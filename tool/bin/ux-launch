@@ -40,7 +40,8 @@ sub get_file
 
 die "No entry name given" unless defined $entryname;
 
-my %entry = L4::ModList::get_module_entry($modulesfile, $entryname);
+my %entry = L4::ModList::get_module_entry($modulesfile, $entryname,
+                                          $module_path);
 L4::ModList::fetch_remote_file($_->{file}) foreach (@{$entry{mods}});
 
 my @mods = @{$entry{mods}};

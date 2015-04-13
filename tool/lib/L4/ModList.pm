@@ -7,6 +7,10 @@ use vars qw(@ISA @EXPORT);
 @ISA    = qw(Exporter);
 @EXPORT = qw(get_module_entry search_file get_entries merge_entries);
 
+my $cross_compile_prefix = $ENV{CROSS_COMPILE} || '';
+my $prog_objdump         = $ENV{OBJDUMP} || "${cross_compile_prefix}objdump";
+
+
 my @internal_searchpaths;
 
 sub quoted { shift =~ s/"/\\"/gr; }
@@ -232,10 +236,28 @@ sub check_env_var
     }
 };
 
-## Extract an entry with modules from a modules.list file
-sub get_module_entry($$)
+sub get_shared_libs
 {
-  my ($mod_file, $entry_to_pick) = @_;
+  my $binary = shift;
+  my @shlibs = ();
+
+  return if not defined $binary or not -e $binary;
+
+  if (open(my $obj, "$prog_objdump -p $binary 2>&1 |"))
+    {
+      while(<$obj>)
+        {
+          push @shlibs, $1 if /^\s+NEEDED\s+(.+)$/;
+        }
+    }
+
+  return @shlibs;
+}
+
+## Extract an entry with modules from a modules.list file
+sub get_module_entry($$$)
+{
+  my ($mod_file, $entry_to_pick, $module_path) = @_;
   my @mods;
   my %type_num = ( kernel => 1, sigma0 => 2, roottask => 3 );
   my %base_mods = (
@@ -428,6 +450,39 @@ sub get_module_entry($$)
         {
           $bootstrap{cmdline} .= " -modaddr $m";
         }
+    }
+
+  my %shlibs;
+  my %scanned;
+  foreach my $m (@mods)
+    {
+      print STDERR "file: $m->{command}\n" if 0;
+      continue if exists $m->{opts}{"no-shlib-scan"};
+      $shlibs{$_} = 1 foreach (get_shared_libs(search_file($m->{command},
+                                                           $module_path)));
+      $scanned{$m->{command}} = 1;
+    }
+  my $loopcnt = 20;
+  do
+    {
+      my $lookagain = 0;
+      foreach my $shlib (keys %shlibs)
+        {
+          next if defined $scanned{$shlib};
+
+          $shlibs{$_} = 1
+            foreach (get_shared_libs(search_file($shlib,
+                                                 $module_path)));
+          $scanned{$shlib} = 1;
+          $lookagain = 1;
+        }
+    }
+  while ($lookagain && --$loopcnt);
+  error "Recursion limit hit for scanning '$m->{command}'\n" if $lookagain;
+
+  foreach (sort keys %shlibs)
+    {
+      push @mods, { get_command_and_cmdline($_) };
     }
 
   return (

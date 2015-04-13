@@ -325,7 +325,7 @@ sub create_image
   $ENV{ARCH}          = $d->{arch};
 
   my %entry = L4::ModList::get_module_entry($modules_list_file,
-                                            $entry_name);
+                                            $entry_name, $search_path);
 
   my $tmpdir;
 

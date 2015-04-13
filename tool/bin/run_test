@@ -95,60 +95,6 @@ my $tmpdir      = $ENV{TEST_TMPDIR};
 make_path($tmpdir);
 push(@modulepaths, $tmpdir);
 
-sub get_module
-{
-  my $cmdline = shift;
-  (my $file, my $args) = split (' ', $cmdline, 2);
-
-  $args = $args ? " $args" : "";
-
-  my $fullpath;
-  if (-e $file and ! -d $file)
-    {
-      $fullpath = $file;
-    }
-  else
-    {
-      # go through the search path
-      foreach my $p (@modulepaths)
-        {
-          my $fp = "$p/$file";
-          if (-e "$fp" and ! -d "$fp")
-            {
-              $fullpath = $fp;
-              last;
-            }
-        }
-    }
-  $fullpath or confess "Cannot find module $file";
-
-  # check for compressed files (e.g. for linux)
-  open(my $fh, '<', $fullpath) or confess "Cannot open '$fullpath': $!\n";
-  my $buf;
-  read($fh, $buf, 2);
-  close($fh);
-
-  if (length($buf) >= 2 && unpack("n", $buf) == 0x1f8b)
-    {
-      my $of = "$tmpdir/".basename($file);
-      print STDERR "'$fullpath' is a zipped file, uncompressing to '$of'\n";
-
-      system("zcat $fullpath >$of");
-
-      return "$of$args";
-    }
-
-  return "$fullpath$args";
-}
-
-sub qemu_get_module
-{
-  my $cmdline = shift;
-  my $fp = get_module($cmdline);
-  $fp =~ s/,/,,/g;
-  return $fp;
-}
-
 sub exit_skip
 {
   print shift;
@@ -397,22 +343,6 @@ if ($is_kunit_test)
     $modlist_info->{kernel}{args} .= " -utest_opts=" . $opts_string;
     $modlist_template = "kunit_test.tpl";
   }
-
-# If any binary was linked dynamically, we need to add the necessary .so files.
-my @inmods = map { get_module($_->{name}.($_->{is_rw} ? " :rw" : "")) } @{$modlist_info->{extra_modules}};
-my %shared_libs = ();
-foreach my $mod (@inmods)
-  {
-    (my $executable) = split(' ', $mod, 2);
-    my $libs = `objdump -p $executable 2>/dev/null | grep NEEDED`;
-    foreach my $lib (split /\n/, $libs)
-      {
-        $lib =~ s/\s*NEEDED\s*//;
-        $shared_libs{$lib} = 1 if $lib;
-      }
-  }
-
-add_mods(map { parse_mod $_ } keys %shared_libs);
 
 my $tt = Template->new({ TRIM => 1, STRICT => 1, ABSOLUTE => 1,
                          INCLUDE_PATH => "$ENV{L4DIR}/tool/templates/runtest/"})

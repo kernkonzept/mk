@@ -58,7 +58,8 @@ sub qemu_get_file
 
 die "No entry name given" unless defined $entryname;
 
-my %entry = L4::ModList::get_module_entry($modulesfile, $entryname);
+my %entry = L4::ModList::get_module_entry($modulesfile, $entryname,
+                                          $module_path);
 
 my @mods = @{$entry{mods}};
 my $kernel = L4::ModList::search_file_or_die($entry{bootstrap}{file}, $module_path);

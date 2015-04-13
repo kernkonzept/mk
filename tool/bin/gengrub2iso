@@ -44,7 +44,8 @@ my @entries;
 foreach my $entryname (@ARGV)
   {
     print "Processing entry '$entryname'\n";
-    my %entry = L4::ModList::get_module_entry($modulesfile, $entryname);
+    my %entry = L4::ModList::get_module_entry($modulesfile, $entryname,
+                                              $module_path);
     push @entries, \%entry;
   }
 
