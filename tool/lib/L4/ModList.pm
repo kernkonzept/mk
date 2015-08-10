@@ -62,7 +62,6 @@ sub parse_options
 sub handle_line
 {
   my $r = shift;
-  my $mod_file = shift;
   my %opts = @_;
 
   $r =~ s/\s+$//;
@@ -121,7 +120,7 @@ sub handle_line
 
 sub handle_line_first
 {
-  return (handle_line(shift,  @_))[0];
+  return (handle_line(shift, @_))[0];
 }
 
 sub readin_config($)
@@ -174,7 +173,7 @@ sub readin_config($)
 
           if ($cmd eq 'include')
             {
-              my @f = handle_line($remaining, $mod_file);
+              my @f = handle_line($remaining);
               foreach my $f (@f)
                 {
                   my $abs;
@@ -293,7 +292,7 @@ sub get_module_entry($$)
       $type = 'bin'   if $type eq 'module';
 
       if ($type =~ /^(entry|title)$/) {
-        ($remaining) = handle_line($remaining, $mod_file, %opts);
+        ($remaining) = handle_line($remaining, %opts);
         if (lc($entry_to_pick) eq lc($remaining)) {
           $process_mode = 'entry';
           $found_entry = 1;
@@ -305,29 +304,29 @@ sub get_module_entry($$)
       }
 
       if ($type eq 'searchpath') {
-        push @internal_searchpaths, handle_line($remaining, $mod_file, %opts);
+        push @internal_searchpaths, handle_line($remaining, %opts);
         next;
       } elsif ($type eq 'group') {
         $process_mode = 'group';
-        $current_group_name = (split /\s+/, handle_line_first($remaining, $mod_file, %opts))[0];
+        $current_group_name = (split /\s+/, handle_line_first($remaining, %opts))[0];
         next;
       } elsif ($type eq 'default-bootstrap') {
-        my ($file, $full) = get_command_and_cmdline(handle_line_first($remaining, $mod_file, %opts), %opts);
+        my ($file, $full) = get_command_and_cmdline(handle_line_first($remaining, %opts), %opts);
         $bootstrap_command = $file;
         $bootstrap_cmdline = $full;
         next;
       } elsif ($type eq 'default-kernel') {
-        my ($file, $full) = get_command_and_cmdline(handle_line_first($remaining, $mod_file, %opts), %opts);
+        my ($file, $full) = get_command_and_cmdline(handle_line_first($remaining, %opts), %opts);
         $mods[0]{command}  = $file;
         $mods[0]{cmdline}  = $full;
         next;
       } elsif ($type eq 'default-sigma0') {
-        my ($file, $full) = get_command_and_cmdline(handle_line_first($remaining, $mod_file, %opts), %opts);
+        my ($file, $full) = get_command_and_cmdline(handle_line_first($remaining, %opts), %opts);
         $mods[1]{command}  = $file;
         $mods[1]{cmdline}  = $full;
         next;
       } elsif ($type eq 'default-roottask') {
-        my ($file, $full) = get_command_and_cmdline(handle_line_first($remaining, $mod_file, %opts), %opts);
+        my ($file, $full) = get_command_and_cmdline(handle_line_first($remaining, %opts), %opts);
         $mods[2]{command}  = $file;
         $mods[2]{cmdline}  = $full;
         next;
@@ -335,7 +334,7 @@ sub get_module_entry($$)
 
       next unless $process_mode;
 
-      my @params = handle_line($remaining, $mod_file, %opts);
+      my @params = handle_line($remaining, %opts);
 
       my @valid_types = ( 'bin', 'data', 'bin-nostrip', 'data-nostrip',
                           'bootstrap', 'roottask', 'kernel', 'sigma0',
