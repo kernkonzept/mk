@@ -9,11 +9,15 @@ my @internal_searchpaths;
 
 my $arglen = 200;
 
-sub get_command_and_cmdline($)
+sub get_command_and_cmdline
 {
-  my ($file, $args) = split /\s+/, $_[0], 2;
+  my $cmd_and_args = shift;
+  my %opts = @_;
+
+  my ($file, $args) = split /\s+/, $cmd_and_args, 2;
 
   my $full = $file;
+  $full = $opts{fname} if exists $opts{fname};
   $full .= " $args" if defined $args;
   $full =~ s/"/\\"/g;
 
@@ -31,7 +35,7 @@ sub error($)
   exit(1);
 }
 
-sub handle_options($)
+sub parse_options
 {
   my $optstring = shift;
   my %opts;
@@ -47,6 +51,10 @@ sub handle_options($)
           $opts{$_} = undef;
         }
     }
+
+  print STDERR "Options: ",
+        join(", ", map { $opts{$_} ? "$_=$opts{$_}" : $_ } keys %opts), "\n"
+   if %opts && 0;
 
   return %opts;
 }
@@ -113,7 +121,7 @@ sub handle_line
 
 sub handle_line_first
 {
-  return (handle_line(shift, shift, @_))[0];
+  return (handle_line(shift,  @_))[0];
 }
 
 sub readin_config($)
@@ -213,6 +221,12 @@ sub readin_config($)
          );
 }
 
+sub disassemble_line
+{
+  $_[0] =~ /^([^\s\[]+)(?:\[\s*(.*)\s*\])?(?:\s+(.*))?/;
+  ($1, $2, $3);
+}
+
 # extract an entry with modules from a modules.list file
 sub get_module_entry($$)
 {
@@ -269,16 +283,10 @@ sub get_module_entry($$)
         next;
       }
 
-      /^([^\s\[]+)(\[\s*(.*)\s*\])?(\s+(.*))?/;
-      my ($type, $opts, $remaining) = ($1, $3, $5);
+      my ($type, $opts, $remaining) = disassemble_line($_);
 
       my %opts;
-      %opts = handle_options($opts) if defined $opts;
-
-      print "Options: ",
-            join(", ", map { $opts{$_} ? "$_=$opts{$_}" : $_ } keys %opts),
-            "\n"
-        if %opts && 0;
+      %opts = parse_options($opts) if defined $opts;
 
       $type = lc($type);
 
@@ -304,22 +312,22 @@ sub get_module_entry($$)
         $current_group_name = (split /\s+/, handle_line_first($remaining, $mod_file, %opts))[0];
         next;
       } elsif ($type eq 'default-bootstrap') {
-        my ($file, $full) = get_command_and_cmdline(handle_line_first($remaining, $mod_file, %opts));
+        my ($file, $full) = get_command_and_cmdline(handle_line_first($remaining, $mod_file, %opts), %opts);
         $bootstrap_command = $file;
         $bootstrap_cmdline = $full;
         next;
       } elsif ($type eq 'default-kernel') {
-        my ($file, $full) = get_command_and_cmdline(handle_line_first($remaining, $mod_file, %opts));
+        my ($file, $full) = get_command_and_cmdline(handle_line_first($remaining, $mod_file, %opts), %opts);
         $mods[0]{command}  = $file;
         $mods[0]{cmdline}  = $full;
         next;
       } elsif ($type eq 'default-sigma0') {
-        my ($file, $full) = get_command_and_cmdline(handle_line_first($remaining, $mod_file, %opts));
+        my ($file, $full) = get_command_and_cmdline(handle_line_first($remaining, $mod_file, %opts), %opts);
         $mods[1]{command}  = $file;
         $mods[1]{cmdline}  = $full;
         next;
       } elsif ($type eq 'default-roottask') {
-        my ($file, $full) = get_command_and_cmdline(handle_line_first($remaining, $mod_file, %opts));
+        my ($file, $full) = get_command_and_cmdline(handle_line_first($remaining, $mod_file, %opts), %opts);
         $mods[2]{command}  = $file;
         $mods[2]{cmdline}  = $full;
         next;
@@ -360,7 +368,7 @@ sub get_module_entry($$)
       if ($process_mode eq 'entry') {
         foreach my $m (@params) {
 
-          my ($file, $full) = get_command_and_cmdline($m);
+          my ($file, $full) = get_command_and_cmdline($m, %opts);
 
           # special cases
           if ($type eq 'bootstrap') {
@@ -468,7 +476,8 @@ sub get_entries($)
 
   foreach my $fileentry (@{$mod_file_db{contents}})
     {
-      push @entry_list, $2 if $$fileentry[2] =~ /^(entry|title)\s+(.+)\s*$/;
+      my ($t, $o, $n) = disassemble_line($$fileentry[2]);
+      push @entry_list, $n if $t eq "entry" or $t eq "title";
     }
 
   return @entry_list;
