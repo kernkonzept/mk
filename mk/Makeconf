@@ -414,12 +414,16 @@ GCC_HAS_ATOMICS_f = $(shell if echo '\#include <bits/c++config.h>' | \
 		               $(callcxx) -dD -E -x c++ - | \
 			       grep -q _GLIBCXX_ATOMIC_BUILTINS; then \
 			         echo y; fi)
+GCCINCFIXEDPATH_f = $(patsubst %/limits.h,%,$(strip $(firstword $(wildcard \
+                      $(addsuffix /limits.h, \
+                        $(call GCCDIR_f)/include-fixed$(if $(filter .,$(shell $(callcc) -print-multi-directory)),,/$(shell $(callcc) -print-multi-directory)) \
+                        $(call GCCDIR_f)/include-fixed)))))
 
 BID_NOSTDINC_clang ?= #-nostdlibinc
 BID_NOSTDINC_gcc   ?= -nostdinc
 BID_NOSTDINC       ?= $(BID_NOSTDINC_$(BID_COMPILER_TYPE))
 ifneq ($(strip $(GCCDIR)),)
-GCCINCDIR	= $(GCCDIR)/include $(GCCDIR)/include-fixed
+GCCINCDIR	= $(GCCDIR)/include $(GCCINCFIXEDPATH)
 I_GCCINCDIR	= $(addprefix -isystem ,$(GCCINCDIR))
 endif
 
