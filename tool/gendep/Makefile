@@ -10,8 +10,9 @@ DDIR	= gendep-$(VERSION)
 CC	= $(HOST_CC)
 CFLAGS	= -fPIC -Wall -pedantic -g
 
-checkbuild = $(shell if $(CC) -m$(1) -c -o /dev/null $(SRC_DIR)/syscall.c \
-                     > /dev/null 2>&1; then echo 1; fi)
+checkbuild = $(shell if    $(CC) -m$(1) -c -o /dev/null $(SRC_DIR)/syscall.c \
+                        && echo 'int main(){}' | $(CC) -m$(1) -o /dev/null -x c - \
+                        > /dev/null 2>&1 ; then echo 1; fi)
 
 OBJS32	= $(addprefix $(OBJ_DIR)/,$(CSRC:.c=.32.o))
 OBJS64  = $(addprefix $(OBJ_DIR)/,$(CSRC:.c=.64.o))
