@@ -395,7 +395,7 @@ endif
 	      break;                                                     \
 	    fi;                                                          \
 	  done;                                                          \
-	  if [ "$$found_it" == "1" ]; then                               \
+	  if [ "$$found_it" = "1" ]; then                                \
 	    break;                                                       \
 	  fi;                                                            \
 	done;                                                            \
