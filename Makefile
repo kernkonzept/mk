@@ -98,6 +98,9 @@ ifneq ($(strip $(B)),)
 BUILDDIR_TO_CREATE := $(B)
 endif
 ifneq ($(strip $(BUILDDIR_TO_CREATE)),)
+ifneq ($(wildcard $(L4DIR)/mk/defconfig/config.$(T)),)
+  DROPSCONF_DEFCONFIG=$(L4DIR)/mk/defconfig/config.$(T)
+endif
 all:: check_build_tools
 	@echo "Creating build directory \"$(BUILDDIR_TO_CREATE)\"..."
 	@if [ -e "$(BUILDDIR_TO_CREATE)" ]; then	\
@@ -106,6 +109,7 @@ all:: check_build_tools
 	fi
 	@mkdir -p "$(BUILDDIR_TO_CREATE)"
 	@cp $(DROPSCONF_DEFCONFIG) $(BUILDDIR_TO_CREATE)/.kconfig
+	@echo CONFIG_PLATFORM_TYPE_$(PT)=y >> $(BUILDDIR_TO_CREATE)/.kconfig
 	@$(MAKE) B= BUILDDIR_TO_CREATE= O=$(BUILDDIR_TO_CREATE) olddefconfig
 	@echo "done."
 else
