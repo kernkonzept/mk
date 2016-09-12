@@ -3,3 +3,4 @@
 /tool/gen_dopecode
 /.ham
 /conf/Makeconf.boot
+/tests
