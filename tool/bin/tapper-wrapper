@@ -21,6 +21,7 @@ GetOptions(
   'fiasco-args|f=s' => sub { $ENV{KERNEL_ARGS} = $_[1]; },
   'moe-args|m=s'    => sub { $ENV{MOE_ARGS} = $_[1]; },
   'test-args|t=s'   => sub { $ENV{TEST_ARGS} = $_[1]; },
+  'logfile|l=s'     => sub { $ENV{TEST_LOGFILE} = $_[1]; },
   'image|i=s'       => sub { $ENV{IMAGE_TYPE} = $_[1]; }
 ) or pod2usage(-verbose => 99, -sections => "OPTIONS");
 
@@ -39,6 +40,13 @@ my $TAPPER_FD;
 my $pid = -1;
 my $expline;
 my $output_to_tapper_fd = 0;
+
+my $LOG_FD;
+my $logfile = $ENV{TEST_LOGFILE};
+if ($logfile)
+  {
+    open $LOG_FD, ">>", $logfile or die "Can not open logfile '$logfile'\n";
+  }
 
 sub get_ps_tree
 {
@@ -184,6 +192,7 @@ sub readline_timeout
           while (sysread($handle, my $part, 128))
             {
               print $part if !$output_to_tapper_fd;
+              print $LOG_FD $part if $LOG_FD;
               $readbuffer .= $part;
               $idx = index($readbuffer, "\n");
               last if $idx >= 0;
@@ -408,6 +417,9 @@ $TEST_SCRIPT [options]
   --image,-i       Create an image of the given type instead of executing
     <STRING>       the test on the target platform.
                    For available image types see 'make help'.
+
+  --logfile,-l     Append output of test execution to the given file.
+    <STRING>
 
  Options for gtest test applications:
   --verbose,-v     Run test in verbose mode. Repeat for increased verbosity.
