@@ -322,14 +322,14 @@ TEST_GROUP.
 To be able to execute the test, a minimal test environment needs
 to be set up by exporting the following environment variables:
 
-\par `KERNEL_<arch>_<platform>`, `KERNEL_<arch>`, `KERNEL`
+\par `KERNEL_<arch>`, `KERNEL`
 Fiasco kernel binary to use. The test runner is able to check if the
 kernel has all features necessary for the test and skip tests accordingly.
 In order for this to work, the `globalconfig.out` config file from the
 build directory needs to be available in the same directory as the
 kernel.
 
-\par `L4LX_KERNEL_<arch>_<platform>`, `L4LX_KERNEL_<arch>`, `L4_LX_KERNEL`
+\par `L4LX_KERNEL_<arch>`, `L4_LX_KERNEL`
 L4Linux binary to use. This is only required to run tests in
 `mode=l4linux`. If no L4Linux kernel is set then these tests
 will simply be skipped.
@@ -339,7 +339,7 @@ variable `L4LINUX_CONF` above). For this to work, the `.config` configuration
 file from the build directory needs to be available in the same
 directory as the kernel.
 
-\par `LINUX_RAMDISK_<arch>_<platform>`, `LINUX_RAMDISK_<arch>`, `LINUX_RAMDISK`
+\par `LINUX_RAMDISK_<arch>`, `LINUX_RAMDISK`
 Ramdisk to mount as root in L4Linux. This is only required to run tests in
 `mode=l4linux`. If not supplied, L4Linux tests will be skipped.
 The ramdisk must be set up to start the test directly after the
@@ -349,9 +349,9 @@ directory contains an example script `launch-l4linux-test`. which can
 be copied onto the ramdisk and started by the init script.
 
 In addition to these variables, the following BID variables can be
-overwritten at runtime: `PLATFORM_TYPE` and `TEST_TIMEOUT`. You may also
-supply `QEMU_ARGS` and `MOE_ARGS` which will be appended to the parameters
-specified in the BID test make file.
+overwritten at runtime: `PT` (for the plaform type) and `TEST_TIMEOUT`.
+You may also supply `QEMU_ARGS` and `MOE_ARGS` which will be appended
+to the parameters specified in the BID test make file.
 
 Once the environment is set up, the tests can be run either by simply
 executing all of them from the build directory with

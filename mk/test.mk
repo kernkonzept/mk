@@ -57,7 +57,7 @@ endif
 # variables that are forwarded to the test runner environment
 testvars_fix    := MODE ARCH MOE_CFG REQUIRED_MODULES KERNEL_CONF L4LINUX_CONF \
                     TEST_SETUP TEST_TARGET TEST_EXPECTED OBJ_BASE
-testvars_conf   := PLATFORM_TYPE TEST_TIMEOUT TEST_EXPECTED_REPEAT
+testvars_conf   := TEST_TIMEOUT TEST_EXPECTED_REPEAT
 testvars_append := QEMU_ARGS MOE_ARGS
 
 # use either a target-specific value or the general version of a variable

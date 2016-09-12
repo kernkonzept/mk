@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# Execute a test on the configured platform.
+# Execute a test on the configured architecture.
 #
 # Exits with 69 (EX_UNAVAILABLE) if the test should be skipped
 # because of incompatible configuration.
@@ -17,15 +17,11 @@ use warnings;
 my $mode        = $ENV{MODE};
 my $arch        = $ENV{ARCH} or die "No architecture specified";
 my $obj_base    = $ENV{OBJ_BASE};
-my $platform    = $ENV{PLATFORM_TYPE};
-my $kernel      = $ENV{"KERNEL_${arch}_$platform"}
-                  || $ENV{"KERNEL_${arch}"} || $ENV{KERNEL} || 'fiasco';
+my $kernel      = $ENV{"KERNEL_${arch}"} || $ENV{KERNEL} || 'fiasco';
 my $kernel_args = $ENV{KERNEL_ARGS} || '';
 my $sigma0      = $ENV{SIGMA0} || "sigma0";
-my $l4linux     = $ENV{"L4LX_KERNEL_${arch}_$platform"}
-                  || $ENV{"L4LX_KERNEL_${arch}"} || $ENV{L4LX_KERNEL};
-my $ramdisk     = $ENV{"LINUX_RAMDISK_${arch}_$platform"}
-                  || $ENV{"LINUX_RAMDISK_${arch}"} || $ENV{LINUX_RAMDISK};
+my $l4linux     = $ENV{"L4LX_KERNEL_${arch}"} || $ENV{L4LX_KERNEL};
+my $ramdisk     = $ENV{"LINUX_RAMDISK_${arch}"} || $ENV{LINUX_RAMDISK};
 my $bootstrap   = $ENV{BOOTSTRAP} || 'bootstrap';
 my @modulepaths = split(/[:\s]+/, $ENV{SEARCHPATH});
 # need a split according to the rules of shell quoting
