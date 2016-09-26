@@ -73,12 +73,16 @@ depcheck:
 	echo "Packages     tested: $(CHECK_GOOD) $$PKGDONE"
 
 depgraph: depsrcgraph depobjgraph
-depsrcgraph: $(PKGDIR_OBJ)/depsrc.svg $(PKGDIR_OBJ)/depsrc.ps $(PKGDIR_OBJ)/depsrc.reduced.svg $(PKGDIR_OBJ)/depsrc.reduced.ps
-depobjgraph: $(PKGDIR_OBJ)/depobj.svg $(PKGDIR_OBJ)/depobj.ps $(PKGDIR_OBJ)/depobj.reduced.svg $(PKGDIR_OBJ)/depobj.reduced.ps
+depsrcgraph: $(PKGDIR_OBJ)/depsrc.svg $(PKGDIR_OBJ)/depsrc.ps $(PKGDIR_OBJ)/depsrc.pdf $(PKGDIR_OBJ)/depsrc.reduced.svg $(PKGDIR_OBJ)/depsrc.reduced.ps
+depobjgraph: $(PKGDIR_OBJ)/depobj.svg $(PKGDIR_OBJ)/depobj.ps $(PKGDIR_OBJ)/depobj.pdf $(PKGDIR_OBJ)/depobj.reduced.svg $(PKGDIR_OBJ)/depobj.reduced.ps
 
 %.ps: %.dot
 	@$(GEN_MESSAGE)
 	$(VERBOSE)dot -Tps -o $@ $<
+
+%.pdf: %.dot
+	@$(GEN_MESSAGE)
+	$(VERBOSE)dot -Tpdf -o $@ $<
 
 %.svg: %.dot
 	@$(GEN_MESSAGE)
