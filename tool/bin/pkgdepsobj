@@ -60,19 +60,23 @@ sub do_deps($@)
 
 	if ($realfile =~ /^$objdir_base\/pkg\/([^\/]+)\//) {
 	  $deps{$p}{l4pkg}{$1} = 1;
+	} elsif ($realfile =~ /^$objdir_base\/include\/contrib\/([^\/]+)\//) {
+	  $deps{$p}{l4pkg}{$1} = 1;
 	} elsif ($realfile =~ /^$srcdir_base\/pkg\/([^\/]+)\//) {
 	  $deps{$p}{l4pkg}{$1} = 1;
 	} elsif ($realfile =~ /^$objdir_base\/(\.config\.all|Makeconf\.\w+)$/) {
 	  $deps{$p}{l4config} = 1;
 	} elsif ($realfile =~ /^$srcdir_base\/Makeconf\.\w+$/) {
 	  $deps{$p}{l4config} = 1;
+	} elsif ($realfile =~ /^$objdir_base\/include\/l4\/bid_config\.h$/) {
+	  $deps{$p}{l4config} = 1;
 	} elsif ($realfile =~ /^$srcdir_base\/tool\/.+$/) {
 	  $deps{$p}{l4tool} = 1;
 	} elsif (   $realfile =~ /\/(libgcc(_eh)?\.a|crt(begin[TS]?|end[S]?)\.o|include(-fixed)?\/(std(arg|def|bool)|limits|unwind|float|omp|[ex]?mmintrin|mm_malloc)\.h)$/
 	         || $realfile =~ /^\/usr\/lib\/gcc\/.+\/lib\/(crt.\.o|lib.+\.so)$/) {
 	  $deps{$p}{gcc} = 1;
-	} elsif (   $realfile =~ /^\/usr\/(lib|include|share)\//
-                 || $realfile =~ /^\/(lib|dev)\//) {
+	} elsif (   $realfile =~ /^\/usr\/(lib|lib32|lib64|include|share)\//
+	         || $realfile =~ /^\/(lib|dev)\//) {
 	  $deps{$p}{host} = 1;
 	} else {
 	  print "Unknown: $realfile\n";
@@ -143,8 +147,8 @@ $mon++;
 print "Creating dot file\n";
 open (D, ">$dotfilename") || die "Cannot create $dotfilename: $!";
 print D "digraph dep {\n";
-print D "  graph [ label = \"\\nBuild-tree based package dependency\\n",
-        "$mday. $mon. $year, $hour:$min\" ];\n";
+printf D "  graph [ label = \"\\nBuild-tree based package dependency\\n".
+         "%02d. %02d. %04d, %02d:%02d\" ];\n", $mday, $mon, $year, $hour, $min;
 foreach my $p (keys %deps) {
   print D map("  \"$p\" -> \"$_\";\n", keys %{$deps{$p}{l4pkg}}), "\n";
 }
