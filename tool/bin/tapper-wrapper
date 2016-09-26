@@ -96,13 +96,21 @@ sub kill_ps_tree
 
 sub exit_test
 {
+  my ($exit_code) = @_;
+
+  # graceful exit override
+  $exit_code = 0
+    if (not defined $exit_code     # default
+        or $exit_code == 69        # SKIP tests
+        or $ENV{HARNESS_ACTIVE});  # run under 'prove'
+
   # tell test runner to finish up
   # signals aren't passed to whole children tree - kill explicit
   kill_ps_tree($pid);
   $pid = -1; # clean behaviour on multiple calling
 
   close($TAPPER_FD);
-  exit(0);
+  exit($exit_code);
 }
 
 sub extract_expected
@@ -124,6 +132,8 @@ sub fail_test
 {
   my $long_msg = shift;
   chomp $long_msg;
+  my $exit_code = shift;
+  $exit_code = 1 if not defined $exit_code;
 
   print $TAPPER_FD <<EOT;
 1..1
@@ -134,7 +144,7 @@ not ok 1 - execution - $test_description
   ...
 EOT
 
-  exit_test()
+  exit_test($exit_code)
 }
 
 
@@ -168,7 +178,7 @@ if ($number_of_runs == 0 and $ENV{HARNESS_ACTIVE})
   {
     print $TAPPER_FD "1..0 # SKIP ";
     print $TAPPER_FD "infinite test cannot be run when harness is active\n";
-    exit_test();
+    exit_test(69);
   }
 
 $pid = open(my $test_proc, "-|", @ARGV) or die "Failed to execute $ARGV[0].\n";
@@ -222,6 +232,7 @@ sub readline_timeout
 }
 
 
+my $test_proc_exit_code;
 if ($ENV{TEST_EXPECTED})
   {
     # search for expected output file in searchpath
@@ -297,14 +308,15 @@ if ($ENV{TEST_EXPECTED})
     my $res_msg;
     if ($test_eof and !close($test_proc))
       {
-        if ($? >> 8 == 69)
+        $test_proc_exit_code = $? >> 8;
+        if ($test_proc_exit_code == 69)
           {
             print $TAPPER_FD "1..0 # SKIP $test_lastline\n";
           }
         else
           {
             $res = 'not ';
-            $res_msg = "Failed to execute test. ($?)";
+            $res_msg = "Failed to execute test. ($test_proc_exit_code)";
           }
       }
     elsif ($expline)
@@ -375,19 +387,20 @@ else
       {
         waitpid $pid, 0;
         $pid = -1;
-        if ($? >> 8 == 69)
+        $test_proc_exit_code = $? >> 8;
+        if ($test_proc_exit_code == 69)
           {
             print $TAPPER_FD "1..0 # SKIP $test_lastline\n";
-            exit_test();
+            exit_test($test_proc_exit_code);
           }
         else
           {
-            fail_test("Test program finished prematurely")
+            fail_test("Test program finished prematurely", $test_proc_exit_code)
           }
       }
   }
 
-exit_test();
+exit_test($test_proc_exit_code);
 
 __END__
 
