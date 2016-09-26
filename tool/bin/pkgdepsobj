@@ -51,42 +51,42 @@ sub do_deps($@)
 
       foreach my $t (@tokens) {
         next unless $t =~ /^\//;
-	$t =~ s/:$//;
+        $t =~ s/:$//;
 
-	my $realfile = readlink($t);
-	$realfile = $t unless defined $realfile; 
+        my $realfile = readlink($t);
+        $realfile = $t unless defined $realfile;
 
-	next unless -r $realfile;
+        next unless -r $realfile;
 
-	if ($realfile =~ /^$objdir_base\/pkg\/([^\/]+)\//) {
-	  $deps{$p}{l4pkg}{$1} = 1;
-	} elsif ($realfile =~ /^$objdir_base\/include\/contrib\/([^\/]+)\//) {
-	  $deps{$p}{l4pkg}{$1} = 1;
-	} elsif ($realfile =~ /^$srcdir_base\/pkg\/([^\/]+)\//) {
-	  $deps{$p}{l4pkg}{$1} = 1;
-	} elsif ($realfile =~ /^$objdir_base\/(\.config\.all|Makeconf\.\w+)$/) {
-	  $deps{$p}{l4config} = 1;
-	} elsif ($realfile =~ /^$srcdir_base\/Makeconf\.\w+$/) {
-	  $deps{$p}{l4config} = 1;
-	} elsif ($realfile =~ /^$objdir_base\/include\/l4\/bid_config\.h$/) {
-	  $deps{$p}{l4config} = 1;
-	} elsif ($realfile =~ /^$srcdir_base\/tool\/.+$/) {
-	  $deps{$p}{l4tool} = 1;
-	} elsif (   $realfile =~ /\/(libgcc(_eh)?\.a|crt(begin[TS]?|end[S]?)\.o|include(-fixed)?\/(std(arg|def|bool)|limits|unwind|float|omp|[ex]?mmintrin|mm_malloc)\.h)$/
-	         || $realfile =~ /^\/usr\/lib\/gcc\/.+\/lib\/(crt.\.o|lib.+\.so)$/) {
-	  $deps{$p}{gcc} = 1;
-	} elsif (   $realfile =~ /^\/usr\/(lib|lib32|lib64|include|share)\//
-	         || $realfile =~ /^\/(lib|dev)\//) {
-	  $deps{$p}{host} = 1;
-	} else {
-	  print "Unknown: $realfile\n";
-	}
+        if ($realfile =~ /^$objdir_base\/pkg\/([^\/]+)\//) {
+          $deps{$p}{l4pkg}{$1} = 1;
+        } elsif ($realfile =~ /^$objdir_base\/include\/contrib\/([^\/]+)\//) {
+          $deps{$p}{l4pkg}{$1} = 1;
+        } elsif ($realfile =~ /^$srcdir_base\/pkg\/([^\/]+)\//) {
+          $deps{$p}{l4pkg}{$1} = 1;
+        } elsif ($realfile =~ /^$objdir_base\/(\.config\.all|Makeconf\.\w+)$/) {
+          $deps{$p}{l4config} = 1;
+        } elsif ($realfile =~ /^$srcdir_base\/Makeconf\.\w+$/) {
+          $deps{$p}{l4config} = 1;
+        } elsif ($realfile =~ /^$objdir_base\/include\/l4\/bid_config\.h$/) {
+          $deps{$p}{l4config} = 1;
+        } elsif ($realfile =~ /^$srcdir_base\/tool\/.+$/) {
+          $deps{$p}{l4tool} = 1;
+        } elsif (   $realfile =~ /\/(libgcc(_eh)?\.a|crt(begin[TS]?|end[S]?)\.o|include(-fixed)?\/(std(arg|def|bool)|limits|unwind|float|omp|[ex]?mmintrin|mm_malloc)\.h)$/
+                 || $realfile =~ /^\/usr\/lib\/gcc\/.+\/lib\/(crt.\.o|lib.+\.so)$/) {
+          $deps{$p}{gcc} = 1;
+        } elsif (   $realfile =~ /^\/usr\/(lib|lib32|lib64|include|share)\//
+                 || $realfile =~ /^\/(lib|dev)\//) {
+          $deps{$p}{host} = 1;
+        } else {
+          print "Unknown: $realfile\n";
+        }
       }
     }
 
     close(L);
   }
-  
+
   #print "$pkg_name depends on: ", join(", ", sort keys %{$deps{$pkg_name}{l4pkg}}), "\n";
 }
 
