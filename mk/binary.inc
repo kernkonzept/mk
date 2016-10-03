@@ -872,11 +872,12 @@ $(if $(BID_ALLOW_CPP_AS_CPLUSPLUS_FILE),$(eval $(call BID_GENERATE_S_MAKE_RULE,%
 
 %.dtb: %.dts
 	@$(BUILD_MESSAGE)
-	$(VERBOSE)$(CPP) $(addprefix -I, $(PRIVATE_INCDIR)) -x assembler-with-cpp -Wp,-MD,.$@.d,-MT$@,-MP -nostdinc -o $@.pre $<
-	$(VERBOSE)$(DTC) $(addprefix -i , $(PRIVATE_INCDIR)) -i $(dir $<) -d .$@.d-x -O dtb -b 0 -o $@ $@.pre
-	$(VERBOSE)$(SED) -e "s|$@.pre|$<|" .$@.d-x | \
-		perl -ne 'print "$$_\n"; if (/^.*:\s*(.*)$$/) { print "$$_:\n" foreach (split(/ /,$$1)); }' >> .$@.d
-	$(VERBOSE)rm -f .$@.d-x $@.pre
+	$(VERBOSE)$(MKDIR) $(@D)
+	$(VERBOSE)$(CPP) $(addprefix -I, $(PRIVATE_INCDIR)) -x assembler-with-cpp -Wp,-MD,$(@D)/.$(@F).d,-MT$@,-MP -nostdinc -o $@.pre $<
+	$(VERBOSE)$(DTC) $(addprefix -i , $(PRIVATE_INCDIR)) -i $(dir $<) -d $(@D)/.$(@F).d-x -O dtb -b 0 -o $@ $@.pre
+	$(VERBOSE)$(SED) -e "s|$@.pre|$<|" $(@D)/.$(@F).d-x | \
+		perl -ne 'print "$$_\n"; if (/^.*:\s*(.*)$$/) { print "$$_:\n" foreach (split(/ /,$$1)); }' >> $(@D)/.$(@F).d
+	$(VERBOSE)$(RM) $(@D)/.$(@F).d-x $@.pre
 
 define bin_to_asm_recipe
 	echo -e ".section .rodata, \"a\"\n"    \
