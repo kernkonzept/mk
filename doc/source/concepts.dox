@@ -20,7 +20,6 @@ of the L4Re programming environment from the tutorial.
 - server loops
 - \subpage l4_cxx_ipc_iface
 - hardware access
-- \subpage l4re_servers
 - \subpage l4re_build_system
 
 
