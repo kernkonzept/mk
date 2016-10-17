@@ -22,7 +22,7 @@ my $module_path  = $ENV{SEARCHPATH}   || ".";
 my $qemu_options = $ENV{QEMU_OPTIONS} || "";
 my $modulesfile  = shift;
 my $entryname    = shift;
-my $unzip_tmp    = tempdir(CLEANUP => 1); 
+my $tmpdir       = tempdir(CLEANUP => 1); 
 
 sub qemu_get_file($$)
 {
@@ -30,11 +30,20 @@ sub qemu_get_file($$)
   my $cmdline = shift;
 
   my $fp = L4::ModList::get_file_uncompressed_or_die($command, $module_path,
-                                                     $unzip_tmp);
+                                                     $tmpdir);
 
-  $cmdline =~ s/^\S+\s*//;
-  $cmdline =~ s/,/,,/g;
-  $fp.' '.$cmdline;
+  (my $arguments = $cmdline) =~ s/^\S+\s*//;;
+  (my $fname = $cmdline) =~ s/^(\S+).*/$1/;
+
+  if ($fname ne $command)
+    {
+      my $link = "$tmpdir/$fname";
+      symlink $fp, $link;
+      $fp = $link;
+    }
+
+  $arguments =~ s/,/,,/g;
+  $fp.' '.$arguments;
 }
 
 
