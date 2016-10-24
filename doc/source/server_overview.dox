@@ -69,6 +69,14 @@ drivers).
 
 For more details see \subpage io "Io, the Io Server".
 
+Cons, the Console Multiplexer
+=============================
+
+cons is an interactive multiplexer for console in- and output. It buffers
+the output from different L4 clients and allows to switch between them
+to redirect input.
+
+For more details see \subpage l4re_servers_cons "Cons".
 
 Mag, the GUI Multiplexer
 ========================
