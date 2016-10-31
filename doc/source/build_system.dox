@@ -369,6 +369,73 @@ or running one or more tests through the test harness
     prove -r test/t/amd64_amdfam10/l4f/l4re-core/
     prove -rv test/t/amd64_amdfam10/l4f/l4re-core/
 
+Running Tests in External Programs
+----------------------------------
+
+You can hand-over test execution to an external program by setting the
+environment variable `EXTERNAL_TEST_STARTER` to the full path of that
+program:
+
+    export EXTERNAL_TEST_STARTER=/path/to/external/test-starter
+    make test
+
+\par `EXTERNAL_TEST_STARTER`
+
+This variable is evaluated by `tool/bin/run_test` (the backend behind
+`make test`) and contains the full path to the tool which actually
+starts the test instead of the test itself.
+
+The `EXTERNAL_TEST_STARTER` can be any program instead of the default
+execution via `make qemu E=maketest`. Its output is taken by
+`run_test` as the test output.
+
+Usually it is just a bridge to prepare the test execution, e.g., it
+could create the test as image and start that image via a simulator.
+
+
+### Running Tests in a Simulator
+
+Based on above mechanism there is a dedicated external test starter
+`tool/bin/teststarter-image-telnet.pl` shipped in BID which assumes an
+image to be started with another program which provides test execution
+output on a network port.
+
+This can be used to execute tests in a simulator, like this:
+
+    export EXTERNAL_TEST_STARTER=$L4RE_SRC/tool/bin/teststarter-image-telnet.pl
+    export SIMULATOR_START=/path/to/configured/simulator-exe
+    make test
+
+After building the image and starting the simulator it contacts the
+simulator via a network port (sometimes called "telnet" port) to
+pass-through its execution output as its own output so it gets
+captured by `run_test` as usual.
+
+The following variables control `teststarter-image-telnet.pl`:
+
+\par `SIMULATOR_START`
+This points to the full path of the program that actually starts the
+prepared test image. Most often this is the frontend script of your
+simulator environment which is pre-configured so that it actually
+works in the way that `teststarter-image-telnet.pl` expects from the
+following settings.
+
+\par `SIMULATOR_IMAGETYPE`
+The image type to be generated via `make $SIMULATOR_IMAGETYPE
+E=maketest`. Default is `elfimage`.
+
+\par `SIMULATOR_HOST`
+The simulator will be contacted via socket on that host to read its
+output. Default is `localhost`.
+
+\par `SIMULATOR_PORT`
+The simulator will be contacted via socket on that port to read its
+output. Default is `11111`.
+
+\par `SIMULATOR_START_SLEEPTIME`
+After starting the simulator it waits that many seconds before reading
+from the port. Default is `1` (second).
+
 
 Debugging Tests
 ---------------
