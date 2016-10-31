@@ -60,9 +60,10 @@ module hello
 
 entry hello-cfg
 kernel fiasco -serial_esc
-moe hello.cfg
+roottask moe rom/hello.cfg
 module l4re
 module ned
+module hello.cfg
 module hello
 
 entry hello-shared
@@ -84,7 +85,8 @@ module libsupc++.so
 module libuc_c.so
 
 entry framebuffer-example-x86
-moe x86-fb.cfg
+roottask moe rom/x86-fb.cfg
+module x86-fb.cfg
 module l4re
 module ned
 module io
@@ -95,7 +97,8 @@ module mag
 module ex_fb_spectrum_cc
 
 entry L4Linux-basic
-moe l4lx.cfg
+roottask moe rom/l4lx.cfg
+module l4lx.cfg
 module l4re
 module ned
 module vmlinuz
