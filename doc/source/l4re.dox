@@ -69,7 +69,7 @@
  * libirq usage example using a self-created thread.
  *
  * \example examples/libs/libirq/async_isr.c
- * libirq usage example using asychronous ISR handler functionality.
+ * libirq usage example using asynchronous ISR handler functionality.
  *
  * \example examples/sys/migrate/thread_migrate.cc
  * Thread migration example.

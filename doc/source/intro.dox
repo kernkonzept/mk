@@ -40,7 +40,7 @@ The Fiasco.OC microkernel is the lowest-level piece of software running in an
 L4-based system. The microkernel is the only program that runs in privileged
 processor mode. It does not include complex services such as program loading,
 device drivers, or file systems; those are implemented in user-level programs on
-top of it (a basic set these services and abstractions is provided by the L4
+top of it (a basic set of these services and abstractions is provided by the L4
 Runtime Environment).
 
 Fiasco.OC kernel services are implemented in kernel objects. Tasks hold
@@ -72,23 +72,27 @@ hardware exceptions, faults and for virtual memory management.
 The following list gives a short overview of the kernel objects provided by
 the Fiasco.OC microkernel:
 
-\li <b>Task</b> A task comprises a memory address space (represented by the task's page table), an object space (holding the kernel protected capabilities), and on X86 an IO-port address space.
+\li <b>Task</b> A task comprises a memory address space (represented by the
+task's page table), an object space (holding the kernel protected
+capabilities), and on x86 an IO-port address space.
 \li <b>Thread</b> A thread is bound to a task and executes code. Multiple
 threads can coexist in one task and are scheduled by the Fiasco scheduler.
 \li <b>Factory</b> A factory is used by applications to create new kernel
 objects.  Access to a factory is required to create any new kernel object.
 Factories can control and restrict object creation.
 \li <b>IPC Gate</b> An IPC gate is used to create a secure communication
-channel between different tasks. It embeds a label (kernel protected payload) that securely identifies
-the gate through which a message is received. The gate label is not visible
-to and cannot be altered by the sender.
+channel between different tasks. It embeds a label (kernel protected payload)
+that securely identifies the gate through which a message is received.
+The gate label is not visible to and cannot be altered by the sender.
 \li <b>IRQ</b> IRQ objects provide access to hardware interrupts. Additionally,
 programs can create new virtual interrupt objects and trigger them. This
 allows to implement a signaling mechanism. The receiver cannot decide whether
 the interrupt is a physical or virtual one.
 \li <b>Vcon</b> Provides access to the in-kernel debugging console (input and output).
 There is only one such object in the kernel and it is only available, if the
-kernel is built with debugging enabled. This object is typically interposed through a user-level service or without debugging in the kernel can be completely based on user-level services.
+kernel is built with debugging enabled. This object is typically interposed
+through a user-level service or without debugging in the kernel can be
+completely based on user-level services.
 \li <b>Scheduler</b> Implements scheduling policy and assignment of threads
     to CPUs, including  CPU statistics.
 

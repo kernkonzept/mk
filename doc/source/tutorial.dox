@@ -83,7 +83,7 @@ enter the Fiasco.OC kernel debugger... Have fun.
 \section customizations Customizations
 
 A basic set of bootable entries can be found in \c l4/conf/modules.list. This file
-is the default for any image creation as shown above. It is recommeded that
+is the default for any image creation as shown above. It is recommended that
 local modification regarding image creation are done in
 \c conf/Makeconf.boot. Initially you may copy \c Makeconf.boot.example to
 \c Makeconf.boot. You can overwrite \c MODULES_LIST to set your own

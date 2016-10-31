@@ -3,7 +3,8 @@
 
 \page l4re_concepts Programming for L4Re
 
-This part of the documentation discusses the concept of microkernel-based programming in more detail. You should have already a basic understanding
+This part of the documentation discusses the concept of microkernel-based
+programming in more detail. You should have already a basic understanding
 of the L4Re programming environment from the tutorial.
 
 \todo All subpages need cleaning. Level of detail here?
