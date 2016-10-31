@@ -24,6 +24,8 @@
 # - module[glob] /some/path/*.foo: add all file matching
 # - module[perl] perl-code: Perl code returns array of files to include
 # - module[shell] shell-code: Return list of files to include
+# - module[fname=FOO] /some/path/bar: The file 'bar' will be added as the
+#                                     module named 'FOO'.
 # - moe file.cfg: expands to
 #        roottask moe rom/file.cfg
 #        module file.cfg
@@ -37,6 +39,9 @@
 # Use a module group:
 #  entry someentry
 #  module-group oftenneedthose
+#
+# Include other module list files:
+#  include /path/to/other.list
 #
 # Set defaults:
 # - default-kernel: set default kernel including arguments
