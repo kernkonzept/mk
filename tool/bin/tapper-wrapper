@@ -5,6 +5,7 @@ use IO::Select;
 use IO::Handle;
 use Getopt::Long;
 use Pod::Usage;
+use File::Basename;
 
 my $help = 0;
 my $nowrapper = 0;
@@ -40,6 +41,7 @@ my $TAPPER_FD;
 my $pid = -1;
 my $expline;
 my $output_to_tapper_fd = 0;
+my $test_description = join(" ", map { $_ ? basename($_) : () } @ARGV, $ENV{TEST_TARGET});
 
 my $LOG_FD;
 my $logfile = $ENV{TEST_LOGFILE};
@@ -124,7 +126,7 @@ sub fail_test
 
   print $TAPPER_FD <<EOT;
 1..1
-not ok 1 - execution
+not ok 1 - execution - $test_description
   ---
   message: $long_msg
   severity: fail
@@ -320,7 +322,7 @@ if ($ENV{TEST_EXPECTED})
         chomp $res_msg;
         print $TAPPER_FD <<EOEXT;
 1..1
-${res}ok 1 - execution
+${res}ok 1 - execution - $test_description
   ---
   message: $res_msg
   ...
