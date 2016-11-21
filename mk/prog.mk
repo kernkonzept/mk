@@ -16,6 +16,13 @@ ROLE = prog.mk
 include $(L4DIR)/mk/Makeconf
 $(GENERAL_D_LOC): $(L4DIR)/mk/prog.mk
 
+define copy_stripped_binary
+  $(call create_dir,$(dir $(2))/.debug); \
+  ln -sf $(call absfilename,$(1)) $(dir $(2))/.debug/$(1); \
+  $(OBJCOPY) --strip-unneeded --add-gnu-debuglink=$(1) $(1) $(2); \
+  chmod 755 $(2)
+endef
+
 # define INSTALLDIRs prior to including install.inc, where the install-
 # rules are defined.
 ifeq ($(MODE),host)
@@ -25,11 +32,9 @@ else
 INSTALLDIR_BIN		?= $(DROPS_STDDIR)/bin/$(subst -,/,$(SYSTEM))
 INSTALLDIR_BIN_LOCAL	?= $(OBJ_BASE)/bin/$(subst -,/,$(SYSTEM))
 endif
-ifeq ($(CONFIG_BID_STRIP_PROGS),y)
-INSTALLFILE_BIN 	?= $(STRIP) --strip-unneeded $(1) -o $(2) && \
-			   chmod 755 $(2)
-INSTALLFILE_BIN_LOCAL 	?= $(STRIP) --strip-unneeded $(1) -o $(2) && \
-			   chmod 755 $(2)
+ifneq ($(CONFIG_BID_STRIP_PROGS),)
+INSTALLFILE_BIN 	?= $(call copy_stripped_binary,$(1),$(2))
+INSTALLFILE_BIN_LOCAL 	?= $(call copy_stripped_binary,$(1),$(2))
 else
 INSTALLFILE_BIN 	?= $(INSTALL) -m 755 $(1) $(2)
 INSTALLFILE_BIN_LOCAL 	?= $(INSTALL) -m 755 $(1) $(2)
