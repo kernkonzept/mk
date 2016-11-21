@@ -145,7 +145,7 @@ absfilename     = $(shell PWD=$$($(PWDCMD)) $(L4DIR)/mk/rel2abs.sh $(1))
 findfile	= $(firstword $(wildcard $(addsuffix /$(1),$(2))) $(1)_NOT_FOUND)
 is_dir          = $(shell test -d '$(1)' && echo yes)
 define create_dir
-  $(if $(wildcard $(1)),,$(VERBOSE)$(INSTALL) -d $(1))
+  $(VERBOSE)$(if $(wildcard $(1)),:,$(INSTALL) -d $(1))
 endef
 
 # Move $(2) to $(1) if content of both files differ
