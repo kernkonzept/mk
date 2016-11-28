@@ -681,6 +681,7 @@ $(CHECK_BASE_DIR)/config.%/.kconfig: mk/defconfig/config.% checkbuild_prepare.%
 	cp $< $@
 
 $(CHECK_BASE_DIR)/config.%/.config.all: $(CHECK_BASE_DIR)/config.%/.kconfig FORCE
+	find $(@D) -xtype l -delete
 	$(MAKE) -j 1 O=$(@D) olddefconfig $(call BID_CHECKBUILD_LOG_REDIR_f, $*)
 
 checkbuild.%: $(CHECK_BASE_DIR)/config.%/.config.all $(CHECK_BASE_DIR)/config.%/.kconfig check_base_dir
