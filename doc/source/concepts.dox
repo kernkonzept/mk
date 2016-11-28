@@ -179,13 +179,13 @@ in the following example.
 ~~~
 local loader = L4.default_loader; -- which is Moe
 local svc = loader:new_channel();  -- create an IPC gate
-loader:start({ caps = { service = svc:full() }}, "rom/my_server");
+loader:start({ caps = { service = svc:svr() }}, "rom/my_server");
 loader:start({ caps = { service = svc:m("rw") }}, "rom/my_client");
 ~~~
 As you can see in the snippet, the first action is to create a new channel
 (IPC gate) using `loader:new_channel()`.  The capability to the gate is stored
 in the variable `svc`. Then the binary `my_server` is started in a new task,
-and full (`:full()`) access to the IPC gate is granted to the server as initial
+and full (`:svr()`) access to the IPC gate is granted to the server as initial
 object.  The gate is accessible to the server application as "service" in the set of
 its initial capabilities.  Virtually in parallel a second task, running the client
 application, is started and also given access to the IPC gate with less rights
@@ -200,7 +200,7 @@ service provides initially.
 ~~~
 local loader = L4.default_loader; -- which is Moe
 local svc = loader:new_channel():m("rws");  -- create an IPC gate with rws rights
-loader:start({ caps = { service = svc:full() } }, "rom/my-service");
+loader:start({ caps = { service = svc:svr() } }, "rom/my-service");
 loader:start({ caps = { foo_service = svc:create(object_to_create, "param") }}, "rom/client");
 ~~~
 This example is quite similar to the first one, however, the difference is that
