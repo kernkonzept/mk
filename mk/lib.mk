@@ -112,14 +112,15 @@ PC_FILES_CONTENTS := $(strip $(foreach pcfile,$(PC_FILENAMES),\
   $(call get_cont,CONTRIB_INCDIR,$(pcfile)) \
   $(call get_cont,PC_LIBS,$(pcfile)) \
   $(call get_cont,REQUIRES_LIBS,$(pcfile)) \
-  $(call get_cont,PC_CFLAGS,$(pcfile))))
+  $(call get_cont,PC_CFLAGS,$(pcfile)) $(call get_cont,PC_EXTRA,$(pcfile))))
 
 ifneq ($(PC_FILES_CONTENTS),)
 
 # when adding something to generate_pcfile it must also be added to the
 # PC_FILES_CONTENTS above, otherwise PC files may not be generated
 $(OBJ_BASE)/pc/%.pc: $(GENERAL_D_LOC)
-	$(VERBOSE)$(call generate_pcfile,$*,$@,$(call get_cont,CONTRIB_INCDIR,$*),$(call get_cont,PC_LIBS,$*),$(call get_cont,REQUIRES_LIBS,$*),$(call get_cont,PC_CFLAGS,$*))
+	@$(GEN_MESSAGE)
+	$(VERBOSE)$(call generate_pcfile,$*,$@,$(call get_cont,CONTRIB_INCDIR,$*),$(call get_cont,PC_LIBS,$*),$(call get_cont,REQUIRES_LIBS,$*),$(call get_cont,PC_CFLAGS,$*),$(call get_cont,PC_EXTRA,$*))
 
 all:: $(PC_FILES)
 

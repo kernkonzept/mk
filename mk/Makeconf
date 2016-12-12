@@ -609,6 +609,11 @@ addfileheader:
 # Common functions
 #
 
+define newline
+
+
+endef
+
 # 1: name
 # 2: output file
 # 3: inc path (one only)
@@ -627,6 +632,7 @@ generate_pcfile =                                                            \
 	$(if $(6),;echo " $(6)" >> $(2),;echo "" >> $(2))                    \
 	$(if $(4),;echo "Libs: $(4)"                               >> $(2))  \
 	$(if $(5),;echo "Requires: $(5)"                           >> $(2))  \
+	$(if $(7),;echo -e '$(subst $(newline),\n,$(7))' >> $(2)) \
 	$(if $(BID_GEN_CONTROL),;echo "Provides: $(1)"             >> $(PKGDIR)/Control) \
 	$(if $(BID_GEN_CONTROL),;echo "Requires: $(5)"             >> $(PKGDIR)/Control) ;
 
