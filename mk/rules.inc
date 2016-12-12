@@ -94,7 +94,7 @@ endef
 # targets: %.o, %.s.o, %.pr.o, and %.pr.s.o
 #
 define BID_GENERATE_ASM_MAKE_RULES
-  $(call BID_GENERATE_DEFAULT_MAKE_RULES,%,%.$(1),AS,-x assembler-with-cpp)
+  $(call BID_GENERATE_DEFAULT_MAKE_RULES,%$(BID_S_INFIX),%.$(1),AS,$(if $(filter .$(1),$(BID_ASM_CPP_FILE_EXTENSIONS)),-x assembler-with-cpp,))
 endef
 
 #

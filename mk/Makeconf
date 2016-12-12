@@ -354,7 +354,8 @@ endif
 FORTRAN_FILE_EXTENSIONS = .f .F .f90 .F90 .f95 .F95
 
 # We recognize the following file extensions for assembly.
-BID_ASM_FILE_EXTENSIONS = .S
+BID_ASM_FILE_EXTENSIONS ?= .S
+BID_ASM_CPP_FILE_EXTENSIONS ?= .S
 
 # macros used here and in packages
 checkcc   = $(shell if $(CC)  $(CCXX_FLAGS) $(1) -o /dev/null -c -x c \
