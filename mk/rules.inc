@@ -33,7 +33,7 @@ define BID_MAKE_RULE_template_gendep
 $(1): $(2) $(GENERAL_D_LOC)
 	@$$(COMP_MESSAGE)
 	$(call BID_MAKE_RULE_CREATE_SUBDIR)
-	$$(VERBOSE)$$(call MAKEDEP,$$($(BID_$(3)_COMPILER_INT_NAME))) $$($(BID_$(3)_COMPILER)) -c $$(DEPEND_FLAG) $$(CPPFLAGS) $$($(3)FLAGS) $(4) $$(call absfilename,$$<) -o $$@
+	$$(VERBOSE)$$(call MAKEDEP,$$($(BID_$(3)_COMPILER_INT_NAME))) $$($(BID_$(3)_COMPILER)) -c $$(DEPEND_FLAG) $$(CPPFLAGS) $$($(3)FLAGS) $(4) $$< -o $$@
 	$$(DEPEND_VERBOSE)$$(call DEPEND_EXTEND_FUNC, $$(*F).d, $$(dir $$@).$$(notdir $$@).d)
 endef
 
@@ -42,7 +42,7 @@ define BID_MAKE_RULE_template_nongendep
 $(1): $(2) $(GENERAL_D_LOC)
 	@$$(COMP_MESSAGE)
 	$(call BID_MAKE_RULE_CREATE_SUBDIR)
-	$$(VERBOSE)$$($(BID_$(3)_COMPILER)) -c $$(DEPFLAGS) $$(DEPFLAGS_$(3)) $$(CPPFLAGS) $$($(3)FLAGS) $(4) $$(call absfilename,$$<) -o $$@
+	$$(VERBOSE)$$($(BID_$(3)_COMPILER)) -c $$(DEPFLAGS) $$(DEPFLAGS_$(3)) $$(CPPFLAGS) $$($(3)FLAGS) $(4) $$< -o $$@
 endef
 
 # which template rule do we really use
