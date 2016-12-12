@@ -136,3 +136,5 @@ CRT0_all_host          =
 CRTN_all_host          =
 LDSCRIPT_all_host      =
 LDFLAGS_all_host       =
+NOPICFLAGS_all_host   ?=
+NOPIEFLAGS_all_host   ?=

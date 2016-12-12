@@ -527,6 +527,14 @@ FFLAGS  += $(CFLAGS_L4_GENERIC)
 
 PICFLAGS += -fPIC -U__PIC__ -D__PIC__=1
 
+# select NOPIEFLAGS and NOPICFLAGS, use the most specific mode variable
+# first and the try the more generic _all_ and global version
+NOPICFLAGS_all_$(MODE)     ?= $(NOPICFLAGS)
+NOPICFLAGS_$(ARCH)_$(MODE) ?= $(NOPICFLAGS_all_$(MODE))
+
+NOPIEFLAGS_all_$(MODE)     ?= $(NOPIEFLAGS)
+NOPIEFLAGS_$(ARCH)_$(MODE) ?= $(NOPIEFLAGS_all_$(MODE))
+
 ifneq ($(MODE),host)
 ASFLAGS_L4_GENERIC += $(CARCHFLAGS) $(CCXX_FLAGS)
 endif
@@ -844,11 +852,11 @@ endef
 
 $(foreach e,.c .cc .cpp $(BID_ASM_FILE_EXTENSIONS) $(FORTRAN_FILE_EXTENSIONS),$(eval $(call reset_implicit_rule,$e)))
 
-$(eval $(call BID_GENERATE_I_MAKE_RULE,%.i,%.c,$(CC),$(CFLAGS)))
+$(eval $(call BID_GENERATE_I_MAKE_RULE,%.i,%.c,$(CC),$(CFLAGS) $(call BID_mode_var,NOPICFLAGS)))
 $(eval $(call BID_GENERATE_I_MAKE_RULE,%.s.i,%.c,$(CC),$(CFLAGS) $(PICFLAGS)))
-$(eval $(call BID_GENERATE_I_MAKE_RULE,%.i,%.cc,$(CXX),$(CXXFLAGS)))
+$(eval $(call BID_GENERATE_I_MAKE_RULE,%.i,%.cc,$(CXX),$(CXXFLAGS) $(call BID_mode_var,NOPICFLAGS)))
 $(eval $(call BID_GENERATE_I_MAKE_RULE,%.s.i,%.cc,$(CXX),$(CXXFLAGS) $(PICFLAGS)))
-$(if $(BID_ALLOW_CPP_AS_CPLUSPLUS_FILE),$(eval $(call BID_GENERATE_I_MAKE_RULE,%.i,%.cpp,$(CXX),$(CXXFLAGS))))
+$(if $(BID_ALLOW_CPP_AS_CPLUSPLUS_FILE),$(eval $(call BID_GENERATE_I_MAKE_RULE,%.i,%.cpp,$(CXX),$(CXXFLAGS) $(call BID_mode_var,NOPICFLAGS))))
 $(if $(BID_ALLOW_CPP_AS_CPLUSPLUS_FILE),$(eval $(call BID_GENERATE_I_MAKE_RULE,%.s.i,%.cpp,$(CXX),$(CXXFLAGS) $(PICFLAGS))))
 $(eval $(call BID_GENERATE_I_MAKE_RULE,%.i,%.S,$(CC),$(ASFLAGS)))
 

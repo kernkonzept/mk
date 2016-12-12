@@ -53,9 +53,9 @@ BID_MAKE_RULE_template = $(BID_MAKE_RULE_template_nongendep)
 # targets: .o, .s.o, .pr.o, and .pr.s.o
 #
 define BID_GENERATE_DEFAULT_MAKE_RULES
-  $(call BID_MAKE_RULE_template,$(1).o,$(2),$(3),$(4))
+  $(call BID_MAKE_RULE_template,$(1).o,$(2),$(3),$(4) $$(call BID_mode_var,NOPICFLAGS))
   $(call BID_MAKE_RULE_template,$(1).s.o,$(2),$(3),$(4) $$(PICFLAGS))
-  $(call BID_MAKE_RULE_template,$(1).pr.o,$(2),$(3),$(4) -DPROFILE -pg)
+  $(call BID_MAKE_RULE_template,$(1).pr.o,$(2),$(3),$(4) $$(call BID_mode_var,NOPICFLAGS) -DPROFILE -pg)
   $(call BID_MAKE_RULE_template,$(1).pr.s.o,$(2),$(3),$(4) $$(PICFLAGS) -DPROFILE -pg)
 endef
 
@@ -66,7 +66,7 @@ endef
 #
 define BID_GENERATE_CXX_MAKE_RULES
   $(call BID_GENERATE_DEFAULT_MAKE_RULES,%,%.$(1),CXX)
-  $(call BID_MAKE_RULE_template,%.ne.o,%.$(1),CXX,$$(CXXFLAGS_NOEXC))
+  $(call BID_MAKE_RULE_template,%.ne.o,%.$(1),CXX,$$(CXXFLAGS_NOEXC) $$(call BID_mode_var,NOPICFLAGS))
   $(call BID_MAKE_RULE_template,%.s.ne.o,%.$(1),CXX,$$(CXXFLAGS_NOEXC) $$(PICFLAGS))
 endef
 
