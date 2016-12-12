@@ -5,8 +5,7 @@ local hw = Io.system_bus()
 
 Io.add_vbus("gui", Io.Vi.System_bus
 {
-  KBD = wrap(hw:match("arm,pl050","AMBA KMI Kbd"));
-  MOUSE = wrap(hw:match("arm,pl050","AMBA KMI mou"));
+  INPUT = wrap(hw:match("arm,pl050"));
 })
 
 Io.add_vbus("fbdrv", Io.Vi.System_bus
