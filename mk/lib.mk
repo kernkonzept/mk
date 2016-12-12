@@ -118,7 +118,7 @@ ifneq ($(PC_FILES_CONTENTS),)
 
 # when adding something to generate_pcfile it must also be added to the
 # PC_FILES_CONTENTS above, otherwise PC files may not be generated
-$(OBJ_BASE)/pc/%.pc: $(GENERAL_D_LOC)
+$(patsubst %,$(OBJ_BASE)/pc/%.pc,$(PC_FILENAMES)):$(OBJ_BASE)/pc/%.pc: $(GENERAL_D_LOC)
 	@$(GEN_MESSAGE)
 	$(VERBOSE)$(call generate_pcfile,$*,$@,$(call get_cont,CONTRIB_INCDIR,$*),$(call get_cont,PC_LIBS,$*),$(call get_cont,REQUIRES_LIBS,$*),$(call get_cont,PC_CFLAGS,$*),$(call get_cont,PC_EXTRA,$*))
 
