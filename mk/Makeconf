@@ -622,7 +622,7 @@ endef
 # 5: requires_libs
 # 6: PC_CFLAGS
 generate_pcfile =                                                            \
-	mkdir -p $(dir $(2))                                                 \
+	[ -d $(dir $(2)) ] || mkdir -p $(dir $(2))                           \
 	;echo -n                                                    > $(2)   \
 	$(if $(3),;echo "incdir=/empty_incdir"                     >> $(2))  \
 	;echo "Name: $(1)"                                         >> $(2)   \

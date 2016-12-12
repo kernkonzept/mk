@@ -238,7 +238,6 @@ endif
 #
 # Additionally, the following variables are supported:
 # SRC_C, SRC_CC, SRC_F, SRC_S - .c, .cc, .f90, .S source files
-# CRT0, CRTN	- startup and finish code
 # LIBS		- additional libs to link (with -l), including paths (-L)
 # IDL		- interface definition files
 # TARGET	- targets to be built
@@ -272,17 +271,9 @@ endif
 LIBCINCDIR    ?= $(call BID_mode_var,LIBCINCDIR)
 LIBCLIBDIR    ?= $(call BID_mode_var,LIBCLIBDIR)
 L4_LIBS       ?= $(call BID_mode_var,L4_LIBS)
-CRT0	      ?= $(call BID_mode_var,CRT0)
-CRTP          ?= $(if $(filter $(CRT0_DEFAULT),$(CRT0)),$(CRTP_DEFAULT),$(CRT0))
-CRTN	      ?= $(call BID_mode_var,CRTN)
 LDSCRIPT      ?= $(call BID_mode_var,LDSCRIPT)
 LDFLAGS       += $(call BID_mode_var,LDFLAGS)
 REQUIRES_LIBS += $(REQUIRES_LIBS_$(ARCH)) $(call BID_mode_var,REQUIRES_LIBS)
-
-# we do not need to put our FLAG-definitions into a special file if we can
-# use the target to parameterize it and if it needs not to appear in the deps 
-#CRT0	=  $(word 1, $(CRT0_$@_$(OSYSTEM)) $(CRT0_$@) $(CRT0_$(OSYSTEM)))
-#CRTN	=  $(word 1, $(CRTN_$@_$(OSYSTEM)) $(CRTN_$@) $(CRTN_$(OSYSTEM)))
 
 LDFLAGS	+= $(strip $(LDFLAGS_$(OSYSTEM)) $(LDFLAGS_$@) $(LDFLAGS_$@_$(OSYSTEM)))
 CARCHFLAGS += $(CARCHFLAGS_$(ARCH)) $(CARCHFLAGS_$(ARCH)_$(CPU))
@@ -296,13 +287,13 @@ BID_MISSING_LIBS :=
 # 2: parameters to pkg-config
 # 3: list of packages
 # use L4_BID_PKG_CONFIG because of export-defs, the function is copied
-L4_BID_PKG_CONFIG = $(PKG_CONFIG)
-BID_PKG_CONFIG = $(if $(strip $(3)),                                     \
+L4_BID_PKG_CONFIG = $(L4DIR)/mk/l4-pkg-config
+BID_PKG_CONFIG =                                      \
                    $(shell PKG_CONFIG_LIBDIR=$(1)/pc                     \
                            PKG_CONFIG_PATH= $(L4_BID_PKG_CONFIG)         \
                            --define-variable=incdir=$(1)/include/contrib \
                            $(if $(VERBOSE),--silence-errors)             \
-			   $(2) $(3) || echo __PKGCONFIG_FAILED__))
+			   $(2) $(3) || echo __PKGCONFIG_FAILED__)
 
 BID_PKG_CONFIG_MISSING =                                        \
      $(if $(strip $(3)),                                        \
@@ -312,6 +303,27 @@ BID_PKG_CONFIG_MISSING =                                        \
                   | LANG=C grep ", not found"))
 
 BID_PKG_CONFIG_FAILED = $(findstring __PKGCONFIG_FAILED__,$(1))
+
+BID_BENDER_DEFINES = \
+	-Dl4obj=$(1)                  \
+	-Dl4dir=$(2)                  \
+	-Dgcclibdir="$(3:-L%=%)"      \
+	-Dl4system=$(4)               \
+	$(if $(5),-Dl4api=$(5))
+
+bid_bender_default_vars = $(call BID_BENDER_DEFINES,$(OBJ_BASE),$(L4DIR),$(GCCSYSLIBDIRS),$(ARCH)_$(CPU),$(L4API))
+
+# linker for L4 libs and applications
+BID_LINK = $(L4DIR)/mk/l4-ld $(bid_bender_default_vars) -Dlinker="$(LD)" \
+           --spec=$(L4DIR)/mk/bid-bender.spec --
+
+# linker for host mode and l4linux mode
+BID_LINK_MODE_host = $(L4DIR)/mk/l4-host-ld $(bid_bender_default_vars) -Dlinker="$(1)" \
+                     --spec=$(L4DIR)/mk/bid-bender.spec --
+
+BID_link_deps_file = $(dir $(1)).$(notdir $(1)).pcs.d
+
+BID_LINK_DEPS = $(addprefix $(dir $(1)),$(addprefix .$(notdir $(1)),.d .pcs.d))
 
 ifeq ($(BID_MISSING_PCS),)
  ifneq ($(SYSTEM),)
@@ -392,11 +404,9 @@ ifeq ($(MODE),host)
 override CROSS_COMPILE = 
 CC            = $(HOST_CC)
 CXX           = $(HOST_CXX)
-LIBS         += $(REQUIRES_LIBS_LIST)
 else
 # no architecture specific flags in host mode
 LDFLAGS      += $(LDFLAGS_$(ARCH))
-L4_LIBS      += $(REQUIRES_LIBS_LIST)
 endif
 
 # additional libraries go after the requires-libs-list

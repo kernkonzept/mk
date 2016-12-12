@@ -61,9 +61,6 @@ $(call GENERATE_PER_TARGET_RULES,$(TARGET_PROFILE),.pr)
 
 TARGET	+= $(TARGET_$(OSYSTEM)) $(TARGET_PROFILE)
 
-LDFLAGS_DYNAMIC_LINKER     := --dynamic-linker=rom/libld-l4.so
-LDFLAGS_DYNAMIC_LINKER_GCC := $(addprefix -Wl$(BID_COMMA),$(LDFLAGS_DYNAMIC_LINKER))
-
 # define some variables different for lib.mk and prog.mk
 ifeq ($(MODE),shared)
 LDFLAGS += $(LDFLAGS_DYNAMIC_LINKER)
@@ -91,10 +88,10 @@ ifneq ($(HOST_LINK),1)
   # linking for our L4 platform
   LDFLAGS += $(addprefix -L, $(L4LIBDIR))
   LDFLAGS += $(addprefix -T, $(LDSCRIPT))
-  LDFLAGS += --start-group $(LIBS) $(L4_LIBS) --end-group
   LDFLAGS += --warn-common
 else
   # linking for some POSIX platform
+  LDFLAGS += $(addprefix -PC,$(REQUIRES_LIBS))
   ifeq ($(MODE),host)
     # linking for the build-platform
     LDFLAGS += -L$(OBJ_BASE)/lib/host
@@ -103,11 +100,7 @@ else
     # linking for L4Linux, we want to look for Linux-libs before the L4-libs
     LDFLAGS += $(GCCSYSLIBDIRS)
     LDFLAGS += $(addprefix -L, $(L4LIBDIR))
-    LDFLAGS += $(LIBS) -Wl,-Bstatic $(L4_LIBS)
-    # -Wl,-Bdynamic is only applicable for dynamically linked programs,
-    ifeq ($(filter -static, $(LDFLAGS)),)
-      LDFLAGS += -Wl,-Bdynamic
-    endif
+    LDFLAGS += $(LIBS)
   endif
 endif
 
@@ -152,35 +145,38 @@ LIBDEPS = $(foreach file, \
                       $(wildcard $(dir)/$(file)))))
 endif
 
-DEPS	+= $(foreach file,$(TARGET), $(dir $(file)).$(notdir $(file)).d)
+DEPS	+= $(foreach file,$(TARGET), $(call BID_LINK_DEPS,$(file)))
 
 LINK_PROGRAM-C-host-1   := $(CC)
 LINK_PROGRAM-CXX-host-1 := $(CXX)
 
-LINK_PROGRAM  := $(LINK_PROGRAM-C-host-$(HOST_LINK))
+bid_call_if = $(if $(2),$(call $(1),$(2)))
+
+LINK_PROGRAM  := $(call bid_call_if,BID_LINK_MODE_host,$(LINK_PROGRAM-C-host-$(HOST_LINK)))
 ifneq ($(SRC_CC),)
-LINK_PROGRAM  := $(LINK_PROGRAM-CXX-host-$(HOST_LINK))
+LINK_PROGRAM  := $(call bid_call_if,BID_LINK_MODE_host,$(LINK_PROGRAM-CXX-host-$(HOST_LINK)))
 endif
 
 BID_LDFLAGS_FOR_LINKING_LD  = $(LDFLAGS)
-BID_LDFLAGS_FOR_GCC         = $(filter     -static -shared -nostdlib -Wl$(BID_COMMA)% -L% -l%,$(LDFLAGS))
-BID_LDFLAGS_FOR_LD          = $(filter-out -static -shared -nostdlib -Wl$(BID_COMMA)% -L% -l%,$(LDFLAGS))
+BID_LDFLAGS_FOR_GCC         = $(filter     -static -shared -nostdlib -Wl$(BID_COMMA)% -L% -l% -PC%,$(LDFLAGS))
+BID_LDFLAGS_FOR_LD          = $(filter-out -static -shared -nostdlib -Wl$(BID_COMMA)% -L% -l% -PC%,$(LDFLAGS))
 BID_LDFLAGS_FOR_LINKING_GCC = $(addprefix -Wl$(BID_COMMA),$(BID_LDFLAGS_FOR_LD)) $(BID_LDFLAGS_FOR_GCC)
 
 ifeq ($(LINK_PROGRAM),)
-LINK_PROGRAM  := $(LD)
-BID_LDFLAGS_FOR_LINKING = $(BID_LDFLAGS_FOR_LINKING_LD)
+LINK_PROGRAM  := $(BID_LINK)
+BID_LDFLAGS_FOR_LINKING = $(call BID_mode_var,NOPIEFLAGS) -MD -MF $(call BID_link_deps_file,$@) \
+                          $(addprefix -PC,$(REQUIRES_LIBS)) $(BID_LDFLAGS_FOR_LINKING_LD)
 BID_LD_WHOLE_ARCHIVE = --whole-archive $1 --no-whole-archive
 else
-BID_LDFLAGS_FOR_LINKING = $(call BID_mode_var,NOPIEFLAGS) $(if $(HOST_LINK_TARGET),$(CCXX_FLAGS)) $(BID_LDFLAGS_FOR_LINKING_GCC)
+BID_LDFLAGS_FOR_LINKING = $(call BID_mode_var,NOPIEFLAGS) -MD -MF $(call BID_link_deps_file,$@) \
+                          $(if $(HOST_LINK_TARGET),$(CCXX_FLAGS)) $(BID_LDFLAGS_FOR_LINKING_GCC)
 BID_LD_WHOLE_ARCHIVE = -Wl,--whole-archive $1 -Wl,--no-whole-archive
 endif
 
-$(TARGET): $(OBJS) $(LIBDEPS) $(CRT0) $(CRTN)
+$(TARGET): $(OBJS) $(LIBDEPS)
 	@$(LINK_MESSAGE)
-	$(VERBOSE)$(call MAKEDEP,$(INT_LD_NAME),,,ld) $(LINK_PROGRAM) -o $@ $(CRT0) \
-	            $(call BID_LD_WHOLE_ARCHIVE, $(OBJS)) \
-	            $(BID_LDFLAGS_FOR_LINKING) $(CRTN)
+	$(VERBOSE)$(call MAKEDEP,$(INT_LD_NAME),,,ld) $(LINK_PROGRAM) -o $@ \
+	  $(BID_LDFLAGS_FOR_LINKING) $(OBJS) $(LIBS) $(EXTRA_LIBS)
 	$(if $(BID_GEN_CONTROL),$(VERBOSE)echo "Requires: $(REQUIRES_LIBS)" >> $(PKGDIR)/Control)
 	$(if $(BID_POST_PROG_LINK_MSG_$@),@$(BID_POST_PROG_LINK_MSG_$@))
 	$(if $(BID_POST_PROG_LINK_$@),$(BID_POST_PROG_LINK_$@))

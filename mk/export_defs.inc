@@ -24,8 +24,6 @@ L4_SYSTEM                    = $(ARCH)_$(CPU)
 L4_CC                        = $(CC)
 L4_CXX                       = $(CXX)
 L4_LD                        = $(LD)
-L4_CRT0_STATIC               = $(CRT0)
-L4_CRTN_STATIC               = $(CRTN)
 L4_LDFLAGS_LD_STATIC         = $(filter-out -l%,$(BID_LDFLAGS_FOR_LINKING_LD))
 L4_LDFLAGS_GCC_STATIC        = $(filter-out -l%,$(BID_LDFLAGS_FOR_LINKING_GCC))
 L4_LDFLAGS_DYNAMIC_LINKER_LD = $(LDFLAGS_DYNAMIC_LINKER)
@@ -34,6 +32,7 @@ L4_LIBDIRS                   = $(addprefix -L,$(L4LIBDIR))
 L4_CPPFLAGS                  = $(CPPFLAGS)
 L4_CFLAGS                    = $(CFLAGS)
 L4_CXXFLAGS                  = $(CXXFLAGS)
+L4_GCCSYSLIBDIRS             = $(GCCSYSLIBDIRS)
 L4_GCCLIB                    = $(GCCLIB)
 L4_GCCLIB_SO                 = $(GCCLIB_SO)
 L4_GCCLIB_EH                 = $(GCCLIB_EH)
@@ -46,6 +45,9 @@ L4_BID_KIP_OFFS_SYS_DEBUGGER = $(L4_KIP_OFFS_SYS_DEBUGGER)
 L4_BID_PKG_CONFIG            = $(PKG_CONFIG)
 L4_BID_PKG_CONFIG_CALL       = $(value BID_PKG_CONFIG)
 L4_BID_PKG_CONFIG_FAILED     = $(value BID_PKG_CONFIG_FAILED)
+
+L4_BID_BENDER_LINK    = $(value BID_BENDER_LINK)
+L4_BID_BENDER_DEFINES = $(value BID_BENDER_DEFINES)
 
 
 all::
@@ -73,14 +75,13 @@ all::
 	@$(call do_output_all,L4_CC)
 	@$(call do_output_all,L4_CXX)
 	@$(call do_output_all,L4_LD)
-	@$(call do_output_all,L4_CRT0_STATIC)
-	@$(call do_output_all,L4_CRTN_STATIC)
 	@$(call do_output_all,L4_LDFLAGS_LD_STATIC)
 	@$(call do_output_all,L4_LDFLAGS_GCC_STATIC)
 	@$(call do_output_all,L4_LDFLAGS_DYNAMIC_LINKER_LD)
 	@$(call do_output_all,L4_LDFLAGS_DYNAMIC_LINKER_GCC)
 	@$(call do_output_all,L4_LIBDIRS_R)
 	@$(call do_output_all,L4_LIBDIRS)
+	@$(call do_output_all,L4_GCCSYSLIBDIRS)
 	@$(call do_output_all,L4_CPPFLAGS)
 	@$(call do_output_all,L4_CFLAGS)
 	@$(call do_output_all,L4_CXXFLAGS)
@@ -94,7 +95,9 @@ all::
 	@$(call do_output_all,L4_BID_PKG_CONFIG)
 	@$(call do_output_mk,L4_BID_PKG_CONFIG_CALL)
 	@$(call do_output_mk,L4_BID_PKG_CONFIG_FAILED)
-	@$(foreach v,LIBCINCDIR REQUIRES_LIBS L4_LIBS CRT0 CRTN LDSCRIPT LDFLAGS, \
+	@$(call do_output_mk,L4_BID_BENDER_LINK)
+	@$(call do_output_mk,L4_BID_BENDER_DEFINES)
+	@$(foreach v,LIBCINCDIR REQUIRES_LIBS L4_LIBS LDSCRIPT LDFLAGS, \
 	  $(call do_output_all,$(v)_all_static) $(call do_output_all,$(v)_all_shared))
 else
 all::
