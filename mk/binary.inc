@@ -204,16 +204,6 @@ L4INCDIR ?=	$(addprefix $(OBJ_BASE)/include/$(ARCH)/,$(L4API)) \
                 $(DROPS_STDDIR)/include/$(ARCH) \
                 $(DROPS_STDDIR)/include
 
-L4INCDIR_SYS ?=	$(addprefix $(OBJ_BASE)/include/sys/$(ARCH)/,$(L4API)) \
-                $(addprefix $(OBJ_BASE)/include/sys/,$(L4API)) \
-                $(OBJ_BASE)/include/sys/$(ARCH)/ \
-                $(OBJ_BASE)/include/sys \
-		$(if $(USE_DICE),$(DICE_INCDIR),)
-                $(addprefix $(DROPS_STDDIR)/include/sys/$(ARCH)/,$(L4API))) \
-                $(addprefix $(DROPS_STDDIR)/include/sys/,$(L4API))) \
-                $(DROPS_STDDIR)/include/sys/$(ARCH) \
-                $(DROPS_STDDIR)/include/sys
-
 L4LIBDIR ?=	$(addprefix $(OBJ_BASE)/lib/$(ARCH)_$(CPU)/,$(L4API)) \
                 $(OBJ_BASE)/lib/$(ARCH)_$(CPU) \
                 $(OBJ_BASE)/lib \
@@ -227,12 +217,6 @@ L4INCDIR ?=	$(addprefix $(OBJ_BASE)/include/$(ARCH)/,$(L4API)) \
                 $(wildcard $(addprefix $(OBJ_BASE)/include/,$(L4API))) \
                 $(OBJ_BASE)/include/$(ARCH) \
                 $(OBJ_BASE)/include \
-		$(if $(USE_DICE),$(DICE_INCDIR),)
-
-L4INCDIR_SYS ?=	$(addprefix $(OBJ_BASE)/include/sys/$(ARCH)/,$(L4API)) \
-                $(addprefix $(OBJ_BASE)/include/sys/,$(L4API)) \
-                $(OBJ_BASE)/include/sys/$(ARCH) \
-                $(OBJ_BASE)/include/sys \
 		$(if $(USE_DICE),$(DICE_INCDIR),)
 
 L4LIBDIR ?=     $(addprefix $(OBJ_BASE)/lib/$(ARCH)_$(CPU)/,$(L4API)) \
@@ -492,11 +476,6 @@ CPPFLAGS+= $(BID_PKG_CONFIG_CFLAGS)
 #CPPFLAGS+= $(if $(CLIENTIDL)$(SERVERIDL)$(addprefix CLIENTIDL_,$(TARGET))$(addprefix SERVERIDL_,$(TARGET)),$(addprefix -I, $(IDL_PATH)))
 ifneq ($(MODE),host)
 CPPFLAGS+= $(addprefix -I, $(L4INCDIR))
-ifneq ($(BID_DISABLE_SYSTEM_HEADERS),)
-CPPFLAGS+= $(addprefix -I ,$(L4INCDIR_SYS))
-else
-CPPFLAGS+= $(addprefix -isystem ,$(L4INCDIR_SYS))
-endif
 endif
 CPPFLAGS+= $(if $(DEBUG_MODE),$(CPPFLAGS-DEBUG_MODE))
 CPPFLAGS+= $(LIBCINCDIR)
