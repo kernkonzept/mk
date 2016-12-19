@@ -495,7 +495,7 @@ sub search_file($$)
     return "$p/$file" if -e "$p/$file" and ! -d "$p/$file";
   }
 
-  return $file if $file =~ /^\// && -e $file;
+  return $file if $file =~ /^\// && -e $file && ! -d "$p/$file";
 
   undef;
 }
