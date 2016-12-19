@@ -257,6 +257,8 @@ INCLUDE_BOOT_CONFIG := required
 endif
 
 ifneq ($(INCLUDE_BOOT_CONFIG),)
+ -include $(L4DIR)/conf/Makeconf.boot
+ -include $(OBJ_BASE)/conf/Makeconf.boot
  PLATFORM_CONF_FILE := $(firstword $(wildcard $(L4DIR)/conf/platforms/$(PLATFORM_TYPE).conf $(L4DIR)/mk/platforms/$(PLATFORM_TYPE).conf))
  ifneq ($(PLATFORM_TYPE),$(patsubst "%",%,$(CONFIG_PLATFORM_TYPE)))
   include $(PLATFORM_CONF_FILE)
@@ -273,8 +275,6 @@ ifneq ($(INCLUDE_BOOT_CONFIG),)
    endif
   endif
  endif
- -include $(L4DIR)/conf/Makeconf.boot
- -include $(OBJ_BASE)/conf/Makeconf.boot
  -include $(OBJ_BASE)/Makeconf.ram_base
  BID_RAM_BASE_DEP := $(if $(wildcard $(OBJ_BASE)/Makeconf.ram_base),$(OBJ_BASE)/Makeconf.ram_base)
  ifeq ($(RAM_BASE),)
