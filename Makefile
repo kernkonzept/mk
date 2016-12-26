@@ -498,6 +498,10 @@ check_and_adjust_ram_base:
 	  echo "Platform \"$(PLATFORM_TYPE)\" not known."; \
 	  exit 1;                                          \
 	fi
+	$(VERBOSE)if [ -z "$(filter $(ARCH),$(PLATFORM_ARCH))" ]; then     \
+	  echo "Platform \"$(PLATFORM_TYPE)\" not available for $(ARCH)."; \
+	  exit 1;                                                          \
+	fi
 	+$(VERBOSE)if [ $$(($(RAM_BASE))) != $$(($(PLATFORM_RAM_BASE))) -o -z "$(RAM_BASE)" -o -z "$(RAM_BASE_SWITCH_OK)" ]; then \
 	  echo "=========== Updating RAM_BASE for platform $(PLATFORM_TYPE) to $(PLATFORM_RAM_BASE) =========" ; \
 	  $(call switch_ram_base_func,$(PLATFORM_RAM_BASE)); \
