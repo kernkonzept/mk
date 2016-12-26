@@ -13,3 +13,5 @@ FC_arm64          = $(CROSS_COMPILE)gfortran
 
 SYSTEMS_ABI    += arm64-l4f
 SYSTEMS_PLAIN  += arm64
+
+QEMU_ARCH_MAP_arm64       = qemu-system-aarch64
