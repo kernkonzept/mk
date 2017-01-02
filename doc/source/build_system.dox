@@ -257,6 +257,11 @@ added as a suffix, set for a specific target only.
 \par `TEST_TARGET`
 Name of binary containing the test (default: same as `TARGET`).
 
+\par `TARGET_$(ARCH)`
+When TARGET is undefined, these targets are added to the list of targets for
+the specified architecture. For all targets `SRC_C[C]` files must be
+defined separately.
+
 \par `TEST_EXPECTED`
 File containing expected output.
 By default the variable is empty, which means the test binary

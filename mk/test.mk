@@ -13,12 +13,13 @@ ifeq ($(origin _L4DIR_MK_TEST_MK),undefined)
 _L4DIR_MK_TEST_MK=y
 
 # auto-fill TARGET with builds for test_*.c[c] if necessary
+# TARGETS_$(ARCH) - contains a list of tests specific for this architecture
 ifndef TARGET
 TARGETS_CC := $(patsubst $(SRC_DIR)/%.cc,%,$(wildcard $(SRC_DIR)/test_*.cc))
 $(foreach t, $(TARGETS_CC), $(eval SRC_CC_$(t) += $(t).cc))
 TARGETS_C := $(patsubst $(SRC_DIR)/%.c,%,$(wildcard $(SRC_DIR)/test_*.c))
 $(foreach t, $(TARGETS_C), $(eval SRC_C_$(t) += $(t).c))
-TARGET += $(TARGETS_CC) $(TARGETS_C)
+TARGET += $(TARGETS_CC) $(TARGETS_C) $(TARGETS_$(ARCH))
 endif
 
 MODE ?= shared
