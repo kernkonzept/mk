@@ -9,10 +9,13 @@ use Getopt::Long;
 sub parse_gengrub_args()
 {
   my %a = ( timeout => undef,
-            serial  => undef
+            serial  => undef,
+            grubpathprefix => undef,
 	   );
   my @opts = ("timeout=i", \$a{timeout},
-              "serial",    \$a{serial});
+              "serial",    \$a{serial},
+              "grubpathprefix:s", \$a{grubpathprefix},
+            );
 
   if (!GetOptions(@opts))
     {
@@ -22,8 +25,10 @@ sub parse_gengrub_args()
   if (0)
     {
       print "Options:\n";
-      print "timeout: $a{timeout}\n" if defined $a{timeout};
-      print "serial : $a{serial}\n" if defined $a{serial};
+      for (keys %a)
+        {
+          print "$_: $a{$_}\n" if defined $a{$_};
+        }
     }
 
   %a;

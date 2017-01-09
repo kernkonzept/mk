@@ -614,6 +614,7 @@ exportpack:
 	 QEMU=$$qemu L4DIR=$(L4DIR) QEMU_OPTIONS="$(QEMU_OPTIONS)"        \
 	 $(tool_envvars) $(common_envvars)                                \
 	  $(L4DIR)/tool/bin/genexportpack --timeout=$(GRUB_TIMEOUT)       \
+	                                  --grubpathprefix=$(GRUB_PATHPREFIX) \
 	                                   $$ml $$TARGETDIR $$e;
 
 help::
