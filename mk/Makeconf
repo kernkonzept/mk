@@ -460,7 +460,7 @@ HOST_LINK        := 1
 HOST_LINK_HOST   := 1
 endif
 
-ifneq ($(filter l4linux,$(MODE)),)
+ifneq ($(filter l4linux targetsys,$(MODE)),)
 HOST_LINK        := 1
 HOST_LINK_TARGET := 1
 endif

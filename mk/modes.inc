@@ -56,8 +56,14 @@ LDFLAGS_all_shared              = -gc-sections
 BID_SUPPORTED_all_l4linux       = y
 LIBCINCDIR_all_l4linux          =
 REQUIRES_LIBS_all_l4linux       = 
-LDFLAGS_all_l4linux              = -gc-sections
+LDFLAGS_all_l4linux             = -gc-sections
 
+################################
+# Targetsys mode
+################################
+
+BID_SUPPORTED_all_targetsys     = y
+LDFLAGS_all_targetsys           = -gc-sections
 
 #####################################
 # lib mode -- options when building libs

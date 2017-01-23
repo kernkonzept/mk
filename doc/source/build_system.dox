@@ -120,6 +120,8 @@ Kind of target to build for. The following values are possible:
  - `shared` - build a dynamically linked binary
  - `l4linux` - build a binary for running on L4Linux on the target platform
  - `host` - build for host system
+ - `targetsys` - build a binary for the target platform with the compiler's
+                 default settings
 
 \par `SYSTEMS`
 

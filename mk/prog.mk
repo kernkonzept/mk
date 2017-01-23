@@ -25,9 +25,9 @@ endef
 
 # define INSTALLDIRs prior to including install.inc, where the install-
 # rules are defined.
-ifeq ($(MODE),host)
-INSTALLDIR_BIN		?= $(DROPS_STDDIR)/bin/host
-INSTALLDIR_BIN_LOCAL	?= $(OBJ_BASE)/bin/host
+ifneq ($(filter host targetsys,$(MODE)),)
+INSTALLDIR_BIN		?= $(DROPS_STDDIR)/bin/$(MODE)
+INSTALLDIR_BIN_LOCAL	?= $(OBJ_BASE)/bin/$(MODE)
 else
 INSTALLDIR_BIN		?= $(DROPS_STDDIR)/bin/$(subst -,/,$(SYSTEM))
 INSTALLDIR_BIN_LOCAL	?= $(OBJ_BASE)/bin/$(subst -,/,$(SYSTEM))
