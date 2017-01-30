@@ -97,7 +97,7 @@ all::
 	@$(call do_output_mk,L4_BID_PKG_CONFIG_FAILED)
 	@$(call do_output_mk,L4_BID_BENDER_LINK)
 	@$(call do_output_mk,L4_BID_BENDER_DEFINES)
-	@$(foreach v,LIBCINCDIR REQUIRES_LIBS L4_LIBS LDSCRIPT LDFLAGS, \
+	@$(foreach v,LIBCINCDIR REQUIRES_LIBS LDSCRIPT LDFLAGS, \
 	  $(call do_output_all,$(v)_all_static) $(call do_output_all,$(v)_all_shared))
 else
 all::

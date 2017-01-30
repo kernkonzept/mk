@@ -29,8 +29,6 @@ LIBC_INCLUDE   = $(BID_NOSTDINC)                            \
 
 BID_SUPPORTED_all_sigma0        = y
 LIBCINCDIR_all_sigma0           = $(LIBC_INCLUDE)
-L4_LIBS_all_sigma0		= -static $(GCCLIB) $(GCCLIB_EH)         \
-				  $(EXTRA_LIBS)
 LDFLAGS_all_sigma0              = -static -gc-sections
 
 
@@ -41,8 +39,6 @@ LDFLAGS_all_sigma0              = -static -gc-sections
 BID_SUPPORTED_all_static        = y
 LIBCINCDIR_all_static           = $(LIBC_INCLUDE)
 REQUIRES_LIBS_all_static        = stdlibs
-L4_LIBS_all_static		= -static  $(GCCLIB) $(GCCLIB_EH) \
-                                  $(EXTRA_LIBS)
 LDFLAGS_all_static              = -static -gc-sections
 
 #####################################
@@ -51,9 +47,6 @@ LDFLAGS_all_static              = -static -gc-sections
 BID_SUPPORTED_all_shared        = y
 LIBCINCDIR_all_shared           = $(LIBC_INCLUDE)
 REQUIRES_LIBS_all_shared        = stdlibs-sh
-L4_LIBS_all_shared             += -luc_c_nonshared.p \
-				  $(GCCLIB_SO) $(GCCLIB_EH)    \
-				  $(EXTRA_LIBS)
 LDFLAGS_all_shared              = -gc-sections
 
 ################################
@@ -63,13 +56,6 @@ LDFLAGS_all_shared              = -gc-sections
 BID_SUPPORTED_all_l4linux       = y
 LIBCINCDIR_all_l4linux          =
 REQUIRES_LIBS_all_l4linux       = 
-L4_LIBS_all_l4linux		= -l4re-util                        \
-                                  -l4lx-re.o                        \
-				  -ll4sys-l4x -l4re                 \
-				  $(EXTRA_LIBS)                     \
-                                  -ll4util                          \
-				  -lcxx_base -lcxx_io               \
-				  -lcxx_libc_io
 LDFLAGS_all_l4linux              = -gc-sections
 
 
@@ -89,7 +75,6 @@ LDFLAGS_all_lib       =
 BID_SUPPORTED_all_host = y
 LIBCINCDIR_all_host    =
 REQUIRES_LIBS_all_host =
-L4_LIBS_all_host       =
 LDFLAGS_all_host       =
 NOPICFLAGS_all_host   ?=
 NOPIEFLAGS_all_host   ?=

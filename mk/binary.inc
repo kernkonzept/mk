@@ -270,7 +270,6 @@ endif
 
 LIBCINCDIR    ?= $(call BID_mode_var,LIBCINCDIR)
 LIBCLIBDIR    ?= $(call BID_mode_var,LIBCLIBDIR)
-L4_LIBS       ?= $(call BID_mode_var,L4_LIBS)
 LDSCRIPT      ?= $(call BID_mode_var,LDSCRIPT)
 LDFLAGS       += $(call BID_mode_var,LDFLAGS)
 REQUIRES_LIBS += $(REQUIRES_LIBS_$(ARCH)) $(call BID_mode_var,REQUIRES_LIBS)

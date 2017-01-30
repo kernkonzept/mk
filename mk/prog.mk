@@ -106,14 +106,6 @@ endif
 
 LDFLAGS += $(LDFLAGS_$@)
 
-ifeq ($(notdir $(LDSCRIPT)),main_stat.ld)
-# ld denies -gc-section when linking against shared libraries
-ifeq ($(findstring FOO,$(patsubst -l%.s,FOO,$(LIBS) $(L4_LIBS))),)
-LDFLAGS += -gc-sections
-endif
-endif
-
-
 include $(L4DIR)/mk/install.inc
 
 #VPATHEX = $(foreach obj, $(OBJS), $(firstword $(foreach dir, \
