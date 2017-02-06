@@ -83,6 +83,7 @@ module libc_be_l4refile.so
 module libc_be_l4re.so
 module libsupc++.so
 module libuc_c.so
+module libpthread.so
 
 entry framebuffer-example-x86
 roottask moe rom/x86-fb.cfg
