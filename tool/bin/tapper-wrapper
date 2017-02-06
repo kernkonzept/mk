@@ -158,8 +158,8 @@ else
     if ($ENV{HARNESS_ACTIVE})
       {
         # Supress normal output when running within a prove harness.
-        open(STDOUT, '>/dev/null');
-        open(STDERR, '>/dev/null');
+        open(STDOUT, '>>', $logfile || '/dev/null');
+        open(STDERR, '>>', $logfile || '/dev/null');
       }
     else
       {
