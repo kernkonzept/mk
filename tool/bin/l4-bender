@@ -295,7 +295,8 @@ sub eval_var_expr
   my ($l, $scope, $exp) = @_;
   print $errout "eval_var_expr: '$exp'\n" if $debug;
   while ($exp =~ /^((?:[^|]|$group)*)(?:([|])(.*))?$/) {
-    print $errout "eval_var_expr: subexpr '$exp' => '$1' '$2', '$3'\n" if $debug;
+    print $errout "eval_var_expr: subexpr '$exp' => '$1' ".
+                  "'", $2 ? $2 : "", "', '", $3 ? $3 : "", "'\n" if $debug;
     my $o = $2;
     my $s2 = $3;
     my $t = eval_spec($l, $1);
@@ -326,7 +327,9 @@ sub eval_expression
   my ($l, $scope, $exp) = @_;
   print $errout "eval_expression: '$exp'\n" if $debug;
   while ($exp =~ /^((?:[^:]|$group)*)((?:\:)((?:[^;({})]|$group)*))?(.*)$/) {
-    print $errout "eval var expr: sub='$1' cond='$2' if='$3' else='$4'\n" if $debug;
+    print $errout "eval var expr: sub='$1' cond='", $2 ? $2 : "", "' ".
+                  "if='", $3 ? $3 : "", "' else='", $4 ? $4 : "", "'\n"
+      if $debug;
     my $cond = $2;
     my $cval = $3;
     my $else = $4;
