@@ -1,7 +1,7 @@
 incdir      = %:set-var(incdir      %(l4obj)/include/contrib)
 pc_file_dir = %:set-var(pc_file_dir %(l4obj)/pc)
 
-# options that take an extra arument
+# options that take an extra argument
 link_arg_opts =
   %:arg-option(m z o h e -entry fini init -defsym)
   %:arg-option(b -format A -architecture y -trace-symbol MF)
@@ -35,7 +35,7 @@ generate_deps =
   # empty deps for all spec/pc files for graceful removal
   %:foreach(%%:echo-file(>>%(deps_file) %%*:) %:all-specs())
 
-# check if the linker vraiable is set
+# check whether the linker variable is set
 check_linker = %(linker:;:%:error(linker variable not defined))
 
 
@@ -54,7 +54,7 @@ link_pass_opts = %:set-var(link_pass_opts
   %{soname*} %{h} %{E} %{-export-dynamic&-no-export-dynamic}
   %{e} %{-entry*} %{-defsym*} %{b} %{-format*} %{A} %{-architecture*}
   %{-gc-sections} %{gc-sections}
-  # we alway set -nostlib below so drop it but use it to avoid an error
+  # we always set -nostlib below so drop it but use it to avoid an error
   %{nostdlib:} %{no-pie:} %{pie})
 
 # linker arguments
@@ -112,7 +112,7 @@ link_args_gcc =
   %{r|nostartfiles|nostdlib:;:%(Link_End)}
   %{MD:%(generate_deps)} %:error-unused-options()
 
-# executed when called as 'ld-l4' (l4 linker)
+# executed when called with '-t ld' (l4 linker)
 gcc-ld = %(check_linker) %:exec(%(linker) %(link_args_gcc))
 
 
@@ -130,6 +130,6 @@ link_host_mode_args =
   %{EL&EB} %{m*} %{W*} %{f*}
   %{MD:%(generate_deps)} %:error-unused-options()
 
-# executed when called as host-ld, host linker.
+# executed when called with '-t host-ld', host linker.
 host-ld =  %(check_linker) %:exec(%(linker) %(link_host_mode_args))
 
