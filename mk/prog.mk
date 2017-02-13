@@ -158,11 +158,9 @@ ifeq ($(LINK_PROGRAM),)
 LINK_PROGRAM  := $(BID_LINK)
 BID_LDFLAGS_FOR_LINKING = $(call BID_mode_var,NOPIEFLAGS) -MD -MF $(call BID_link_deps_file,$@) \
                           $(addprefix -PC,$(REQUIRES_LIBS)) $(BID_LDFLAGS_FOR_LINKING_LD)
-BID_LD_WHOLE_ARCHIVE = --whole-archive $1 --no-whole-archive
 else
 BID_LDFLAGS_FOR_LINKING = $(call BID_mode_var,NOPIEFLAGS) -MD -MF $(call BID_link_deps_file,$@) \
                           $(if $(HOST_LINK_TARGET),$(CCXX_FLAGS)) $(BID_LDFLAGS_FOR_LINKING_GCC)
-BID_LD_WHOLE_ARCHIVE = -Wl,--whole-archive $1 -Wl,--no-whole-archive
 endif
 
 $(TARGET): $(OBJS) $(LIBDEPS)
