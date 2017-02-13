@@ -286,7 +286,7 @@ BID_MISSING_LIBS :=
 # 2: parameters to pkg-config
 # 3: list of packages
 # use L4_BID_PKG_CONFIG because of export-defs, the function is copied
-L4_BID_PKG_CONFIG = $(L4DIR)/mk/l4-pkg-config
+L4_BID_PKG_CONFIG = $(L4DIR)/tool/bin/l4-bender
 BID_PKG_CONFIG =                                      \
                    $(shell PKG_CONFIG_LIBDIR=$(1)/pc                     \
                            PKG_CONFIG_PATH= $(L4_BID_PKG_CONFIG)         \
@@ -313,11 +313,11 @@ BID_BENDER_DEFINES = \
 bid_bender_default_vars = $(call BID_BENDER_DEFINES,$(OBJ_BASE),$(L4DIR),$(GCCSYSLIBDIRS),$(ARCH)_$(CPU),$(L4API))
 
 # linker for L4 libs and applications
-BID_LINK = $(L4DIR)/mk/l4-ld $(bid_bender_default_vars) -Dlinker="$(LD)" \
+BID_LINK = $(L4DIR)/tool/bin/l4-bender -t ld $(bid_bender_default_vars) -Dlinker="$(LD)" \
            --spec=$(L4DIR)/mk/bid-bender.spec --
 
 # linker for host mode and l4linux mode
-BID_LINK_MODE_host = $(L4DIR)/mk/l4-host-ld $(bid_bender_default_vars) -Dlinker="$(1)" \
+BID_LINK_MODE_host = $(L4DIR)/tool/bin/l4-bender -t host-ld $(bid_bender_default_vars) -Dlinker="$(1)" \
                      --spec=$(L4DIR)/mk/bid-bender.spec --
 
 BID_link_deps_file = $(dir $(1)).$(notdir $(1)).pcs.d

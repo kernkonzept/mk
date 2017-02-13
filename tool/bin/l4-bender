@@ -889,6 +889,10 @@ while (@ARGV) {
   }
 
   if (check_arg_opt($o)) {
+  } elsif ($o =~ /^-t$/) {
+    $template = "%(". shift(@ARGV) . ")";
+    print $errout "template: '$template'\n" if $debug;
+    $action = \&print_template;
   } elsif ($o =~ /^--pkg-config$/) {
     $mode_pkg_config = 1;
   } elsif ($o =~ /^(?:--no-pkg-config)|(?:--)$/) {
@@ -920,14 +924,6 @@ while (@ARGV) {
   } else {
     push @non_pc_args, $o;
   }
-}
-
-# set template to %(progname) if a special executable name is used and the
-# template is not overridden on the command line.
-if ($progname ne 'l4-bender' && $progname ne 'l4-pkg-config') {
-  $template = "%($progname)" unless $template;
-  $action = \&print_template unless $action;
-  print $errout "template: '$template'\n" if $debug;
 }
 
 # the default template emulates pkg-config --cflags and --libs options

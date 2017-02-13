@@ -75,7 +75,7 @@ link_args =
   %{MD:%(generate_deps)} %:error-unused-options()
 
 # executed when called as 'ld-l4' (l4 linker)
-l4-ld = %(check_linker) %:exec(%(linker) %(link_args))
+ld = %(check_linker) %:exec(%(linker) %(link_args))
 
 
 ######### gcc command line compatibility mode for linker ###################
@@ -113,7 +113,7 @@ link_args_gcc =
   %{MD:%(generate_deps)} %:error-unused-options()
 
 # executed when called as 'ld-l4' (l4 linker)
-l4-gcc-ld = %(check_linker) %:exec(%(linker) %(link_args_gcc))
+gcc-ld = %(check_linker) %:exec(%(linker) %(link_args_gcc))
 
 
 ################## GCC pass through for linking host / l4linux mode ###########
@@ -130,6 +130,6 @@ link_host_mode_args =
   %{EL&EB} %{m*} %{W*} %{f*}
   %{MD:%(generate_deps)} %:error-unused-options()
 
-# executed when called as l4-host-ld, host linker.
-l4-host-ld =  %(check_linker) %:exec(%(linker) %(link_host_mode_args))
+# executed when called as host-ld, host linker.
+host-ld =  %(check_linker) %:exec(%(linker) %(link_host_mode_args))
 
