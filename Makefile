@@ -494,9 +494,11 @@ QEMU_KERNEL_FILE          ?= $(QEMU_KERNEL_FILE-$(QEMU_KERNEL_TYPE))
 FASTBOOT_BOOT_CMD    ?= fastboot boot
 
 check_and_adjust_ram_base:
-	$(VERBOSE)if [ -z "$(PLATFORM_RAM_BASE)" ]; then   \
-	  echo "Platform \"$(PLATFORM_TYPE)\" not known."; \
-	  exit 1;                                          \
+	$(VERBOSE)if [ -z "$(PLATFORM_RAM_BASE)" ]; then          \
+	  echo "ERROR: Platform \"$(PLATFORM_TYPE)\" not known."; \
+	  echo "Available platform:";                             \
+	  $(MAKE) listplatforms;                                  \
+	  exit 1;                                                 \
 	fi
 	$(VERBOSE)if [ -z "$(filter $(ARCH),$(PLATFORM_ARCH))" ]; then     \
 	  echo "Platform \"$(PLATFORM_TYPE)\" not available for $(ARCH)."; \
