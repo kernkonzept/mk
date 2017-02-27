@@ -54,6 +54,10 @@ else
 test_script = $(L4DIR)/tool/bin/run_test
 endif
 
+# L4RE_ABS_SOURCE_DIR_PATH is used in gtest-internal.h to shorten absolute path
+# names to L4Re relative paths.
+CPPFLAGS += -DL4RE_ABS_SOURCE_DIR_PATH="$(L4DIR_ABS)"
+
 # variables that are forwarded to the test runner environment
 testvars_fix    := MODE ARCH MOE_CFG REQUIRED_MODULES KERNEL_CONF L4LINUX_CONF \
                     TEST_SETUP TEST_TARGET TEST_EXPECTED OBJ_BASE
