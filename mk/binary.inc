@@ -903,7 +903,7 @@ clean cleanall::
 	$(VERBOSE)$(RM) $(strip $(filter-out $(KEEP_ON_CLEAN),\
 		$(wildcard *.dpi) $(wildcard *.o) $(wildcard *.i) \
 		$(wildcard *.S) $(wildcard *.dtb) \
-		$(ALLOBJS) $(DEL_ON_CLEAN)))
+		$(wildcard $(filter-out -%, $(ALLOBJS) $(DEL_ON_CLEAN)))))
 
 # clean: delete all temporary editor files, objects, binaries
 #        and most generated files
