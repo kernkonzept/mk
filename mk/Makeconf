@@ -363,7 +363,7 @@ checkcc   = $(shell if $(CC)  $(CCXX_FLAGS) $(1) -o /dev/null -c -x c \
 checkcxx  = $(shell if $(CXX) $(CCXX_FLAGS) $(1) -o /dev/null -c -x c++ \
                     /dev/null > /dev/null 2>&1; then echo "$(1)"; fi)
 checkdtc  = $(shell if $(DTC) $(1) --version /dev/null > /dev/null 2>&1; \
-	            then echo "$(1)"; fi)
+                    then echo "$(1)"; fi)
 
 callcc    = LC_ALL=C $(CC)  $(CCXX_FLAGS)
 callcxx   = LC_ALL=C $(CXX) $(CCXX_FLAGS)
