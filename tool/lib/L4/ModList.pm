@@ -491,11 +491,11 @@ sub search_file($$)
   my $file = shift;
   my $paths = shift;
 
+  return $file if $file =~ /^\// && -e $file && ! -d "$file";
+
   foreach my $p (split(/[:\s]+/, $paths), @internal_searchpaths) {
     return "$p/$file" if -e "$p/$file" and ! -d "$p/$file";
   }
-
-  return $file if $file =~ /^\// && -e $file && ! -d "$file";
 
   undef;
 }
