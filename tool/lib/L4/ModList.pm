@@ -497,6 +497,68 @@ sub get_entries($)
   return @entry_list;
 }
 
+sub handle_remote_file
+{
+  my $file = shift;
+  my $fetch_file = shift;
+  my $output_dir = $ENV{OUTPUT_DIR};
+  $output_dir = $ENV{TMPDIR} unless defined $output_dir;
+  $output_dir = '/tmp' unless defined $output_dir;
+
+  if ($file =~ /^s(sh|cp):\/\/([^\/]+)\/(.+)/)
+    {
+      my $rhost = $2;
+      my $rpath = $3;
+
+      (my $lfile = $file) =~ s,[\s/:~],_,g;
+      $lfile = "$output_dir/$lfile";
+
+      if ($fetch_file)
+        {
+          print STDERR "Retrieving $file...\n";
+          system("rsync -azS $rhost:$rpath $lfile 1>&2");
+          die "rsync failed" if $?;
+        }
+
+      return $lfile;
+    }
+
+  if ($file =~ /^(https?:\/\/.+)/)
+    {
+      my $url = $1;
+
+      (my $lpath = $url) =~ s,[\s/:~],_,g;
+      $lpath = "$output_dir/$lpath";
+
+      if ($fetch_file)
+        {
+          print STDERR "Retrieving ($$, $ARGV[0]) $file...\n";
+
+          # So we do not know the on-disk filename of the URL we're downloading
+          # and since we want to use -N and as -N and -O don't play together,
+          # we're doing the following:
+
+          mkdir $lpath || die "Cannot create directory '$lpath'";
+          system("wget -Nq -P $lpath $url");
+          die "wget failed" if $?;
+        }
+
+      my $lfile = "__unknown_yet__";
+      if (opendir(my $dh, $lpath))
+        {
+          die "First path should be '.'"   unless readdir $dh eq '.';
+          die "Second path should be '..'" unless readdir $dh eq '..';
+          $lfile = readdir $dh;
+          die "Too many files in $lpath" if readdir $dh;
+          closedir $dh;
+        }
+
+      return "$lpath/$lfile";
+    }
+
+  return undef;
+}
+
 # Search for a file by using a path list (single string, split with colons
 # or spaces, see the split)
 # return undef if it could not be found, the complete path otherwise
@@ -506,6 +568,9 @@ sub search_file($$)
   my $paths = shift;
 
   return $file if $file =~ /^\// && -e $file && ! -d "$file";
+
+  my $r = handle_remote_file($file, 0);
+  return $r if $r;
 
   foreach my $p (split(/[:\s]+/, $paths), @internal_searchpaths) {
     return "$p/$file" if -e "$p/$file" and ! -d "$p/$file";
@@ -521,6 +586,11 @@ sub search_file_or_die($$)
   my $f = search_file($file, $paths);
   error "Could not find '$file' with path '$paths'\n" unless defined $f;
   $f;
+}
+
+sub fetch_remote_file
+{
+  handle_remote_file(shift, 1);
 }
 
 sub get_or_copy_file_uncompressed_or_die($$$$)
