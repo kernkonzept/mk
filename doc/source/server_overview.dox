@@ -69,43 +69,24 @@ drivers).
 
 For more details see \subpage io "Io, the Io Server".
 
-Cons, the Console Multiplexer
-=============================
 
-cons is an interactive multiplexer for console in- and output. It buffers
-the output from different L4 clients and allows to switch between them
-to redirect input.
+Other Servers
+=============
 
-For more details see \subpage l4re_servers_cons "Cons".
+The following additional server package are available on top of the core
+L4Re environment.
 
-Mag, the GUI Multiplexer
-========================
+ - Rtc, the Real-Time Clock Server
 
-Our default multiplexer for the graphics hardware is Mag.  Mag is a
-Nitpicker (TODO: ref) derivate that allows secure multiplexing of the
-graphics and input hardware among multiple applications and multiple complete
-windowing environments.
+   is a simple multiplexer for real-time clock hardware on your platform.
 
-\todo Add some Nitpicker reference
+ - fb-drv, the Low-Level Graphics Driver
 
-For more information see \subpage l4re_servers_mag "Mag".
-
-
-fb-drv, the Low-Level Graphics Driver
-=====================================
-
-The fb-drv server provides low-level access and initialization of various
-graphics hardware.  It has support for running VESA BIOS calls on Intel x86
-platforms, as well as support for various ARM display controllers.
-\em fb-drv, provides a single instance of the L4Re::Goos interface and can
-serve as a back end for the Mag server, in particular, if there is no graphics
-support in the boot loader.
-
-
-Rtc, the Real-Time Clock Server
-===============================
-
-Rtc is a simple multiplexer for real-time clock hardware on your platform.
-
+   provides low-level access and initialization of various
+   graphics hardware.  It has support for running VESA BIOS calls on Intel x86
+   platforms, as well as support for various ARM display controllers.
+   `fb-drv` provides a single instance of the L4Re::Goos interface and can
+   serve as a back end for the Mag server, in particular, if there is no graphics
+   support in the boot loader.
 
 */
