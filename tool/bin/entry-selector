@@ -30,16 +30,16 @@ if ($ARGV[0] eq 'menu')
   {
     my ($tmpfd, $tmpfilename) = tempfile();
 
-    my $backtitle = '';
+    my $backtitle = '--menu ""';
     if (defined $ENV{BACKTITLE})
       {
         $backtitle = $ENV{BACKTITLE};
-        $backtitle =~ s/"/\\"/g;
-        $backtitle = "--backtitle \"$backtitle\"";
+        $backtitle =~ s/'/'\\''/g;
+        $backtitle = "--menu '$backtitle'";
       }
 
-    system("dialog $backtitle --title 'Entry selection' "
-        ." --menu 'Select entry to launch' 18 65 18 ".
+    system("dialog --title 'Select entry to launch:' "
+        ." $backtitle -1 -1 0 ".
         join(' ', map { "$_ '$e[$_]'" } (0 .. $#e) )." 2> $tmpfilename");
 
     if ($?)
