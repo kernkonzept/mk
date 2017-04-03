@@ -476,7 +476,14 @@ sub get_entries($)
   foreach my $fileentry (@{$mod_file_db{contents}})
     {
       my ($t, $o, $n) = disassemble_line($$fileentry[2]);
-      push @entry_list, $n if $t eq "entry" or $t eq "title";
+      if ($t eq "entry" or $t eq "title")
+        {
+          my %opts;
+          %opts = parse_options($o) if defined $o;
+          ($n) = handle_line($n, %opts);
+
+          push @entry_list, $n if defined $n and $n ne '';
+        }
     }
 
   return @entry_list;
