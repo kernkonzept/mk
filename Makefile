@@ -441,13 +441,15 @@ define set_ml
 	   [ -n "$(MODULES_LIST)" ] && ml=$(MODULES_LIST)
 endef
 define entryselection
-	unset e;                                                 \
+	   unset e;                                              \
 	   $(set_ml);                                            \
 	   [ -n "$(ENTRY)"       ] && e="$(ENTRY)";              \
 	   [ -n "$(E)"           ] && e="$(E)";                  \
 	   if [ -z "$$e" ]; then                                 \
 	     BACKTITLE="No entry given. Use 'make $@ E=entryname' to avoid menu." \
-	       L4DIR=$(L4DIR) $(L4DIR)/tool/bin/entry-selector menu $$ml 2> $(OBJ_BASE)/.entry-selector.tmp; \
+	       L4DIR=$(L4DIR) $(common_envvars)                  \
+	       $(L4DIR)/tool/bin/entry-selector menu $$ml        \
+	         2> $(OBJ_BASE)/.entry-selector.tmp;             \
 	     if [ $$? != 0 ]; then                               \
 	       cat $(OBJ_BASE)/.entry-selector.tmp;              \
 	       exit 1;                                           \
