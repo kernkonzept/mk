@@ -446,7 +446,8 @@ define entryselection
 	   [ -n "$(ENTRY)"       ] && e="$(ENTRY)";              \
 	   [ -n "$(E)"           ] && e="$(E)";                  \
 	   if [ -z "$$e" ]; then                                 \
-	     BACKTITLE="No entry given. Use 'make $@ E=entryname' to avoid menu." \
+	     BACKTITLE="No entry given. Use                      \
+	                'make $@ E=entryname' to avoid menu."    \
 	       L4DIR=$(L4DIR) $(common_envvars)                  \
 	       $(L4DIR)/tool/bin/entry-selector menu $$ml        \
 	         2> $(OBJ_BASE)/.entry-selector.tmp;             \
