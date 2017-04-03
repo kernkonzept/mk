@@ -70,7 +70,7 @@ sub get_ps_tree
       # pids are in (parens), so 'split' on '()' and take every 2nd entry
       my @pstree = map { split(/[()]/) } qx{echo \$(pstree -lp $pid)};
       @pids = @pstree[grep $_ % 2, 0..$#pstree];
-      @pids = grep { system("ps -ax -o pid=,stat= | grep -q '^$_ Z$'") != 0 } @pids; # ignore zombies
+      @pids = grep { system("ps -ax -o pid=,stat= | grep -q '^$_ Z\$'") != 0 } @pids; # ignore zombies
     }
   return @pids;
 }
