@@ -866,7 +866,7 @@ $(if $(BID_ALLOW_CPP_AS_CPLUSPLUS_FILE),$(eval $(call BID_GENERATE_S_MAKE_RULE,%
 	@$(GEN_MESSAGE)
 	$(VERBOSE)$(call MAKEDEP,perl) $(GEN_DOPECODE) $< >$@
 
-%.dtb: %.dts
+%.dtb: %.dts $(GENERAL_D_LOC)
 	@$(BUILD_MESSAGE)
 	$(VERBOSE)$(MKDIR) $(@D)
 	$(VERBOSE)$(CPP) $(addprefix -I, $(PRIVATE_INCDIR)) -x assembler-with-cpp -Wp,-MD,$(@D)/.$(@F).d,-MT$@,-MP -nostdinc -o $@.pre $<
