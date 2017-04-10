@@ -1,4 +1,4 @@
-#! /usr/bin/perl -W
+#! /usr/bin/perl -w
 #
 # (c) 2009 Technische Universität Dresden
 # This file is part of TUD:OS and distributed under the terms of the
