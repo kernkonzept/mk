@@ -513,7 +513,7 @@ check_and_adjust_ram_base:
 	fi
 
 listentries:
-	$(VERBOSE)$(set_ml); \
+	$(VERBOSE)$(set_ml); $(common_envvars) \
 	  L4DIR=$(L4DIR) $(L4DIR)/tool/bin/entry-selector list $$ml
 
 shellcodeentry:
