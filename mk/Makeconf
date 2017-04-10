@@ -571,7 +571,7 @@ BUILT_MESSAGE              ?= echo -e $(EMPHSTART)'  [$(PKGNAME_DIRNAME)] ==> $@
 COMP_MESSAGE               ?= echo -e "  [$(PKGNAME_DIRNAME)] ... Compiling $@"
 COMP_P_MESSAGE             ?= echo -e "  [$(PKGNAME_DIRNAME)] ... Compiling PIC $@"
 COMP_PR_MESSAGE            ?= echo -e "  [$(PKGNAME_DIRNAME)] ... Compiling PROFILE $@"
-GEN_MESSAGE                ?= echo -e "  [$(PKGNAME_DIRNAME)] ... Generating $@"
+GEN_MESSAGE                ?= echo -e "  [$(PKGNAME_DIRNAME)] ... Generating $(if $(1),$(1),$@)"
 LINK_MESSAGE               ?= echo -e "  [$(PKGNAME_DIRNAME)] ==> Linking $@"
 LINK_SHARED_MESSAGE        ?= echo -e "  [$(PKGNAME_DIRNAME)] ==> Linking to shared $@"
 LINK_PARTIAL_MESSAGE       ?= echo -e "  [$(PKGNAME_DIRNAME)] ==> Partial linking to $@"
