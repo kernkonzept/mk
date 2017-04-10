@@ -555,7 +555,7 @@ sub generate_grub1_entry($$%)
   my $entryname = shift;
   my $prefix = shift;
   $prefix = '' unless defined $prefix;
-  $prefix = "/$prefix" if $prefix ne '' and $prefix !~ /^\//;
+  $prefix = "/$prefix" if $prefix ne '' and $prefix !~ /^[\/(]/;
   my %entry = @_;
   my $s = "title $entryname\n";
   my $c = $entry{bootstrap}{cmdline};
@@ -584,7 +584,7 @@ sub generate_grub2_entry($$%)
   my $entryname = shift;
   my $prefix = shift;
   $prefix = '' unless defined $prefix;
-  $prefix = "/$prefix" if $prefix ne '' and $prefix !~ /^\//;
+  $prefix = "/$prefix" if $prefix ne '' and $prefix !~ /^[\/(]/;
   my %entry = @_;
   # basename of first path
   my ($c, $args) = split(/\s+/, $entry{bootstrap}{cmdline}, 2);
