@@ -1,4 +1,4 @@
-CROSS_COMPILE_arm64       = aarch64-linux-
+CROSS_COMPILE_arm64       = aarch64-linux-gnu-
 LD_EMULATION_CHOICE_arm64 = aarch64linux aarch64elf
 OFORMAT_arm64             = elf64-littleaarch64
 BFD_ARCH_arm64            = aarch64
