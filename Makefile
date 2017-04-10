@@ -617,6 +617,7 @@ exportpack:
 	 $(tool_envvars) $(common_envvars)                                \
 	  $(L4DIR)/tool/bin/genexportpack --timeout=$(GRUB_TIMEOUT)       \
 	                                  --grubpathprefix=$(GRUB_PATHPREFIX) \
+	                                  --grubentrytitle="$(GRUB_ENTRY_TITLE)" \
 	                                   $$ml $$TARGETDIR $$e;
 
 help::

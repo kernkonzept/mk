@@ -11,10 +11,12 @@ sub parse_gengrub_args()
   my %a = ( timeout => undef,
             serial  => undef,
             grubpathprefix => undef,
+            grubentrytitle => undef,
 	   );
   my @opts = ("timeout=i", \$a{timeout},
               "serial",    \$a{serial},
               "grubpathprefix:s", \$a{grubpathprefix},
+              "grubentrytitle:s", \$a{grubentrytitle},
             );
 
   if (!GetOptions(@opts))

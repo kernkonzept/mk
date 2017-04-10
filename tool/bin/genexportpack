@@ -75,10 +75,10 @@ foreach my $entryname (@ARGV)
   {
     print "Processing entry '$entryname'\n";
     my %entry = L4::ModList::get_module_entry($modulesfile, $entryname);
-    print GRUB1 L4::ModList::generate_grub1_entry($entryname,
+    print GRUB1 L4::ModList::generate_grub1_entry($opts{grubentrytitle} || $entryname,
                                                   $opts{grubpathprefix},
                                                   %entry), "\n";
-    print GRUB2 L4::ModList::generate_grub2_entry($entryname,
+    print GRUB2 L4::ModList::generate_grub2_entry($opts{grubentrytitle} || $entryname,
                                                   $opts{grubpathprefix},
                                                   %entry);
 
