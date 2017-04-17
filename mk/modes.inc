@@ -17,8 +17,8 @@ LIBC_INCLUDE   = $(BID_NOSTDINC)                            \
                  -I$(OBJ_BASE)/include/contrib/libstdc++-v3 \
                  -I$(OBJ_BASE)/include/uclibc               \
                  $(if $(CONFIG_USE_DROPS_STDDIR),           \
-                  -I$(DROPS_STDDIR)/include/contrib/libstdc++-v3,) \
-                  -I$(DROPS_STDDIR)/include/uclibc          \
+                  -I$(DROPS_STDDIR)/include/contrib/libstdc++-v3 \
+                  -I$(DROPS_STDDIR)/include/uclibc)         \
                  $(I_GCCINCDIR)
 
 #############################################################################
