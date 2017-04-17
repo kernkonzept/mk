@@ -537,8 +537,12 @@ sub get_or_copy_file_uncompressed_or_die($$$$)
     system("zcat $fp >$tf");
     $fp = $tf;
   } elsif ($copy) {
-    print("cp $fp $tf\n");
-    system("cp $fp $tf");
+    system("cmp -s $fp $tf");
+    if ($?)
+      {
+        print("cp $fp $tf\n");
+        system("cp $fp $tf");
+      }
     $fp = $tf;
   }
 
