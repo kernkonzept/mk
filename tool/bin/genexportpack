@@ -18,7 +18,7 @@ use L4::Grub;
 use File::Temp qw/tempdir/;
 
 my $qemu         = $ENV{QEMU}         || 'qemu';
-my $module_path  = $ENV{SEARCHPATH} || ".";
+my $module_path  = $ENV{SEARCHPATH}   || ".";
 my %opts         = L4::Grub::parse_gengrub_args();
 my $qemu_options = $ENV{QEMU_OPTIONS} || "";
 my $modulesfile  = shift;
@@ -47,6 +47,12 @@ delete $opts{timeout}
 print GRUB1 L4::Grub::grub1_config_prolog(%opts);
 print GRUB2 L4::Grub::grub2_config_prolog(%opts);
 print QEMU "#! /bin/sh\n".
+           "if [ -z \"\$1\" ]; then\n".
+           "  echo Usage: \$0 entry\n".
+           "  echo\n".
+           "  echo Available entries: ".join(", ", @ARGV)."\n".
+           "  exit 1\n".
+           "fi\n".
            "entry=\$1\n".
            "shift\n".
            "\n".
