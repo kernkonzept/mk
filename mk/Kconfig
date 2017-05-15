@@ -9,7 +9,7 @@ config ARCH_ENABLE_STACK_PROTECTOR
 
 choice
 	prompt "Target Architecture"
-	default BUILD_ARCH_x86
+#  ARCH_CHOICE_DEFAULT
 	help
 	  Specify for which processor architecture you want to build.
 

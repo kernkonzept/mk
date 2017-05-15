@@ -61,6 +61,12 @@ open(IN, "$kconfig_src_file") || die "Cannot open $kconfig_src_file: $!";
 open(OUT, ">$kconfig_obj_file") || die "Cannot open $kconfig_obj_file: $!";
 while ($_=<IN>) {
   print OUT;
+  if (/$tag ARCH_CHOICE_DEFAULT\W/x) {
+    my $a = 'x86';
+    $a = $ENV{ARCH} if defined $ENV{ARCH};
+    die "Unknown architecture '$a'" unless defined $archs{"BUILD_ARCH_$a"};
+    print OUT "\tdefault BUILD_ARCH_$a\n";
+  }
   if (/$tag ARCH_DEFAULT_CPU\W/x) {
     foreach my $i (sort keys %archs) {
       print OUT "\tdefault $archs{$i}{default_cpu}  if $i\n"
