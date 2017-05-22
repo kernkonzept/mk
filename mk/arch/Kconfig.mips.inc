@@ -20,6 +20,18 @@ config CPU_MIPS_64R6
 
 endchoice
 
+choice
+	prompt "Endianess"
+	default MIPS_LITTLE_ENDIAN
+
+config MIPS_LITTLE_ENDIAN
+	bool "Little Endian"
+
+config MIPS_BIG_ENDIAN
+	bool "Big Endian"
+
+endchoice
+
 config CPU
 	string
 	default "32r2"    if CPU_MIPS_32R2
