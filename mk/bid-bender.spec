@@ -72,6 +72,7 @@ link_args =
   %(Link_Start) %o %{OBJ*:%*} %(Libs)
   %{static:--start-group} %(Link_Libs) %{!shared:%(libgcc);:%(libgcc_s)}
   %(libgcc_eh) %{static:--end-group} %(Link_End)
+  %{EL&EB}
   %{MD:%(generate_deps)} %:error-unused-options()
 
 # executed when called as 'ld-l4' (l4 linker)
@@ -110,6 +111,7 @@ link_args_gcc =
   %{r|nodefaultlibs|nostdlib:;:%{static:--start-group} %(Link_Libs)
   %{!r:%{!shared:%(libgcc);:%(libgcc_s)} %(libgcc_eh) %{static:--end-group}}}
   %{r|nostartfiles|nostdlib:;:%(Link_End)}
+  %{EL&EB}
   %{MD:%(generate_deps)} %:error-unused-options()
 
 # executed when called with '-t ld' (l4 linker)
