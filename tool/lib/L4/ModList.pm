@@ -598,6 +598,7 @@ sub generate_grub2_entry($$%)
   my %entry = @_;
   # basename of first path
   my ($c, $args) = split(/\s+/, $entry{bootstrap}{cmdline}, 2);
+  $args = '' unless defined $args;
   my $bn = (reverse split(/\/+/, $c))[0];
   my $s = "menuentry \"$entryname\" {\n";
 
