@@ -610,13 +610,14 @@ grub1iso:
 grub2iso:
 	$(call geniso,2)
 
-exportpack:
+exportpack: $(if $(filter $(ARCH),x86 amd64),,$(QEMU_KERNEL_TYPE))
 	$(if $(EXPORTPACKTARGETDIR),, \
 	  @echo Need to specific target directory as EXPORTPACKTARGETDIR=dir; exit 1)
 	$(VERBOSE)$(entryselection);                                      \
 	 TARGETDIR=$(EXPORTPACKTARGETDIR);                                \
 	 qemu=$(if $(QEMU_PATH),$(QEMU_PATH),$(QEMU_ARCH_MAP_$(ARCH)));   \
 	 QEMU=$$qemu L4DIR=$(L4DIR) QEMU_OPTIONS="$(QEMU_OPTIONS)"        \
+	 IMAGE_FILE="$(QEMU_KERNEL_FILE)"                                 \
 	 $(tool_envvars) $(common_envvars)                                \
 	  $(L4DIR)/tool/bin/genexportpack --timeout=$(GRUB_TIMEOUT)       \
 	                                  --grubpathprefix=$(GRUB_PATHPREFIX) \
