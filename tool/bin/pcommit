@@ -238,8 +238,28 @@ my %handler_hg = (
   {
     my $answer = shift;
     my $d = shift;
+    # we need to fix-up the phase status here too :(
+    # or not use push
+    my $cur_branch = qx(hg branch);
+    chomp $cur_branch;
+    open(my $f, "LANG=C hg log -b $cur_branch --template '{rev} {phase}\n'|")
+     || die "Cannot do hg log: $!";
+    my $first_draft_phase_rev;
+    while (<$f>) {
+      chomp;
+      my ($rev, $phase) = split /\s+/;
+      $first_draft_phase_rev = $rev if $phase eq 'draft';
+      last if $phase eq 'public';
+    }
+    close $f;
+
     system("cd $d && hg ci && hg push");
     system("hg up");
+    if (defined $first_draft_phase_rev) {
+      system("hg phase -fd $first_draft_phase_rev")
+    } else {
+      system("hg phase -fd \$(cd $d && hg id -i)");
+    }
   },
 
   abort => sub()
