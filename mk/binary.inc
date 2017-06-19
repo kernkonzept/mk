@@ -58,7 +58,7 @@ ifneq ($(strip $(SRC_F)$(foreach t,$(TARGET),$(SRC_F_$(t)))),)
       $(info $(shell echo -e "\033[32mFortran compiler (gcc-4.6 or later) missing, skipping directory '$(SRC_DIR)'.\033[0m"))
       SYSTEMS =
     else
-      ifeq ($(filter 4.6 4.7 4.8 4.9 5 6,$(GCCVERSION)),)
+      ifeq ($(filter 4.6 4.7 4.8 4.9 5 6 7,$(GCCVERSION)),)
         $(info $(shell echo -e "\033[32mFortran compiler gcc version 4.6 or later required, skipping directory '$(SRC_DIR)'.\033[0m"))
         SYSTEMS =
       endif
@@ -69,7 +69,7 @@ endif
 ifneq ($(SRC_CC_IS_CXX11),)
   ifneq ($(SRC_CC_IS_CXX11),c++0x)
     # gcc-4.5 and 4.6 only know about c++0x
-    ifeq ($(filter 4.7 4.8 4.9 5 6,$(GCCVERSION)),)
+    ifeq ($(filter 4.7 4.8 4.9 5 6 7,$(GCCVERSION)),)
       $(info $(shell echo -e "\033[32mGCC too old to compile C++11 sources in directory '$(SRC_DIR)'. At least version 4.7 required.\033[0m"))
       SYSTEMS =
     endif
@@ -496,7 +496,7 @@ CXXFLAGS_L4_GENERIC += $(GCCSTACKPROTECTOROPT)
 CXXFLAGS_L4_GENERIC += -fuse-cxa-atexit
 endif
 
-CXXFLAGS_CXX11 = $(if $(filter 4.7 4.8 4.9 5 6,$(GCCVERSION)),-std=gnu++11,-std=gnu++0x)
+CXXFLAGS_CXX11 = $(if $(filter 4.7 4.8 4.9 5 6 7,$(GCCVERSION)),-std=gnu++11,-std=gnu++0x)
 
 ifneq ($(SRC_CC_IS_CXX11),)
   CXXFLAGS+= $(CXXFLAGS_CXX11)
