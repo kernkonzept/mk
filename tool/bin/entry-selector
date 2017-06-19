@@ -24,6 +24,13 @@ unless (defined $ARGV[1]) {
   exit 1;
 }
 
+system("dialog > /dev/null 2>&1");
+if ($?)
+  {
+    print "\nERROR: 'dialog' program not installed. Please install.\n\n";
+    exit 1;
+  }
+
 my @e = L4::ModList::get_entries($ARGV[1]);
 
 if ($ARGV[0] eq 'menu')
