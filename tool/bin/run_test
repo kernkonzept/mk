@@ -150,7 +150,7 @@ if ($moe_cfg)
   {
     # Create an additional LUA config file where environment variables can
     # be exported to.
-    my $mod_list = '"'.join('","', @more_mods).'"';
+    my $mod_list = '"'.join('","', map { s/:rw$//; $_ } map { $_ } @more_mods).'"';
     my $test_prog = $test_target;
     $test_prog .= ' '.$test_args if $test_args;
     open($ned_cfg, '>', $ned_cfg_name)
@@ -184,7 +184,7 @@ else
     $roottask .= " -- ".$test_args if $test_args;
   }
 push(@module_list, "l4re");
-push(@module_list, @more_mods);
+push(@module_list, map { s/:rw$/ :rw/; $_ } map { $_ } @more_mods);
 push(@module_list, $test_target);
 
 # If any binary was linked dynamically, we need to add the necessary .so files.
