@@ -7,11 +7,10 @@
 #   - VirtualBox
 #   - Fastboot
 #
-# This is a make snippet.
+# This is a 'make' file.
 #
 # Copy this example file to Makeconf.boot in the same directory.
 #
-# #
 # Generic options:
 #
 # Search path for modules, such as binaries, libraries, kernel, configuration
@@ -22,13 +21,26 @@
 #
 # For additional image buliding options see the header of
 # pkg/bootstrap/server/src/Make.rules
-#
-#
-# QEMU: Specific configuration for 'qemu' target (make qemu E=xxx'):
-#
+
 # Add fiasco build directory to MODULE_SEARCH_PATH
 
-qemu: MODULE_SEARCH_PATH += /path/to/fiasco-build
+MODULE_SEARCH_PATH += /path/to/fiasco-build
+
+# For use with multiple platforms and architectures:
+
+FIASCO_PATH-arm-integrator      = /path/to/fiasco-build-arm-integrator
+FIASCO_PATH-arm-rv_vexpress     = /path/to/fiasco-build-arm-rv_vexpress
+FIASCO_PATH-arm-rv_vexpress_a15 = /path/to/fiasco-build-arm-rv_vexpress_a15
+
+FIASCO_PATH-mips-malta          = /path/to/fiasco-build-mips-malta
+
+FIASCO_PATH-x86                 = /path/to/fiasco-build-x86
+FIASCO_PATH-amd64               = /path/to/fiasco-build-amd64
+
+MODULE_SEARCH_PATH += $(FIASCO_PATH-$(ARCH)-$(PLATFORM_TYPE))
+MODULE_SEARCH_PATH += $(FIASCO_PATH-$(ARCH))
+
+# QEMU: Specific configuration for 'qemu' target (make qemu E=xxx'):
 
 # Optional options for QEMU, but setting '-serial stdio' is recommended
 QEMU_OPTIONS       ?= -serial stdio
@@ -60,9 +72,10 @@ QEMU_OPTIONS      += $(QEMU_OPTIONS-$(ARCH))
 
 # Fiasco-UX: Specific configuration for 'ux' target ('make ux E=xxx'):
 #
-# Add Fiasco-UX build directory to MODULE_SEARCH_PATH
+# Add Fiasco-UX build directory to MODULE_SEARCH_PATH based
+# on the make target
 
-ux: MODULE_SEARCH_PATH += /path/to/fiasco-ux-build
+ux: MODULE_SEARCH_PATH = /path/to/fiasco-ux-build:$(MODULE_SEARCH_PATH)
 
 # Additional (optional) variables:
 #  UX_OPTIONS: Options for Fiasco-UX, such as -m
@@ -75,10 +88,6 @@ ux: MODULE_SEARCH_PATH += /path/to/fiasco-ux-build
 #              UX_SEARCH_PATH 
 
 UX_OPTIONS     = -m 128
-
-# Search path for other make targets:
-# grub1iso grub2iso: MODULE_SEARCH_PATH += /path/to/fiasco-build
-# %image: MODULE_SEARCH_PATH += /path/to/fiasco-build
 
 # VirtualBox
 #
