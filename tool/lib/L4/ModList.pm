@@ -80,6 +80,13 @@ sub handle_line
       return @m;
     }
 
+  if (exists $opts{arch})
+    {
+      my @a = split /\|+/, $opts{arch};
+      return ( $r ) if grep /^$ENV{ARCH}$/, @a;
+      return ();
+    }
+
   return ( glob $r ) if exists $opts{glob};
 
 
@@ -293,7 +300,7 @@ sub get_module_entry($$)
 
       if ($type =~ /^(entry|title)$/) {
         ($remaining) = handle_line($remaining, %opts);
-        if (lc($entry_to_pick) eq lc($remaining)) {
+        if (defined $remaining && lc($entry_to_pick) eq lc($remaining)) {
           $process_mode = 'entry';
           $found_entry = 1;
         } else {
