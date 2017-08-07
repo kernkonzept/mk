@@ -491,6 +491,7 @@ QEMU_ARCH_MAP_$(ARCH) ?= qemu-system-$(ARCH)
 QEMU_KERNEL_TYPE          ?= elfimage
 QEMU_KERNEL_FILE-elfimage  = $(IMAGES_DIR)/bootstrap.elf
 QEMU_KERNEL_FILE-uimage    = $(IMAGES_DIR)/bootstrap.uimage
+QEMU_KERNEL_FILE-itb       = $(IMAGES_DIR)/bootstrap.itb
 QEMU_KERNEL_FILE-rawimage  = $(IMAGES_DIR)/bootstrap.raw
 QEMU_KERNEL_FILE          ?= $(QEMU_KERNEL_FILE-$(QEMU_KERNEL_TYPE))
 
@@ -528,6 +529,9 @@ elfimage: check_and_adjust_ram_base
 uimage: check_and_adjust_ram_base
 	$(call genimage,BOOTSTRAP_DO_UIMAGE=y BOOTSTRAP_DO_RAW_IMAGE=)
 	$(VERBOSE)$(if $(POST_IMAGE_CMD),$(call POST_IMAGE_CMD,$(IMAGES_DIR)/bootstrap.uimage))
+
+itb: check_and_adjust_ram_base
+	$(call genimage,BOOTSTRAP_DO_ITB=y)
 
 rawimage: check_and_adjust_ram_base
 	$(call genimage,BOOTSTRAP_DO_UIMAGE= BOOTSTRAP_DO_RAW_IMAGE=y)
@@ -631,6 +635,7 @@ help::
 	@echo "  elfimage   - Generate an ELF image, containing all modules."
 	@echo "  rawimage   - Generate a raw image (memory dump), containing all modules."
 	@echo "  uimage     - Generate a uimage for u-boot, containing all modules."
+	@echo "  itb        - Generate a FIT image for u-boot, containing all modules."
 	@echo "  grub1iso   - Generate an ISO using GRUB1 in images/<name>.iso [x86, amd64]" 
 	@echo "  grub2iso   - Generate an ISO using GRUB2 in images/<name>.iso [x86, amd64]" 
 	@echo "  qemu       - Use Qemu to run 'name'." 
@@ -667,7 +672,7 @@ listplatforms:
 .PHONY: elfimage rawimage uimage qemu vbox ux switch_ram_base \
         grub1iso grub2iso listentries shellcodeentry exportpack \
         fastboot fastboot_rawimage fastboot_uimage \
-	check_and_adjust_ram_base listplatforms
+	check_and_adjust_ram_base listplatforms itb
 
 switch_ram_base:
 	$(VERBOSE)$(call switch_ram_base_func,$(RAM_BASE))
