@@ -776,13 +776,15 @@ report:
 	elif [ -e /etc/redhat-release ]; then                  \
 	  echo -n "Redhat: ";                                  \
 	  cat /etc/redhat-release;                             \
-	  [ -e /etc/redhat_version ]                           \
-	    && echo "  Version: `cat /etc/redhat_version`";    \
+	  if [ -e /etc/redhat_version ]; then                  \
+	    echo "  Version: `cat /etc/redhat_version`";       \
+	  fi;                                                  \
 	elif [ -e /etc/slackware-release ]; then               \
 	  echo -n "Slackware: ";                               \
 	  cat /etc/slackware-release;                          \
-	  [ -e /etc/slackware-version ]                        \
-	    && echo "  Version: `cat /etc/slackware-version`"; \
+	  if [ -e /etc/slackware-version ]; then               \
+	    echo "  Version: `cat /etc/slackware-version`";    \
+	  fi;                                                  \
 	elif [ -e /etc/mandrake-release ]; then                \
 	  echo -n "Mandrake: ";                                \
 	  cat /etc/mandrake-release;                           \
