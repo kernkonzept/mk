@@ -531,7 +531,7 @@ sub get_or_copy_file_uncompressed_or_die($$$$)
 
   my $fp = L4::ModList::search_file_or_die($command, $paths);
 
-  open F, $fp || error "Cannot open '$fp': $!\n";
+  open(F, $fp) || error "Cannot open '$fp': $!\n";
   my $buf;
   read F, $buf, 2;
   close F;
