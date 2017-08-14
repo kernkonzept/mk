@@ -87,9 +87,6 @@ source "Kconfig.generated.platform_types"
 config USE_DROPS_STDDIR
 	def_bool n
 
-config USE_DICE
-	def_bool n
-
 config DROPS_STDDIR
 	string
 	default "/path/to/l4re"

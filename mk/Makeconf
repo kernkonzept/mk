@@ -80,15 +80,6 @@ $(call dv,CPP)   = $(if $(CLANG),$(call \
                      clang-bin-tgt,$(CLANG),clang-cpp),$(CROSS_COMPILE)cpp)
 
 CP		?= cp
-DICE_SRCDIR	?= $(L4DIR)/../dice
-DICE_OBJDIR	?= $(DICE_SRCDIR)
-DICE		?= $(firstword $(wildcard $(DICE_OBJDIR)/src/dice \
-				$(DROPS_STDDIR)/tool/bin/dice \
-				 $(shell which dice 2>/dev/null) ) \
-				 did_not_find_dice___please_install_dice )
-DICE_CPP_NAME	= cpp0
-
-DICE_INCDIR	?= $(DICE_SRCDIR)/include
 
 DOXYGEN		?= doxygen
 ECHO		?= echo

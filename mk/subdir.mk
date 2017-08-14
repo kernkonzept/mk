@@ -10,13 +10,12 @@ include $(L4DIR)/mk/Makeconf
 
 ifeq ($(PKGDIR),.)
 TARGET ?= $(patsubst %/Makefile,%,$(wildcard $(addsuffix /Makefile, \
-	idl include src lib server examples doc)))
-$(if $(wildcard include/Makefile), idl lib server examples: include)
-$(if $(wildcard idl/Makefile), lib server examples: idl)
+	include src lib server examples doc)))
+$(if $(wildcard include/Makefile), lib server examples: include)
 $(if $(wildcard lib/Makefile), server examples: lib)
 else
 TARGET ?= $(patsubst %/Makefile,%,$(wildcard $(addsuffix /Makefile, \
-	idl src lib server examples doc)))
+	src lib server examples doc)))
 endif
 
 TARGET += $(if $(CONFIG_BID_BUILD_TESTS),$(TARGET_test))
@@ -45,7 +44,7 @@ $(filter-out ptest,$(SUBDIR_TARGET)): %:
 	    if [ -f $@/Makefile ] ; then PWD=$(PWD)/$@ $(MAKE) -C $@ $(MKFLAGS) ; fi
 # Second, the rules for going down into sub-pkgs with "lib" and "server"
 # targets. Going down into sub-pkgs.
-	$(if $(SUBDIRS),$(if $(filter $@,idl include lib server examples doc),\
+	$(if $(SUBDIRS),$(if $(filter $@,include lib server examples doc),\
 		$(VERBOSE)set -e; for s in $(SUBDIRS); do \
 			PWD=$(PWD)/$$s $(MAKE) -C $$s $@ $(MKFLAGS); done ))
 

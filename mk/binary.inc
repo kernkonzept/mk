@@ -107,14 +107,8 @@ BID_ORIG_SYSTEM = $(shell echo $(2)|$(AWKP) '\
 			    {t=s;sub("-.*","",t);\
                              if(m==$$i&&t=="$(1)"){print $$i;exit}}}}')
 
-ifeq ($(ROLE),idl.mk)
-TARGET_SYSTEMS := $(sort $(foreach sys,$(sort \
-	$(shell echo $(BUILD_SYSTEMS)|$(SED) -e 's/_[^- ]*\(-\{0,1\}\)/\1/g')), \
-	$(call FILTER_SYSTEM,$(sys),$(SYSTEMS))))
-else
 TARGET_SYSTEMS := $(sort $(foreach sys,$(BUILD_SYSTEMS),\
 			$(call FILTER_SYSTEM,$(sys),$(SYSTEMS))))
-endif
 
 DIR_FROM_SUB = $(firstword $(addprefix ../,$(patsubst /%,,$(1))) $(1))
 SYSTEM_TO_ARCH = $(shell echo $(1)|$(SED) -e 's/[_-].*//')
@@ -193,7 +187,6 @@ L4INCDIR ?=	$(addprefix $(OBJ_BASE)/include/$(ARCH)/,$(L4API)) \
                 $(addprefix $(OBJ_BASE)/include/,$(L4API)) \
                 $(OBJ_BASE)/include/$(ARCH) \
                 $(OBJ_BASE)/include \
-		$(if $(USE_DICE),$(DICE_INCDIR),) \
                 $(addprefix $(DROPS_STDDIR)/include/$(ARCH)/,$(L4API)) \
                 $(addprefix $(DROPS_STDDIR)/include/,$(L4API)) \
                 $(DROPS_STDDIR)/include/$(ARCH) \
@@ -211,8 +204,7 @@ else
 L4INCDIR ?=	$(addprefix $(OBJ_BASE)/include/$(ARCH)/,$(L4API)) \
                 $(wildcard $(addprefix $(OBJ_BASE)/include/,$(L4API))) \
                 $(OBJ_BASE)/include/$(ARCH) \
-                $(OBJ_BASE)/include \
-		$(if $(USE_DICE),$(DICE_INCDIR),)
+                $(OBJ_BASE)/include
 
 L4LIBDIR ?=     $(addprefix $(OBJ_BASE)/lib/$(ARCH)_$(CPU)/,$(L4API)) \
                 $(OBJ_BASE)/lib/$(ARCH)_$(CPU) \
@@ -234,7 +226,6 @@ endif
 # Additionally, the following variables are supported:
 # SRC_C, SRC_CC, SRC_F, SRC_S - .c, .cc, .f90, .S source files
 # LIBS		- additional libs to link (with -l), including paths (-L)
-# IDL		- interface definition files
 # TARGET	- targets to be built
 #
 # These variables will be used for all operations with the corresponding
@@ -454,7 +445,6 @@ CFLAGS_L4_GENERIC += $(CCXX_FLAGS) $(CARCHFLAGS) $(GCCSTACKPROTECTOROPT)
 endif
 
 
-$(CLIENTIDL:.idl=-client.o): CFLAGS += -ffunction-sections
 CFLAGS  += $(if $(CONFIG_BID_GCC_OMIT_FP),-fomit-frame-pointer,-fno-omit-frame-pointer)
 CFLAGS	+= $(call bid_flag_variants,CFLAGS)
 CFLAGS	+= $(OPTS) $(WARNINGS)
@@ -482,7 +472,6 @@ CPPFLAGS+= $(DEFINES)
 CPPFLAGS+= $(addprefix -I,  $(PRIVATE_INCDIR) $(call bid_flag_variants,PRIVATE_INCDIR))
 CPPFLAGS+= $(if $(CONTRIB_INCDIR),$(addprefix -I$(OBJ_BASE)/include/contrib/,$(CONTRIB_INCDIR)))
 CPPFLAGS+= $(BID_PKG_CONFIG_CFLAGS)
-#CPPFLAGS+= $(if $(CLIENTIDL)$(SERVERIDL)$(addprefix CLIENTIDL_,$(TARGET))$(addprefix SERVERIDL_,$(TARGET)),$(addprefix -I, $(IDL_PATH)))
 ifneq ($(MODE),host)
 CPPFLAGS+= $(addprefix -I, $(L4INCDIR))
 endif
@@ -537,48 +526,6 @@ ALLOBJS  = $(OBJS) $(foreach target,$(TARGET) $(TARGET_$(OSYSTEM)),\
                              $(OBJS_$(target)) $(OBJS_$(target)_$(OSYSTEM)))
 ALLDPI = $(sort $(foreach obj,$(ALLOBJS),$(patsubst %.dpe,%.dpi,\
 		$(DPE_$(obj:.o=.c)))))
-
-# implementation of $(CLIENTIDL) and $(SERVERIDL)
-IDL_TYPE   ?= dice
-IDL_PKGDIR ?= $(PKGDIR_OBJ)
-IDL_PATH   ?= $(addsuffix /idl/OBJ-$(ARCH)-$(L4API),$(IDL_PKGDIR))
-ifneq ($(IDL_TYPE), dice)
-ifneq ($(IDL_TYPE), corba)
-$(error IDL_TYPE "$(IDL_TYPE)" not supported.)
-endif
-endif
-
-# A function to deliver the source files generated from IDL-files and
-# that should be linked to a given target. Used by "targetobjs" to write
-# the target-objects and in the "Makefile.inc:"-rule to write the IDL_SRC_C-
-# variables
-# arg: 1 - target
-IDL_SRC_Cfn = $(CLIENTIDL:.idl=-client.c) $(SERVERIDL:.idl=-server.c)	\
-	      $(foreach inter, $(OSYSTEM) $(1) $(1)_$(OSYSTEM),		\
-			$(CLIENTIDL_$(inter):.idl=-client.c)		\
-			$(SERVERIDL_$(inter):.idl=-server.c))
-IDL_SRC_CCfn = $(CLIENTIDL:.idl=-client.cc) $(SERVERIDL:.idl=-server.cc) \
-	      $(foreach inter, $(OSYSTEM) $(1) $(1)_$(OSYSTEM),		\
-			$(CLIENTIDL_$(inter):.idl=-client.cc)		\
-			$(SERVERIDL_$(inter):.idl=-server.cc))
-
-# *all* CLIENTIDLs/SERVERIDLs
-# needed for the test if we should include the IDL-Path into vpath
-IDL_ALLCLIENTIDL = $(CLIENTIDL) $(CLIENTIDL_$(OSYSTEM))			\
-		   $(foreach target,$(TARGET) $(TARGET_$(OSYSTEM)),	\
-		      $(CLIENTIDL_$(target)) $(CLIENTIDL_$(target)_$(OSYSTEM)))
-IDL_ALLSERVERIDL = $(SERVERIDL) $(SERVERIDL_$(OSYSTEM)) 		\
-		   $(foreach target,$(TARGET) $(TARGET_$(OSYSTEM)),	\
-		      $(SERVERIDL_$(target)) $(SERVERIDL_$(target)_$(OSYSTEM)))
-
-ifneq ($(IDL_ALLCLIENTIDL),)
-vpath %-client.c $(IDL_PATH)
-vpath %-client.cc $(IDL_PATH)
-endif
-ifneq ($(IDL_ALLSERVERIDL),)
-vpath %-server.c $(IDL_PATH)
-vpath %-server.cc $(IDL_PATH)
-endif
 
 # adjust obj path in case an absolute path name is given,
 # for that to work we also need to explicitly list .o to .source relations
@@ -684,17 +631,6 @@ BID_SRC_VARS ?= S C CC F DATA
 #
 define make_per_target_vars
   $(foreach svar,$(BID_SRC_VARS),$(call make_per_source_type_vars,SRC_$(svar),$(1),$(2)))
-endef
-
-# function to to use with $(eval ...) that generates per-target
-# SRC_C and SRC_CC entries for IDL-compiler generated source files
-# NOTE: no IDL compiler is currently used/supported so this function
-#       is not used.
-define per_target_idl_vars
-  IDL_SRC_C_$(1)  = $$(call IDL_SRC_Cfn,$(1))
-  SRC_C_$(1)     += $$(IDL_SRC_C_$(1))
-  IDL_SRC_CC_$(1) = $$(call IDL_SRC_CCfn,$(1))
-  SRC_CC_$(1)    += $$(IDL_SRC_CC_$(1))
 endef
 
 #

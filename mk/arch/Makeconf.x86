@@ -23,7 +23,6 @@ CARCHFLAGS_x86_athlon4    = -march=athlon-4
 CARCHFLAGS_x86_K8         = -march=k8
 CARCHFLAGS_x86_opteron    = -march=opteron
 
-IDL_SYSTEMS     += x86-l4f
 CCXX_FLAGS_x86  += -m32
 
 CC_x86          = $(CROSS_COMPILE)gcc
