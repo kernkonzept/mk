@@ -11,12 +11,12 @@
 # installed. If they are both empty, and NOTARGETSTOINSTALL is not set,
 # they are set to TARGET and TARGET_$(ARCH).
 #
-# INSTALLDIR and INSTALLDIR_LOCAL is the dir the files will be installed 
+# INSTALLDIR and INSTALLDIR_LOCAL is the dir the files will be installed
 # in and must be set prior to including this file. INSTALLDIR is used by the
 # target "install" and "INSTALLDIR_LOCAL" by the target "all".
 #
 # The target "all" is made depending on the installed files in
-# INSTALLDIR_LOCAL. "install" on the files in INSTALLDIR. An other
+# INSTALLDIR_LOCAL. "install" on the files in INSTALLDIR. Another
 # difference is that "all" results in using the variable
 # $(INSTALLFILE_LOCAL) to install the files and "install" in using
 # $(INSTALLFILE). This allows the difference between linking and actually
