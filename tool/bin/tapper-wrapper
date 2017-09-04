@@ -6,6 +6,8 @@ use IO::Handle;
 use Getopt::Long;
 use Pod::Usage;
 use File::Basename;
+use File::Temp "tempdir";
+use File::Path "make_path";
 
 my $help = 0;
 my $nowrapper = 0;
@@ -24,6 +26,7 @@ GetOptions(
   'moe-args|m=s'    => sub { $ENV{MOE_ARGS} = $_[1]; },
   'test-args|t=s'   => sub { $ENV{TEST_ARGS} = $_[1]; },
   'logfile|l=s'     => sub { $ENV{TEST_LOGFILE} = $_[1]; },
+  'workdir=s'       => sub { $ENV{TEST_WORKDIR} = $_[1]; },
   'image|i=s'       => sub { $ENV{IMAGE_TYPE} = $_[1]; }
 ) or pod2usage(-verbose => 99, -sections => "OPTIONS");
 
@@ -38,14 +41,30 @@ if ($nowrapper)
   }
 
 my $timeout = $ENV{TEST_TIMEOUT} || 10;
+my $target = $ENV{TEST_TARGET};
 my $TAPPER_FD;
 my $pid = -1;
 my $expline;
 my $output_to_tapper_fd = 0;
-my $test_description = join(" ", map { $_ ? basename($_) : () } @ARGV, $ENV{TEST_TARGET});
+my $test_description = join(" ", map { $_ ? basename($_) : () } @ARGV, $target);
 
 my $LOG_FD;
-my $logfile = $ENV{TEST_LOGFILE};
+my $logfile;
+my $workdir = $ENV{TEST_WORKDIR};
+if ($workdir)
+  {
+    my ($name, $path, $suffix) = fileparse($ENV{TEST_TESTFILE} || $target || "", ".t");
+    my $testworkdir   = "$workdir/$path$name";
+    my $logdir        = "$testworkdir/log"; # tapper-wrapper logs
+    my $rundir        = "$testworkdir/run"; # run_test modules.list, ned files, etc.
+    $logfile          = "$logdir/testout.log";
+    $ENV{TEST_TMPDIR} = $rundir;
+    make_path($logdir, $rundir);
+  }
+else
+  {
+    $logfile = $ENV{TEST_LOGFILE};
+  }
 if ($logfile)
   {
     open $LOG_FD, ">>", $logfile or die "Can not open logfile '$logfile'\n";
@@ -432,8 +451,17 @@ $TEST_SCRIPT [options]
     <STRING>       the test on the target platform.
                    For available image types see 'make help'.
 
-  --logfile,-l     Append output of test execution to the given file.
-    <STRING>
+  --logfile,-l     Append output of test execution to the given file
+    <STRING>       unless --workdir is given.
+
+  --workdir        Create logs, temp and other files below the given
+    <STRING>       directory. That directory is taken as base dir for
+                   more automatically created subdir levels using the
+                   current test path, in order to guarantee
+                   conflict-free usage when running many different
+                   tests with a common workdir. When --workdir is
+                   provided then --logfile is ignored as it is
+                   organized below workdir.
 
  Options for gtest test applications:
   --verbose,-v     Run test in verbose mode. Repeat for increased verbosity.

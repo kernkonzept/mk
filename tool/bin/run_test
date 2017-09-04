@@ -36,7 +36,6 @@ my $hwconfig_file = $ENV{TEST_HWCONFIG} || '';
 my $roottask;
 
 my $tmpdir      = $ENV{TEST_TMPDIR};
-$tmpdir        .= "/$test_target";
 make_path($tmpdir);
 push(@modulepaths, $tmpdir);
 

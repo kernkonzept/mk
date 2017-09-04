@@ -78,6 +78,7 @@ $(TEST_SCRIPTS):%.t: $(GENERAL_D_LOC)
 	$(VERBOSE)$(foreach v,$(testvars_conf), echo ': $${$(v):=$(call targetvar,$(v),$(notdir $*))}' >> $@;)
 	$(VERBOSE)$(foreach v,$(testvars_append), echo '$(v)="$$$(v) $(call targetvar,$(v),$(notdir $*))"' >> $@;)
 	$(VERBOSE)echo ': $${BID_L4_TEST_HARNESS_ACTIVE:=1}' >> $@
+	$(VERBOSE)echo 'export TEST_TESTFILE=$$0' >> $@
 	$(VERBOSE)echo 'if [ -n "$$TEST_TMPDIR" ]; then GOT_TMPDIR=1; else TEST_TMPDIR=`mktemp -d`; fi' >> $@
 	$(VERBOSE)echo -e "set +a\n" >> $@
 	$(VERBOSE)echo -e 'trap "{ if [ x$$GOT_TMPDIR != x1 -a -d $$TEST_TMPDIR ]; then rm -r $$TEST_TMPDIR; fi; }" EXIT\n' >> $@

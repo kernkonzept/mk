@@ -312,6 +312,17 @@ The test will only be executed if the command returns 0.
 If the exit code is 2, the test is marked as skipped
 with the reason provided in the final line of stdout.
 
+\par `TEST_LOGFILE`
+Append output of test execution to the given file unless
+TEST_WORKDIR is given.
+
+\par `TEST_WORKDIR`
+Create logs, temp and other files below the given directory. That
+directory is taken as base dir for more automatically created subdir
+levels using the current test path, in order to guarantee conflict-free
+usage when running many different tests with a common workdir. When
+TEST_WORKDIR is provided then TEST_LOGFILE is ignored as it is
+organized below workdir.
 
 In addition to compiled tests, it is also possible to create tests
 where the test binary or script comes from a different source. These
