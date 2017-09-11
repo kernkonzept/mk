@@ -19,7 +19,9 @@ $(GENERAL_D_LOC): $(L4DIR)/mk/prog.mk
 define copy_stripped_binary
   $(call create_dir,$(dir $(2))/.debug); \
   ln -sf $(call absfilename,$(1)) $(dir $(2))/.debug/$(1); \
-  $(OBJCOPY) --strip-unneeded --add-gnu-debuglink=$(1) $(1) $(2); \
+  $(OBJCOPY) --strip-unneeded --add-gnu-debuglink=$(1) \
+             $(1) $(2) >/dev/null 2>&1 \
+    || ln -sf $(call absfilename,$(1)) $(2); \
   chmod 755 $(2)
 endef
 
