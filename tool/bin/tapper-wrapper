@@ -224,8 +224,7 @@ sub readline_timeout
 
   if ($idx >= 0 and $readbuffer)
     {
-      $outline = substr($readbuffer, 0, $idx + 1);
-      $readbuffer = substr($readbuffer, $idx + 1);
+      $outline = substr($readbuffer, 0, $idx + 1, '');
     }
 
   $outline =~ s/\r+\n/\n/g;
