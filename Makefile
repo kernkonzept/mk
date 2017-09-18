@@ -283,7 +283,7 @@ endef
 
 KCONFIGS_ARCH := $(wildcard $(L4DIR)/mk/arch/Kconfig.*.inc)
 
-$(KCONFIG_FILE): $(KCONFIG_FILE_SRC) Makefile $(wildcard $(L4DIR)/conf/platforms/*.conf $(L4DIR)/conf/platforms/*.conf) \
+$(KCONFIG_FILE): $(KCONFIG_FILE_SRC) Makefile $(wildcard $(L4DIR)/mk/platforms/*.conf $(L4DIR)/conf/platforms/*.conf) \
                  $(KCONFIGS_ARCH) $(L4DIR)/tool/bin/gen_kconfig
 	$(VERBOSE)echo $(KCONFIG_FILE): $^ > $(KCONFIG_FILE_DEPS)
 	$(VERBOSE)$(foreach f,$^,echo $(f): >> $(KCONFIG_FILE_DEPS) ; )
