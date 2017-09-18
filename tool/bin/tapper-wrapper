@@ -26,6 +26,7 @@ GetOptions(
   'fiasco-args|f=s' => sub { $ENV{KERNEL_ARGS} = $_[1]; },
   'moe-args|m=s'    => sub { $ENV{MOE_ARGS} = $_[1]; },
   'test-args|t=s'   => sub { $ENV{TEST_ARGS} = $_[1]; },
+  'run-tags|T=s'    => sub { $ENV{TEST_RUN_TAGS} = $_[1]; },
   'logfile|l=s'     => sub { $ENV{TEST_LOGFILE} = $_[1]; },
   'workdir=s'       => sub { $ENV{TEST_WORKDIR} = $_[1]; },
   'image|i=s'       => sub { $ENV{IMAGE_TYPE} = $_[1]; }

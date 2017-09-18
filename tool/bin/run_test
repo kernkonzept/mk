@@ -33,11 +33,29 @@ my $ned_cfg     = $ENV{NED_CFG};
 my $moe_args    = $ENV{MOE_ARGS};
 my @more_mods   = split(' ', $ENV{REQUIRED_MODULES});
 my $hwconfig_file = $ENV{TEST_HWCONFIG} || '';
+my $test_run_tags = $ENV{TEST_RUN_TAGS} || '';
+my $test_required_tags = $ENV{TEST_TAGS};
 my $roottask;
 
 my $tmpdir      = $ENV{TEST_TMPDIR};
 make_path($tmpdir);
 push(@modulepaths, $tmpdir);
+
+# array_minus removes all entries from the first array which exist in
+# the second array. If the result is empty then the first is a subset
+# of the second.
+sub array_minus
+{
+  my %e = map{ $_ => undef } @{$_[1]};
+  return grep( ! exists( $e{$_} ), @{$_[0]} );
+}
+
+# array_intersect keeps only those entries from the first array which
+# exist in the second array.
+sub array_intersect {
+  my %e = map { $_ => undef } @{$_[0]};
+  return grep { exists( $e{$_} ) } @{$_[1]};
+}
 
 sub get_module
 {
@@ -158,6 +176,37 @@ sub check_config
       print "WARNING: $binname config not found at $cfgfile\n";
     }
 }
+
+# Are the tags required by the current test?
+if (defined($test_required_tags))
+  {
+    # Remove whitespaces in both variables
+    $test_run_tags =~ s/\s+//g;
+    $test_required_tags =~ s/\s+//g;
+
+    # Convert both strings to arrays
+    my @test_forbidden_tags = map { s/^!(.*)/$1/; $_ } grep { /^!/ } split(/,/, $test_required_tags);
+    my @test_required_tags = grep { /^[^!]/} split(/,/, $test_required_tags);
+    my @test_run_tags = split(/,/, $test_run_tags);
+
+    # Remove empty elements (just in case)
+    @test_required_tags = grep { $_ ne '' } @test_required_tags;
+    @test_run_tags = grep { $_ ne '' } @test_run_tags;
+
+    # Check missing tags
+    my @tags_missing = array_minus(\@test_required_tags, \@test_run_tags);
+    if (scalar(@tags_missing) > 0)
+      {
+        exit_skip "requires additional run tags: " . join(", ", @tags_missing);
+      }
+
+    # Check forbidden tags
+    my @tags_forbidden = array_intersect(\@test_forbidden_tags, \@test_run_tags);
+    if (scalar(@tags_forbidden) > 0)
+      {
+        exit_skip "not supported with run tags: " . join(", ", @tags_forbidden);
+      }
+  }
 
 # Any L4Re kernel features as requirements?
 check_config('L4Re kernel', $ENV{"KERNEL_CONF"}, $kernel, 'globalconfig.out');

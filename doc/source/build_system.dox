@@ -324,6 +324,15 @@ usage when running many different tests with a common workdir. When
 TEST_WORKDIR is provided then TEST_LOGFILE is ignored as it is
 organized below workdir.
 
+\par `TEST_TAGS`
+Comma separated list of tags which have to be specified
+in order to run the test. Test will be skipped without error otherwise.
+Useful to mark tests, e.g. broken or slow.
+Tag names can basically contain any character except comma.
+Whitespace characters surrounding a tag name will be ignored.
+A tag starting with exclamation mark is checked to not appear
+in the specified run tags, otherwise the test is also skipped.
+
 In addition to compiled tests, it is also possible to create tests
 where the test binary or script comes from a different source. These
 tests must be listed in `EXTRA_TARGET` and for each target a
@@ -386,6 +395,35 @@ or running one or more tests through the test harness
     prove test/t/amd64_amdfam10/l4f/l4re-core/moe/test_namespace.t
     prove -r test/t/amd64_amdfam10/l4f/l4re-core/
     prove -rv test/t/amd64_amdfam10/l4f/l4re-core/
+
+To run tests with tags (see `TEST_TAGS`), these tags need to be
+specified either in the environment variable `TEST_RUN_TAGS` or as
+arguments to the test.t files:
+
+    $ test/t/amd64_amdfam10/l4f/l4re-core/test_one.t --run-tags slow,gtest-shuffle
+    $ test/t/amd64_amdfam10/l4f/l4re-core/test_one.t -T slow,gtest-shuffle
+    $ prove -r test/t/amd64_amdfam10/l4f/l4re-core/ :: -T slow,gtest-shuffle
+    $ TEST_RUN_TAGS=slow,gtest-shuffle prove -r test/t/amd64_amdfam10/l4f/l4re-core/
+
+Without providing run tags, tests requiring certain tags are skipped:
+
+    $ make test
+    ...
+    test/t/amd64_amdfam10/test_one.t .... ok
+    test/t/amd64_amdfam10/test_two.t .... skipped: requires additional run tags: slow
+    test/t/amd64_amdfam10/test_three.t .. ok
+
+When tags are provided, the tests requiring those tags are now also
+executed, the tests that forbid them are skipped:
+
+    $ TEST_RUN_TAGS=slow,gtest-shuffle
+    $ make test
+    ...
+    test/t/amd64_amdfam10/test_one.t .... ok
+    test/t/amd64_amdfam10/test_two.t .... ok
+    test/t/amd64_amdfam10/test_three.t .. skipped: not supported with run tags: gtest-shuffle
+
+Tests without any tags are always executed.
 
 Running Tests in External Programs
 ----------------------------------
