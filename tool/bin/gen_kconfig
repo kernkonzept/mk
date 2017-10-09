@@ -63,7 +63,7 @@ while ($_=<IN>) {
   print OUT;
   if (/$tag ARCH_CHOICE_DEFAULT\W/x) {
     my $a = 'x86';
-    $a = $ENV{ARCH} if defined $ENV{ARCH};
+    $a = $ENV{ARCH} if $ENV{ARCH};
     die "Unknown architecture '$a'" unless defined $archs{"BUILD_ARCH_$a"};
     print OUT "\tdefault BUILD_ARCH_$a\n";
   }
