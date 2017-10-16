@@ -325,10 +325,12 @@ ifneq ($(CONFIG_HAVE_LDSO),)
 # arg4 - [opt] alternative binary name
 ifeq ($(origin BID_LIBGENDEP_PATHS), undefined)
  ifeq ($(HOST_SYSTEM),linux)
+   BID_LIBGENDEP_PATHS_fn = \
+     $(firstword $(wildcard $(call absfilename, $(OBJ_BASE)/tool/gendep$(1) \
+                                                $(DROPS_STDDIR)/tool/lib$(1))))
    BID_LIBGENDEP_PATHS := \
-      $(firstword $(wildcard $(call absfilename, $(OBJ_BASE)/tool/gendep/64 \
-        $(DROPS_STDDIR)/tool/lib/64))):$(firstword $(wildcard $(call absfilename, \
-        $(OBJ_BASE)/tool/gendep/32 $(DROPS_STDDIR)/tool/lib/32 )))
+     $(call BID_LIBGENDEP_PATHS_fn,/64):$(call \
+            BID_LIBGENDEP_PATHS_fn,/32):$(call BID_LIBGENDEP_PATHS_fn)
  endif
 
  ifeq ($(HOST_SYSTEM),darwin)

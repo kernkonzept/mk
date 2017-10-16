@@ -49,7 +49,7 @@
 static int real_open (const char *fn, int flags, int mode)
 {
   if(VERBOSE) printf("real_open(%s)\n", fn);
-  return (syscall(SYS_open, (fn), (flags), (mode)));
+  return (syscall(SYS_openat, AT_FDCWD, (fn), (flags), (mode)));
 }
 
 int OPEN(const char *fn, int flags, ...)
@@ -169,7 +169,7 @@ FILE* FOPEN64(const char*path, const char*mode){
 static int real_unlink (const char *fn)
 {
   if(VERBOSE) printf("real_unlink(%s)\n", fn);
-  return syscall(SYS_unlink, (fn));
+  return syscall(SYS_unlinkat, AT_FDCWD, (fn));
 }
 
 int UNLINK(const char *fn)
