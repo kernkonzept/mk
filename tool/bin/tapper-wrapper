@@ -13,7 +13,7 @@ my $help = 0;
 my $nowrapper = 0;
 Getopt::Long::Configure ("bundling");
 GetOptions(
-  'help'    => \$help,
+  'help|h'  => \$help,
   'debug|d' => sub { $ENV{TEST_ARGS} = '-vvv';
                      $ENV{KERNEL_ARGS} = '-serial_esc';
                      $nowrapper = 1;
@@ -467,6 +467,9 @@ $TEST_SCRIPT [options]
   --verbose,-v     Run test in verbose mode. Repeat for increased verbosity.
   --only,-o <TEST> Only run given test.
                    Produces command line: --gtest_filter=*<TEST>
+
+  --record,-r      Record per test meta information such as path of the test
+                   file, the line number of the test, and the name of the test.
 
   For more options to gtest try running with: --test-args -h
 
