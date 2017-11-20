@@ -1,4 +1,4 @@
-CROSS_COMPILE_arm         = arm-linux-
+CROSS_COMPILE_arm         = arm-linux-gnueabihf-
 LD_EMULATION_CHOICE_arm   = armelf armelf_linux_eabi
 OFORMAT_arm               = elf32-littlearm
 BFD_ARCH_arm              = arm
