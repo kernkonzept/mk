@@ -364,8 +364,9 @@ sub get_module_entry($$)
         @params = @m;
         $type = 'bin';
       } elsif ($type eq 'moe') {
+        my $bn = (reverse split(/\/+/, $params[0]))[0];
         $mods[2]{command}  = 'moe';
-        $mods[2]{cmdline}  = "moe rom/$params[0]";
+        $mods[2]{cmdline}  = "moe rom/$bn";
         $type = 'bin';
         @m = ($params[0]);
       }
