@@ -70,19 +70,20 @@ targetvar = $(or $($(1)_$(2)),$($(1)))
 
 # This is the same as INSTALLFILE_LIB_LOCAL
 INSTALLFILE_TEST_LOCAL = $(LN) -sf $(call absfilename,$(1)) $(2)
+DEFAULT_TEST_STARTER = $(L4DIR)/tool/bin/default-test-starter
 
 $(TEST_SCRIPTS):%.t: $(GENERAL_D_LOC)
 	$(VERBOSE)echo -e "#!/bin/bash\n\nset -a" > $@
+	$(VERBOSE)echo 'L4DIR="$(L4DIR)"' >> $@
 	$(VERBOSE)echo 'SEARCHPATH="$(if $(PRIVATE_LIBDIR),$(PRIVATE_LIBDIR):)$(INSTALLDIR_BIN_LOCAL):$(OBJ_BASE)/bin/$(ARCH)_$(CPU):$(OBJ_BASE)/bin/$(ARCH)_$(CPU)/$(BUILD_ABI):$(OBJ_BASE)/lib/$(ARCH)_$(CPU):$(OBJ_BASE)/lib/$(ARCH)_$(CPU)/$(BUILD_ABI):$(SRC_DIR):$(L4DIR)/conf/test"' >> $@
 	$(VERBOSE)$(foreach v,$(testvars_fix), echo '$(v)="$(call targetvar,$(v),$(notdir $*))"' >> $@;)
 	$(VERBOSE)$(foreach v,$(testvars_conf), echo ': $${$(v):=$(call targetvar,$(v),$(notdir $*))}' >> $@;)
 	$(VERBOSE)$(foreach v,$(testvars_append), echo '$(v)="$$$(v) $(call targetvar,$(v),$(notdir $*))"' >> $@;)
 	$(VERBOSE)echo ': $${BID_L4_TEST_HARNESS_ACTIVE:=1}' >> $@
-	$(VERBOSE)echo 'export TEST_TESTFILE=$$0' >> $@
-	$(VERBOSE)echo 'if [ -n "$$TEST_TMPDIR" ]; then GOT_TMPDIR=1; else TEST_TMPDIR=`mktemp -d`; fi' >> $@
-	$(VERBOSE)echo -e "set +a\n" >> $@
-	$(VERBOSE)echo -e 'trap "{ if [ x$$GOT_TMPDIR != x1 -a -d $$TEST_TMPDIR ]; then rm -r $$TEST_TMPDIR; fi; }" EXIT\n' >> $@
-	$(VERBOSE)echo '$(L4DIR)/tool/bin/tapper-wrapper $(call test_script,$(notdir $*)) "$$@"' >> $@
+	$(VERBOSE)echo 'TEST_TESTFILE="$$0"' >> $@
+	$(VERBOSE)echo ': $${TEST_STARTER:=$(DEFAULT_TEST_STARTER)}' >> $@
+	$(VERBOSE)echo 'set +a' >> $@
+	$(VERBOSE)echo 'exec $$TEST_STARTER "$$@"' >> $@
 	$(VERBOSE)chmod 755 $@
 	@$(BUILT_MESSAGE)
 	@$(call INSTALL_LOCAL_MESSAGE,$@)

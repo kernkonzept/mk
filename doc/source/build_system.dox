@@ -454,6 +454,17 @@ output. Default is `11111`.
 After starting the simulator it waits that many seconds before reading
 from the port. Default is `1` (second).
 
+Running tests without tapper-wrapper
+------------------------------------
+
+In case you want to replace the tapper-wrapper test starter, you can
+replace the default one by setting the environment variable
+`TEST_STARTER` to the path of your test starter. Then your test starter
+can use the same environment which is normally set up for the default
+starter, which includes environment variables provided by the build
+system as well as the test itself. Among these are `SEARCHPATH`, `MODE`,
+`ARCH`, `MOE_CFG`, `MOE_ARGS`, `TEST_TIMEOUT`, `TEST_TARGET`,
+`TEST_EXPECTED`, `QEMU_ARGS` and many more.
 
 Debugging Tests
 ---------------
