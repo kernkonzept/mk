@@ -119,6 +119,7 @@ MKDIR		= mkdir -p
 MKFLAGS		+=$(MKFLAGS_$@)
 NM		?= $(CROSS_COMPILE)nm
 OBJCOPY		?= $(CROSS_COMPILE)objcopy
+OBJDUMP		?= $(CROSS_COMPILE)objdump
 PKG_CONFIG      = pkg-config
 PWDCMD		= pwd -P
 RANLIB		?= $(CROSS_COMPILE)ranlib
@@ -136,7 +137,7 @@ ABS2REL		= $(L4DIR)/tool/bin/abs2rel.sh
 # it is optional to be able to set it as environment variable
 FIASCOUX	?= $(L4DIR)/../kernel/fiasco/build-ux/fiasco
 PAGER		?= less
-DISASM_CMD      ?= $(CROSS_COMPILE)objdump -lCSd $(1) | $(PAGER)
+DISASM_CMD      ?= $(OBJDUMP) -lCSd $(1) | $(PAGER)
 IMAGES_DIR      ?= $(OBJ_BASE)/images
 
 # functions that are handy
@@ -606,7 +607,7 @@ ADDFILEHEADER_PREFIX = $(patsubst $(call absfilename,$(PKGDIR)/)%,\
 ADDFILEHEADER_FILES = $(filter-out addfileheader,$(MAKECMDGOALS))
 addfileheader:
 	addfileheader $(ADDFILEHEADER_OPTIONS) -p $(ADDFILEHEADER_PREFIX) $(ADDFILEHEADER_FILES)
-        
+
 
 .PHONY: FORCE
 
