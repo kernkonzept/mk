@@ -108,12 +108,16 @@ sub dump_xtor_section($$$$$)
     my $h = sprintf "%x", $v;
 
     # lazy..
-    my $o = `$nm $file | grep $h | perl -p -e 's/(\\s_GLOBAL__I\\.\\d+_)(_Z)/\$1 ... \$2/' | c++filt | c++filt`;
+    my $o = `$nm $file | grep $h`;
     chomp $o;
     if ($o eq '') {
       print "Address $h not found in binary\n";
     } else {
-      print "$o\n";
+      if ($o =~ /^(.+\s_GLOBAL__sub_I(_|\.\d+_))(.+)/) {
+        print "$1 -- ", `echo '$3' | c++filt`;
+      } else {
+        system("echo '$o' | c++filt");
+      }
     }
   }
 
@@ -219,6 +223,7 @@ foreach my $f (@ARGV) {
   $en = $en eq 'msb';
   print "[32;1m$f:[m\n";
   dump_xtor_section($f, $bits, $en, ".ctors", 1);
+  dump_xtor_section($f, $bits, $en, ".preinit_array", 0);
   dump_xtor_section($f, $bits, $en, ".init_array", 0);
   dump_xtor_section($f, $bits, $en, ".dtors", 1);
   dump_xtor_section($f, $bits, $en, ".fini_array", 0);
