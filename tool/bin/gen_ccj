@@ -1,0 +1,81 @@
+#! /usr/bin/env perl
+
+use strict;
+use warnings;
+use File::Basename;
+
+my $searchdir = shift;
+my $outfile = shift;
+
+if (not defined $outfile)
+  {
+    print "Usage: $0 search-dir outfile\n";
+    print "\n";
+    print "Example: $0 /path/to/obj-dir /path/to/your/l4re/src/dir/compile_commands.json\n";
+    exit 1;
+  }
+
+open(my $out, ">$outfile") or die "Cannot open '$outfile': $!";
+
+my %db;
+
+open(my $fh_find, "find '$searchdir' -name '.*.cmd' |") or die "Cannot launch 'find': $!";
+while (my $file = <$fh_find>)
+  {
+    chomp $file;
+
+    my $cmd;
+    my $source;
+    my $obj;
+    open(my $fh_cmd, $file) or die "Cannot open '$file': $!";
+    while (<$fh_cmd>)
+      {
+        chomp;
+        $cmd    = $1 if /^cmd_\S+\s+:=\s+(.+)/;
+        $source = $1 if /^source_\S+\s+:=\s+(.+)/;
+        $obj    = $1 if /^cmd_(\S+)\s+:=\s+.+/;
+      }
+
+    if (defined $cmd and defined $source and defined $obj)
+      {
+        my $dir = dirname($file);
+        my $subdir = dirname($obj);
+        my $subdir_len = length($subdir) + 1;
+        $subdir_len = 0 if $subdir eq '.';
+        $dir = substr($dir, 0, length($dir) - $subdir_len);
+
+        my %e = ( cmd => $cmd, dir => $dir, obj => $obj );
+        $db{$source} = { %e };
+      }
+
+    close $fh_cmd;
+  }
+
+close $fh_find;
+
+print $out "[\n";
+my $comma = "";
+foreach my $source (sort keys %db)
+  {
+    (my $dir = $db{$source}{dir}) =~ s/(["\\])/\\$1/g;
+    (my $cmd = $db{$source}{cmd}) =~ s/(["\\])/\\$1/g;
+    print $out $comma;
+    print $out "  {\n";
+    print $out "    \"file\": \"$source\",\n";
+    print $out "    \"directory\": \"$dir\",\n";
+    print $out "    \"command\": \"$cmd\",\n";
+    print $out "    \"output\": \"$dir/$db{$source}{obj}\"\n";
+    print $out "  }";
+    $comma = ",\n";
+  }
+print $out "\n]\n";
+
+close $out;
+
+# Did we do it right?
+system("echo '{}' | jq . 2>&1 > /dev/null");
+if ($? == 0)
+  {
+    my $o = `jq < $outfile`;
+    print $o if $?;
+  }

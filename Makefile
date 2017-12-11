@@ -225,7 +225,10 @@ regen_l4defs:
 	+$(call generate_l4defs_files,sharedlib)
 	+$(call generate_l4defs_files,finalize)
 
-.PHONY: l4defs regen_l4defs
+compile_commands.json:
+	$(L4DIR)/tool/bin/gen_ccj $(OBJ_DIR) $(L4DIR)/compile_commands.json
+
+.PHONY: l4defs regen_l4defs compile_commands.json
 endif # empty $(S)
 
 #####################
