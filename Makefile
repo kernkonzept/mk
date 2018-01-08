@@ -858,5 +858,17 @@ help::
 	@echo "  test             - Execute unit tests."
 	@echo "  listplatforms    - List available platforms."
 
-test::
-	prove -rv "$(OBJ_BASE)/test/t/$(ARCH)_$(CPU)/$(BUILD_ABI)"
+
+test:
+	$(VERBOSE)taparchive="$(TAPARCHIVE)"; \
+	if [ -n "$${taparchive%%/*}" ]; then \
+	  echo "ERROR: TAPARCHIVE must be an absolute path."; \
+	  exit 1; \
+	fi
+	$(VERBOSE)tmptestdir=$$(mktemp -d); \
+	ln -fs "$(OBJ_BASE)/test/t/$(ARCH)_$(CPU)/$(BUILD_ABI)" \
+	       "$${tmptestdir}/bid-tests"; \
+	(cd $$tmptestdir && \
+	 prove $(if $(TAPARCHIVE),-a $(TAPARCHIVE)) $(if $(VERBOSE),,-v) \
+	       -m -r "bid-tests/$${TESTS#bid-tests/}"); \
+	rm -fr "$$tmptestdir"
