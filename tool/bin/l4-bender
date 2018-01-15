@@ -8,7 +8,7 @@ use File::Basename;
 
 my $progname = basename($0);
 
-my @non_pc_args; # argoments from non pkg-config mode
+my @non_pc_args; # arguments from non pkg-config mode
 my %global_vars; # global variables from the command line
 my %all_files;   # all files loaded
 my @pc_files;    # all pc files loaded
@@ -44,7 +44,7 @@ sub warn
 # search the given file in the given search paths and return the first
 # match.
 #
-# The seach paths are a list of paths, where each path may also contain
+# The search paths are a list of paths, where each path may also contain
 # a colon separated list of paths.
 sub search_file
 {
@@ -214,7 +214,7 @@ my %funcs = (
     return $value;
   },
 
-  # %:split(DELIM ARGS) split ARGS at DELIM and return space seperated
+  # %:split(DELIM ARGS) split ARGS at DELIM and return space separated
   # list of split ARGS
   'split' => sub {
     my ($ctxt, $delim, @values) = @_;
@@ -592,7 +592,7 @@ sub replace
   print $errout "replace var: orig='$orig' -> values=[".
     join(', ', map { "'$_'" } @values)."]\n" if $debug;
 
-  # check for %* relacements
+  # check for %* replacements
   if ($orig =~ /\*/ && $expr =~ /%\*/) {
     my $or = _get_opt_regexp($orig, 1);
     # process
@@ -705,7 +705,7 @@ sub set_val
   $s->{vals}{$var} = $value;
 }
 
-# compute compined value over all pc files for a given variable
+# compute combined value over all pc files for a given variable
 sub compute_vals
 {
   my ($self, $name) = @_;
