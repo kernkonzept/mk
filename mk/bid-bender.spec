@@ -3,7 +3,7 @@ pc_file_dir = %:set-var(pc_file_dir %(l4obj)/pc)
 
 # options that take an extra argument
 link_arg_opts =
-  %:arg-option(m z o h e -entry fini init -defsym)
+  %:arg-option(L m z o h e -entry fini init -defsym)
   %:arg-option(b -format A -architecture y -trace-symbol MF)
 
 # options that are part of the output file list %o
