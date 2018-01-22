@@ -169,7 +169,7 @@ FILE* FOPEN64(const char*path, const char*mode){
 static int real_unlink (const char *fn)
 {
   if(VERBOSE) printf("real_unlink(%s)\n", fn);
-  return syscall(SYS_unlinkat, AT_FDCWD, (fn));
+  return syscall(SYS_unlinkat, AT_FDCWD, (fn), 0);
 }
 
 int UNLINK(const char *fn)
