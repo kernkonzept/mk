@@ -165,9 +165,28 @@ if ($moe_cfg)
         print $ned_cfg "t.HWCONFIG = {}\n";
         print $ned_cfg qx($convert --to=lua --prefix='t.HWCONFIG.' '$hwconfig_file' | sort);
       }
-    print $ned_cfg "return t\n";
 
-    close($ned_cfg);
+    # Some more assembly required for L4Linux tests.
+    if ($mode eq 'l4linux')
+      {
+        $ned_cfg or confess "L4Linux tests needs to be run with moe config.";
+        # Check that the right version is available.
+        # This is optional, missing parts lead to a simple skip of the test.
+        exit_skip("No L4Linux binary provided.") if (!$l4linux);
+        exit_skip("No ramdisk for L4Linux provided.") if (!$ramdisk);
+        check_config('L4Linux kernel', $ENV{"L4LINUX_CONF"}.' CONFIG_L4_CHR_DS_DRV',
+          $l4linux, '.config');
+
+        push (@module_list, $l4linux);
+        push (@module_list, $ramdisk);
+
+        my $l4linux_bin = basename($l4linux);
+        my $ramdisk_bin = basename($ramdisk);
+        my $ramdisk_size= qx(du -b $ramdisk);
+        chomp($ramdisk_size);
+        print $ned_cfg "t.L4LX_EXEC_CMD = 'rom/$l4linux_bin l4x_rd=rom/$ramdisk_bin ramdisk_size=$ramdisk_size l4re_testprog=/dev/rom/$test_target l4cdds.add=rom/$test_target console=ttyLv0'\n";
+      }
+    print $ned_cfg "return t\n";
 
     # Now set up boot for use with ned.
     (my $moe_cfg_name = $moe_cfg) =~ s/.*\///;
@@ -202,26 +221,6 @@ foreach my $mod (@inmods)
 
 push(@module_list, keys %shared_libs);
 
-# Some more assembly required for L4Linux tests.
-if ($mode eq 'l4linux')
-  {
-    $ned_cfg or confess "L4Linux tests needs to be run with moe config.";
-    # Check that the right version is available.
-    # This is optional, missing parts lead to a simple skip of the test.
-    exit_skip("No L4Linux binary provided.") if (!$l4linux);
-    exit_skip("No ramdisk for L4Linux provided.") if (!$ramdisk);
-    check_config('L4Linux kernel', $ENV{"L4LINUX_CONF"}.' CONFIG_L4_CHR_DS_DRV',
-                 $l4linux, '.config');
-
-    push (@module_list, $l4linux);
-    push (@module_list, $ramdisk);
-
-    my $l4linux_bin = basename($l4linux);
-    my $ramdisk_bin = basename($ramdisk);
-    my $ramdisk_size= qx(du -b $ramdisk);
-    chomp($ramdisk_size);
-    print $ned_cfg "L4LX_EXEC_CMD = 'rom/$l4linux_bin l4x_rd=rom/$ramdisk_bin ramdisk_size=$ramdisk_size l4re_testprog=/dev/rom/$test_target l4cdds.add=rom/$test_target console=ttyLv0'\n";
-  }
 
 my $test_modules;
 my $test_modules_name = "$tmpdir/__test_modules.list";
