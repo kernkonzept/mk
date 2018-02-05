@@ -29,7 +29,7 @@
 
 $(GENERAL_D_LOC): $(L4DIR)/mk/binary.inc $(L4DIR)/mk/modes.inc $(L4DIR)/mk/rules.inc
 
-SRC_CC_IS_CXX11 ?= c++0x
+SRC_CC_IS_CXX11 ?= y
 
 # our default Makefile-name in the OBJ-Subdirs
 BID_OBJ_Makefile ?= Makefile
