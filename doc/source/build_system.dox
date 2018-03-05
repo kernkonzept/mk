@@ -280,8 +280,8 @@ test harness like `prove`.
 Non-standard timeout after which the test run is aborted
 (useful for tests involving sleep).
 
-\par `MOE_CFG`
-LUA configuration file for startup to give to moe
+\par `NED_CFG`
+LUA configuration file for startup to give to Ned
 
 \par `REQUIRED_MODULES`
 Additional modules needed to run the test.

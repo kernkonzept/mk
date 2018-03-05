@@ -29,7 +29,7 @@ my @qemu_args   = split("\0", qx:perl -e 'foreach (\@ARGV) { print "\$_\\0";}' -
 my $test_setup  = $ENV{TEST_SETUP};
 my $test_target = $ENV{TEST_TARGET};
 my $test_args   = $ENV{TEST_ARGS} || '';
-my $moe_cfg     = $ENV{MOE_CFG};
+my $ned_cfg     = $ENV{NED_CFG};
 my $moe_args    = $ENV{MOE_ARGS};
 my @more_mods   = split(' ', $ENV{REQUIRED_MODULES});
 my $hwconfig_file = $ENV{TEST_HWCONFIG} || '';
@@ -141,35 +141,35 @@ check_config('L4Re kernel', $ENV{"KERNEL_CONF"}, $kernel, 'globalconfig.out');
 
 # Create the initial module list
 my @module_list = ();
-my $ned_cfg;
-my $ned_cfg_name = "$tmpdir/test_env.lua";
+my $test_env_cfg;
+my $test_env_cfg_name = "$tmpdir/test_env.lua";
 my $convert = "$FindBin::Bin/key-value-convert.pl"; # hwconfig converter in same path
 
-if ($moe_cfg)
+if ($ned_cfg)
   {
     # Create an additional LUA config file where environment variables can
     # be exported to.
     my $mod_list = '"'.join('","', map { s/:rw$//; $_ } map { $_ } @more_mods).'"';
     my $test_prog = $test_target;
     $test_prog .= ' '.$test_args if $test_args;
-    open($ned_cfg, '>', $ned_cfg_name)
-      or confess "Cannot create configuration file $ned_cfg_name.";
+    open($test_env_cfg, '>', $test_env_cfg_name)
+      or confess "Cannot create configuration file $test_env_cfg_name.";
 
-    print $ned_cfg "local t = {}\n";
-    print $ned_cfg "t.TEST_PROG = '$test_prog'\n";
-    print $ned_cfg "t.REQUIRED_MODULES = {$mod_list}\n";
+    print $test_env_cfg "local t = {}\n";
+    print $test_env_cfg "t.TEST_PROG = '$test_prog'\n";
+    print $test_env_cfg "t.REQUIRED_MODULES = {$mod_list}\n";
     if ($hwconfig_file)
       {
         die "Hardware config '$hwconfig_file' not found." if (! -e $hwconfig_file);
         # Provide hwconfig as hash
-        print $ned_cfg "t.HWCONFIG = {}\n";
-        print $ned_cfg qx($convert --to=lua --prefix='t.HWCONFIG.' '$hwconfig_file' | sort);
+        print $test_env_cfg "t.HWCONFIG = {}\n";
+        print $test_env_cfg qx($convert --to=lua --prefix='t.HWCONFIG.' '$hwconfig_file' | sort);
       }
 
     # Some more assembly required for L4Linux tests.
     if ($mode eq 'l4linux')
       {
-        $ned_cfg or confess "L4Linux tests needs to be run with moe config.";
+        $test_env_cfg or confess "L4Linux tests needs to be run with moe config.";
         # Check that the right version is available.
         # This is optional, missing parts lead to a simple skip of the test.
         exit_skip("No L4Linux binary provided.") if (!$l4linux);
@@ -184,16 +184,16 @@ if ($moe_cfg)
         my $ramdisk_bin = basename($ramdisk);
         my $ramdisk_size= qx(du -b $ramdisk);
         chomp($ramdisk_size);
-        print $ned_cfg "t.L4LX_EXEC_CMD = 'rom/$l4linux_bin l4x_rd=rom/$ramdisk_bin ramdisk_size=$ramdisk_size l4re_testprog=/dev/rom/$test_target l4cdds.add=rom/$test_target console=ttyLv0'\n";
+        print $test_env_cfg "t.L4LX_EXEC_CMD = 'rom/$l4linux_bin l4x_rd=rom/$ramdisk_bin ramdisk_size=$ramdisk_size l4re_testprog=/dev/rom/$test_target l4cdds.add=rom/$test_target console=ttyLv0'\n";
       }
-    print $ned_cfg "return t\n";
+    print $test_env_cfg "return t\n";
 
     # Now set up boot for use with ned.
-    (my $moe_cfg_name = $moe_cfg) =~ s/.*\///;
-    $roottask = "moe $moe_args rom/$moe_cfg_name";
+    (my $ned_cfg_name = $ned_cfg) =~ s/.*\///;
+    $roottask = "moe $moe_args rom/$ned_cfg_name";
     push(@module_list, "ned");
     push(@module_list, "test_env.lua");
-    push(@module_list, $moe_cfg);
+    push(@module_list, $ned_cfg);
   }
 else
   {
@@ -250,7 +250,7 @@ if ($test_setup)
 
 my @runargs = qw(-serial stdio -nographic -monitor none);
 
-close($ned_cfg) if ($ned_cfg);
+close($test_env_cfg) if ($test_env_cfg);
 my $module_search_path=join(":", @modulepaths);
 my $qemu_options = join(' ', map { qq{"$_"} } (@qemu_args, @runargs));
 chdir $obj_base;
