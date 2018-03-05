@@ -150,7 +150,7 @@ $(LINK_INCR_TARGETS):%.a: $(OBJS) $(LIBDEPS) $(foreach x,$(LINK_INCR_TARGETS),$(
 	@$(LINK_PARTIAL_MESSAGE)
 	$(VERBOSE)[ -d "$(dir $@)" ] || $(MKDIR) $(dir $@)
 	$(VERBOSE)$(call MAKEDEP,$(LD)) $(LD) \
-	   -T$(LDSCRIPT_INCR) \
+	   -T $(LDSCRIPT_INCR) \
 	   -o $@ -r $(OBJS) $(LDFLAGS)
 	$(if $(LINK_INCR_ONLYGLOBSYM_$@)$(LINK_INCR_ONLYGLOBSYMFILE_$@), \
 	   $(VERBOSE)$(OBJCOPY) \

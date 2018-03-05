@@ -5,6 +5,9 @@ pc_file_dir = %:set-var(pc_file_dir %(l4obj)/pc)
 link_arg_opts =
   %:arg-option(L m z o h e -entry fini init -defsym)
   %:arg-option(b -format A -architecture y -trace-symbol MF)
+  %:arg-option(-hash-style)
+  %:arg-option(T Tbss Tdata Ttext Ttext-segment Trodata-segment Tldata-segment)
+  %:arg-option(dT)
 
 # options that are part of the output file list %o
 link_output_args =
@@ -42,7 +45,7 @@ check_linker = %(linker:;:%:error(linker variable not defined))
 ######### ld compatibility (pass through) mode for linking ##################
 # options to pass to the linker (binutils ld)
 link_pass_opts = %:set-var(link_pass_opts
-  %{M} %{-print-map} %{-trace-symbol*} %{y}
+  %{M} %{-print-map} %{-trace-symbol*} %{y} %{-verbose}
   %{-cref} %{-trace} %{r}
   %{m} %{-error-*} %{-warn-*&-no-warn-*}
   %{-sort-*} %{-unique*}
@@ -53,7 +56,7 @@ link_pass_opts = %:set-var(link_pass_opts
   %{x} %{X} %{S} %{s} %{t} %{z} %{Z} %{n} %{N} %{init*} %{fini*}
   %{soname*} %{h} %{E} %{-export-dynamic&-no-export-dynamic}
   %{e} %{-entry*} %{-defsym*} %{b} %{-format*} %{A} %{-architecture*}
-  %{-gc-sections} %{gc-sections}
+  %{-gc-sections} %{gc-sections} %{-hash-style*}
   # we always set -nostlib below so drop it but use it to avoid an error
   %{nostdlib:} %{no-pie:} %{pie})
 
@@ -64,10 +67,10 @@ link_args =
   %{nocrt|r:;:%:read-pc-file(%(pc_file_dir) ldscripts)}
   %{o} -nostdlib %{static:-static;:--eh-frame-hdr} %{shared}
   %(link_pass_opts) %:foreach(%%{: -L%%*} %(l4libdir)) %{T*&L*}
-  %{!T*:-T%:search(main_%{static:stat;shared:rel;:dyn}.ld %(libdir))}
-  %{!shared:%{!static:%{!-dynamic-linker*:--dynamic-linker=%(Link_DynLinker)
+  %{!r:%{!dT:-dT %:search(main_%{static:stat;shared:rel;:dyn}.ld %(libdir))}}
+  %{r|shared|static|-dynamic-linker*:;:--dynamic-linker=%(Link_DynLinker)
     %(Link_DynLinker:;:
-      %:error(Link_DynLinker not specified, cannot link with shared libs.))}}}
+      %:error(Link_DynLinker not specified, cannot link with shared libs.))}
   %{-dynamic-linker*}
   %(Link_Start) %o %{OBJ*:%*} %(Libs)
   %{static:--start-group} %(Link_Libs) %{!shared:%(libgcc);:%(libgcc_s)}
@@ -85,8 +88,8 @@ ld = %(check_linker) %:exec(%(linker) %(link_args))
 gcc_arg_opts =
   %:arg-option(aux-info param x idirafter include imacro iprefix
                iwithprefix iwithprefixbefore isystem imultilib
-               isysroot Xpreprocessor Xassembler T Xlinker
-               u z G o U D I MF)
+               isysroot Xpreprocessor Xassembler T
+               Xlinker u z G o U D I MF)
 
 link_output_args_gcc = %:output-option(l*)
 
@@ -103,7 +106,7 @@ link_args_gcc =
   %{r|nocrt|nostartfiles|nostdlib:;:%:read-pc-file(%(pc_file_dir) ldscripts)}
   %{o} -nostdlib %{static:-static;:--eh-frame-hdr} %{shared}
   %(link_pass_opts_gcc) %{W*:} %{f*:} %{u*} %{O*} %{g*} %{T*&L*}
-  %{!r:%{!T*:-T%:search(main_%{static:stat;shared:rel;:dyn}.ld %(libdir))}}
+  %{!r:%{!dT:-dT %:search(main_%{static:stat;shared:rel;:dyn}.ld %(libdir))}}
   %{r|shared|static|-dynamic-linker*:;:--dynamic-linker=%(Link_DynLinker)
     %(Link_DynLinker:;:
       %:error(Link_DynLinker not specified, cannot link with shared libs.))}

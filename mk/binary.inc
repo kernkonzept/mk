@@ -715,7 +715,7 @@ ifneq ($(MODE),shared)
   else
     define make_per_target_reloc
       $(1): $$(BID_RAM_BASE_DEP)
-      LDFLAGS_$(1) += --defsym=__executable_start=$$(firstword $$(call default_reloc,$(1)))
+      LDFLAGS_$(1) += -Ttext-segment=$$(firstword $$(call default_reloc,$(1)))
     endef
   endif
 else
