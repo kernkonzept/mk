@@ -105,6 +105,29 @@ sub exit_error
   exit 1;
 }
 
+sub generate_gtest_shuffle_seed
+{
+  # gtest uses the current time for seed generation which is rather
+  # deterministic on a new QEMU VM. Hence, the host provides the seed.
+  # gtest limits itself to an integer seed in range [0, 99999].
+  $ENV{TEST_GTEST_SHUFFLE_SEED} ||= int(rand(100_000));
+}
+
+sub check_add_gtest_shuffle()
+{
+  # Shuffling test will disrupt the expected output.
+  if ($ENV{TEST_EXPECTED} and ($ENV{TEST_GTEST_SHUFFLE}))
+    {
+      print "Warning: Expected output configured. Ignoring gtest shuffle.\n";
+    }
+  elsif ($ENV{TEST_GTEST_SHUFFLE})
+    {
+      generate_gtest_shuffle_seed();
+      $test_args.=
+        " --gtest_shuffle --gtest_random_seed=$ENV{TEST_GTEST_SHUFFLE_SEED}";
+    }
+}
+
 # Check that a kernel has mandatory features enabled.
 # Go through the configuration and make sure the required config option
 # is enabled. If the configuration file is not found, it just prints
@@ -138,6 +161,9 @@ sub check_config
 
 # Any L4Re kernel features as requirements?
 check_config('L4Re kernel', $ENV{"KERNEL_CONF"}, $kernel, 'globalconfig.out');
+
+# check add gtest_shuffle unless specific output is expected.
+check_add_gtest_shuffle();
 
 # Create the initial module list
 my @module_list = ();

@@ -21,6 +21,7 @@ GetOptions(
   'verbose|v'       => sub { $ENV{TEST_ARGS} .= ' -v'; },
   'record|r'        => sub { $ENV{TEST_ARGS} .= ' -r'; },
   'only|o=s'        => sub { $ENV{TEST_ARGS} .= " --gtest_filter=*$_[1]"; },
+  'shuffle:i'       => \&gtest_shuffle_seed,
   'no-wrapper|W'    => \$nowrapper,
   'fiasco-args|f=s' => sub { $ENV{KERNEL_ARGS} = $_[1]; },
   'moe-args|m=s'    => sub { $ENV{MOE_ARGS} = $_[1]; },
@@ -69,6 +70,12 @@ if ($logfile)
   {
     open $LOG_FD, ">>", $logfile or die "Can not open logfile '$logfile'\n";
   }
+
+sub gtest_shuffle_seed
+{
+  $ENV{TEST_GTEST_SHUFFLE} = 1;
+  $ENV{TEST_GTEST_SHUFFLE_SEED} = $_[1];
+}
 
 sub get_ps_tree
 {
@@ -467,6 +474,14 @@ $TEST_SCRIPT [options]
   --verbose,-v     Run test in verbose mode. Repeat for increased verbosity.
   --only,-o <TEST> Only run given test.
                    Produces command line: --gtest_filter=*<TEST>
+
+  --shuffle        Run tests in random order. <SEED> is optional, if <SEED> is
+    <SEED>         not provided this script generates one.
+                   Produces gtest command line additions:
+                     --gtest_shuffle --gtest_random_seed=<SEED>
+                   For tests that run in 'expected output' mode those arguments
+                   are not added.
+                   Specifing gtest_shuffle in --test-args is undefined behavior.
 
   --record,-r      Record per test meta information such as path of the test
                    file, the line number of the test, and the name of the test.
