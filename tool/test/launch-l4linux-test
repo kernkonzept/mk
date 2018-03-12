@@ -1,0 +1,22 @@
+#!/bin/sh
+#
+# This script starts the test application on L4Linux during a test run.
+#
+# It must be copied onto the ramdisk used in the test environment and
+# started after general initialisation is finished. This initialisation
+# should include at least proper setup of /proc, /sys and /dev.
+#
+# The test setup supplies the path to the program to be executed via the kernel
+# commandline parameter `l4re_testprog`.
+
+testprog=$(cat /proc/cmdline)
+testprog=${testprog##*l4re_testprog=}
+testprog=${testprog%% *}
+
+# Currently the test application is provided via l4bdds and directly read
+# from /dev. Copy it into /tmp first, because /dev is usually not executable.
+
+[ -d /tmp ] || mkdir /tmp
+cp $testprog /tmp/l4re_test_runner
+chmod 755 /tmp/l4re_test_runner
+exec /tmp/l4re_test_runner

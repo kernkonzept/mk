@@ -1,0 +1,214 @@
+#! /bin/bash
+# 
+# This skript inserts the correct filename of a file into its header.
+# It also enters a date into the header if an empty date-field is found.
+#
+# Pre: The first 50 Lines must contain a line matching
+# '^ *\file[[:space:]]*[filename]. Then either the filename will be set,
+# or replaced. An empty date-field is filled.
+# If an \author-field is found prior the date field, a new date-field is
+# added and the other one removed.
+#
+# Author: Jork Loeser <jork.loeser@inf.tu-dresden.de>
+
+
+# no brace expansion
+set +B
+# to pathname expansion
+set -f
+
+authorstring="$MAILADDRESS"
+datestring="`date +%Y-%m-%d`"
+
+while true ; do
+	case $1 in
+		( "-a" )
+			authorstring="$2"
+			shift ; shift ;;
+		( "-d" )
+			datestring="$2"
+			shift ; shift ;;
+		( "-n" )
+			dryrun=1
+			shift ;;
+		( "-p" )
+			fileprefix="$2"
+			shift ; shift ;;
+		( "-c" )
+			copyfile="$2"
+			if [ ! -r "$copyfile" ] ; then
+				echo "$copyfile: Cannot read." >&2
+				exit 1
+			fi
+			shift; shift ;;
+		( "--" )
+			shift
+			break ;;
+		( -* )
+			echo "${0##*/} [options] <files> - add a file header to the given files"
+			echo
+			echo "Options:"
+			echo " -n          dry run"
+			echo " -p <pre>    the filename in the header is prepended with <pre>."
+			echo " -a <author> the author in a new header is set to <author>. Default"
+			echo "             is the value of the environment-variable MAILADDRESS."
+			echo " -d <date>   if a file has no date in its header, or a new header is added,"
+			echo "             use <date> for the value. Default is the value returned by"
+			echo "             'date +%m/%d/%Y'"
+			echo " -c <cfile>  Instead of using the default copyright message, copy it from"
+			echo "             <cfile>".
+			exit 1
+			;;
+		( * )	break ;;
+	esac
+done
+
+if [ "$fileprefix" ] ; then fileprefix="${fileprefix%/}/" ; fi
+#echo "Using fileprefix \"$fileprefix\", default date \"$datestring\", default author \"$authorstring\"."
+if [ "$dryrun" ] ; then echo "Dry run" ; fi
+
+for file in "$@" ; do 
+tmpfile="$file.addfilename.tmp"
+rm -f -- "$tmpfile"
+
+# during execution, header is eiter:
+# - undef (or 0) if not found yet
+# - 1 if within the first header
+# - 2 if after the first header
+awk -v file="$file" -v tmpfile="$tmpfile" -v fileprefix="$fileprefix" \
+	-v authorstring="$authorstring" -v dry="$dryrun" \
+	-v datestring="$datestring" -v copyfile="$copyfile" \
+	-v year="`date +%Y`" '
+	BEGIN{
+		gsub("^./", "", file)
+		filename=fileprefix""file
+		LINES = 50
+		isinclude=match(file, ".h$");
+		if(isinclude){
+			incdefine="__"fileprefix""file"_";
+			gsub("[^a-zA-Z0-9]","_",incdefine);
+			incdefine=toupper(incdefine);
+		}
+	}
+	NR<=LINES && isinclude && !has_define && /^#ifndef[ \t]/{
+		def1 = $2
+		def_saved=$0"\n"
+		next
+	}
+	def_saved {
+		if ($1 == "#define"){
+			def2 = $2
+			has_define=1
+			if(def1 != def2){
+				printf("%s - confused by include macros. Ignoring them\n",
+					file)
+				# fall through
+
+			} else if(def1!=incdefine){
+				printf("%s - changing include macro from %s to %s\n",
+					file, def1, incdefine);
+				tmpdata=tmpdata""sprintf("#ifndef %s\n#define %s\n",
+					incdefine, incdefine);
+				def_saved=""
+				modified=1
+				next
+			}
+		}
+		tmpdata=tmpdata""def_saved;
+		def_saved=""
+	}
+	/\/\*[*!]/ && !header { header=1 }
+	/\*\// && header { header=2 }
+	NR<=LINES && header==1 && /^[ \t]*\*[ \t]*\\file[ \t]*/{
+		has_file=1
+		if($3 == ""){
+			printf("%s - adding file-description %s\n",
+				filename, file)
+			tmpdata=tmpdata" * \\file   "filename"\n"
+			modified=1
+			next
+		}
+		
+		# Obtain all after the "\file" arg
+		i = index($0, "\\file")+5;
+		# skip the whitespaces
+		do{
+			c = substr($0, i, 1);
+			if(c!=" " && c!="\t") break;
+			i++;
+		}while(1);
+		fname = substr($0, i);
+		if(fname != filename) {
+			printf("%s - changing description from \"%s\" to \"%s\"\n",
+				file, fname, filename)
+			$0 = substr($0, 1, i-1)""filename
+			modified=1
+			tmpdata=tmpdata""$0"\n"
+			next
+		}
+	}
+	NR<=LINES && header==1 && /^[ \t]*\*[ \t]*\\date[ \t]*/{
+		if(has_date){
+			printf ("%s - Multiple \\date fields or misordering.\n",
+				filename);
+			if($3!=""){printf("	Deleting date %s\n", $3);}
+			modified=1
+			next;
+		}
+		has_date=1
+		if($3==""){
+			tmpdata=tmpdata""sprintf(" * \\date   %s\n",datestring)
+			printf ("%s - adding date (%s)\n" ,
+				file, datestring);
+			modified=1
+			next;
+		}
+	}
+	NR<=LINES && header==1 &&/^[ \t]*\*[ \t]*\\author[ \t]*/{
+		has_author=1
+		if(!has_date){
+			tmpdata=tmpdata""sprintf(" * \\date   %s\n",datestring)
+			printf ("%s - No \\date prior to \\author, adding date (%s)\n" ,
+				file, datestring);
+			modified=1
+			has_date=1
+		}
+			
+	}
+	{
+		tmpdata=tmpdata""$0"\n"
+	}
+	END{
+		if(isinclude && !has_define){
+			printf("%s - adding include define \"%s\"\n",
+				file, incdefine);
+			tmpdata=sprintf("#ifndef %s\n#define %s\n",
+				incdefine, incdefine)tmpdata"\n#endif\n";
+			modified=1
+		}
+		if(has_file+has_date+has_author==0){
+			printf("%s - adding header\n",
+				file);
+			tmpheader=sprintf("/*!\n * \\file   %s\n * \\brief  \n *\n * \\date   %s\n * \\author %s\n *\n */\n",
+				filename, datestring, authorstring);
+			if(copyfile){
+				while(getline copyline<copyfile){
+					copymsg=copymsg""copyline;
+				}
+			} else {
+				copymsg="/* (c) "year" Technische Universitaet Dresden\n" \
+					" * This file is part of DROPS, which is distributed under the terms of the\n" \
+					" * GNU General Public License 2. Please see the COPYING file for details.\n" \
+					" */\n";
+			}
+			tmpdata=tmpheader""copymsg""tmpdata;
+			modified=1
+
+		}
+		if(modified && ! dry) printf("%s", tmpdata) >> tmpfile
+		
+	}
+' "$file"
+
+if [ -r "$tmpfile" ] ; then mv -- "$tmpfile" "$file" ; fi
+done

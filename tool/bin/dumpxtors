@@ -1,0 +1,230 @@
+#! /usr/bin/perl -W
+#
+# Adam Lackorzynski <adam@os.inf.tu-dresden.de>
+#
+
+use strict;
+use File::Temp qw/ tempfile /;
+use Math::BigInt;
+
+my $objcopy = $ENV{"objcopy"} || "objcopy";
+my $objdump = $ENV{"objdump"} || "objdump";
+my $nm      = $ENV{"nm"} || "nm";
+
+
+sub usage()
+{
+  print "$0 filename{,...}\n";
+}
+
+unless (defined $ARGV[0]) {
+  usage();
+  exit(1);
+}
+
+
+sub dump_xtor_section($$$$$)
+{
+  my $file = shift;
+  my $targetbits = shift;
+  my $target_be = shift;
+  my $name = shift;
+  my $has_zero_end_marker = shift;
+  my ($fh, $tmpf) = tempfile();
+
+  system("$objcopy -j $name -O binary $file $tmpf");
+  if ($?) {
+    print "$objcopy failed with exit code $?\n";
+    return;
+  }
+
+  my $sz = (stat $fh)[7];
+
+  if (($sz * 8) % $targetbits) {
+    print "$name: Odd size of section\n";
+    return;
+  }
+
+  if ($sz == 0) {
+    print "$name: Invalid/non-existing/empty section\n";
+    return;
+  }
+
+  my $buf;
+  if (read($fh, $buf, $sz) != $sz) {
+    print "read of $file(section: $name) failed\n";
+    return;
+  }
+
+  my $not_zero = new Math::BigInt($targetbits == 64
+                                  ? '0xffffffffffffffff': '0xffffffff');
+
+  my @vals;
+  {
+    my @v;
+    if (not $target_be) {
+      @v = reverse unpack("L*", $buf);
+    } else {
+      @v = unpack("N*", $buf);
+    }
+
+    while (scalar @v) {
+      my $n = new Math::BigInt(shift @v);
+      if ($targetbits == 64) {
+        $n->blsft(32);
+        $n->bior(shift @v);
+      }
+      push @vals, $n;
+    }
+  }
+
+  if ($has_zero_end_marker && @vals < 2) {
+    print "$name: Invalid section layout\n";
+    return;
+  }
+
+  if ($has_zero_end_marker) {
+    if (!$vals[0]->is_zero()) {
+      print "$name: Hmm, last member in sector should be 0\n";
+      return;
+    }
+
+    if ($vals[scalar @vals - 1] != $not_zero) {
+      print "$name: Hmm, first member in sector should be ~0\n";
+      return;
+    }
+
+    pop @vals;
+    shift @vals;
+  }
+
+  if (scalar @vals == 0) {
+    print "$name: No entries in section of $file\n";
+    return;
+  }
+
+  print "[33;1m$name section[m (in priority order):\n";
+  foreach my $v (@vals) {
+    my $h = sprintf "%x", $v;
+
+    # lazy..
+    my $o = `$nm $file | grep $h | perl -p -e 's/(\\s_GLOBAL__I\\.\\d+_)(_Z)/\$1 ... \$2/' | c++filt | c++filt`;
+    chomp $o;
+    if ($o eq '') {
+      print "Address $h not found in binary\n";
+    } else {
+      print "$o\n";
+    }
+  }
+
+  unlink $tmpf;
+}
+
+sub dump_xtor_symbols($$$$)
+{
+  my $file = shift;
+  my $target_be = shift;
+  my $sym1 = shift;
+  my $sym2 = shift;
+
+  my $start;
+  my $end;
+  foreach (`$nm $file`)
+    {
+      if (/^(\S+)\s+\S\s+${sym1}$/)
+        {
+          $start = $1;
+        }
+      elsif (/^(\S+)\s+\S\s+${sym2}$/)
+        {
+          $end = $1;
+        }
+    }
+
+  return if not defined $start or not defined $end;
+  return if $end eq $start;
+
+  if (hex($end) < hex($start))
+    {
+      ($end, $start) = ($start, $end);
+      ($sym1, $sym2) = ($sym2, $sym1);
+    }
+
+  my @vals;
+  foreach (`$objdump -s --start-address=0x$start --stop-address=0x$end $file`)
+    {
+      my $re_addr = '[\da-f]+';
+      if (/^\s+($re_addr)\s+(($re_addr\s+){1,4})/i)
+        {
+	  if (length($1) > 8)
+	    {
+	      my $a = $2;
+	      $a =~ s/(($re_addr)\s+($re_addr))\s+/$2$3 /g;
+	      my @v = split(/\s+/, $a);
+	      map { s/(..)(..)(..)(..)(..)(..)(..)(..)/$8$7$6$5$4$3$2$1/ } @v unless $target_be;
+	      push @vals, @v;
+	    }
+	  else
+	    {
+	      my @v = split(/\s+/, $2);
+	      map { s/(..)(..)(..)(..)/$4$3$2$1/ } @v unless $target_be;
+	      push @vals, @v;
+	    }
+	}
+    }
+
+  print "[33;1m$sym1($start) - $sym2($end)[m (in priority order):\n";
+  my @nm_output = `$nm $file`;
+  foreach my $v (@vals) {
+    my @o = grep { /^$v/ } @nm_output;
+    map { s/(\s_GLOBAL__I\.\d+_)(_Z)/$1 ... $2/ } @o;
+
+    my $o = '';
+    if (@o)
+      {
+        $o = shift @o;
+        chomp $o;
+        $o = `echo '$o' | c++filt`;
+        chomp $o;
+      }
+    if ($o eq '') {
+      print "$v: Address not found in binary\n";
+    } else {
+      print "$o\n";
+    }
+  }
+
+}
+
+sub get_app_type($)
+{
+  my $file = shift;
+  my $o = `LANG=C file -L $file`;
+  die "Failed to 'file' $file: $!" if $?;
+  my $b;
+  my $e;
+  $b = 32 if $o =~ /ELF 32-bit/;
+  $b = 64 if $o =~ /ELF 64-bit/;
+  $e = 'msb' if $o =~ /\sMSB\s/;
+  $e = 'lsb' if $o =~ /\sLSB\s/;
+  ($b, $e);
+}
+
+foreach my $f (@ARGV) {
+  my ($bits, $en) = get_app_type($f);
+  if (not defined $bits or not defined $en) {
+    print "Failed to get bit-width and endiness of $f\n";
+    next;
+  }
+  $en = $en eq 'msb';
+  print "[32;1m$f:[m\n";
+  dump_xtor_section($f, $bits, $en, ".ctors", 1);
+  dump_xtor_section($f, $bits, $en, ".init_array", 0);
+  dump_xtor_section($f, $bits, $en, ".dtors", 1);
+  dump_xtor_section($f, $bits, $en, ".fini_array", 0);
+  dump_xtor_symbols($f, $en, "__CTOR_END__", "__CTOR_LIST__");
+  dump_xtor_symbols($f, $en, "__DTOR_END__", "__DTOR_LIST__");
+  dump_xtor_symbols($f, $en, "__INIT_ARRAY_START__", "__INIT_ARRAY_END__");
+  dump_xtor_symbols($f, $en, "__PER_CPU_INIT_ARRAY_START__", "__PER_CPU_INIT_ARRAY_END__");
+  dump_xtor_symbols($f, $en, "__PER_CPU_LATE_INIT_ARRAY_START__", "__PER_CPU_LATE_INIT_ARRAY_END__");
+}

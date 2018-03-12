@@ -1,0 +1,288 @@
+#!/usr/bin/perl
+#
+# Execute a test on the configured platform.
+#
+# Exits with 69 (EX_UNAVAILABLE) if the test should be skipped
+# because of incompatible configuration.
+#
+
+use File::Path "make_path";
+use File::Basename;
+use FindBin;
+use Carp;
+use strict;
+use warnings;
+
+# Environment settings used below
+my $mode        = $ENV{MODE};
+my $arch        = $ENV{ARCH} or die "No architecture specified";
+my $obj_base    = $ENV{OBJ_BASE};
+my $platform    = $ENV{PLATFORM_TYPE};
+my $kernel      = $ENV{"KERNEL_${arch}_$platform"}
+                  || $ENV{"KERNEL_${arch}"} || $ENV{KERNEL} || 'fiasco';
+my $kernel_args = $ENV{KERNEL_ARGS} || '';
+my $sigma0      = $ENV{SIGMA0} || "sigma0";
+my $l4linux     = $ENV{"L4LX_KERNEL_${arch}_$platform"}
+                  || $ENV{"L4LX_KERNEL_${arch}"} || $ENV{L4LX_KERNEL};
+my $ramdisk     = $ENV{"LINUX_RAMDISK_${arch}_$platform"}
+                  || $ENV{"LINUX_RAMDISK_${arch}"} || $ENV{LINUX_RAMDISK};
+my $bootstrap   = $ENV{BOOTSTRAP} || 'bootstrap';
+my @modulepaths = split(/[:\s]+/, $ENV{SEARCHPATH});
+# need a split according to the rules of shell quoting
+my @qemu_args   = split("\0", qx:perl -e 'foreach (\@ARGV) { print "\$_\\0";}' -- $ENV{QEMU_ARGS}:) if $ENV{QEMU_ARGS};
+my $test_setup  = $ENV{TEST_SETUP};
+my $test_target = $ENV{TEST_TARGET};
+my $test_args   = $ENV{TEST_ARGS} || '';
+my $moe_cfg     = $ENV{MOE_CFG};
+my $moe_args    = $ENV{MOE_ARGS};
+my @more_mods   = split(' ', $ENV{REQUIRED_MODULES});
+my $hwconfig_file = $ENV{TEST_HWCONFIG} || '';
+my $roottask;
+
+my $tmpdir      = $ENV{TEST_TMPDIR};
+$tmpdir        .= "/$test_target";
+make_path($tmpdir);
+push(@modulepaths, $tmpdir);
+
+sub get_module
+{
+  my $cmdline = shift;
+  (my $file, my $args) = split (' ', $cmdline, 2);
+
+  $args = $args ? " $args" : "";
+
+  my $fullpath;
+  if (-e $file and ! -d $file)
+    {
+      $fullpath = $file;
+    }
+  else
+    {
+      # go through the search path
+      foreach my $p (@modulepaths)
+        {
+          my $fp = "$p/$file";
+          if (-e "$fp" and ! -d "$fp")
+            {
+              $fullpath = $fp;
+              last;
+            }
+        }
+    }
+  $fullpath or confess "Cannot find module $file";
+
+  # check for compressed files (e.g. for linux)
+  open(my $fh, '<', $fullpath) or confess "Cannot open '$fullpath': $!\n";
+  my $buf;
+  read($fh, $buf, 2);
+  close($fh);
+
+  if (length($buf) >= 2 && unpack("n", $buf) == 0x1f8b)
+    {
+      my $of = "$tmpdir/".basename($file);
+      print STDERR "'$fullpath' is a zipped file, uncompressing to '$of'\n";
+
+      system("zcat $fullpath >$of");
+
+      return "$of$args";
+    }
+
+  return "$fullpath$args";
+}
+
+sub qemu_get_module
+{
+  my $cmdline = shift;
+  my $fp = get_module($cmdline);
+  $fp =~ s/,/,,/g;
+  return $fp;
+}
+
+sub exit_skip
+{
+  print shift;
+  exit 69;
+}
+
+# Check that a kernel has mandatory features enabled.
+# Go through the configuration and make sure the required config option
+# is enabled. If the configuration file is not found, it just prints
+# a warning and continues.
+sub check_config
+{
+  my $binname = shift;
+  my $copts = shift;
+  return if (!$copts);
+
+  my $binary = shift;
+  my $cfgfile = shift;
+
+  my $kpath = qx/dirname `perl -e 'print \$ARGV[0]' $binary`/;
+  chomp($kpath);
+  $cfgfile = "${kpath}/$cfgfile";
+
+  if (-e $cfgfile)
+    {
+      foreach my $copt (split(' ', $copts))
+        {
+          my $o = qx:grep ^$copt $cfgfile:;
+          exit_skip("$binname not configured for $copt.\n") if (!$o);
+        }
+    }
+  else
+    {
+      print "WARNING: $binname config not found at $cfgfile\n";
+    }
+}
+
+# Any L4Re kernel features as requirements?
+check_config('L4Re kernel', $ENV{"KERNEL_CONF"}, $kernel, 'globalconfig.out');
+
+# Create the initial module list
+my @module_list = ();
+my $ned_cfg;
+my $ned_cfg_name = "$tmpdir/test_env.lua";
+my $convert = "$FindBin::Bin/key-value-convert.pl"; # hwconfig converter in same path
+
+if ($moe_cfg)
+  {
+    # Create an additional LUA config file where environment variables can
+    # be exported to.
+    my $mod_list = '"'.join('","', @more_mods).'"';
+    my $test_prog = $test_target;
+    $test_prog .= ' '.$test_args if $test_args;
+    open($ned_cfg, '>', $ned_cfg_name)
+      or confess "Cannot create configuration file $ned_cfg_name.";
+
+    print $ned_cfg "local t = {}\n";
+    print $ned_cfg "t.TEST_PROG = '$test_prog'\n";
+    print $ned_cfg "t.REQUIRED_MODULES = {$mod_list}\n";
+    if ($hwconfig_file)
+      {
+        die "Hardware config '$hwconfig_file' not found." if (! -e $hwconfig_file);
+        # Provide hwconfig as hash
+        print $ned_cfg "t.HWCONFIG = {}\n";
+        print $ned_cfg qx($convert --to=lua --prefix='t.HWCONFIG.' '$hwconfig_file' | sort);
+      }
+    print $ned_cfg "return t\n";
+
+    close($ned_cfg);
+
+    # Now set up boot for use with ned.
+    (my $moe_cfg_name = $moe_cfg) =~ s/.*\///;
+    $roottask = "moe $moe_args rom/$moe_cfg_name";
+    push(@module_list, "ned");
+    push(@module_list, "test_env.lua");
+    push(@module_list, $moe_cfg);
+  }
+else
+  {
+    # Run the test program directly as the init process.
+    $roottask = "moe --init=rom/$test_target $moe_args";
+    $roottask .= " -- ".$test_args if $test_args;
+  }
+push(@module_list, "l4re");
+push(@module_list, @more_mods);
+push(@module_list, $test_target);
+
+# If any binary was linked dynamically, we need to add the necessary .so files.
+my @inmods = map { get_module($_) } @module_list;
+my %shared_libs = ();
+foreach my $mod (@inmods)
+  {
+    (my $executable) = split(' ', $mod, 2);
+    my $libs = `objdump -p $executable 2>/dev/null | grep NEEDED`;
+    foreach my $lib (split /\n/, $libs)
+      {
+        $lib =~ s/\s*NEEDED\s*//;
+        $shared_libs{$lib} = 1 if $lib;
+      }
+  }
+
+push(@module_list, keys %shared_libs);
+
+# Some more assembly required for L4Linux tests.
+if ($mode eq 'l4linux')
+  {
+    $ned_cfg or confess "L4Linux tests needs to be run with moe config.";
+    # Check that the right version is available.
+    # This is optional, missing parts lead to a simple skip of the test.
+    exit_skip("No L4Linux binary provided.") if (!$l4linux);
+    exit_skip("No ramdisk for L4Linux provided.") if (!$ramdisk);
+    check_config('L4Linux kernel', $ENV{"L4LINUX_CONF"}.' CONFIG_L4_CHR_DS_DRV',
+                 $l4linux, '.config');
+
+    push (@module_list, $l4linux);
+    push (@module_list, $ramdisk);
+
+    my $l4linux_bin = basename($l4linux);
+    my $ramdisk_bin = basename($ramdisk);
+    my $ramdisk_size= qx(du -b $ramdisk);
+    chomp($ramdisk_size);
+    print $ned_cfg "L4LX_EXEC_CMD = 'rom/$l4linux_bin l4x_rd=rom/$ramdisk_bin ramdisk_size=$ramdisk_size l4re_testprog=/dev/rom/$test_target l4cdds.add=rom/$test_target console=ttyLv0'\n";
+  }
+
+my $test_modules;
+my $test_modules_name = "$tmpdir/__test_modules.list";
+open($test_modules, '>', $test_modules_name)
+  or confess "Cannot create configuration file $test_modules_name.";
+
+print $test_modules <<EOHEADER;
+
+entry maketest
+kernel $kernel $kernel_args
+bootstrap $bootstrap
+sigma0 $sigma0
+roottask $roottask
+EOHEADER
+
+print $test_modules "module $_\n" foreach @module_list;
+
+# run any potential pre-test setup scripts
+if ($test_setup)
+  {
+    system($test_setup);
+    if ($?)
+      {
+        exit $? >> 8;
+      }
+  }
+
+my @runargs = qw(-serial stdio -nographic -monitor none);
+
+close($ned_cfg) if ($ned_cfg);
+my $module_search_path=join(":", @modulepaths);
+my $qemu_options = join(' ', map { qq{"$_"} } (@qemu_args, @runargs));
+chdir $obj_base;
+$ENV{QEMU_OPTIONS} = $qemu_options;
+$ENV{MODULES_LIST} = $test_modules_name;
+$ENV{MODULE_SEARCH_PATH} = $module_search_path;
+
+print "$_='$ENV{$_}' " foreach qw(QEMU_OPTIONS MODULES_LIST MODULE_SEARCH_PATH);
+
+if (defined $ENV{IMAGE_TYPE} and !defined $ENV{HARNESS_ACTIVE})
+  {
+    system("make $ENV{IMAGE_TYPE} E=maketest");
+    print "Just creating boot image.\n";
+    exit 69;
+  }
+
+if (my $test_starter = $ENV{EXTERNAL_TEST_STARTER})
+  {
+    # MODULES_LIST is set
+    my $piperead;
+    if (!open ($piperead, '-|', $test_starter))
+      {
+        print "Error starting $test_starter: $!\n";
+        exit 1;
+      }
+    STDOUT->autoflush(1);
+    print $_ while <$piperead>;
+    close $piperead;
+    exit 0;
+  }
+
+
+my @cmd = (qw(make qemu E=maketest));
+print join(' ', @cmd)."\n";
+exec @cmd;

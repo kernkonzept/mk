@@ -1,0 +1,152 @@
+#! /usr/bin/perl -W
+#
+# 2008, 2009, Adam Lackorzynski <adam@os.inf.tu-dresden.de>
+#
+# Generate package dependencies by parsing the dependency files generated
+# while building the package. This script will generate a dot file.
+
+use strict;
+
+my $objdir_base;
+my $srcdir_base;
+my $dotfilename;
+
+my %deps;
+
+sub dep_files_for_subdir($)
+{
+  my $p = shift;
+  my @list;
+  open(FIND, "find '$p' -type f |") || die "Cannot do 'find': $!";
+
+  while (<FIND>) {
+    next unless /\/\.[^\/]+\.d$/;
+    chomp;
+    push @list, $_;
+    #print "file: $_\n";
+  }
+
+  close(FIND);
+  @list;
+}
+
+sub do_deps($@)
+{
+  my $pkg_name = shift;
+  my @file_list = @_;
+  print "Processing package $pkg_name\n";
+  foreach my $file (@file_list) {
+
+    # some cheating here, because e.g. we build uclibc_r stuff in the
+    # uclibc subdir, we should probably move libpthread to uclibc_r...
+    my $p = $pkg_name;
+    $p = "uclibc_r"
+       if     $pkg_name eq 'uclibc'
+          and $file =~ /^$objdir_base\/pkg\/uclibc\/lib\/libpthread\//;
+
+    open(L, "$file") || die "Cannot open '$file': $!";
+    while (<L>) {
+      chomp;
+      my @tokens = split /\s+/;
+
+      foreach my $t (@tokens) {
+        next unless $t =~ /^\//;
+	$t =~ s/:$//;
+
+	my $realfile = readlink($t);
+	$realfile = $t unless defined $realfile; 
+
+	next unless -r $realfile;
+
+	if ($realfile =~ /^$objdir_base\/pkg\/([^\/]+)\//) {
+	  $deps{$p}{l4pkg}{$1} = 1;
+	} elsif ($realfile =~ /^$srcdir_base\/pkg\/([^\/]+)\//) {
+	  $deps{$p}{l4pkg}{$1} = 1;
+	} elsif ($realfile =~ /^$objdir_base\/(\.config\.all|Makeconf\.\w+)$/) {
+	  $deps{$p}{l4config} = 1;
+	} elsif ($realfile =~ /^$srcdir_base\/Makeconf\.\w+$/) {
+	  $deps{$p}{l4config} = 1;
+	} elsif ($realfile =~ /^$srcdir_base\/tool\/.+$/) {
+	  $deps{$p}{l4tool} = 1;
+	} elsif (   $realfile =~ /\/(libgcc(_eh)?\.a|crt(begin[TS]?|end[S]?)\.o|include(-fixed)?\/(std(arg|def|bool)|limits|unwind|float|omp|[ex]?mmintrin|mm_malloc)\.h)$/
+	         || $realfile =~ /^\/usr\/lib\/gcc\/.+\/lib\/(crt.\.o|lib.+\.so)$/) {
+	  $deps{$p}{gcc} = 1;
+	} elsif (   $realfile =~ /^\/usr\/(lib|include|share)\//
+                 || $realfile =~ /^\/(lib|dev)\//) {
+	  $deps{$p}{host} = 1;
+	} else {
+	  print "Unknown: $realfile\n";
+	}
+      }
+    }
+
+    close(L);
+  }
+  
+  #print "$pkg_name depends on: ", join(", ", sort keys %{$deps{$pkg_name}{l4pkg}}), "\n";
+}
+
+# ------------------------------------------------------
+
+if (!defined $ARGV[2]) {
+  print "$0: srcdir objdir dotfilename\n";
+  exit 1;
+}
+
+$srcdir_base = $ARGV[0];
+$objdir_base = $ARGV[1];
+$dotfilename = $ARGV[2];
+
+$objdir_base =~ s/\/+$//;
+$srcdir_base =~ s/\/+$//;
+
+sub collect_deps
+{
+  my $dir = shift;
+  my $prefix = shift;
+  my $level = shift;
+  my $recurse = shift;
+
+  my $opts = '-maxdepth 1';
+  $opts = '' if $recurse;
+
+  open (F, "find '$dir' -mindepth 1 $opts -type d ! -name 'OBJ-*' |")
+    || die "Cannot call find: $!";
+
+  while (<F>) {
+    chomp;
+    next if $recurse and not -e "$_/.general.d";
+    my $pkg_path = $_;
+    (my $pkg_name = $pkg_path) =~ s/^.+\///;
+    $pkg_name = $prefix.$pkg_name;
+    if ($pkg_name eq 'examples' and $level == 0 and defined $ENV{DO_DETAILED_EXAMPLES}) {
+      collect_deps("$pkg_path", "examples_", $level + 1, 1);
+    } else {
+      do_deps($pkg_name, dep_files_for_subdir($pkg_path));
+    }
+  }
+  close F;
+}
+
+collect_deps("$objdir_base/pkg", "", 0, 0);
+
+foreach (keys %deps) {
+  delete $deps{$_}{l4pkg}{$_} if exists $deps{$_}{l4pkg}{$_};
+}
+
+
+my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst)
+  = localtime(time);
+$year += 1900;
+$mon++;
+
+print "Creating dot file\n";
+open (D, ">$dotfilename") || die "Cannot create $dotfilename: $!";
+print D "digraph dep {\n";
+print D "  graph [ label = \"\\nBuild-tree based package dependency\\n",
+        "$mday. $mon. $year, $hour:$min\" ];\n";
+foreach my $p (keys %deps) {
+  print D map("  \"$p\" -> \"$_\";\n", keys %{$deps{$p}{l4pkg}}), "\n";
+}
+print D "}\n";
+close D;

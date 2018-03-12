@@ -1,0 +1,5 @@
+/pkg
+/.repo
+/tool/gen_dopecode
+/.ham
+/conf/Makeconf.boot

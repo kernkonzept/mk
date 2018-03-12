@@ -1,0 +1,618 @@
+#! /usr/bin/perl -W
+#
+# Adam Lackorzynski <adam@os.inf.tu-dresden.de>
+#
+#
+# Commit parts of a file. Select interactively.
+#
+
+use strict;
+use FileHandle;
+use IPC::Open2;
+
+my $pager = "vim -R -";     # "gvim -f -R -"
+my $diff  = "vim -d";       # "gvim -f -d "
+
+my $diff_against;
+
+# svn specific functions
+my %handler_svn = (
+  name => "Subversion",
+
+  init => sub()
+  {
+  },
+
+  exit => sub()
+  {
+  },
+
+  is_wc_dir => sub($)
+  {
+    return -d $_[0].'/.svn';
+  },
+
+  get_file_list_to_diff => sub(@)
+  {
+    my %list;
+    foreach my $p (@_) {
+      my @o = `svn st $p`;
+      next if $?;
+      foreach (@o) {
+	if (/^([ADMC]).....\s+(.+)/) {
+	  die "Remove conflict of $_ first" if $1 eq 'C';
+	  $list{$2} = 1;
+	}
+      }
+    }
+
+    sort keys %list;
+  },
+
+  get_unmod_file => sub($)
+  {
+    my $f = shift;
+    my $c;
+
+    open(SVNCAT, "svn cat $f |") || die "Cannot launch 'svn cat $f': $!";
+    while (<SVNCAT>) {
+      $c .= $_;
+    }
+    close SVNCAT;
+    return $c;
+  },
+
+  create_clean_wc_to => sub($@)
+  {
+    my $to = shift;
+
+    # this is the very simple method that doesn't really work if you're
+    # committing a change in the root of the working copy, I'd really like to
+    # have a possibility to clone a working copy (with a path)
+    #system("cp -a . $to");
+    #system("cd $to && svn revert -R .");
+
+    # get base repo URL
+    my $o = `svn info`;
+    die "Cannot get repo URL for wc creation" if $o !~ /URL:\s+(.+)$/m;
+    my $url = $1;
+    print "URL: $url\n";
+
+    system("svn co --depth empty $url $to");
+
+    foreach my $e (@_) {
+      my @direlems = split(/\//, $e);
+      my $s = '';
+      my $part = '';
+
+      
+      foreach my $i (@direlems) {
+	print "$i\n";
+	$part .= "$i/";
+	$s .= " $part" unless -e "$to/$part";
+      }
+      $s =~ s/\/$//;
+      system("cd $to && svn up --depth empty $s");
+    }
+
+    $to;
+  },
+
+  wc_changes => sub($)
+  {
+    my $d = shift;
+    `cd $d && svn diff`;
+  },
+
+  call_wc_diff_pager => sub($)
+  {
+    my $d = shift;
+    system("cd $d && (svn diff | diffstat; echo; svn diff) | $pager");
+  },
+
+  offers_commit_break => 0,
+
+  call_commit_and_update => sub($$@)
+  {
+    my $answer = shift;
+    my $d = shift;
+    system("cd $d && svn ci");
+    system("svn up ".join(' ', @_));
+  },
+
+  abort => sub()
+  {
+  },
+);
+
+sub get_repo_prefix_from_cwd
+{
+  my $repodirname = shift;
+  my $repovariant = shift;
+
+  my $p = $ENV{PWD};
+
+  $p =~ s@/+$@@;
+  my $prefix = '';
+  my $cnt = 40;
+
+  $p = readlink($p) if -l $p;
+  # we'll find one since is_wc_dir() said there is one
+  while (not -e "$p/$repodirname")
+    {
+      last if $p !~ m@(.*)/([^/]+)$@;
+      $p = $1;
+      $prefix = "$2/$prefix";
+      $p = readlink $p if -l $p;
+      $cnt--;
+      die "Link recursion?!" unless $cnt;
+    }
+
+  print "Repository root: $p\n";
+  die "No $repovariant dir" unless $p;
+
+  return ($prefix, $p);
+}
+
+# Mecurial specific functions
+my $hg_path_prefix;
+my %handler_hg = (
+  name => "Mercurial",
+
+  init => sub()
+  {
+    my $p;
+    ($hg_path_prefix, $p) = get_repo_prefix_from_cwd(".hg", "Mercurial");
+
+    chdir $p;
+  },
+
+  exit => sub()
+  {
+  },
+
+  is_wc_dir => sub($)
+  {
+    return -d $_[0].'/.hg';
+  },
+
+  get_file_list_to_diff => sub(@)
+  {
+    my %list;
+    foreach my $p (map { "$hg_path_prefix$_" } @_) {
+      my @o = split /\n/, `hg status -mn $p`;
+      next if $?;
+      $list{$_} = 1 foreach @o;
+    }
+
+    sort keys %list;
+  },
+
+  get_unmod_file => sub($)
+  {
+    my $f = shift;
+    my $c;
+
+    open(S, "hg cat $f |") || die "Cannot launch 'hg cat $f': $!";
+    while (<S>) {
+      $c .= $_;
+    }
+    close S;
+    return $c;
+  },
+
+  create_clean_wc_to => sub($@)
+  {
+    my $to = shift;
+
+    print "to = $to\n";
+    my $src = ".";
+    # Need to find wc root
+    my $cnt = 0;
+    while (not -d "$src/.hg")
+      {
+	$src .= "/..";
+	die "To much recursion" if ++$cnt > 200;
+      }
+    system("hg clone $src $to");
+    die "Hg cloning failed: $!" if $?;
+
+    $to;
+  },
+
+  wc_changes => sub($)
+  {
+    my $d = shift;
+    `cd $d && hg diff`;
+  },
+
+  call_wc_diff_pager => sub($)
+  {
+    my $d = shift;
+    system("cd $d && (hg diff | diffstat; echo; hg diff) | $pager");
+  },
+
+  offers_commit_break => 0,
+
+  call_commit_and_update => sub($$@)
+  {
+    my $answer = shift;
+    my $d = shift;
+    system("cd $d && hg ci && hg push");
+    system("hg up");
+  },
+
+  abort => sub()
+  {
+  },
+);
+
+# Git specific functions
+my $git_path_prefix;
+my $git_use_last_commit;
+my $git_commit_amend;
+my $git_last_commit_info_text;
+my $git_add_sob;
+my $git_treeobject;
+my $git_orig_head;
+my %handler_git = (
+  name => "Git",
+
+  init => sub()
+  {
+    $diff_against = 'HEAD' unless defined $diff_against;
+
+    my $p;
+    ($git_path_prefix, $p) = get_repo_prefix_from_cwd(".git", "Git");
+    chdir $p;
+
+    if (defined $git_use_last_commit)
+      {
+        my $output=`git status -uno --porcelain`;
+
+        die "WC not clean!" if $? or $output ne '';
+
+	$git_orig_head = `git log -1 --format=format:%H`;
+	chomp $git_orig_head;
+
+	$git_last_commit_info_text = `git log --format=format:%B -1`;
+
+	system("git reset --soft HEAD~1");
+
+	$git_treeobject = `git write-tree`;
+	chomp $git_treeobject;
+
+	system("git reset --mixed");
+      }
+  },
+
+  is_wc_dir => sub($)
+  {
+    return -e $_[0].'/.git';
+  },
+
+  get_file_list_to_diff => sub(@)
+  {
+    my %list;
+    if (0) {
+    foreach my $p (map { "$git_path_prefix$_" } @_) {
+      my @o = `git status --porcelain $p`;
+      next if $?;
+      foreach (@o) {
+	if (/^.M\s+(.+)/) {
+	  $list{$1} = 1;
+	}
+      }
+    }
+    }
+
+    my $files = join(' ', map { "$git_path_prefix$_" } @_);
+    my @o = `git diff-index $diff_against $files`;
+    return () if $?;
+    foreach (@o) {
+      if (/^(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)/) {
+	my $f = $6;
+	if ($5 =~ /^M/) {
+	  $list{$f} = 1;
+	}
+      }
+    }
+
+
+    sort keys %list;
+  },
+
+  get_unmod_file => sub($)
+  {
+    my $f = shift;
+    my $c;
+
+    open(S, "git show $diff_against:$f |") || die "Cannot launch 'git show diff_against:$f': $!";
+    while (<S>) {
+      $c .= $_;
+    }
+    close S;
+    return $c;
+  },
+
+  create_clean_wc_to => sub($@)
+  {
+    my $to = shift;
+    print "to = $to\n";
+
+    sub co($@)
+    {
+      my $t = shift;
+      system("mkdir -p $t") unless -e $t;
+      die "mkdir $t failed: $!" if $?;
+      foreach my $e (@_)
+        {
+          my $i = rindex($e, "/");
+          if ($i != -1)
+            {
+              my $basepath = substr($e, 0, $i) if $i != -1;
+              #print "bp=$basepath\n";
+              system("mkdir -p $t/$basepath") unless -e "$t/$basepath";
+              die "mkdir $t/$basepath failed: $!" if $?;
+            }
+          system("git show $diff_against:$e > $t/$e");
+        }
+    }
+    co("$to/a", @_);
+    co("$to/b", @_);
+
+    "$to/b";
+  },
+
+  wc_changes => sub($)
+  {
+    my $d = shift;
+    `cd $d && diff -urN a b`;
+  },
+
+  call_wc_diff_pager => sub($)
+  {
+    my $d = shift;
+    system("cd $d && (diff -urN a b | diffstat; echo; diff -urN a b) | $pager");
+  },
+
+  offers_commit_break => 1,
+
+  call_commit_and_update => sub($$@)
+  {
+    my $answer = shift;
+    my $d = shift;
+    for my $f (@_)
+      {
+	my $hash = `git hash-object -w --stdin < $d/b/$f`;
+	chomp $hash;
+	my $o = `git ls-files --stage $f`;
+	die "invalid git-ls-files output: $o" if $o !~ /^(\d+)\s/;
+	my $mode = $1;
+	system("git update-index --cacheinfo $mode $hash $f");
+	die "git-update-index failed: $!" if $?;
+      }
+
+    if (lc($answer) eq 's')
+      {
+        system($ENV{SHELL} ? $ENV{SHELL} : "sh");
+	die "Shell non-zero exit -> exiting" if $?;
+      }
+
+    my $commit_opts = '';
+    $commit_opts .= " -s" if $git_add_sob;
+    $commit_opts .= " --amend" if $git_commit_amend;
+    system("git commit$commit_opts");
+
+    if (defined $git_use_last_commit)
+      {
+	print "git commit-tree $git_treeobject -p HEAD\n";
+	my $pid = open2(*R, *W, "git commit-tree $git_treeobject -p HEAD");
+	print W $git_last_commit_info_text;
+	close W;
+	my $commitobject = <R>;
+	close R;
+
+	chomp $commitobject;
+
+	system("git update-ref HEAD $commitobject");
+	system("git reset --hard");
+      }
+
+  },
+
+  abort => sub()
+  {
+    if (defined $git_use_last_commit)
+      {
+	system("git reset --hard $git_orig_head");
+      }
+  }
+);
+
+#########################################################################
+## generic stuff
+
+my $force_hndl;
+
+sub call_interactive_diff_and_merge_tool($$)
+{
+  my $filewc = shift;
+  my $filecommit = shift;
+
+  system("$diff $filewc $filecommit");
+}
+
+while (defined $ARGV[0])
+  {
+    if ($ARGV[0] eq '-l')
+      {
+        $git_use_last_commit = 1;
+        shift;
+      }
+    elsif ($ARGV[0] eq '-s')
+      {
+	$git_add_sob = 1;
+	shift;
+      }
+    elsif ($ARGV[0] eq '--amend')
+      {
+	$git_commit_amend = 1;
+	shift;
+      }
+    elsif ($ARGV[0] eq '-f')
+      {
+        shift;
+        $force_hndl = shift;
+        die "Need param to -f option" unless defined $force_hndl;
+        die "Specify {git,hg,svn}" unless $force_hndl =~ /^(git|hg|svn)$/;
+      }
+    else
+      {
+        last;
+      }
+}
+
+if (!defined($ARGV[0])) {
+  print "use: $0 dir(s)/file(s)\n\n";
+  print "     $0 .\n";
+  print "     $0 foo.c blah.c\n";
+  exit(1);
+}
+
+foreach (@ARGV) {
+  die "No .. allowed (you may fix me)" if /^\.\.\// || /\/\.\.\// || /\/\.\.$/;
+  die "No absolute path allowed (you may fix me)" if /^\//;
+  die "$_ is no file or directory" unless -e;
+}
+
+
+my %hndl;
+{
+  my $p = $ENV{PWD};
+
+  if ($force_hndl)
+    {
+      %hndl = %handler_svn if $force_hndl eq 'svn';
+      %hndl = %handler_hg  if $force_hndl eq 'hg';
+      %hndl = %handler_git if $force_hndl eq 'git';
+      die "Internal error" unless %hndl;
+    }
+  else
+    {
+      do
+        {
+          %hndl = %handler_svn if $handler_svn{is_wc_dir}($p);
+          %hndl = %handler_hg  if not %hndl and $handler_hg{is_wc_dir}($p);
+          %hndl = %handler_git if not %hndl and $handler_git{is_wc_dir}($p);
+
+          $p =~ s@[^/]+(/+)?$@@ unless %hndl;
+        }
+      while (not %hndl and $p ne '' and $p ne '/');
+    }
+}
+
+die "Current directory is not a working copy." unless %hndl;
+
+print "Detected repository type: ".$hndl{name}."\n";
+
+$hndl{init}();
+
+my @filelist = $hndl{get_file_list_to_diff}(@ARGV);
+
+printf join("\n", @filelist)."\n";
+
+
+# prepare
+
+my $tmpdir = `mktemp -d`;
+chomp($tmpdir);
+
+my $filecommit = "$tmpdir/TO-COMMIT.c";
+my $filewc     = "$tmpdir/FROM-WC.c";
+
+my $unmodwc = "$tmpdir/unmod-wc";
+mkdir $unmodwc;
+
+print "Creating clean working copy of your current working copy:\n";
+my $unmodwc_edit = $hndl{create_clean_wc_to}($unmodwc, @filelist);
+print "done.\n";
+
+# build two files
+
+open(TOCOMMIT, ">$filecommit") || die "Cannot open $filecommit: $!";
+open(WC,       ">$filewc")     || die "Cannot open $filewc: $!";
+
+foreach my $f (@filelist) {
+  # repo version of the file
+  print TOCOMMIT "========== PARTCOMMIT:$f ================\n";
+  print TOCOMMIT $hndl{get_unmod_file}($f);
+
+  # modified version of the file
+  open(MODIFIED, $f) || die "Cannot open $f: $!";
+  print WC "========== PARTCOMMIT:$f ================\n";
+  while (<MODIFIED>) {
+    print WC;
+  }
+  close MODIFIED;
+}
+
+close TOCOMMIT;
+close WC;
+
+# this one should not be modified
+chmod 0400, $filewc;
+
+call_interactive_diff_and_merge_tool($filewc, $filecommit);
+
+# now unsplit the file and apply to the unmod working copy
+open(TOCOMMIT, "$filecommit") || die "Cannot open $filecommit: $!";
+
+sub _writeout($$)
+{
+  my $file = shift;
+  my $content = shift;
+  print "Writing $file\n";
+  open(X, ">$file") || die "Cannot open $file: $!";
+  print X $content;
+  close X;
+}
+
+my $file;
+my $filecontents = '';
+while (<TOCOMMIT>) {
+  if (/^========== PARTCOMMIT:(.+) ================$/) {
+    # write out file to $unmodwc_edit/$file
+    _writeout("$unmodwc_edit/$file", $filecontents) if defined $file;
+    $file = $1;
+    $filecontents = '';
+  } else {
+    die "Invalid file contents" unless defined $file;
+    $filecontents .= $_;
+  }
+}
+_writeout("$unmodwc_edit/$file", $filecontents) if defined $file;
+
+close TOCOMMIT;
+
+if ($hndl{wc_changes}($unmodwc) ne '') {
+  print "Check this:\n";
+  $hndl{call_wc_diff_pager}($unmodwc);
+
+  #system("reset");
+  print "Commit the diff you just saw? [y/N",
+        ($hndl{offers_commit_break} ? "/s" : ""), "]\n";
+  my $answer = `bash -c 'read a && echo \$a'`;
+  chomp $answer;
+  if (lc($answer) eq 'y' or lc($answer) eq 's') {
+    $hndl{call_commit_and_update}($answer, $unmodwc, @filelist);
+  } else {
+    print "Not commiting stuff, bye\n";
+    $hndl{abort}();
+  }
+} else {
+  print "No change, exiting\n";
+  $hndl{abort}();
+}
+
+system("rm -fr $tmpdir");

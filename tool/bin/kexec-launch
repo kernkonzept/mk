@@ -1,0 +1,44 @@
+#! /usr/bin/perl -W
+#
+# (c) 2010 Adam Lackorzynski, Technische Universität Dresden
+# This file is part of TUD:OS and distributed under the terms of the
+# GNU General Public License 2.
+# Please see the COPYING-GPL-2 file for details.
+#
+# Adam Lackorzynski <adam@os.inf.tu-dresden.de>
+#
+
+use strict;
+
+BEGIN { unshift @INC, $ENV{L4DIR}.'/tool/lib'
+           if $ENV{L4DIR} && -d $ENV{L4DIR}.'/tool/lib/L4';}
+
+use L4::ModList;
+use File::Temp qw/tempdir/;
+
+my $kernelname   = $ENV{KERNEL}     || 'bootstrap';
+my $module_path  = $ENV{SEARCHPATH} || ".";
+my $modulesfile  = shift;
+my $entryname    = shift;
+my $unzip_tmp    = tempdir(CLEANUP => 1); 
+
+die "No entry name given" unless defined $entryname;
+
+sub getfile($$)
+{
+  my $command = shift;
+  my $cmdline = shift;
+  my $f = L4::ModList::get_file_uncompressed_or_die($command, $module_path,
+                                                    $unzip_tmp);
+  $cmdline =~ s/^\S+\s*//;
+  $f.' '.$cmdline;
+}
+
+my %entry = L4::ModList::get_module_entry($modulesfile, $entryname);
+
+my @mods = @{$entry{mods}};
+my $kernel = L4::ModList::search_file_or_die($entry{bootstrap}{command}, $module_path);
+my $moduleparams = join(' ', map { "--module=\"".getfile($_->{command}, $_->{cmdline})."\"" } @mods);
+
+print "kexec -l $kernel --command-line=\"$entry{bootstrap}{cmdline}\" ".
+      "$moduleparams ".join(' ', @ARGV)."\n";;

@@ -1,0 +1,46 @@
+#! /usr/bin/perl -W
+#
+# 2009, Adam Lackorzynski <adam@os.inf.tu-dresden.de>
+#
+# Generate dependencies on PC files
+# 
+
+use strict;
+
+my $pcfiledir = $ARGV[0];
+
+die "Need to give directory with pc files." unless defined $pcfiledir;
+
+opendir D, $pcfiledir || die "Cannot open $pcfiledir: $!";
+
+my ($sec,$min,$hour,$mday,$mon,$year,$wday,$yday,$isdst) = localtime(time);
+$year += 1900;
+$mon++;
+
+print "# Automatically generated\n";
+print "#\n";
+print "digraph dep {\n";
+print "  graph [ label = \"\\nPC file dependency\\n",
+      sprintf("%02d. %02d. %04d, %02d:%02d \"];\n", $mday, $mon,
+      $year, $hour, $min);
+
+
+foreach my $f (readdir D)
+  {
+    next unless $f =~ /(.+)\.pc$/;
+    my $p = $1;
+
+    open(F, "$pcfiledir/$f") or die "Cannot open $pcfiledir/$f: $!";
+
+    while (<F>)
+      {
+	next unless /requires:\s+(.+)/i;
+	print "  \"$p\" -> \"$_\";\n" foreach split /\s+/, $1;
+      }
+
+    close F;
+  }
+
+print "}\n";
+
+closedir D;

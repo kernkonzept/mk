@@ -1,0 +1,277 @@
+#! /bin/sh
+# vi:set ft=sh:
+#
+# Some gcc wrapper that makes normal gcc calls into l4re specific ones. Uses
+# /bin/sh to not be too slow.
+#
+# Adam Lackorzynski <adam@os.inf.tu-dresden.de>
+
+# In: 
+#    $1: Reference to string to filter
+#    $2: Quoted string with list of arguments to filter out
+# Out:
+#    A filtered version of the string in var referneced by $1
+#    with all the entries in $2 removed
+filterOut()
+{
+	eval toFilt="\$$1"
+	result=""
+	filt=" $2 " #needed for whole token matching
+	for e in $toFilt; do
+		#POSIX substring matching, true if $e not in $filt
+		[ "${filt#* $e }" = "$filt" ] && result="$result $e"
+	done
+	eval "$1=\${result}" #Return result
+}
+
+# In: 
+#    $1: Reference to string to search
+#    $2: Variable to set to 1 on first match
+#    $3: Quoted string with list of arguments to search for
+# Out:
+#    Sets variable referenced by $2 to one if at least on token
+#    from $3 is in the list referenced by $1
+
+setFor()
+{
+	eval toFilt="\$$1"
+	result=""
+	filt=" $3 " #needed for whole token matching
+	for e in $toFilt; do
+		#POSIX substring matching, check if e in filter
+		if [ "${filt#* $e }" != "$filt" ]
+		then
+			eval "$2=1"
+			return;
+		fi
+	done
+}
+
+# In:
+#    $1: Reference to list where each element should be prefixed
+#    $2: Prefix (e.g. -Wl,)
+prefix()
+{
+	eval toPrefix="\$$1"
+	result=""
+	for e in $toPrefix; do
+		result="$result $2$e"
+	done;
+	eval "$1=\${result}"	
+}
+
+#print $1 if we are verbose
+log()
+{
+	[ -n "$L4RE_VERBOSE" ] && echo "$logprefix: $1"
+}
+
+#print $2 if expression in $1 evaluates to true
+logIf()
+{
+	eval "test $1" && log "$2"
+}
+
+
+[ -n "$O" ] && L4_OBJ_BASE=$O
+
+if [ -z "$L4_OBJ_BASE" -o -z "$1" ];
+then
+  cat <<EOH
+Need to specify O/L4_OBJ_BASE with path to obj-dir
+Usage: $0 gcc-options...
+ Evaluated environment variables:
+  O / L4_OBJ_BASE      : object base directory
+  CROSS_COMPILE        : cross compile prefix
+  L4RE_GCC_CXX         : use g++ instead of gcc
+  L4RE_LINK_ADDR       : binary link address, defaults to 0x1000000
+  L4RE_LINK_OPTS       : additional link options
+  L4RE_REQUIRES_LIBS   : libs of required libs
+  L4RE_PRIVATE_INCDIR  : addition include paths
+  L4RE_FORCE_LINK_MODE : 'static' or 'shared'
+  V / L4RE_VERBOSE     : verboseness
+EOH
+  exit 1
+fi
+
+if [ ! -e "$L4_OBJ_BASE/l4defs.sh.inc" ]; then
+  echo "\"$L4_OBJ_BASE\" does not seem to be a (configured) obj-dir"
+  exit 1
+fi
+
+. $L4_OBJ_BASE/l4defs.sh.inc
+
+[ "${0%g++}" != "$0" ] && L4RE_GCC_CXX=y
+[ "${0%ld}"  != "$0" ] && L4RE_GCC_LD=y
+
+GCC=${CROSS_COMPILE}gcc
+[ -n "$L4RE_GCC_CXX" ] && GCC=${CROSS_COMPILE}g++
+
+LD=${CROSS_COMPILE}ld
+
+logprefix=l4re-gcc
+[ -n "$L4RE_GCC_CXX" ] && logprefix=l4re-g++
+[ -n "$L4RE_GCC_LD"  ] && logprefix=l4re-ld
+
+L4RE_LINK_ADDR=${L4RE_LINK_ADDR:-0x10000000}
+
+[ -n "$V" ] && L4RE_VERBOSE=y
+
+log "orig: $*"
+
+args="$*"
+filterOut args "-lm -lcrypt -lutil -lz"
+setFor args is_compile "-c"
+setFor args is_static "-static"
+setFor args is_shared_lib_link "-shared"
+
+for e in "$args"; do
+  case "$e" in
+     *Bstatic) is_static=1 ;;
+     *-soname*) is_shared_lib_link=1 ;;
+  esac
+done
+
+log "Args: $args"
+
+if [ -n "$is_compile" ]; then
+  log "is compile"
+
+  [ -z "$L4RE_REQUIRES_LIBS" ] && L4RE_REQUIRES_LIBS=stdlibs
+  if [ -n "$L4RE_REQUIRES_LIBS" ]; then
+    log "L4RE_REQUIRES_LIBS=$L4RE_REQUIRES_LIBS"
+    add_cflags=$(l4_bid_call_pkgconfig $L4_OBJ_BASE --cflags $L4RE_REQUIRES_LIBS)
+    if [ $? != 0 ]; then
+      echo "l4_bid_call_pkgconfig failed"
+      exit 1
+    fi
+  fi
+
+  if [ -n "$L4RE_PRIVATE_INCDIR" ]; then
+    for c in $L4RE_PRIVATE_INCDIR; do
+      add_cflags="$add_cflags -I$c"
+    done
+  fi
+
+  log "add_cflags: $add_cflags"
+  [ -n "$L4RE_VERBOSE" ] && set -x
+  if [ -n "$L4RE_GCC_CXX" ]; then
+    l4_flags=$L4_CXXFLAGS
+  else
+    l4_flags=$L4_CFLAGS
+  fi
+  $GCC $l4_flags $L4_CPPFLAGS $add_cflags $args
+
+else
+
+  log "is link"
+
+  if [ "$L4RE_FORCE_LINK_MODE" = "static" ]; then
+    is_static=1
+  elif [ "$L4RE_FORCE_LINK_MODE" = "shared" ]; then
+    unset is_static
+  fi
+
+  if [ -z "$L4RE_REQUIRES_LIBS" ]; then
+    if [ -n "$is_static" ]; then
+      L4RE_REQUIRES_LIBS=stdlibs
+    else
+      L4RE_REQUIRES_LIBS=stdlibs-sh
+    fi
+  fi
+  if [ -n "$L4RE_REQUIRES_LIBS" ]; then
+    log "L4RE_REQUIRES_LIBS=$L4RE_REQUIRES_LIBS"
+    add_libs=$(l4_bid_call_pkgconfig $L4_OBJ_BASE --libs $L4RE_REQUIRES_LIBS)
+    if [ $? != 0 ]; then
+      echo "l4_bid_call_pkgconfig failed"
+      exit 1
+    fi
+  fi
+
+  log "add_libs: $add_libs"
+  logIf '-n "$is_static"' "is static"
+  logIf '-z "$is_static"' "is shared"
+  logIf '-n "$is_shared_lib_link"' "is shared lib link"
+
+  if [ -n "$is_static" ]; then
+    unset LIB_LIST
+    for i in $L4_LDFLAGS_GCC_STATIC; do
+      if [ "$i" = "-Wl,--end-group" ]; then
+	LIB_LIST="$LIB_LIST $add_libs $i"
+      elif [ "$i" != "${i#-Wl,-T/}" ]; then
+        :
+      else
+	LIB_LIST="$LIB_LIST $i"
+      fi
+    done
+
+    [ -n "$L4RE_VERBOSE" ] && set -x
+    $GCC -nostdlib $L4_CRT0_STATIC \
+	 $args \
+         -Wl,--defsym=__executable_start=$L4RE_LINK_ADDR $LIB_LIST \
+	 $L4_LDFLAGS_GCC_STATIC \
+	 $L4_CRTN_STATIC  \
+	 $L4RE_LINK_OPTS $L4_GCCLIB $L4_GCCLIB_EH
+
+  else
+    # shared
+    unset LIB_LIST
+    [ -n "$L4RE_VERBOSE" ] && set -x
+
+    if [ -n "$is_shared_lib_link" ]; then
+      log "Shared lib link!"
+      for i in $L4_LDFLAGS_LD_SHARED; do
+	if [ "$i" = "-Wl,--end-group" ]; then
+	  LIB_LIST="$LIB_LIST $add_libs $i"
+	elif [ "$i" != "${i#-T/}" ]; then
+	  :
+	else
+	  LIB_LIST="$LIB_LIST $i"
+	fi
+      done
+
+      for i in $args; do
+        if [ "$i" != "${i#-Wl,}" ]; then
+          filtered_args="$filtered_args ${i#-Wl,}"
+        else
+          filtered_args="$filtered_args $i"
+        fi
+      done
+
+      $LD $L4_CRT0_SO \
+         $filtered_args -T$L4_LDS_so $LIB_LIST \
+         $L4_LDFLAGS_DYNAMIC_LINKER_LD \
+         $L4RE_LINK_OPTS $L4_GCCLIB $L4_GCCLIB_EH \
+         $L4_CRTN_SO -l4re
+
+    else
+      log "Is not shared_lib_link"
+      prefix add_libs "-Wl,"
+      #filterOut add_libs "-m32"
+
+      for i in $L4_LDFLAGS_GCC_SHARED; do
+	if [ "$i" = "-Wl,--end-group" ]; then
+	  LIB_LIST="$LIB_LIST $add_libs $i"
+	elif [ "$i" != "${i#-Wl,-T/}" ]; then
+	  :
+	else
+	  LIB_LIST="$LIB_LIST $i"
+	fi
+      done
+      
+      $GCC -nostdlib -shared $CRT0_SO \
+         $args \
+         -Wl,-T$L4_LDS_dyn_bin $LIB_LIST \
+         $L4_LDFLAGS_DYNAMIC_LINKER_GCC \
+         $L4RE_LINK_OPTS $L4_GCCLIB $L4_GCCLIB_EH \
+         $CRTN_SO -l4re
+      
+      #$GCC -nostdlib $CRT0_all_shared \
+      #   $args \
+      #   -Wl,-T$L4_LDS_dyn_bin $LIB_LIST \
+      #   $L4_LDFLAGS_DYNAMIC_LINKER_GCC \
+      #   $L4RE_LINK_OPTS $L4_GCCLIB $L4_GCCLIB_EH \
+      #   $CRTN_all_shared -l4re
+    fi
+  fi
+fi
