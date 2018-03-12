@@ -114,14 +114,18 @@ foreach my $entryname (@ARGV)
       $initrd_arg.
       "                  $qemu_options \"\$@\";;\n";
 
-    $files{$_} = 1 foreach @{$entry{files}};
+    foreach (@mods) {
+      (my $f = $_->{cmdline}) =~ s/^(\S+).*/$1/;
+      $files{$_->{command}} = $f;
+    }
     if (!$x86_based) {
       delete $files{bootstrap};
       $files{$kernel_w_path} = 1;
     }
   }
 
-L4::ModList::copy_file_uncompressed_or_die($_, $module_path, $targetdir)
+L4::ModList::copy_file_uncompressed_or_die($_, $module_path,
+                                           $targetdir, $files{$_})
   foreach keys %files;
 
 print QEMU "  *) echo \"Give entry:\"\n";

@@ -593,12 +593,9 @@ sub fetch_remote_file
   handle_remote_file(shift, 1);
 }
 
-sub get_or_copy_file_uncompressed_or_die($$$$)
+sub get_or_copy_file_uncompressed_or_die($$$$$)
 {
-  my $command   = shift;
-  my $paths     = shift;
-  my $targetdir = shift;
-  my $copy      = shift;
+  my ($command, $paths, $targetdir, $targetfilename, $copy) = @_;
 
   my $fp = L4::ModList::search_file_or_die($command, $paths);
 
@@ -607,8 +604,13 @@ sub get_or_copy_file_uncompressed_or_die($$$$)
   read F, $buf, 2;
   close F;
 
-  (my $tf = $fp) =~ s|.*/||;
-  $tf = $targetdir.'/'.$tf;
+  my $tf;
+  if ($targetfilename) {
+    $tf = $targetdir.'/'.$targetfilename;
+  } else {
+    (my $f = $fp) =~ s|.*/||;
+    $tf = $targetdir.'/'.$f;
+  }
 
   if (length($buf) >= 2 && unpack("n", $buf) == 0x1f8b) {
     print STDERR "'$fp' is a zipped file, uncompressing to '$tf'\n";
@@ -629,12 +631,14 @@ sub get_or_copy_file_uncompressed_or_die($$$$)
 
 sub get_file_uncompressed_or_die($$$)
 {
-  return get_or_copy_file_uncompressed_or_die(shift, shift, shift, 0);
+  return get_or_copy_file_uncompressed_or_die(shift, shift, shift, undef, 0);
 }
 
-sub copy_file_uncompressed_or_die($$$)
+sub copy_file_uncompressed_or_die($$$$)
 {
-  return get_or_copy_file_uncompressed_or_die(shift, shift, shift, 1);
+  my ($command, $searchpaths, $targetdir, $targetfilename) = @_;
+  return get_or_copy_file_uncompressed_or_die($command, $searchpaths,
+                                              $targetdir, $targetfilename, 1);
 }
 
 
