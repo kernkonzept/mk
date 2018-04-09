@@ -298,11 +298,13 @@ BID_BENDER_DEFINES = \
 bid_bender_default_vars = $(call BID_BENDER_DEFINES,$(OBJ_BASE),$(L4DIR),$(GCCSYSLIBDIRS),$(ARCH)_$(CPU),$(L4API))
 
 # linker for L4 libs and applications
-BID_LINK = $(L4DIR)/tool/bin/l4-bender -t ld $(bid_bender_default_vars) -Dlinker="$(LD)" \
+BID_LINK = $(L4DIR)/tool/bin/l4-bender $(if $(V),--trace-exec) \
+           -t ld $(bid_bender_default_vars) -Dlinker="$(LD)" \
            --spec=$(L4DIR)/mk/bid-bender.spec --
 
 # linker for host mode and l4linux mode
-BID_LINK_MODE_host = $(L4DIR)/tool/bin/l4-bender -t host-ld $(bid_bender_default_vars) -Dlinker="$(1)" \
+BID_LINK_MODE_host = $(L4DIR)/tool/bin/l4-bender $(if $(V),--trace-exec) \
+                     -t host-ld $(bid_bender_default_vars) -Dlinker="$(1)" \
                      --spec=$(L4DIR)/mk/bid-bender.spec --
 
 BID_link_deps_file = $(dir $(1)).$(notdir $(1)).pcs.d
