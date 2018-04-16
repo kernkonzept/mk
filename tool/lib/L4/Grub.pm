@@ -124,7 +124,7 @@ sub grub2_mkisofs($$@)
   # argument parts. We use the following to detect this version and act
   # accordingly.
   my $opt = '';
-  system('grub-mkrescue --output=/dev/null /dev/null -f >/dev/null 2>&1');
+  system("$mkr --output=/dev/null /dev/null -f >/dev/null 2>&1");
   $opt = " -as mkisofs" unless $?;
   my $cmd = "$mkr --output=\"$isofilename\" $dir ".
             join(' ', @morefiles)." --$opt -f";
