@@ -1,0 +1,150 @@
+## This file states the license of this package and possibly its subpackages
+## in machine and human readable format. The PackageName refers to the package
+## whose license is defined by PackageLicenseConcluded.
+## For more information about this file format visit the SPDX website at
+## https://spdx.org
+
+SPDXVersion: SPDX-2.1
+DataLicense: CC0-1.0
+SPDXID: SPDXRef-DOCUMENT
+DocumentNamespace: spdx:kernkonzept/mk-9d86a1cf-c4ab-4700-8f21-0a22bcd93619
+DocumentName: LICENSE.spdx
+
+Creator: Organization: Kernkonzept GmbH (info@kernkonzept.com)
+
+## Package Information
+PackageName: mk
+PackageOriginator: Organization: Kernkonzept GmbH (info@kernkonzept.com)
+PackageLicenseDeclared: (GPL-2.0-only OR LicenseRef-kk-custom)
+PackageLicenseConcluded: (GPL-2.0-only OR LicenseRef-kk-custom)
+FilesAnalyzed: true
+PackageCopyrightText: NOASSERTION
+PackageDownloadLocation: NOASSERTION
+
+FileName: ./tool/bin/abs2rel.sh
+SPDXID: SPDXRef-abs2rel.sh
+LicenseConcluded: GPL-2.0-only
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+FileName: ./tool/bin/addfileheader
+SPDXID: SPDXRef-addfileheader
+LicenseConcluded: GPL-2.0-only
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+FileName: ./tool/bin/reloc.sh
+SPDXID: SPDXRef-reloc.sh
+LicenseConcluded: GPL-2.0-only
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+FileName: ./tool/bin/l4_timeout_old_2_new
+SPDXID: SPDXRef-l4_timeout_old_2_new
+LicenseConcluded: GPL-2.0-only
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+FileName: ./tool/bin/mkspafs
+SPDXID: SPDXRef-mkspafs
+LicenseConcluded: GPL-2.0-only
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+FileName: ./tool/bin/entry-selector
+SPDXID: SPDXRef-entry-selector
+LicenseConcluded: GPL-2.0-only
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+FileName: ./tool/bin/genexportpack
+SPDXID: SPDXRef-genexportpack
+LicenseConcluded: GPL-2.0-only
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+FileName: ./tool/bin/gengrub1iso
+SPDXID: SPDXRef-gengrub1iso
+LicenseConcluded: GPL-2.0-only
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+FileName: ./tool/bin/gengrub2iso
+SPDXID: SPDXRef-gengrub2iso
+LicenseConcluded: GPL-2.0-only
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+FileName: ./tool/bin/kexec-launch
+SPDXID: SPDXRef-kexec-launch
+LicenseConcluded: GPL-2.0-only
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+FileName: ./tool/bin/qemu-x86-launch
+SPDXID: SPDXRef-qemu-x86-launch
+LicenseConcluded: GPL-2.0-only
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+FileName: ./tool/bin/ux-launch
+SPDXID: SPDXRef-ux-launch
+LicenseConcluded: GPL-2.0-only
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+FileName: ./tool/bin/swig-rm-extern-c.pl
+SPDXID: SPDXRef-swig-rm-extern-c
+LicenseConcluded: GPL-2.0-only
+LicenseInfoInFile: NOASSERTION
+FileCopyrightText: NOASSERTION
+
+PackageName: gendep
+SPDXID: SPDXRef-gendep
+PackageFileName: ./tool/gendep
+PackageOriginator: Organization: Kernkonzept GmbH (info@kernkonzept.com)
+PackageLicenseDeclared: LicenseRef-public-domain
+PackageLicenseConcluded: LicenseRef-public-domain
+PackageCopyrightText: NOASSERTION
+PackageDownloadLocation: NOASSERTION
+FilesAnalyzed: false
+
+PackageName: kconfig
+SPDXID: SPDXRef-kconfig
+PackageFileName: ./tool/kconfig
+PackageOriginator: Organization: The Linux Foundation
+PackageLicenseDeclared: GPL-2.0-or-later
+PackageLicenseConcluded: GPL-2.0-or-later
+PackageCopyrightText: NOASSERTION
+PackageDownloadLocation: NOASSERTION
+FilesAnalyzed: false
+
+Relationship: SPDXRef-mk CONTAINS SPDXRef-gendep
+Relationship: SPDXRef-mk CONTAINS SPDXRef-kconfig
+
+## License Information
+LicenseID: LicenseRef-kk-custom
+ExtractedText: <text>Kernkonzept Custom License
+
+If you have sought a special licensing agreement with Kernkonzept GmbH the
+terms and conditions from therein apply to this package.
+
+If you require a different licensing scheme please contact us at
+info@kernkonzept.com.
+</text>
+LicenseName: Kernkonzept Custom License
+
+LicenseID: LicenseRef-public-domain
+ExtractedText: <text>This code is public domain. Copy it, use it, distribute
+it. Under no circumstences the authors can be made responsible for any kind of
+damage, loss or anger or irritation resulting from the use, distribution or
+existance of this code.
+
+See the COPYING file in this package for details.
+</text>
+
+LicenseID: LicenseRef-free-for-anybody
+ExtractedText: <text>Free for anybodys use in any application, in whole or in
+part, as long as the above copyright is retained. By using this stuff, you
+agree that I am not responsible for anything that might go wrong, nor for any
+damages because something did.</text>
