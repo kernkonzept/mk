@@ -16,6 +16,7 @@ BEGIN { unshift @INC, $ENV{L4DIR}.'/tool/lib'
 use L4::ModList;
 use L4::Grub;
 use File::Temp qw/tempdir/;
+use File::Basename qw/basename/;
 
 my $qemu         = $ENV{QEMU}         || 'qemu';
 my $module_path  = $ENV{SEARCHPATH}   || ".";
@@ -116,7 +117,7 @@ foreach my $entryname (@ARGV)
 
     foreach (@mods) {
       (my $f = $_->{cmdline}) =~ s/^(\S+).*/$1/;
-      $files{$_->{command}} = $f;
+      $files{$_->{command}} = basename($f);
     }
     if (!$x86_based) {
       delete $files{bootstrap};
