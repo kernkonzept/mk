@@ -489,7 +489,9 @@ endif
 
 CXXFLAGS+= $(if $(CONFIG_BID_GCC_OMIT_FP),-fomit-frame-pointer,-fno-omit-frame-pointer)
 CXXFLAGS+= $(call bid_flag_variants,CXXFLAGS)
-CXXFLAGS+= $(OPTS) $(filter-out -Wstrict-prototypes -Wmissing-prototypes,$(WARNINGS))
+CXXFLAGS+= $(OPTS) $(filter-out $(foreach w,-Wstrict-prototypes -Wmissing-prototypes,\
+                                            $(w) $(patsubst -W%,-Wno-%,$(w))),\
+                                $(WARNINGS))
 CXXFLAGS+= $(CXXFLAGS-y)
 CXXFLAGS+= -fno-common
 CXXFLAGS+= $(CXXFLAGS_L4_GENERIC)
