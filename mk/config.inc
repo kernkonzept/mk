@@ -86,21 +86,21 @@ $(DIRS_FOR_CONFIG): $(KCONFIG_FILE)
 	$(VERBOSE)[ -d $@ ] || install -d $@
 
 menuconfig config: $(DIRS_FOR_CONFIG)
-	$(VERBOSE)+$(kconfig_call) menuconfig silentoldconfig
+	$(VERBOSE)+$(kconfig_call) menuconfig syncconfig
 	$(VERBOSE)test ! -r $(DROPSCONF_CONFIG) -o \
 		! $(DROPSCONF_CONFIG) -nt $(DROPSCONF_CONFIG_MK) || \
 		$(MAKE) $(DROPSCONF_CONFIG_MK)
 
 textconfig: $(DIRS_FOR_CONFIG)
-	$(VERBOSE)+$(kconfig_call) config silentoldconfig
+	$(VERBOSE)+$(kconfig_call) config syncconfig
 	@$(MAKE) $(DROPSCONF_CONFIG_MK)
 
 oldconfig olddefconfig xconfig gconfig nconfig randconfig allyesconfig allnoconfig savedefconfig: $(DIRS_FOR_CONFIG)
-	$(VERBOSE)+$(kconfig_call) $@ silentoldconfig
+	$(VERBOSE)+$(kconfig_call) $@ syncconfig
 	@$(MAKE) $(DROPSCONF_CONFIG_MK)
 
-$(DROPSCONF_CONFIG) silentoldconfig: $(DIRS_FOR_CONFIG)
-	$(VERBOSE)+$(kconfig_call) silentoldconfig
+$(DROPSCONF_CONFIG) syncconfig: $(DIRS_FOR_CONFIG)
+	$(VERBOSE)+$(kconfig_call) syncconfig
 	
 
 #$(DROPSCONF_CONFIG_H): $(DROPSCONF_CONFIG)
@@ -167,7 +167,7 @@ help::
 # special switch not to include DROPSCONF_CONFIG_MK
 ifeq ($(DROPSCONF_DONTINC_MK),)
 # do not prebuild the config file on "make config"
-ifeq ($(filter config oldconfig silentoldconfig txtconfig help scrub clean cleanall $(DROPSCONF_CONFIG_MK),$(MAKECMDGOALS)),)
+ifeq ($(filter config oldconfig syncconfig txtconfig help scrub clean cleanall $(DROPSCONF_CONFIG_MK),$(MAKECMDGOALS)),)
 $(info INCLUDING $(DROPSCONF_CONFIG_MK) config.inc)
 -include $(DROPSCONF_CONFIG_MK)
 endif
@@ -175,9 +175,9 @@ endif
 
 # end of DROPSCONF defined
 else
-config txtconfig oldconfig olddefconfig silentoldconfig::
+config txtconfig oldconfig olddefconfig syncconfig::
 endif
 
-.PHONY: config oldconfig olddefconfig silentoldconfig txtconfig menuconfig \
+.PHONY: config oldconfig olddefconfig syncconfig txtconfig menuconfig \
         xconfig gconfig nconfig randconfig allyesconfig allnoconfig \
 	savedefconfig
