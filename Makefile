@@ -11,7 +11,7 @@ clean-dirs    := tool pkg tests doc
 cleanall-dirs := tool pkg tests doc
 
 BUILD_TOOLS	= bash bison flex gawk gcc g++ ld perl tput
-#BUILD_TOOLS_pkg/uvmm  := dtc
+BUILD_TOOLS_pkg/uvmm  := dtc
 
 CMDS_WITHOUT_OBJDIR := help checkbuild checkbuild.% up update check_build_tools
 CMDS_NO_PROJECT_MK  := $(CMDS_WITHOUT_OBJDIR) \
