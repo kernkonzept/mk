@@ -1,9 +1,5 @@
 mainmenu "L4Re Configuration"
 
-config KERNELVERSION
-        string
-	option env="KERNELVERSION"
-
 config ARCH_ENABLE_STACK_PROTECTOR
 	bool
 
