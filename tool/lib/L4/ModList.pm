@@ -501,9 +501,7 @@ sub handle_remote_file
 {
   my $file = shift;
   my $fetch_file = shift;
-  my $output_dir = $ENV{OUTPUT_DIR};
-  $output_dir = $ENV{TMPDIR} unless defined $output_dir;
-  $output_dir = '/tmp' unless defined $output_dir;
+  my $output_dir = $ENV{OUTPUT_DIR} || $ENV{TMPDIR} || '/tmp';
 
   if ($file =~ /^s(sh|cp):\/\/([^\/]+)\/(.+)/)
     {
