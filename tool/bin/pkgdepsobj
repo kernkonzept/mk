@@ -64,18 +64,22 @@ sub do_deps($@)
           $deps{$p}{l4pkg}{$1} = 1;
         } elsif ($realfile =~ /^$srcdir_base\/pkg\/([^\/]+)\//) {
           $deps{$p}{l4pkg}{$1} = 1;
+        } elsif ($realfile =~ /^$objdir_base\/pc\/([^\/]+)\.pc/) {
+          # ignore
         } elsif ($realfile =~ /^$objdir_base\/(\.config\.all|Makeconf\.\w+)$/) {
           $deps{$p}{l4config} = 1;
         } elsif ($realfile =~ /^$srcdir_base\/Makeconf\.\w+$/) {
           $deps{$p}{l4config} = 1;
         } elsif ($realfile =~ /^$objdir_base\/include\/l4\/bid_config\.h$/) {
           $deps{$p}{l4config} = 1;
+        } elsif ($realfile =~ /^$srcdir_base\/mk\/bid-bender\.spec$/) {
+          $deps{$p}{l4config} = 1;
         } elsif ($realfile =~ /^$srcdir_base\/tool\/.+$/) {
           $deps{$p}{l4tool} = 1;
         } elsif (   $realfile =~ /\/(libgcc(_eh)?\.a|crt(begin[TS]?|end[S]?)\.o|include(-fixed)?\/(std(arg|def|bool)|limits|unwind|float|omp|[ex]?mmintrin|mm_malloc)\.h)$/
                  || $realfile =~ /^\/usr\/lib\/gcc\/.+\/lib\/(crt.\.o|lib.+\.so)$/) {
           $deps{$p}{gcc} = 1;
-        } elsif (   $realfile =~ /^\/usr\/(lib|lib32|lib64|include|share)\//
+        } elsif (   $realfile =~ /^\/\/?usr\/(lib|lib32|lib64|include|share)\//
                  || $realfile =~ /^\/(lib|dev)\//) {
           $deps{$p}{host} = 1;
         } else {
