@@ -3,7 +3,7 @@ pc_file_dir = %:set-var(pc_file_dir %(l4obj)/pc)
 
 # options that take an extra argument
 link_arg_opts =
-  %:arg-option(L m z o h e -entry fini init -defsym)
+  %:arg-option(L m z o O h e -entry fini init -defsym)
   %:arg-option(b -format A -architecture y -trace-symbol MF)
   %:arg-option(-hash-style)
   %:arg-option(T Tbss Tdata Ttext Ttext-segment Trodata-segment Tldata-segment)
@@ -46,7 +46,7 @@ check_linker = %(linker:;:%:error(linker variable not defined))
 # options to pass to the linker (binutils ld)
 link_pass_opts = %:set-var(link_pass_opts
   %{M} %{-print-map} %{-trace-symbol*} %{y} %{-verbose}
-  %{-cref} %{-trace} %{r}
+  %{-cref} %{-trace} %{r} %{O*}
   %{m} %{-error-*} %{-warn-*&-no-warn-*}
   %{-sort-*} %{-unique*}
   %{-define-common&-no-define-common} %{B*}
