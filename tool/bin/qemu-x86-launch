@@ -53,10 +53,10 @@ my %entry = L4::ModList::get_module_entry($modulesfile, $entryname);
 
 my @mods = @{$entry{mods}};
 my $kernel = L4::ModList::search_file_or_die($entry{bootstrap}{command}, $module_path);
-my $initrd = join(',', map { qemu_get_file($_->{command}, $_->{cmdline}) } @mods);
+my $initrd = join(',', map { qemu_get_file($_->{command}, $_->{cmdline_quoted}) } @mods);
 
 my $qemu_cmd =
-      "$qemu -kernel $kernel -append \"$entry{bootstrap}{cmdline}\" ".
+      "$qemu -kernel $kernel -append \"$entry{bootstrap}{cmdline_quoted}\" ".
       "-initrd \"$initrd\" $qemu_options";
 
 # check installed qemu version

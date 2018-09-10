@@ -94,7 +94,7 @@ foreach my $entryname (@ARGV)
 
     my @mods = @{$entry{mods}};
 
-    my $initrd = join(',', map { qemu_get_file($_->{command}, $_->{cmdline}) } @mods);
+    my $initrd = join(',', map { qemu_get_file($_->{command}, $_->{cmdline_quoted}) } @mods);
 
     my $kernel_w_path;
     my $initrd_arg = '';
@@ -119,10 +119,7 @@ foreach my $entryname (@ARGV)
       (my $f = $_->{cmdline}) =~ s/^(\S+).*/$1/;
       $files{$_->{command}} = basename($f);
     }
-    if (!$x86_based) {
-      delete $files{bootstrap};
-      $files{$kernel_w_path} = 1;
-    }
+    $files{$kernel_w_path} = $kernel;
   }
 
 L4::ModList::copy_file_uncompressed_or_die($_, $module_path,

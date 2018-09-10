@@ -19,14 +19,16 @@ sub get_command_and_cmdline
   my $full = $file;
   $full = $opts{fname} if exists $opts{fname};
   $full .= " $args" if defined $args;
-  $full =~ s/"/\\"/g;
+
+  my $full_quoted = $full;
+  $full_quoted =~ s/"/\\"/g;
 
   if (length($full) > $arglen) {
     print "$.: \"$full\" too long...\n";
     exit 1;
   }
 
-  ($file, $full);
+  ($file, $full, $full_quoted);
 }
 
 sub error($)
@@ -249,17 +251,21 @@ sub get_module_entry($$)
     $mods[2] = { command => 'Makefile', cmdline => 'Makefile', type => 'bin'};
 
     return (
-      bootstrap => { command => 'bootstrap',
-                     cmdline => 'bootstrap' },
+      bootstrap => { command        => 'bootstrap',
+                     cmdline        => 'bootstrap',
+                     cmdline_quoted => 'bootstrap' },
       mods    => [ @mods ],
       modaddr => 0x200000,
     );
   }
 
   # preseed first 3 modules
-  $mods[0] = { command => 'fiasco',   cmdline => 'fiasco',   type => 'bin'};
-  $mods[1] = { command => 'sigma0',   cmdline => 'sigma0',   type => 'bin'};
-  $mods[2] = { command => 'roottask', cmdline => 'moe',      type => 'bin'};
+  $mods[0] = { command => 'fiasco',   cmdline => 'fiasco',
+               cmdline_quoted => 'fiasco', type => 'bin'};
+  $mods[1] = { command => 'sigma0',   cmdline => 'sigma0',
+               cmdline_quoted => 'sigma0', type => 'bin'};
+  $mods[2] = { command => 'roottask', cmdline => 'moe',
+               cmdline_quoted => 'moe',    type => 'bin'};
 
   my $process_mode = undef;
   my $found_entry = 0;
@@ -318,24 +324,28 @@ sub get_module_entry($$)
         $current_group_name = (split /\s+/, handle_line_first($remaining, %opts))[0];
         next;
       } elsif ($type eq 'default-bootstrap') {
-        my ($file, $full) = get_command_and_cmdline(handle_line_first($remaining, %opts), %opts);
-        $bootstrap_command = $file;
-        $bootstrap_cmdline = $full;
+        my ($file, $full, $full_quoted) = get_command_and_cmdline(handle_line_first($remaining, %opts), %opts);
+        $bootstrap_command        = $file;
+        $bootstrap_cmdline        = $full;
+        $bootstrap_cmdline_quoted = $full_quoted;
         next;
       } elsif ($type eq 'default-kernel') {
-        my ($file, $full) = get_command_and_cmdline(handle_line_first($remaining, %opts), %opts);
-        $mods[0]{command}  = $file;
-        $mods[0]{cmdline}  = $full;
+        my ($file, $full, $full_quoted) = get_command_and_cmdline(handle_line_first($remaining, %opts), %opts);
+        $mods[0]{command}         = $file;
+        $mods[0]{cmdline}         = $full;
+        $mods[0]{cmdline_quoted}  = $full_quoted;
         next;
       } elsif ($type eq 'default-sigma0') {
-        my ($file, $full) = get_command_and_cmdline(handle_line_first($remaining, %opts), %opts);
-        $mods[1]{command}  = $file;
-        $mods[1]{cmdline}  = $full;
+        my ($file, $full, $full_quoted) = get_command_and_cmdline(handle_line_first($remaining, %opts), %opts);
+        $mods[1]{command}         = $file;
+        $mods[1]{cmdline}         = $full;
+        $mods[1]{cmdline_quoted}  = $full_quoted;
         next;
       } elsif ($type eq 'default-roottask') {
-        my ($file, $full) = get_command_and_cmdline(handle_line_first($remaining, %opts), %opts);
-        $mods[2]{command}  = $file;
-        $mods[2]{cmdline}  = $full;
+        my ($file, $full, $full_quoted) = get_command_and_cmdline(handle_line_first($remaining, %opts), %opts);
+        $mods[2]{command}         = $file;
+        $mods[2]{cmdline}         = $full;
+        $mods[2]{cmdline_quoted}  = $full_quoted;
         next;
       }
 
@@ -365,8 +375,9 @@ sub get_module_entry($$)
         $type = 'bin';
       } elsif ($type eq 'moe') {
         my $bn = (reverse split(/\/+/, $params[0]))[0];
-        $mods[2]{command}  = 'moe';
-        $mods[2]{cmdline}  = "moe rom/$bn";
+        $mods[2]{command}        = 'moe';
+        $mods[2]{cmdline}        = "moe rom/$bn";
+        $mods[2]{cmdline_quoted} = "moe rom/$bn";
         $type = 'bin';
         @m = ($params[0]);
       }
@@ -375,29 +386,34 @@ sub get_module_entry($$)
       if ($process_mode eq 'entry') {
         foreach my $m (@params) {
 
-          my ($file, $full) = get_command_and_cmdline($m, %opts);
+          my ($file, $full, $full_quoted) = get_command_and_cmdline($m, %opts);
 
           # special cases
           if ($type eq 'bootstrap') {
-            $bootstrap_command = $file;
-            $bootstrap_cmdline = $full;
+            $bootstrap_command        = $file;
+            $bootstrap_cmdline        = $full;
+            $bootstrap_cmdline_quoted = $full_quoted;
           } elsif ($type =~ /(rmgr|roottask)/i) {
-            $mods[2]{command}  = $file;
-            $mods[2]{cmdline}  = $full;
+            $mods[2]{command}         = $file;
+            $mods[2]{cmdline}         = $full;
+            $mods[2]{cmdline_quoted}  = $full_quoted;
           } elsif ($type eq 'kernel') {
-            $mods[0]{command}  = $file;
-            $mods[0]{cmdline}  = $full;
+            $mods[0]{command}         = $file;
+            $mods[0]{cmdline}         = $full;
+            $mods[0]{cmdline_quoted}  = $full_quoted;
           } elsif ($type eq 'sigma0') {
-            $mods[1]{command}  = $file;
-            $mods[1]{cmdline}  = $full;
+            $mods[1]{command}         = $file;
+            $mods[1]{cmdline}         = $full;
+            $mods[1]{cmdline_quoted}  = $full_quoted;
           } elsif ($type eq 'initrd') {
             $linux_initrd      = $file;
             $is_mode_linux     = 1;
           } else {
             push @mods, {
-                          type    => $type,
-                          command => $file,
-                          cmdline => $full,
+                          type           => $type,
+                          command        => $file,
+                          cmdline        => $full,
+                          cmdline_quoted => $full_quoted,
                         };
           }
         }
@@ -425,8 +441,9 @@ sub get_module_entry($$)
              # environment, for convenience we use $mods[0] because that
              # are the contents of 'kernel xxx' which sounds more
              # reasonable
-             bootstrap => { command => $mods[0]{command},
-                            cmdline => $mods[0]{cmdline}},
+             bootstrap => { command        => $mods[0]{command},
+                            cmdline        => $mods[0]{cmdline},
+                            cmdline_quoted => $mods[0]{cmdline_quoted}},
              type      => 'Linux',
              files     => [ @files ],
            );
@@ -453,8 +470,10 @@ sub get_module_entry($$)
   push @files, $_->{command} foreach @mods;
 
   return (
-           bootstrap => { command => $bootstrap_command,
-                          cmdline => $bootstrap_cmdline },
+           bootstrap => { command        => $bootstrap_command,
+                          cmdline        => $bootstrap_cmdline,
+                          cmdline_quoted => $bootstrap_cmdline_quoted,
+                        },
            mods    => [ @mods ],
            modaddr => $modaddr_title || $modaddr_global,
            type    => 'MB',
