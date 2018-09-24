@@ -378,9 +378,10 @@ OPTS_DEBUG       ?= -g
 OPTS             ?= $(OPTS_DEBUG) -O2 -fno-strict-aliasing
 
 WARNINGS_MINIMAL ?= -Wall $(call bid_flag_variants,WARNINGS)
-WARNINGS_MEDIUM  ?= -Wall -Wstrict-prototypes -Wmissing-prototypes \
+WARNINGS_MEDIUM  ?= -Wall -Wstrict-prototypes $(CONDITIONAL_WARNINGS_MEDIUM) \
                     -Wmissing-declarations $(call bid_flag_variants,WARNINGS)
-WARNINGS_FULL    ?= -Wextra $(WARNINGS_MEDIUM)
+WARNINGS_FULL    ?= -Wextra -Wbad-function-cast -Wdouble-promotion \
+                    $(CONDITIONAL_WARNINGS_FULL) $(WARNINGS_MEDIUM)
 WARNINGS         ?= $(WARNINGS_FULL)
 
 ifeq ($(MODE),host)
@@ -489,7 +490,7 @@ endif
 
 CXXFLAGS+= $(if $(CONFIG_BID_GCC_OMIT_FP),-fomit-frame-pointer,-fno-omit-frame-pointer)
 CXXFLAGS+= $(call bid_flag_variants,CXXFLAGS)
-CXXFLAGS+= $(OPTS) $(filter-out $(foreach w,-Wstrict-prototypes -Wmissing-prototypes,\
+CXXFLAGS+= $(OPTS) $(filter-out $(foreach w,-Wbad-function-cast -Wstrict-prototypes -Wmissing-prototypes,\
                                             $(w) $(patsubst -W%,-Wno-%,$(w))),\
                                 $(WARNINGS))
 CXXFLAGS+= $(CXXFLAGS-y)
