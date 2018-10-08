@@ -19,7 +19,7 @@
 # path.
 # MODULE_SEARCH_PATH = /path/to/cfgs:/path/to/foo:..
 #
-# For additional image buliding options see the header of
+# For additional image building options see the header of
 # pkg/bootstrap/server/src/Make.rules
 
 # Add fiasco build directory to MODULE_SEARCH_PATH
