@@ -242,7 +242,7 @@ my %handler_hg = (
     # or not use push
     my $cur_branch = qx(hg branch);
     chomp $cur_branch;
-    open(my $f, "LANG=C hg log -b $cur_branch --template '{rev} {phase}\n'|")
+    open(my $f, "LC_ALL=C hg log -b $cur_branch --template '{rev} {phase}\n'|")
      || die "Cannot do hg log: $!";
     my $first_draft_phase_rev;
     while (<$f>) {

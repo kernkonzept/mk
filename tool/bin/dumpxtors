@@ -203,7 +203,7 @@ sub dump_xtor_symbols($$$$)
 sub get_app_type($)
 {
   my $file = shift;
-  my $o = `LANG=C file -L $file`;
+  my $o = `LC_ALL=C file -L $file`;
   die "Failed to 'file' $file: $!" if $?;
   my $b;
   my $e;

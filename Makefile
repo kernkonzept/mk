@@ -388,7 +388,7 @@ endif
 ifneq ($(CONFIG_INT_LD_NAME_SWITCH),)
 	$(VERBOSE) set -e; echo INT_LD_NAME=$$($(LD) 2>&1 | perl -p -e 's,^(.+/)?(.+):.+,$$2,') >> $(DROPSCONF_CONFIG_MK)
 endif
-	$(VERBOSE)emulations=$$(LANG= $(firstword $(LD)) --help |        \
+	$(VERBOSE)emulations=$$(LC_ALL=C $(firstword $(LD)) --help |     \
 	                        grep -i "supported emulations:" |        \
 	                        sed -e 's/.*supported emulations: //') ; \
 	unset found_it;                                                  \

@@ -279,12 +279,12 @@ BID_PKG_CONFIG =                                      \
                            $(if $(VERBOSE),--silence-errors)             \
 			   $(2) $(3) || echo __PKGCONFIG_FAILED__)
 
-BID_PKG_CONFIG_MISSING =                                        \
-     $(if $(strip $(3)),                                        \
-          $(shell PKG_CONFIG_LIBDIR=$(1)/pc                     \
-                  PKG_CONFIG_PATH= LANG=C $(L4_BID_PKG_CONFIG)  \
-                  --errors-to-stdout --print-errors $(2) $(3)   \
-                  | LANG=C grep ", not found"))
+BID_PKG_CONFIG_MISSING =                                         \
+     $(if $(strip $(3)),                                         \
+          $(shell PKG_CONFIG_LIBDIR=$(1)/pc                      \
+                  PKG_CONFIG_PATH= LC_ALL=C $(L4_BID_PKG_CONFIG) \
+                  --errors-to-stdout --print-errors $(2) $(3)    \
+                  | LC_ALL=C grep ", not found"))
 
 BID_PKG_CONFIG_FAILED = $(findstring __PKGCONFIG_FAILED__,$(1))
 
