@@ -314,6 +314,8 @@ static void get_executable_name(void)
   while ((c = fgetc(cmdline))!=EOF && c && i < STRLEN-1)
     cmd[i++] = c;
 
+  fclose(cmdline);
+
   cmd[i++] = 0;
 #elif defined(__APPLE__) || defined(__FreeBSD__)
   int mib[3], arglen;
