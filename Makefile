@@ -507,7 +507,7 @@ FASTBOOT_BOOT_CMD    ?= fastboot boot
 check_and_adjust_ram_base:
 	$(VERBOSE)if [ -z "$(PLATFORM_RAM_BASE)" ]; then          \
 	  echo "ERROR: Platform \"$(PLATFORM_TYPE)\" not known."; \
-	  echo "Available platform:";                             \
+	  echo "Available platforms:";                            \
 	  $(MAKE) listplatforms;                                  \
 	  exit 1;                                                 \
 	fi
