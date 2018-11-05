@@ -632,7 +632,7 @@ exportpack: $(if $(filter $(ARCH),x86 amd64),,$(QEMU_KERNEL_TYPE))
 	 IMAGE_FILE="$(QEMU_KERNEL_FILE)"                                 \
 	 $(tool_envvars) $(common_envvars)                                \
 	  $(L4DIR)/tool/bin/genexportpack --timeout=$(GRUB_TIMEOUT)       \
-	                                  --grubpathprefix=$(GRUB_PATHPREFIX) \
+	                                  --grubpathprefix="$(GRUB_PATHPREFIX)" \
 	                                  --grubentrytitle="$(GRUB_ENTRY_TITLE)" \
 	                                   $$ml $$TARGETDIR $$e;
 
