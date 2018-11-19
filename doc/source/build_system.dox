@@ -356,7 +356,7 @@ In order for this to work, the `globalconfig.out` config file from the
 build directory needs to be available in the same directory as the
 kernel.
 
-\par `L4LX_KERNEL_<arch>`, `L4_LX_KERNEL`
+\par `L4LX_KERNEL_<arch>`, `L4LX_KERNEL`
 L4Linux binary to use. This is only required to run tests in
 `mode=l4linux`. If no L4Linux kernel is set then these tests
 will simply be skipped.
