@@ -628,6 +628,7 @@ exportpack: $(if $(filter $(ARCH),x86 amd64),,$(QEMU_KERNEL_TYPE))
 	 TARGETDIR=$(EXPORTPACKTARGETDIR);                                \
 	 qemu=$(if $(QEMU_PATH),$(QEMU_PATH),$(QEMU_ARCH_MAP_$(ARCH)));   \
 	 QEMU=$$qemu L4DIR=$(L4DIR) QEMU_OPTIONS="$(QEMU_OPTIONS)"        \
+	 OUTPUT_DIR="$(BOOTSTRAP_OUTPUT_DIR)"                             \
 	 IMAGE_FILE="$(QEMU_KERNEL_FILE)"                                 \
 	 $(tool_envvars) $(common_envvars)                                \
 	  $(L4DIR)/tool/bin/genexportpack --timeout=$(GRUB_TIMEOUT)       \
