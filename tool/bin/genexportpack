@@ -64,21 +64,6 @@ $qemu =~ s@.*/@@;
 
 my %files;
 
-sub qemu_get_file($$)
-{
-  my $command = shift;
-  my $cmdline = shift;
-
-  my $fp = L4::ModList::get_file_uncompressed_or_die($command, $module_path,
-                                                     $unzip_tmp);
-
-  $fp = (reverse split(/\/+/, $fp))[0];
-
-  $cmdline =~ s/^\S+\s*//;
-  $cmdline =~ s/,/,,/g;
-  $fp.' '.$cmdline;
-}
-
 my $x86_based = ($ENV{ARCH} eq 'x86' or $ENV{ARCH} eq 'amd64') ? 1 : 0;
 
 foreach my $entryname (@ARGV)
@@ -93,14 +78,26 @@ foreach my $entryname (@ARGV)
                                                   %entry);
 
     my @mods = @{$entry{mods}};
+    my @args;
 
-    my $initrd = join(',', map { qemu_get_file($_->{command}, $_->{cmdline_quoted}) } @mods);
+    foreach (@mods) {
+      $_->{cmdline} =~ /^(\S+)\s*(.*)/;
+
+      $files{$_->{command}} = basename($1);
+      (my $a = $2) =~ s/,/,,/g;
+
+      push @args, $files{$_->{command}}.' '.$a;
+    }
+
+    L4::ModList::get_file_uncompressed_or_die($_->{command}, $module_path,
+                                              $unzip_tmp)
+      foreach @mods;
 
     my $kernel_w_path;
     my $initrd_arg = '';
     if ($x86_based) {
       $kernel_w_path = L4::ModList::search_file_or_die($entry{bootstrap}{command}, $module_path);
-      $initrd_arg = "                  -initrd \"$initrd\" \\\n";
+      $initrd_arg = "                  -initrd \"".join(',', @args)."\" \\\n";
     } else {
       die "Need to specify IMAGE_FILE environment variable for non-x86 use."
         unless defined $image_file;
@@ -115,10 +112,6 @@ foreach my $entryname (@ARGV)
       $initrd_arg.
       "                  $qemu_options \"\$@\";;\n";
 
-    foreach (@mods) {
-      (my $f = $_->{cmdline}) =~ s/^(\S+).*/$1/;
-      $files{$_->{command}} = basename($f);
-    }
     $files{$kernel_w_path} = $kernel;
   }
 
