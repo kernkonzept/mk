@@ -485,7 +485,7 @@ sub replace_var
   print $errout "lookup var: '$var'\n" if $debug;
   return $loc->{__vars__}{$var} if defined $loc->{__vars__}{$var};
   return '' if $var eq '';
-  ::warn("use of undefined varaible: '$var'\n") unless $may_be_undef;
+  ::warn("use of undefined variable: '$var'\n") unless $may_be_undef;
   return 0 if $may_be_undef;
   return;
 }
