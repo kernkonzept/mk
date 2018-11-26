@@ -337,7 +337,9 @@ print "$_='$ENV{$_}' " foreach qw(QEMU_OPTIONS MODULES_LIST MODULE_SEARCH_PATH);
 
 if ($ENV{IMAGE_TYPE})
   {
-    my $retval = system("make $ENV{IMAGE_TYPE} E=maketest");
+    my $cmd = "make $ENV{IMAGE_TYPE} E=maketest";
+    print $cmd."\n";
+    my $retval = system($cmd);
     if ($retval == 0)
       {
         exit_skip "Just creating boot image.\n";
