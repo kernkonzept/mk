@@ -11,6 +11,7 @@ my $objcopy = $ENV{"objcopy"} || "objcopy";
 my $objdump = $ENV{"objdump"} || "objdump";
 my $nm      = $ENV{"nm"} || "nm";
 
+my $color = -t STDOUT;
 
 sub usage()
 {
@@ -22,6 +23,11 @@ unless (defined $ARGV[0]) {
   exit(1);
 }
 
+sub C
+{
+  return $_[0] if $color;
+  return "";
+}
 
 sub dump_xtor_section($$$$$)
 {
@@ -103,7 +109,7 @@ sub dump_xtor_section($$$$$)
     return;
   }
 
-  print "[33;1m$name section[m (in priority order):\n";
+  print C("[33;1m")."$name section".C("[m")." (in priority order):\n";
   foreach my $v (@vals) {
     my $h = sprintf "%x", $v;
 
@@ -124,9 +130,10 @@ sub dump_xtor_section($$$$$)
   unlink $tmpf;
 }
 
-sub dump_xtor_symbols($$$$)
+sub dump_xtor_symbols
 {
   my $file = shift;
+  my $bits = shift;
   my $target_be = shift;
   my $sym1 = shift;
   my $sym2 = shift;
@@ -160,7 +167,7 @@ sub dump_xtor_symbols($$$$)
       my $re_addr = '[\da-f]+';
       if (/^\s+($re_addr)\s+(($re_addr\s+){1,4})/i)
         {
-	  if (length($1) > 8)
+	  if ($bits == 64)
 	    {
 	      my $a = $2;
 	      $a =~ s/(($re_addr)\s+($re_addr))\s+/$2$3 /g;
@@ -177,7 +184,7 @@ sub dump_xtor_symbols($$$$)
 	}
     }
 
-  print "[33;1m$sym1($start) - $sym2($end)[m (in priority order):\n";
+  print C("[33;1m")."$sym1($start) - $sym2($end)".C("[m")." (in priority order):\n";
   my @nm_output = `$nm $file`;
   foreach my $v (@vals) {
     my @o = grep { /^$v/ } @nm_output;
@@ -221,15 +228,15 @@ foreach my $f (@ARGV) {
     next;
   }
   $en = $en eq 'msb';
-  print "[32;1m$f:[m\n";
+  print C("[32;1m")."$f:".C("[m")."\n";
   dump_xtor_section($f, $bits, $en, ".ctors", 1);
   dump_xtor_section($f, $bits, $en, ".preinit_array", 0);
   dump_xtor_section($f, $bits, $en, ".init_array", 0);
   dump_xtor_section($f, $bits, $en, ".dtors", 1);
   dump_xtor_section($f, $bits, $en, ".fini_array", 0);
-  dump_xtor_symbols($f, $en, "__CTOR_END__", "__CTOR_LIST__");
-  dump_xtor_symbols($f, $en, "__DTOR_END__", "__DTOR_LIST__");
-  dump_xtor_symbols($f, $en, "__INIT_ARRAY_START__", "__INIT_ARRAY_END__");
-  dump_xtor_symbols($f, $en, "__PER_CPU_INIT_ARRAY_START__", "__PER_CPU_INIT_ARRAY_END__");
-  dump_xtor_symbols($f, $en, "__PER_CPU_LATE_INIT_ARRAY_START__", "__PER_CPU_LATE_INIT_ARRAY_END__");
+  dump_xtor_symbols($f, $bits, $en, "__CTOR_END__", "__CTOR_LIST__");
+  dump_xtor_symbols($f, $bits, $en, "__DTOR_END__", "__DTOR_LIST__");
+  dump_xtor_symbols($f, $bits, $en, "__INIT_ARRAY_START__", "__INIT_ARRAY_END__");
+  dump_xtor_symbols($f, $bits, $en, "__PER_CPU_INIT_ARRAY_START__", "__PER_CPU_INIT_ARRAY_END__");
+  dump_xtor_symbols($f, $bits, $en, "__PER_CPU_LATE_INIT_ARRAY_START__", "__PER_CPU_LATE_INIT_ARRAY_END__");
 }
