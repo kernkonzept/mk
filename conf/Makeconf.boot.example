@@ -57,12 +57,20 @@ QEMU_OPTIONS-arm-rv_vexpress     += -M vexpress-a9 -m 1024 -cpu cortex-a9 -smp 4
 QEMU_OPTIONS-arm-rv_vexpress_a15 += -M vexpress-a15 -m 2047 -cpu cortex-a15 \
                                     -smp 4
 QEMU_OPTIONS-arm-rv_pbx          += realview-pbx-a9 -m 512 -cpu cortex-a9 -smp 4
+QEMU_OPTIONS-arm-arm_virt        += -M virt -cpu cortex-a15 -m 1024
+# Requires at least QEMU-3.1
+#QEMU_OPTIONS-arm-arm_virt        += -M virt,virtualization=true -cpu cortex-a15 -m 1024
+
+QEMU_OPTIONS-arm64-arm_virt      += -M virt -cpu cortex-a57 -m 1024
+# Requires at least QEMU-3.1
+#QEMU_OPTIONS-arm64-arm_virt      += -M virt,virtualization=true -cpu cortex-a57 -m 1024
 
 QEMU_OPTIONS-mips-malta          += -M malta -m 256 -cpu P5600
 
-QEMU_OPTIONS-arm  += $(QEMU_OPTIONS-arm-$(PLATFORM_TYPE))
-QEMU_OPTIONS-mips += $(QEMU_OPTIONS-mips-$(PLATFORM_TYPE))
-QEMU_OPTIONS      += $(QEMU_OPTIONS-$(ARCH))
+QEMU_OPTIONS-arm   += $(QEMU_OPTIONS-arm-$(PLATFORM_TYPE))
+QEMU_OPTIONS-arm64 += $(QEMU_OPTIONS-arm64-$(PLATFORM_TYPE))
+QEMU_OPTIONS-mips  += $(QEMU_OPTIONS-mips-$(PLATFORM_TYPE))
+QEMU_OPTIONS       += $(QEMU_OPTIONS-$(ARCH))
 
 # The path to the QEMU binary - optional
 #QEMU_PATH-x86   = /path/to/qemu
