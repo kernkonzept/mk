@@ -862,6 +862,7 @@ help::
 	@echo "  cont             - Continue building after fixing a build error."
 	@echo "  clean            - Call 'clean' target recursively."
 	@echo "  cleanfast        - Delete all directories created during build."
+	@echo "  doc              - Generate documentation."
 	@echo "  report           - Print out host configuration information."
 	@echo "  help             - Print this help text."
 	@echo "  test             - Execute unit tests."
