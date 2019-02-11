@@ -361,10 +361,10 @@ BID_ASM_FILE_EXTENSIONS ?= .S
 BID_ASM_CPP_FILE_EXTENSIONS ?= .S
 
 # macros used here and in packages
-checkcc   = $(shell if $(CC)  $(CCXX_FLAGS) $(1) -o /dev/null -c -x c \
-                    /dev/null > /dev/null 2>&1; then echo "$(1)"; fi)
-checkcxx  = $(shell if $(CXX) $(CCXX_FLAGS) $(1) -o /dev/null -c -x c++ \
-                    /dev/null > /dev/null 2>&1; then echo "$(1)"; fi)
+checkcc   = $(if $(shell $(CC)  $(CCXX_FLAGS) $(1) -S -o /dev/null -x c   \
+						  /dev/null 2>&1),$(2),$(1))
+checkcxx  = $(if $(shell $(CXX) $(CCXX_FLAGS) $(1) -S -o /dev/null -x c++ \
+						  /dev/null 2>&1),$(2),$(1))
 checkdtc  = $(shell if $(DTC) $(1) --version /dev/null > /dev/null 2>&1; \
                     then echo "$(1)"; fi)
 
