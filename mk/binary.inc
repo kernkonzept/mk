@@ -468,7 +468,7 @@ CPPFLAGS-DEBUG_MODE = \
 
 CPPFLAGS+= $(call bid_flag_variants,CPPFLAGS)
 CPPFLAGS+= $(DEFINES)
-CPPFLAGS+= $(addprefix -I, $(PRIVATE_INCDIR) $(PRIVATE_INCDIR_$(OSYSTEM)) $(PRIVATE_INCDIR_$@) $(PRIVATE_INCDIR_$@_$(OSYSTEM)))
+CPPFLAGS+= $(addprefix -I,  $(PRIVATE_INCDIR) $(call bid_flag_variants,PRIVATE_INCDIR))
 CPPFLAGS+= $(if $(CONTRIB_INCDIR),$(addprefix -I$(OBJ_BASE)/include/contrib/,$(CONTRIB_INCDIR)))
 CPPFLAGS+= $(BID_PKG_CONFIG_CFLAGS)
 #CPPFLAGS+= $(if $(CLIENTIDL)$(SERVERIDL)$(addprefix CLIENTIDL_,$(TARGET))$(addprefix SERVERIDL_,$(TARGET)),$(addprefix -I, $(IDL_PATH)))
