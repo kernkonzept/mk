@@ -372,6 +372,7 @@ endif
 endif
 
 bid_flag_variants = $($(1)_$(OSYSTEM)) $($(1)_$@) $($(1)_$(@D)) $($(1)_$<) \
+                    $($(1)_$(@D)/$(<F)) \
                     $($(1)_$(<F)) $($(1)_$(<D)) $($(1)_$(<F)_$(OSYSTEM))
 
 OPTS_DEBUG       ?= -g
