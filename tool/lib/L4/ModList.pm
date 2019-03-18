@@ -246,9 +246,8 @@ sub get_module_entry($$)
     # Automatic build entry is being built.
     # This image is useless but it always builds.
 
-    $mods[0] = { command => 'Makefile', cmdline => 'Makefile', type => 'bin'};
-    $mods[1] = { command => 'Makefile', cmdline => 'Makefile', type => 'bin'};
-    $mods[2] = { command => 'Makefile', cmdline => 'Makefile', type => 'bin'};
+    $mods[$_] = { command => 'Makefile', cmdline => 'Makefile',
+                  cmdline_quoted => 'Makefile', type => 'bin' } for 0..2;
 
     return (
       bootstrap => { command        => 'bootstrap',
