@@ -4,8 +4,7 @@ BID_PRJ_DIR_MAX_DEPTH ?= 4
 ifneq ($(S),)
 # handle explicit subdir builds here
 
-comma := ,
-ALL_SUBDIRS   := $(subst :, ,$(subst $(comma), ,$(S)))
+ALL_SUBDIRS   := $(subst :, ,$(subst $(BID_COMMA), ,$(S)))
 
 BID_DCOLON_TARGETS := all clean cleanall install scrub DROPSCONF_CONFIG_MK_POST_HOOK
 
