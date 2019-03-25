@@ -7,7 +7,7 @@ use vars qw(@ISA @EXPORT);
 
 my @internal_searchpaths;
 
-my $arglen = 200;
+my $max_arglen = 60;
 
 sub get_command_and_cmdline
 {
@@ -20,13 +20,11 @@ sub get_command_and_cmdline
   $full = $opts{fname} if exists $opts{fname};
   $full .= " $args" if defined $args;
 
+  my $l = length($full);
+  $full = '...'.substr($full, $l - $max_arglen - 3) if $l > $max_arglen;
+
   my $full_quoted = $full;
   $full_quoted =~ s/"/\\"/g;
-
-  if (length($full) > $arglen) {
-    print "$.: \"$full\" too long...\n";
-    exit 1;
-  }
 
   ($file, $full, $full_quoted);
 }
