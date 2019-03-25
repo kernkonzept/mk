@@ -7,8 +7,6 @@ use vars qw(@ISA @EXPORT);
 
 my @internal_searchpaths;
 
-my $max_arglen = 60;
-
 sub get_command_and_cmdline
 {
   my $cmd_and_args = shift;
@@ -19,9 +17,6 @@ sub get_command_and_cmdline
   my $full = $file;
   $full = $opts{fname} if exists $opts{fname};
   $full .= " $args" if defined $args;
-
-  my $l = length($full);
-  $full = '...'.substr($full, $l - $max_arglen - 3) if $l > $max_arglen;
 
   my $full_quoted = $full;
   $full_quoted =~ s/"/\\"/g;
