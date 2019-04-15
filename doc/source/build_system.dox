@@ -290,7 +290,6 @@ Additional modules needed to run the test.
 Additional parameters to supply to QEMU.
 
 \par `MOE_ARGS`
-
 Additional parameters to supply to moe.
 
 \par `KERNEL_CONF`
