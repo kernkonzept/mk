@@ -292,6 +292,9 @@ Additional parameters to supply to QEMU.
 \par `MOE_ARGS`
 Additional parameters to supply to moe.
 
+\par `TEST_ARGS`
+Additional arguments for the `TEST_STARTER` (tapper-wrapper per default).
+
 \par `KERNEL_CONF`
 Features the Fiasco kernel must have been compiled with.
 A space-separated list of config options as used by
@@ -331,6 +334,9 @@ Tag names can basically contain any character except comma.
 Whitespace characters surrounding a tag name will be ignored.
 A tag starting with exclamation mark is checked to not appear
 in the specified run tags, otherwise the test is also skipped.
+
+\par `TAPARCHIVE`
+Filename for an archive file to store the resulting TAP output.
 
 In addition to compiled tests, it is also possible to create tests
 where the test binary or script comes from a different source. These
