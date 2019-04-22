@@ -123,6 +123,14 @@ config ETAGS
 config HAVE_LDSO
 	def_bool y
 
+config BID_DEBUG_INFO
+	bool "Generate debug information"
+	default y
+	help
+	  Generate debug information.
+
+	  If unsure, say 'Y'.
+
 config INT_CPP_NAME_SWITCH
 	bool "Automatically determine internal gcc preprocessor names"
 	default y

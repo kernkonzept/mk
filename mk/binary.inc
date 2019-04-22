@@ -379,7 +379,8 @@ bid_flag_variants = $($(1)_$(OSYSTEM)) $($(1)_$@) $($(1)_$(@D)) $($(1)_$<) \
                     $($(1)_$(@D)/$(<F)) \
                     $($(1)_$(<F)) $($(1)_$(<D)) $($(1)_$(<F)_$(OSYSTEM))
 
-OPTS_DEBUG       ?= -g
+OPTS_DEBUG-$(CONFIG_BID_DEBUG_INFO) = -g
+OPTS_DEBUG       ?= $(OPTS_DEBUG-y)
 OPTS             ?= $(OPTS_DEBUG) -O2 -fno-strict-aliasing
 
 WARNINGS_MINIMAL ?= -Wall $(call bid_flag_variants,WARNINGS)
