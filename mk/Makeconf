@@ -367,6 +367,8 @@ checkcxx  = $(if $(shell $(CXX) $(CCXX_FLAGS) $(1) -S -o /dev/null -x c++ \
                                 /dev/null 2>&1),$(2),$(1))
 checkdtc  = $(shell if $(DTC) $(1) --version /dev/null > /dev/null 2>&1; \
                     then echo "$(1)"; fi)
+checkcxx_nowarn = $(if $(shell $(CXX) $(CCXX_FLAGS) -W$(1) -S -o /dev/null \
+                                      -x c++ /dev/null 2>&1),,-Wno-$(1))
 
 callcc    = LC_ALL=C $(CC)  $(CCXX_FLAGS)
 callcxx   = LC_ALL=C $(CXX) $(CCXX_FLAGS)
@@ -415,6 +417,7 @@ GCCLIB_EH_f	= $(filter /%,$(shell $(callcc) -print-file-name=libgcc_eh.a))
 GCCNOSTACKPROTOPT_f= $(call checkcc,-fno-stack-protector)
 GCCSTACKPROTOPT_f = $(call checkcc,-fstack-protector)
 GCCSTACKPROTALLOPT_f = $(call checkcc,-fstack-protector-all)
+GCCWNONOEXCEPTTYPE_f = $(call checkcxx_nowarn,noexcept-type)
 GCCFORTRANAVAIL_f = $(shell echo | $(callfc) -dD -E - 2>&1 | grep -q __GNUC__ && echo y)
 GCC_HAS_ATOMICS_f = $(shell if echo '\#include <bits/c++config.h>' | \
 		               $(callcxx) -dD -E -x c++ - | \

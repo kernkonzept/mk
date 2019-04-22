@@ -494,6 +494,7 @@ CXXFLAGS+= $(call bid_flag_variants,CXXFLAGS)
 CXXFLAGS+= $(OPTS) $(filter-out $(foreach w,-Wbad-function-cast -Wstrict-prototypes -Wmissing-prototypes,\
                                             $(w) $(patsubst -W%,-Wno-%,$(w))),\
                                 $(WARNINGS))
+CXXFLAGS+= $(GCCWNONOEXCEPTTYPE)
 CXXFLAGS+= $(CXXFLAGS-y)
 CXXFLAGS+= -fno-common
 CXXFLAGS+= $(CXXFLAGS_L4_GENERIC)
