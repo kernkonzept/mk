@@ -96,7 +96,7 @@ all:: $(TEST_SCRIPTS_INST)
 
 # Install rule for the .t files
 $(TEST_SCRIPTS_INST):$(INSTALLDIR_TEST_LOCAL)/%: %
-	$(call create_dir,$(INSTALLDIR_TEST_LOCAL))
+	$(VERBOSE)$(call create_dir,$(INSTALLDIR_TEST_LOCAL))
 	$(VERBOSE)$(call INSTALLFILE_TEST_LOCAL,$<,$@)
 
 endif	# SYSTEM is defined, really build

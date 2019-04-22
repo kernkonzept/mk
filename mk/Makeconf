@@ -146,7 +146,7 @@ absfilename     = $(abspath $(1))
 findfile	= $(firstword $(wildcard $(addsuffix /$(1),$(2))) $(1)_NOT_FOUND)
 is_dir          = $(shell test -d '$(1)' && echo yes)
 define create_dir
-  $(VERBOSE)$(if $(wildcard $(1)),:,$(INSTALL) -d $(1))
+  $(if $(wildcard $(1)),true $(1) exists,$(INSTALL) -d $(1))
 endef
 
 # Move $(2) to $(1) if content of both files differ

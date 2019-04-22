@@ -129,7 +129,7 @@ DEPS	+= $(foreach file,$(TARGET), $(call BID_LINK_DEPS,$(file)))
 
 $(filter-out $(LINK_INCR) %.so %.o.a %.o.pr.a, $(TARGET)):%.a: $(OBJS)
 	@$(AR_MESSAGE)
-	$(VERBOSE)[ -d "$(dir $@)" ] || $(MKDIR) $(dir $@)
+	$(VERBOSE)$(call create_dir,$(@D))
 	$(VERBOSE)$(RM) $@
 	$(VERBOSE)$(AR) crs$(if $(filter %.thin.a,$@),T) $@ $(OBJS)
 	@$(BUILT_MESSAGE)
@@ -137,7 +137,7 @@ $(filter-out $(LINK_INCR) %.so %.o.a %.o.pr.a, $(TARGET)):%.a: $(OBJS)
 # shared lib
 $(filter %.so, $(TARGET)):%.so: $(OBJS) $(LIBDEPS)
 	@$(LINK_SHARED_MESSAGE)
-	$(VERBOSE)[ -d "$(dir $@)" ] || $(MKDIR) $(dir $@)
+	$(VERBOSE)$(call create_dir,$(@D))
 	$(VERBOSE)$(call MAKEDEP,$(LD)) $(BID_LINK) -MD -MF $(call BID_link_deps_file,$@) -o $@ $(LDFLAGS_SO) \
 	  $(LDFLAGS) $(OBJS) $(addprefix -PC,$(REQUIRES_LIBS))
 	@$(BUILT_MESSAGE)
@@ -148,7 +148,7 @@ $(filter %.so, $(TARGET)):%.so: $(OBJS) $(LIBDEPS)
 LINK_INCR_TARGETS = $(filter $(LINK_INCR) %.o.a %.o.pr.a, $(TARGET))
 $(LINK_INCR_TARGETS):%.a: $(OBJS) $(LIBDEPS) $(foreach x,$(LINK_INCR_TARGETS),$(LINK_INCR_ONLYGLOBSYMFILE_$(x)))
 	@$(LINK_PARTIAL_MESSAGE)
-	$(VERBOSE)[ -d "$(dir $@)" ] || $(MKDIR) $(dir $@)
+	$(VERBOSE)$(call create_dir,$(@D))
 	$(VERBOSE)$(call MAKEDEP,$(LD)) $(LD) \
 	   -T $(LDSCRIPT_INCR) \
 	   -o $@ -r $(OBJS) $(LDFLAGS)
