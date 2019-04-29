@@ -73,7 +73,9 @@ PKGCONF_DIR  = $(OBJ_BASE)/pc
 
 # the default command for generating package dependencies
 PKGDEPS_CMD  = $(L4DIR)/mk/pkgdeps $(PKGDEPS_IGNORE_MISSING) \
-                     -P $(PKGCONF_DIR) $(addprefix -A ,$(ALIASES_DIRS))
+                     -P $(PKGCONF_DIR) \
+                     $(addprefix -A ,$(ALIASES_DIRS)) \
+                     $(if $(wildcard $(OBJ_BASE)/.kconfig),-C $(OBJ_BASE)/.kconfig)
 PKGDEPS_IGNORE_MISSING := -I
 
 PKG_MESSAGE       =echo "=== Building package \"$(basename $@)\" ==="
@@ -115,7 +117,8 @@ $(OBJ_DIR)/.Package.deps: $(L4DIR)/mk/pkgdeps $(OBJ_DIR)/.Package.deps.pkgs \
                           $(if $(filter update up,$(MAKECMDGOALS)),,Makefile) \
                           $(wildcard $(foreach d,$(ALIASES_DIRS),$(d)/*)) \
                           $(wildcard $(foreach d,$(BUILD_SUBDIRS),$(d)/Control)) \
-                          $(PKGCONF_DIR)
+                          $(PKGCONF_DIR) \
+                          $(wildcard $(OBJ_BASE)/.kconfig)
 	$(VERBOSE)$(PKGDEPS_CMD) generate $(SRC_DIR) $(ALL_SUBDIRS) > $@.tmp
 	$(VERBOSE)$(call move_if_changed,$@,$@.tmp)
 

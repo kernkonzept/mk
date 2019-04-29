@@ -14,6 +14,8 @@ my %pkgs;
 my %provided;
 my %nodes;
 my %clusters;
+my %config;
+my %build_only_deps;
 
 my $pcfiledir_for_aliases;
 
@@ -29,10 +31,57 @@ sub new_node
   return $n
 }
 
+sub filter_requires
+{
+  my $n = shift;
+
+  my @r;
+  foreach my $e (@{$n->{requires}})
+    {
+      if ($e =~ /(\S+)\[(.+)\]$/)
+        {
+          my $p = $1;
+          my @tokens = split /;+/, $2;
+
+          foreach my $t (@tokens)
+            {
+              # 'build-only'  is only useful for alias definitions
+              # where we do not want to have a link dependency but
+              # just a build dependency
+              if ($t eq 'build-only')
+                {
+                  $build_only_deps{$p} = 1;
+                }
+              else
+                {
+                  my $expr = $t;
+
+                  # now translate the expression into a perl expression
+                  # so that we can use perl to evaluate it
+                  $expr =~ s/\bconfig\((\w+)\)/
+                             defined $config{$1} ? 1 : 0/eg;
+                  $expr =~ s/\barch\((\w+)\)/
+                             defined $config{"CONFIG_BUILD_ARCH_$1"} ? 1 : 0/eg;
+
+                  push @r, $p if eval $expr;
+                }
+            }
+        }
+      else
+        {
+          push @r, $e;
+        }
+    }
+
+  @{$n->{requires}} = @r;
+}
+
 sub add_node($$)
 {
   my $n = shift;
   my $cluster = shift;
+
+  filter_requires($n);
 
   my $name = $n->{name};
   $nodes{$name} = $n;
@@ -76,7 +125,7 @@ sub write_alias_pcfile($@)
   print U "Name: $alias\n".
           "Version: 0\n".
           "Description: Alias Dependency Package\n".
-          "Requires: ".join(' ', @_)."\n";
+          "Requires: ".join(' ', grep { not defined $build_only_deps{$_} } @_)."\n";
 
   close U;
 }
@@ -132,7 +181,15 @@ sub read_aliases_dir($$)
           next if /^$/;
           if (/^\s*(\S+)\s*:?=\s*(.+)/)
             {
-              add_alias($1, $cluster, split(/\s+/, $2));
+              my @r;
+              my $s = $2;
+              while (1)
+                {
+                  last unless $s =~ s/(\S+\[(.+?)\]|\S+)\s*//;
+                  push @r, $1;
+                }
+
+              add_alias($1, $cluster, @r);
             }
           else
             {
@@ -174,8 +231,16 @@ sub scan_for_provided_pkg_configs
           my $control_entry = sub
             {
               my $tag = shift;
-              return 0 unless $o =~ /^$tag:[ \t]*(.+)$/im;
-              push @{$node->{$tag}}, split /\s+/, $1;
+              return 0 unless $o =~ /^$tag(\[.+?\])?:[ \t]*(.+)$/im;
+              my $tagfilter = $1 || '';
+              my $s = $2;
+              while (1)
+                {
+                  last unless $s =~ s/(\S+\[(.+?)\]|\S+)\s*//;
+                  die "Error: Double filter not allowed in $path/$ctfn for '$tag\[$tagfilter\]: $1'"
+                    if $tagfilter and $2;
+                  push @{$node->{$tag}}, $1.$tagfilter;
+                }
               $o = $`."\n".$';
               return 1;
             };
@@ -945,6 +1010,26 @@ sub smooth_control_file($$)
   print "Requires: ".join(' ', @{$nodes{$pkg}->{requires}})."\n";
 }
 
+sub read_config
+{
+  my $configfile = shift;
+
+  open(my $c, $configfile) || die "Cannot open $configfile: $!";
+
+  while (my $l = <$c>)
+    {
+      chomp $l;
+      $l =~ s/^\s*#.*//; # Avoid destroying strings with hashes inside
+      $l =~ s/^\s+//;
+      $l =~ s/\s+$//;
+      next unless length($l);
+      my ($key, $val) = split(/\s*=\s*/, $l, 2);
+      $config{$key} = $val;
+    }
+
+  close $c;
+}
+
 # a bit of hand-crafted option parsing, if it gets more use getopt
 my @aliases_dirs;
 while (1)
@@ -964,6 +1049,11 @@ while (1)
       {
         shift;
         $ignore_missing = 1;
+      }
+    elsif ($ARGV[0] eq '-C')
+      {
+        shift;
+        read_config(shift);
       }
     else
       {
