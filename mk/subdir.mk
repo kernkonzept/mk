@@ -18,6 +18,9 @@ else
 TARGET ?= $(patsubst %/Makefile,%,$(wildcard $(addsuffix /Makefile, \
 	idl src lib server examples doc)))
 endif
+
+TARGET += $(if $(CONFIG_BID_BUILD_TESTS),$(TARGET_test))
+
 SUBDIR_TARGET	:= $(if $(filter doc,$(MAKECMDGOALS)),$(TARGET),    \
 			$(filter-out doc,$(TARGET)))
 

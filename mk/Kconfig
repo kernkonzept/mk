@@ -132,6 +132,14 @@ config BID_DEBUG_INFO
 
 	  If unsure, say 'Y'.
 
+config BID_BUILD_TESTS
+	bool "Also build tests"
+	default y
+	help
+	  Enable to build tests.
+
+	  If unsure, say 'N'.
+
 config INT_CPP_NAME_SWITCH
 	bool "Automatically determine internal gcc preprocessor names"
 	default y
