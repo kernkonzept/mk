@@ -40,6 +40,8 @@ ifneq ($(SYSTEM_TARGET),) # Added late 2015
   $(info The variable SYSTEM_TARGET has been deprecated in favor of CROSS_COMPILE.)
 endif
 
+strip_quotes = $(patsubst "%,%,$(patsubst %",%,$(1)))#"
+
 CROSS_COMPILE    ?= $(CROSS_COMPILE_$(ARCH))
 
 
@@ -71,7 +73,7 @@ CPU              = $(patsubst "%",%,$(CONFIG_CPU))
 CPU_ABI          = $(patsubst "%",%,$(CONFIG_CPU_ABI))
 BUILD_ABI        = $(patsubst "%",%,$(CONFIG_BUILD_ABI))
 BUILD_ARCH       = $(patsubst "%",%,$(CONFIG_BUILD_ARCH))
-MAKECONFS_ADD    = $(patsubst "%,%,$(patsubst %",%,$(CONFIG_MAKECONFS_ADD))) #"
+MAKECONFS_ADD    = $(call strip_quotes,$(CONFIG_MAKECONFS_ADD))
 
 CCXX_FLAGS        = $(CCXX_FLAGS_$(BUILD_ARCH))
 
