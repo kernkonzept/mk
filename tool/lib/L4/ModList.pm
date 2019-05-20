@@ -266,6 +266,7 @@ sub get_module_entry($$)
   my $modaddr_global;
   my $bootstrap_command = "bootstrap";
   my $bootstrap_cmdline = "bootstrap";
+  my $bootstrap_cmdline_quoted = "bootstrap";
   my $linux_initrd;
   my $is_mode_linux;
 
