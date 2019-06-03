@@ -582,7 +582,7 @@ sub search_file($$)
   return $r if $r;
 
   foreach my $p (split(/[:\s]+/, $paths), @internal_searchpaths) {
-    return "$p/$file" if -e "$p/$file" and ! -d "$p/$file";
+    return "$p/$file" if $p ne '' and -e "$p/$file" and ! -d "$p/$file";
   }
 
   undef;
