@@ -39,7 +39,8 @@ pod2usage(-verbose => 99,
 if ($nowrapper)
   {
     print("WARNING: output capturing disabled, the test will not terminate automatically.\n");
-    exec(@ARGV);
+    system(@ARGV);
+    exit($? == 69 ? 0 : $?);
   }
 
 my $timeout = $ENV{TEST_TIMEOUT} || 10;
