@@ -371,7 +371,9 @@ sub get_module_entry($$)
       }
     }
 
-  error "$mod_file: Unknown entry \"$entry_to_pick\"!\n" unless $found_entry;
+  error "$mod_file: Unknown entry \"$entry_to_pick\"!\n".
+        "Available entries: ".join(' ', sort &get_entries($mod_file))."\n"
+    unless $found_entry;
 
   if (defined $is_mode_linux)
     {
