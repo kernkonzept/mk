@@ -563,7 +563,7 @@ DEPS	+= $(GENERAL_D_LOC)
 ifeq ($(CONFIG_BID_COLORED_PHASES),y)
   ifneq ($(BID_COLORS_TESTED),y)
     BID_COLORS_TESTED := y
-    BID_COLORS_SUPPORTED := $(shell tput colors 1>&2 2 > /dev/null; [ $$? -eq 0 ] && echo -n 'y' || echo -n 'n')
+    BID_COLORS_SUPPORTED := $(shell tput colors 2>/dev/null 1>&2; [ $$? -eq 0 ] && echo -n 'y' || echo -n 'n')
     export BID_COLORS_TESTED
     export BID_COLORS_SUPPORTED
   endif
