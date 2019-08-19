@@ -690,10 +690,9 @@ endef
 #
 # args: 1 - target name
 #       2 - object-file infix 1 (added after the source files base-name)
-#       3 - object-file infix 2 (added before the .o, only used for C++ files)
 #
 define make_per_target_vars_and_deps
-  $$(call make_per_target_vars,$(1),$(2),$(3))
+  $$(call make_per_target_vars,$(1),$(2))
   OBJS_$(1) := $$(call get_target_var,OBJS,$(1))
   $$(OBJS_$(1)): .general.d
   $(1): OBJS = $$(OBJS_$(1))
