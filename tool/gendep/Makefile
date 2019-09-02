@@ -59,24 +59,26 @@ endif
 all:: $(LIB)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/Makefile
+	$(VERBOSE)$(call create_dir,$(@D))
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(OBJ_DIR)/%.32.o: $(SRC_DIR)/%.c $(SRC_DIR)/Makefile
+	$(VERBOSE)$(call create_dir,$(@D))
 	$(CC) $(CFLAGS) -m32 -c $< -o $@
 
 $(OBJ_DIR)/%.64.o: $(SRC_DIR)/%.c $(SRC_DIR)/Makefile
+	$(VERBOSE)$(call create_dir,$(@D))
 	$(CC) $(CFLAGS) -m64 -c $< -o $@
 
 $(LIB96): $(OBJS96) $(SRC_DIR)/Makefile
-	$(MKDIR) $(OBJ_DIR)
 	$(call cmd_link,$@) $(OBJS96)
 
 $(LIB32): $(OBJS32) $(SRC_DIR)/Makefile
-	$(MKDIR) $(OBJ_DIR)/32
+	$(VERBOSE)$(call create_dir,$(OBJ_DIR)/32)
 	$(call cmd_link,$@,32) $(OBJS32)
 
 $(LIB64): $(OBJS64) $(SRC_DIR)/Makefile
-	$(MKDIR) $(OBJ_DIR)/64
+	$(VERBOSE)$(call create_dir,$(OBJ_DIR)/64)
 	$(call cmd_link,$@,64) $(OBJS64)
 
 doc: $(MAN)
