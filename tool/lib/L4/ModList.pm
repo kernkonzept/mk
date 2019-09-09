@@ -569,6 +569,11 @@ sub handle_remote_file
       return "$lpath/$lfile";
     }
 
+  if ($file =~ /^((ssh\+)?git:\/\/.+)/)
+    {
+      # git archive --format=tar --remote=$1 HEAD path | tar -xO
+    }
+
   return undef;
 }
 

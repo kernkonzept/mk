@@ -12,7 +12,7 @@ link_arg_opts =
 # options that are part of the output file list %o
 link_output_args =
   %:output-option(l* -whole-archive -no-whole-archive
-                  -start-group -end-group)
+                  -start-group -end-group u)
 
 
 l4libdir =
