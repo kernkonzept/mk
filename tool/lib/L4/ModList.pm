@@ -555,10 +555,12 @@ sub handle_remote_file
       my $lfile = "__unknown_yet__";
       if (opendir(my $dh, $lpath))
         {
-          die "First path should be '.'"   unless readdir $dh eq '.';
-          die "Second path should be '..'" unless readdir $dh eq '..';
-          $lfile = readdir $dh;
-          die "Too many files in $lpath" if readdir $dh;
+          my @entries = readdir $dh;
+          die "Too many/few files in $lpath" if @entries != 3;
+          foreach (@entries)
+            {
+              $lfile = $_ if $_ ne '.' and $_ ne '..';
+            }
           closedir $dh;
         }
 
