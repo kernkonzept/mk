@@ -10,7 +10,7 @@ install-dirs  := tool pkg
 clean-dirs    := tool pkg tests doc
 cleanall-dirs := tool pkg tests doc
 
-BUILD_TOOLS	= bash bison flex gawk gcc g++ ld perl tput
+BUILD_TOOLS	= bash bison flex gawk $(CC) $(CXX) $(HOST_CC) $(HOST_CXX) gcc g++ ld perl tput
 BUILD_TOOLS_pkg/uvmm  := dtc
 
 CMDS_WITHOUT_OBJDIR := help checkbuild checkbuild.% up update check_build_tools
@@ -375,7 +375,10 @@ ifneq ($(CONFIG_INT_CPP_NAME_SWITCH),)
 		echo 'int main(void){}'>$$X ; \
 		rm -f $$X.out ; $(LD_GENDEP_PREFIX) GENDEP_SOURCE=$$X \
 		GENDEP_OUTPUT=$$X.out $(CC) $(CCXX_FLAGS) -c $$X -o $$X.o; \
-		test -e $$X.out; echo INT_CPP_NAME=`cat $$X.out` \
+		if [ ! -e $$X.out ]; then \
+			echo -e "\n\033[1;31mGendep did not generate output. Is the compiler ($(CC)) statically linked?\033[0m"; \
+			echo -e "Please use a dynamically linked compiler.\n"; exit 1; \
+		fi; echo INT_CPP_NAME=`cat $$X.out` \
 			>>$(DROPSCONF_CONFIG_MK); \
 		rm -f $$X $$X.{o,out};
 	$(VERBOSE)set -e; X="$(OBJ_BASE)/tmp.$$$$$$RANDOM.cc" ; \
@@ -424,7 +427,7 @@ BUILD_TOOLS += $(foreach dir,$(DIRS_FOR_BUILD_TOOLS_CHECKS), \
 
 check_build_tools:
 	@unset mis;                                                \
-	for i in $(BUILD_TOOLS); do                                \
+	for i in $(sort $(BUILD_TOOLS)); do                        \
 	  if ! command -v $$i >/dev/null 2>&1; then                \
 	    [ -n "$$mis" ] && mis="$$mis ";                        \
 	    mis="$$mis$$i";                                        \
