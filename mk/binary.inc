@@ -44,6 +44,8 @@ ifeq ($(SYSTEM),) # if we have no system yet, build the subdirs
 # our default systems
 SYSTEMS	?= $(SYSTEMS_ABI)
 
+DEPENDS_PKGS ?= $(if $(PKG_OPTIONAL),$(REQUIRES_LIBS))
+
 BID_MISSING_PCS := \
    $(strip $(if $(DEPENDS_PKGS), \
              $(strip $(foreach i,$(DEPENDS_PKGS),            \
