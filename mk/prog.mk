@@ -25,7 +25,7 @@ else
 INSTALLDIR_BIN		?= $(DROPS_STDDIR)/bin/$(subst -,/,$(SYSTEM))
 INSTALLDIR_BIN_LOCAL	?= $(OBJ_BASE)/bin/$(subst -,/,$(SYSTEM))
 endif
-ifeq ($(CONFIG_BID_STRIP_PROGS),y)
+ifeq ($(CONFIG_BID_STRIP_BINARIES),y)
 INSTALLFILE_BIN 	?= $(call copy_stripped_binary,$(1),$(2),755)
 INSTALLFILE_BIN_LOCAL 	?= $(call copy_stripped_binary,$(1),$(2),755)
 else

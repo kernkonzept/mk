@@ -151,7 +151,7 @@ config INT_LD_NAME
 	depends on !INT_LD_NAME_SWITCH
 
 
-config BID_STRIP_PROGS
+config BID_STRIP_BINARIES
 	bool "Strip binaries on install"
 	default y
 	help

@@ -25,7 +25,7 @@ INSTALLDIR_LIB		?= $(DROPS_STDDIR)/lib/$(subst -,/,$(SYSTEM))
 INSTALLDIR_LIB_LOCAL	?= $(OBJ_BASE)/lib/$(subst -,/,$(SYSTEM))
 endif
 
-do_strip=$(and $(CONFIG_BID_STRIP_PROGS),$(filter %.so,$(1)))
+do_strip=$(and $(CONFIG_BID_STRIP_BINARIES),$(filter %.so,$(1)))
 INSTALLFILE_LIB         ?= $(if $(call do_strip,$(1)),                      \
                                 $(call copy_stripped_binary,$(1),$(2),644), \
                                 $(INSTALL) -m 644 $(1) $(2))
