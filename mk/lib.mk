@@ -13,6 +13,8 @@ _L4DIR_MK_LIB_MK=y
 
 ROLE = lib.mk
 
+include $(L4DIR)/mk/Makeconf
+
 # define INSTALLDIRs prior to including install.inc, where the install-
 # rules are defined. Same for INSTALLDIR.
 ifeq ($(MODE),host)
@@ -22,8 +24,14 @@ else
 INSTALLDIR_LIB		?= $(DROPS_STDDIR)/lib/$(subst -,/,$(SYSTEM))
 INSTALLDIR_LIB_LOCAL	?= $(OBJ_BASE)/lib/$(subst -,/,$(SYSTEM))
 endif
+
+ifeq ($(CONFIG_BID_STRIP_PROGS),y)
+INSTALLFILE_LIB 	?= $(call copy_stripped_binary,$(1),$(2),644)
+INSTALLFILE_LIB_LOCAL 	?= $(call copy_stripped_binary,$(1),$(2),644)
+else
 INSTALLFILE_LIB		?= $(INSTALL) -m 644 $(1) $(2)
 INSTALLFILE_LIB_LOCAL	?= $(LN) -sf $(call absfilename,$(1)) $(2)
+endif
 
 INSTALLFILE		= $(INSTALLFILE_LIB)
 INSTALLDIR		= $(INSTALLDIR_LIB)
@@ -47,7 +55,6 @@ endif
 CPPFLAGS          += -DL4SYS_USE_UTCB_WRAP=1
 
 # include all Makeconf.locals, define common rules/variables
-include $(L4DIR)/mk/Makeconf
 include $(L4DIR)/mk/binary.inc
 $(GENERAL_D_LOC): $(L4DIR)/mk/lib.mk
 

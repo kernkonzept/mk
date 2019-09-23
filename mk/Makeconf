@@ -151,6 +151,16 @@ define create_dir
   $(if $(wildcard $(1)),true $(1) exists,$(INSTALL) -d $(1))
 endef
 
+# Strip binary $(1) to $(2) and set target file mode to $(3)
+define copy_stripped_binary
+  $(call create_dir,$(dir $(2))/.debug); \
+  ln -sf $(call absfilename,$(1)) $(dir $(2))/.debug/$(1); \
+  $(OBJCOPY) --strip-unneeded --add-gnu-debuglink=$(1) \
+             $(1) $(2) >/dev/null 2>&1 \
+    || ln -sf $(call absfilename,$(1)) $(2); \
+  chmod $(3) $(2)
+endef
+
 # Move $(2) to $(1) if content of both files differ
 define move_if_changed
   if test ! -r "$(1)" || ! cmp -s $(1) $(2); then \

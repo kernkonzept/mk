@@ -153,11 +153,12 @@ config INT_LD_NAME
 
 config BID_STRIP_PROGS
 	bool "Strip binaries on install"
+	default y
 	help
-	  If enabled, binaries will be stripped on installation into
-	  $(L4DIR)/bin or $(DROPS_STDDIR)/bin. If you want to load them with
-	  all their symbols (eg to show the symbols with the Fiasco kernel
-	  debugger), say 'N' here.
+	  If enabled, binaries (libraries and executables) will be stripped on
+	  installation into $(L4DIR)/bin or $(DROPS_STDDIR)/bin. If you want
+	  to load them with all their symbols (eg to show the symbols with the
+	  Fiasco kernel debugger), say 'N' here.
 
 	  If unsure, say 'Y'.
 
