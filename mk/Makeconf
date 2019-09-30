@@ -552,6 +552,8 @@ $(GENERAL_D_LOC): $(L4DIR)/mk/Makeconf $(EXTRA_GENERAL_D_DEP)
 		$(PKGDIR_ABS)/Makeconf.local))
 	$(DEPEND_VERBOSE)$(call BID_DEPEND_GENERAL_D_COND,\
 		$(MAKECONFLOCAL))
+	$(DEPEND_VERBOSE)$(call BID_DEPEND_GENERAL_D_COND,\
+	        $(L4DIR)/mk/arch/Makeconf.$(BUILD_ARCH))
 
 DEPS	+= $(GENERAL_D_LOC)
 
