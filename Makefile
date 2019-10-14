@@ -10,7 +10,10 @@ install-dirs  := tool pkg
 clean-dirs    := tool pkg tests doc
 cleanall-dirs := tool pkg tests doc
 
-BUILD_TOOLS	= bash bison flex gawk $(CC) $(CXX) $(HOST_CC) $(HOST_CXX) gcc g++ ld perl tput
+BUILD_TOOLS    = bash bison flex gawk perl tput \
+                 $(foreach v,CC CXX LD HOST_CC HOST_CXX HOST_LD, \
+                           $(firstword $(foreach x,$($(v)),\
+			                         $(if $(findstring =,$(x)),,$(x)))))
 BUILD_TOOLS_pkg/uvmm  := dtc
 
 CMDS_WITHOUT_OBJDIR := help checkbuild checkbuild.% up update check_build_tools
