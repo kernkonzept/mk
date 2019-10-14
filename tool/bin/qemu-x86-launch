@@ -55,6 +55,7 @@ my @mods = @{$entry{mods}};
 my $kernel = L4::ModList::search_file_or_die($entry{bootstrap}{command}, $module_path);
 my $initrd = join(',', map { qemu_get_file($_->{command}, $_->{cmdline_quoted}) } @mods);
 my (undef, $args) = split /\s+/, $entry{bootstrap}{cmdline_quoted}, 2;
+$args = "" unless defined $args;
 
 my $qemu_cmd =
       "$qemu -kernel $kernel -append \"$args\" ".
