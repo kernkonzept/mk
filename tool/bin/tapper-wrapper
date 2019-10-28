@@ -443,7 +443,7 @@ $TEST_SCRIPT [options]
 =head1 OPTIONS
 
   --help,-h        Print this help message.
-  --nowrapper,-W   Disable output capturing and timeout check.
+  --no-wrapper,-W  Disable output capturing and timeout check.
                    Necessary when using Fiasco JDB for debugging.
 
   --debug,-d       Run in debug mode. Shortcut for:
