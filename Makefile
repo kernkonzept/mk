@@ -740,16 +740,16 @@ report:
 	@make -v || true
 	@echo
 	@echo "CC: $(CC) -v:"
-	@$(CC) -v || true
+	@$(CC) -v 2>&1 || true
 	@echo
 	@echo "CXX: $(CXX) -v:"
-	@$(CXX) -v || true
+	@$(CXX) -v 2>&1 || true
 	@echo
 	@echo "HOST_CC: $(HOST_CC) -v:"
-	@$(HOST_CC) -v || true
+	@$(HOST_CC) -v 2>&1 || true
 	@echo
 	@echo "HOST_CXX: $(HOST_CXX) -v:"
-	@$(HOST_CXX) -v || true
+	@$(HOST_CXX) -v 2>&1 || true
 	@echo
 	@echo -n "ld: $(LD) -v: "
 	@$(LD) -v || true
