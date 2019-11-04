@@ -281,7 +281,7 @@ if ($ENV{TEST_EXPECTED})
     open(my $expect_fd, '<', $expout_file)
       or fail_test("Can't open expected output ('$expout_file')");
 
-    $expline = 'Welcome to L4/Fiasco.OC!';
+    $expline = '(L4 Bootstrapper|Welcome to L4/Fiasco.OC!)';
 
     my $expoutput = extract_expected($expline);
     my $num_res = 1;
