@@ -1,0 +1,572 @@
+/**
+\page l4re_concepts_ipc %L4 Inter-Process Communication (IPC)
+
+Inter-process communication (IPC) is the fundamental communication mechanism in
+the Fiasco.OC microkernel.
+
+Basically IPC invokes a subroutine in a different context using input and
+output parameters. It is used to communicate between userland threads and, as a
+special case, to communicate between a userland thread and a kernel object. IPC
+provides the only (non-debugging) way of doing system calls.
+
+
+\section l4re_concepts_ipc_mechanism IPC mechanism
+
+When using this API, an IPC operation can be conducted using the l4_ipc()
+function (or one of its related \ref l4_ipc_api "helpers"). In general it
+causes a method to be invoked on the called kernel object. An IPC operation
+consists of a send and receive phase, but either of them can be skipped, that
+is, an IPC operation can consist of only either a send or a receive phase. IPC
+is always synchronous and blocking and can be given a timeout. Timeouts can be
+specified separately for each phase. Invoking the IPC syscall without any phase
+is deprecated.
+
+On the lowest abstraction level, IPC operations need the following arguments:
+  - \ref l4re_concepts_descr_flags "flags" describing the IPC mode,
+  - the \ref l4re_concepts_descr_capidx "capability selector" of the
+    communication partner,
+  - a \ref l4re_concepts_descr_label "label",
+  - a \ref l4re_concepts_descr_msgtag "message tag",
+  - a pair of \ref l4re_concepts_descr_timeouts "timeout" values, and
+  - a pointer to the \ref l4re_concepts_descr_utcb
+    "user-level thread control block" (UTCB).
+
+As result of an IPC operation the kernel returns a message tag and a label and
+the kernel also changes UTCB content. For the detailed call signature, refer to
+l4_ipc(). Furthermore, depending on the IPC parameters, the kernel might have
+transferred the FPU state and capabilities from the sender to the receiving
+thread.
+
+The transition between the IPC send phase and the IPC receive phase is atomic,
+that is, as soon as the send phase has finished, the thread receive phase
+starts. A relative receive timeout does not start before the send phase has
+finished (see also below) and a thread which received an IPC call from another
+thread can assume that the other thread is ready to receive the reply message
+and the replying thread can therefore reply with a timeout of zero, see
+\ref l4re_concepts_descr_timeouts.
+
+For performance optimization and under certain conditions, the kernel may
+perform a context switch from the IPC sender to the IPC receiver without
+consulting the scheduler after the send phase finished. For instance, a client
+performing an IPC call to a server has to wait for the server anyway. Hence,
+after the client request was sent to the server, the kernel switches directly
+to the server thread. This behavior can be disabled by setting the
+#L4_MSGTAG_SCHEDULE flag in the sender message tag (see below).
+
+
+\subsection l4re_concepts_descr_flags IPC Flags
+The *flags* defined in #l4_syscall_flags_t are used by the invoking thread to
+define the intended IPC operation. The variants of l4_ipc() (see \ref
+l4_ipc_api) use the flags
+  - to request the IPC phases (send-only IPC, receive-only IPC, IPC with send
+    and receive phase), and
+  - to decide, if the reply capability (see \ref l4re_concepts_descr_capidx
+    "below") should be used instead of the capability of a dedicated kernel
+    object as target for the send phase (*reply*), and
+  - to decide, if receiving should wait for an incoming message from any
+    possible sender (*open wait*) instead of a message from a dedicated
+    sender (*closed wait*).
+
+
+\subsection l4re_concepts_descr_capidx Capability selector
+The *capability selector* defines a kernel object as partner of the IPC
+operation. Some kernel objects forward IPC to a userland thread.
+
+Basically a capability is represented by #l4_cap_idx_t where the bits starting
+from #L4_CAP_SHIFT are used as index into the local capability table of the
+current address space.
+
+Specifying #L4_INVALID_CAP as target for an IPC operation is equivalent to
+specifying a thread capability of the current thread with full permissions.
+As a result, the userland thread either communicates with its corresponding
+kernel thread object (if #L4_PROTO_THREAD is specified as protocol value,
+see the description of the message tag \ref l4re_concepts_descr_msgtag "below")
+or the IPC target is the current userland thread. In the latter case, no IPC
+will be performed and the send phase and the receive phase will block until the
+corresponding timeout has expired, see \ref l4re_concepts_descr_timeouts
+"below".
+
+A special partner is defined by the *reply capability*. Since it would
+be impractical (and a security flaw) to always pass an explicit capability to
+reply to for each IPC, the kernel generates an implicit one that can be used
+for just that purpose if the IPC contains an **open wait** phase. The reply
+capability is valid after a receive phase and points to the kernel object that
+sent the IPC just received. It can be used only once. The reply capability is
+selected by setting the #L4_SYSF_REPLY flag, see
+\ref l4re_concepts_descr_flags "above".
+
+
+\subsection l4re_concepts_descr_label IPC Label
+The IPC label is a machine word which is transferred unchanged from the IPC
+sender to the IPC receiver when directly sending to a userland thread. However,
+the primary purpose of the label is to create a relationship between an
+L4::Rcv_endpoint (L4::Ipc_gate or L4::Irq) and the bound thread.
+
+During L4::Rcv_endpoint::bind_thread(), a label is specified. If the thread
+receives an IPC message through the endpoint, that label is delivered to the
+receiving thread as output parameter of l4_ipc() instead of the label specified
+during the corresponding IPC send operation (see the detailed description of
+L4::Ipc_gate for more details on the label with IPC gates). The label is
+usually used by the receiving thread to invoke the object which is responsible
+for handling the IPC request of the corresponding endpoint. This mechanism is
+used by the L4::Epiface mechanism for server loops.
+
+
+\subsection l4re_concepts_descr_msgtag IPC Message Tag
+The *message tag* (#l4_msgtag_t) describes the payload of the IPC and
+can also be used to enable certain features. It contains:
+  - a *protocol value* (cf. l4_msgtag_t::label(), also called the tag's
+    _label_),
+  - the number of items in \ref l4re_concepts_descr_mrs
+    "UTCB message registers" to transfer (cg. l4_msgtag_t::words() and
+    l4_msgtag_t::items()), and
+  - flags (cf. l4_msgtag_t::flags() and #L4_msgtag_flags, may be 0).
+
+The information from the message tag is required by the kernel to transfer the
+message. The IPC system call returns a message tag as result of the IPC
+operation. On success, a copy of the message tag specified by the sender is
+returned if there is a receive phase. Without receive phase, a successful IPC
+syscall returns the message tag specified as input parameter.
+
+Failures during IPC are signalled using the #L4_MSGTAG_ERROR flag in the
+message tag. If this bit is set by the kernel, the content of the returned
+message tag apart from that bit is undefined and the kernel wrote the actual
+error code into the l4_thread_regs_t::error register of the UTCB (see also
+\ref l4re_concepts_descr_tcrs). When an IPC error occurs after the rendezvous
+of the IPC partners, both partners observe the same error information. If, for
+instance, the IPC was aborted using L4::Thread::ex_regs(), the sender gets an
+#L4_IPC_SECANCELED error while the receiver gets an #L4_IPC_RECANCELED error.
+The function L4Re::chkipc() can be used to verify that an IPC operation
+finished successfully: It throws an error if the IPC failed.
+
+\internal
+See kk-all chat from 2022-04-11: Alex says that the message tag is undefined in
+case of an error (only the error bit is set).
+\endinternal
+
+The *protocol value* is usually used to distinguish between different
+protocols of the same interface. Certain protocol IDs are pre-defined when
+talking to kernel objects, see #L4_msgtag_protocol. From IPC point of view, the
+protocol value is just payload that is transferred from sender to receiver and
+hence doesn't have a dedicated meaning.
+
+By convention, during IPC calls, the protocol value is used for return values,
+where negative values signify errors. See the
+\ref l4_cxx_ipc_iface_return_types "section" about %L4 RPC return types for
+further information. The function L4Re::chksys() can be used to verify that an
+RPC call using IPC was successful: It throws an error if the IPC failed or if
+the returned protocol value is negative.
+
+
+\subsection l4re_concepts_descr_timeouts IPC Timeouts
+As written above, IPC *timeouts* are specified separately for the send phase
+(IPC send timeout) and the receive phase (IPC receive timeout). The timeout of
+one phase is encapsulated by #l4_timeout_s. Both timeouts are combined into a
+single #l4_timeout_t parameter. Timeouts are either relative to the current
+time of the invoking thread or absolute. In the latter case, the absolute time
+of the deadline of the respective phase is written into a UTCB buffer register
+(see l4_timeout_abs()). The relative timeout of the receive phase starts
+immediately after the send phase has finished.
+
+Two specific timeout values are sufficient for most IPC operations:
+  - #L4_IPC_TIMEOUT_NEVER is used if the IPC partner might not yet be ready.
+    Usually a client trusting a server will perform an IPC call with an
+    infinite timeout for both phases. The send phase will take some time if the
+    IPC receiver is currently not ready. The receive phase will take some time
+    as the server needs time to serve the request. Also, a server will usually
+    wait with an infinite receive timeout for the next request (see below for
+    a possible exception).
+  - #L4_IPC_TIMEOUT_0 is used when it is either certain that the IPC receiver
+    is currently ready or if the IPC sender doesn't want to wait if the IPC
+    receiver is not ready. The former case applies to a thread which was called
+    with an IPC call, for example a server got a client request. The reply to
+    the IPC call should use a timeout of zero to ensure that a client doesn't
+    block a server (server could not deliver the result of the request).
+    See also L4::Ipc_svr::Default_timeout.
+    Another case is an IPC send operation for waking up another thread from an
+    IPC receive operation. If the other thread is not ready to receive, then it
+    might be already woken up and it does not make sense to wait any longer.
+    Also triggering an IRQ is usually done with a send timeout of 0, see
+    L4::Triggerable::trigger().
+
+In certain cases it also makes sense to specify an IPC timeout different from
+"never" or "zero":
+  - A server might leave the server loop after some time to perform idle work
+    (see L4::Ipc_svr::Server_iface::add_timeout()).
+  - A thread does not want to wait for an infinite time if the partner is not
+    ready. This could be also some safety measure.
+  - A thread wants to block for a certain amount of time without consuming CPU
+    time. The l4_ipc_sleep() function specifies the #L4_INVALID_CAP as target
+    for an IPC receive operation and specifies the intended relative waiting
+    period as IPC timeout. Waiting for an absolute timeout would be possible
+    with similar code.
+
+\note The kernel IPC path is optimized for the two special cases using
+      #L4_IPC_TIMEOUT_NEVER and #L4_IPC_TIMEOUT_0. Specifying a different
+      timeout causes more maintenance effort for the kernel.
+
+
+\subsection l4re_concepts_descr_utcb User-level Thread Control Block
+The \ref l4_utcb_api "UTCB" is located on a power-of-2-sized and
+power-of-2-aligned memory area shared between userland and the kernel
+(L4::Task::add_ku_mem()). The UTCB is bound to a thread during the
+L4::Thread::control() operation with the L4::Thread::Attr parameters set up
+using L4::Thread::Attr::bind(). The UTCB is used for IPC-related data exchange
+and is set up before invoking l4_ipc(). To access certain parts of the UTCB,
+the corresponding functions have to be used (there is no data type L4_utcb or
+similar). The UTCB consists of:
+  - the \ref l4re_concepts_descr_mrs "message registers"
+    `MR[0]`, `MR[1]`, ..., `MR[n-1]` with n = #L4_UTCB_GENERIC_DATA_SIZE
+    (access using l4_utcb_mr()),
+  - the \ref l4re_concepts_descr_bdr "buffer descriptor register" `BDR`
+    (access using l4_utcb_br(), see l4_buf_regs_t::bdr),
+  - the \ref l4re_concepts_descr_brs "buffer registers"
+    `BR[0]`, `BR[1]`, ..., `BR[m-1]` with m = #L4_UTCB_GENERIC_BUFFERS_SIZE
+    (access using l4_utcb_br()),
+  - the \ref l4re_concepts_descr_tcrs "thread control registers" (access using
+    l4_utcb_tcr(), includes the IPC error code), and
+  - in case of an exception IPC, the register state of the thread which
+    triggered the exception (access using l4_utcb_exc()).
+
+IPC to a kernel object requires the setup of the UTCB of the corresponding
+userlevel thread. IPC between userlevel threads requires the setup of UTCBs
+of both partners.
+
+The kernel changes only the following UTCB content:
+  - The message registers of the UTCB of the receiver of an IPC, and
+  - the IPC error field of the thread invoking l4_ipc() if there was an error
+    during IPC.
+
+\internal
+Another exception: See Ic7e8aa98d8f782b684445cc6f866df3bffae2c37 / #CD-518.
+\endinternal
+
+
+\subsubsection l4re_concepts_descr_mrs IPC Message registers
+The *message registers* contain *untyped items* and *typed items*. The sender's
+typed items are interpreted by the kernel in conjunction with the receiver's
+_receive items_. Each typed send item occupies two message registers.
+The untyped items, on the other hand, are free to be used by the communication
+partners to exchange data: The content of all message registers used for
+untyped items (l4_msgtag_t::words()) is copied from the UTCB of the IPC sender
+to the UTCB of the IPC receiver.
+
+A typed send item consists of a *flexpage* (see l4_fpage(), l4_obj_fpage(), and
+l4_iofpage()) of the to be transferred capabilities (*flexpage word*) and a
+_message word_. There are two types of send items: *map items* and *void
+items*. For a void item, the message word is all zero. For a map item, the
+message word contains:
+  - the *compound bit* allowing to use the same receive buffer for the
+    subsequent typed send item (scatter-gather behavior,
+    see #L4_ITEM_CONT of #l4_msg_item_consts_t),
+  - the *type bit* defining this typed send item as a *map item*,
+  - the *grant flag* for delegating the access to the flexpage from the
+    sender to the receiver and atomically removing the rights from the sender
+    (see #l4_msg_item_consts_t),
+  - *attributes* with semantics depending on the item type; for memory
+    mappings, they contain cacheability information
+    (see #l4_fpage_cacheability_opt_t); for objects, they contain additional
+    rights (see #L4_obj_fpage_ctl),
+  - the *send base* (also called *hot spot*) defining what is actually mapped
+    when send and receive flexpages have a different size.
+
+A typed send item can be created using l4_sndfpage_add(). This function sets
+the compound bit unconditionally. Alternatively, the functions l4_map_control()
+and l4_map_obj_control() can be used to set up the message word of a map item
+for a memory flexpage respective for objects.
+
+See \ref l4re_concepts_descr_transfer "below" for a description how typed items
+are transferred.
+
+
+\subsubsection l4re_concepts_descr_brs IPC Buffer Registers
+The *buffer registers* and *buffer descriptor register* are
+interpreted by the kernel during the receive phase (if any). Buffer registers
+define *receive items* which are required to receive typed send items (memory,
+I/O ports or object capabilities). To specify a receive item, either
+one or two buffer registers are required:
+  - A *small buffer item* (L4::Ipc::Small_buf) occupying one buffer
+    register is sufficient to receive one object capability.
+  - A *buffer item* (L4::Ipc::Buf_item) occupying two buffer registers
+    (*message word* and a *flexpage*) is required to receive
+    memory flexpages, I/O ports, or multiple object capabilities.
+
+\subsubsection l4re_concepts_descr_bdr IPC Buffer Descriptor Register
+The buffer descriptor register defines indices of buffer registers used to
+receive dedicated types of send items and also contains a flag:
+  - 5 bits starting at #L4_BDR_MEM_SHIFT define the index of the first receive
+    item used for memory flexpages.
+  - 5 bits starting at #L4_BDR_IO_SHIFT define the index of the first receive
+    item used for I/O flexpages.
+  - 5 bits starting at #L4_BDR_OBJ_SHIFT define the index of the first receive
+    item used for object flexpages.
+  - The #L4_UTCB_INHERIT_FPU can be set using l4_utcb_inherit_fpu() and allows
+    to receive the FPU state from the IPC sender. This is only relevant if the
+    sender set #L4_MSGTAG_TRANSFER_FPU in the message tag.
+
+For most use cases, a BDR value of zero is sufficient. In that case, if `BR[0]`
+contains a void item, no capabilities are received. Otherwise, only one type of
+capabilities (memory, I/O ports or objects) can be received even if there are
+several receive items. For more complex setups that require receiving different
+types of capabilities in one receive operation, other BDR values are necessary.
+
+The BDR of the receiving thread is only used by the kernel if at least one
+typed item is transferred during the IPC or if #L4_MSGTAG_TRANSFER_FPU is set
+in the UTCB of the sending thread.
+
+
+\subsubsection l4re_concepts_descr_tcrs IPC Thread Control Registers
+The l4_thread_regs_t::error register contains the IPC error code in case the
+#L4_MSGTAG_ERROR flag is set in the message tag returned by an IPC syscall.
+Otherwise this register is not touched by the kernel. See
+#l4_ipc_tcr_error_t for a detailed enumeration of all possible error codes
+during an IPC operation.
+
+\internal
+(Change still in review)
+The l4_thread_regs_t::free_marker is set by the kernel to `-1` immediately
+before a thread is destroyed. This value indicates that the kernel does not
+longer use the UTCB and it can be re-used by other threads.
+\endinternal
+
+The other members of l4_thread_regs_t are never touched by the kernel.
+
+
+\subsection l4re_concepts_descr_transfer Transfer of Typed Send Items
+
+The kernel interprets all typed items in the sender UTCB (l4_msgtag_t::items())
+and performs the following operations while modifying the corresponding typed
+items in the receiver UTCB:
+  - If the message item of the sender is void, this item is ignored and the
+    message word of the corresponding typed item in the receiver UTCB is set to
+    zero (making it a void item). The flexpage word of this item is not
+    changed.
+  - Otherwise, if the type bit of the message item of the sender is not set,
+    the IPC is aborted with #L4_IPC_SEMSGCUT / #L4_IPC_REMSGCUT.
+  - Otherwise, if there is a receive item corresponding to the flexpage type of
+    the send item available (see \ref l4re_concepts_descr_bdr), information
+    described by the flexpage is transferred to the receiver.
+
+In the last case, the message word of the typed item in the receiver UTCB is
+modified to contain the send base, the type and the size of the transferred
+flexpage, as well as a copy of the compound bit and the type bit of the send
+item. If the receiver ordered a local ID in the corresponding receive item, the
+kernel attempts to apply special rules, see #L4_RCV_ITEM_LOCAL_ID. Otherwise,
+regular mappings as described by the flexpage of the send item are created in
+the receiver space.
+
+A receive item forms a *receive window* of a specific address and size in the
+receiver space. Each typed send item that is a map item requires a
+corresponding receive item. By default, there is a one-to-one mapping (one
+receive item per typed send item) but it is also possible to use one receive
+item to receive several typed send items: The compound bit (see
+#l4_msg_item_consts_t) of a send item defines if the following typed send item
+shall use the same receive item as the current one for receiving the flexpage.
+If the compound bit is set, proper values of the send base shall be used to
+prevent overlapping of addresses in the receiver space.
+
+The send base is relevant when the size of the receive flexpage differs from
+the size of the transferred resource. As a typical example, triggering a memory
+page fault opens a receive window covering the entire memory address space of
+the faulting thread. The pager will usually reply a memory flexpage smaller
+than the entire address space of the faulting thread. Hence, the pager has to
+specify a proper base which is used as offset of the sent object in the receive
+flexpage in the *receiver space*. If the sender flexpage is bigger than the
+receive window, a flexpage of the size of the receive window starting at the
+send base in the *sender space* is transferred to the receiver.
+\internal
+See Fiasco: map_util.cpp / free_constraint().
+\endinternal
+
+The kernel will stop transmission of typed items before l4_msgtag_t::items() is
+reached either if it finds a void item as receive buffer or if the flexpage
+type of the send item does not match the flexpage type of the corresponding
+receive item. Under both conditions, the IPC is aborted with #L4_IPC_SEMSGCUT /
+#L4_IPC_REMSGCUT.
+
+\note The kernel ignores the flexpage access rights of the receive items. The
+      actual rights for a transferred resource in the target address space are
+      defined by the access rights to that resource of the IPC sender address
+      space and the flexpage access rights in the typed send item.
+      Additionally, when transferring object capabilities, the transferred
+      rights also depend on the sender’s rights on the capability invoked for
+      IPC.
+
+
+\section l4re_concepts_ipc_examples Examples
+A number of examples show the interplay of the concepts introduced so far.
+
+\subsection l4re_concepts_ipc_examples_1 User Thread to Kernel Object
+
+The L4::Scheduler kernel object has a method L4::Scheduler.idle_time(). It
+takes a set of CPUs to query, represented by two machine words.
+
+In user space, the function L4::Cap<L4::Scheduler>->idle_time() is called,
+which does the following:
+  - Fill `MR[0]` with a constant identifying the method being called
+    (#L4_SCHEDULER_IDLE_TIME_OP).
+  - Fill `MR[1]` and `MR[2]` with the two words making up the CPU set.
+  - Set up the message tag with the protocol value (#L4_PROTO_SCHEDULER), the
+    number of untyped and typed items (3 and 0), and some flags.
+  - Call l4_ipc() with the capability ID, the tag, the pointer to the filled
+    UTCB, infinite timeouts, and with flags indicating a send and receive
+    phase. (The label does not matter in this case.)
+
+This function traps into kernel space using standard platform specific
+mechanisms. The kernel reads the protocol value on the message tag, checks that
+the capability ID refers to a valid object that speaks that protocol, and
+dispatches the message to the appropriate handler. The handler fills the first
+64 bits of the message registers with the computed time value. This will cover
+`MR[0]` on 64-bit architectures and `MR[0]` and `MR[1]` on 32-bit
+architectures.
+It then sets up the return message tag:
+  - The number of untyped items is 1 or 2.
+  - The number of typed items is 0.
+  - The protocol value contains the return value and is set to 0.
+  - An error would be signalled as a negative protocol value. Under certain
+    conditions (e.g. wrong kernel object capability specified), the error is
+    signalled as IPC error (see #L4_MSGTAG_ERROR in the description of the
+    \ref l4re_concepts_descr_msgtag).
+  - (The return label is as irrelevant in this case as the send label.)
+
+This reply is received by the receive phase of the original l4_ipc() call from
+userland. Finally the l4_ipc() function copies the time value out of the
+message registers and forwards it with a possible error from the message tag
+flags to its caller.
+
+
+\subsection l4re_concepts_ipc_examples_2 User Thread to User Thread
+
+When the target kernel object is of type L4::Thread (or L4::Ipc_gate, but we
+will cover this in the example \ref l4re_concepts_ipc_examples_3 "below") and
+the message tag's protocol value is not #L4_PROTO_THREAD, the kernel will
+forward the IPC message to the userland thread represented by the kernel
+object. There it can be received by a call to l4_ipc(). The restriction of the
+protocol number is necessary because one also wants to invoke L4::Thread's
+control methods such as L4::Thread.switch_to() or L4::Thread.ex_regs(). Besides
+this restriction, the interpretation of all the IPC parameters and the untyped
+items of the UTCB is up to the communication partners.
+
+
+\subsubsection l4re_concepts_ipc_examples_2_1 Simple Messages
+
+A simple example is a client calling a server to have a computation performed
+on a value: Similar to IPC from a userland thread to a kernel object, the
+client writes the value to `MR[0]`. It sets up the message tag with some agreed
+upon protocol value (which, as explained above, must be different from
+#L4_PROTO_THREAD), number of untyped items to 1, typed items to 0, and no flags
+set. The client may want to pass a label that identifies itself, as many
+clients can use the server. In this context, the identifier might also be
+passed via the message registers, but the label is the proper place for this,
+as it gets a special treatment by the kernel for IPC gates (covered by the
+example \ref l4re_concepts_ipc_examples_3 "below"). The client then calls
+l4_ipc() with the tag, label and flags indicating it wants a send phase and a
+receive phase (as it wants a result back). The target is the capability index
+referring to a capability for the L4::Thread kernel object of the server.
+
+To be able to receive an IPC message, the server has set up a UTCB of its own
+and called l4_ipc() with flags indicating it only wants to enter a receive
+phase and it accepts IPCs from any partner. This is called an **open wait**.
+(The alternative would be to specify a capability index referring to a
+L4::Thread capability to exclusively receive from.)
+
+Both system calls (the send IPC initiated by the client and the receive IPC
+initiated by the server) may be seen by the kernel in any order but the IPC
+will not start before sender and receiver are ready. In that case the kernel
+will copy the relevant message registers the client specified in the message
+tag from the client's UTCB to the server's UTCB, in the current example just
+`MR[0]`. It will then switch the client to the receive phase of its call (which
+cannot yet be executed) and return the server's call with the message tag and
+label.
+
+The server inspects the tag for the correct protocol value and number of
+untyped items passed, inspect the label to decide whether it maybe wants
+special treatment of this particular client, performs the computation on
+`MR[0]` and writes the result back to `MR[0]` (or to more words, depending on
+what exactly it computes). It sets up the tag in the usual way, but probably
+needs to pass no label, as the client knows who it is talking to.
+
+For the reply, the server makes use the reply capability (see
+\ref l4re_concepts_descr_capidx "above"). Since the client sent the last IPC to
+the server, the reply capability will point to it. So when the server calls
+l4_ipc() with the computed result in the message registers and using the reply
+capability as target, the kernel knows to forward this to the client's thread.
+The kernel copies the message registers from the server's UTCB to the client's
+UTCB, and the client's l4_ipc() system call, which is still stuck in the
+receive phase, is returned with the tag.
+
+The client looks at the tag and then the message registers for its wanted
+result and the example is concluded.
+
+
+\subsubsection l4re_concepts_ipc_examples_2_2 Send Items
+
+IPC between userland threads is also used to transfer typed items: Memory, I/O
+ports, and and objects, all represented as flexpages. Typed items and untyped
+items can be part of the same IPC. As general rule, the sender specifies what
+he wants to send, the receiver where and how much it wants to receive, and the
+kernel checks the required permissions before doing the actual transfer. As
+written before, this mechanism is synchronous and the receiver cannot be
+transferred items against its will. \see l4_fpage_api
+
+Suppose a client wants a server to have read only access to a page of its
+memory. The client sets up a flexpage covering the page and with only the
+#L4_FPAGE_RO right set. The server sets up a flexpage of a memory region where
+it will receive the mapping. This may be larger than one page, suppose for our
+case four pages, in which case the exact position of the mapping will be
+resolved by the send base provided by the sender. The client combines the hot
+spot and some flags into a machine word and writes it to `MR[0]` (see also
+l4_map_control()). At `MR[1]` follows the flexpage it wants to send (see also
+l4_fpage()). The server does almost the same but writes the words to `BR[0]`
+and `BR[1]`. (The server could also specify a hot spot, but it is currently
+ignored by the kernel.) The client specifies 1 typed and 0 untyped items in the
+message tag. The server writes 0 to `BDR` to specify that the first receive
+item starts at the first buffer register.
+
+Both client and server initiate their IPC, the client with only a send phase to
+the server, and the server with an open wait receive phase. The kernel checks
+the compatibility of the send items and the receive buffers (e.g. that no
+object capability flexpage is sent to a receive buffer describing a memory
+mapping flexpage) and updates its internal structures to reflect the change. In
+our case, the sender's hot spot indicates to which of the four pages that make
+up the receive buffer the sent page should be mapped. The kernel also
+translates the typed send item to the server's address space and stores it in
+the server's UTCB at `MR[0]` and `MR[1]`.
+
+Once the server returns from its syscall, it will have read access to the
+client's shared page.
+
+
+\subsection l4re_concepts_ipc_examples_3 User Thread to User Object
+
+A common use case for thread to thread communication is when a server
+implements a number of object interfaces and a client wants to invoke methods
+on them. For security reasons, the server does not want to hand out its thread
+capability to everyone it nonetheless wants to serve. It also may not want to
+allow every client access to everyone of its interfaces. For this purpose,
+IPC gates implemented by the kernel object L4::Ipc_gate can be used.
+An IPC gate can be bound to a thread and forwards IPC to it. In doing so it
+applies two transformations
+  1. It sets the label to a predefined value.
+  2. It changes the rights of transferred items (see #L4_CAP_FPAGE_S).
+
+For each object of every interface the server implements, it creates an IPC
+gate and binds it to itself (see L4::Ipc_gate::bind_thread()). It sets the
+gate's label to a unique value identifying the object. Then it hands the gate
+out to clients. Several clients can be handed the same gate and will all end up
+invoking methods on the same object.
+
+Instead of setting the target as the server's thread kernel object, the client
+uses the IPC gate's instead. The label the client sends is irrelevant, as the
+gate will overwrite it with the value the server has set during the bind
+operation. The server executes an open wait, and the kernel performs the same
+operation as in the above \ref l4re_concepts_ipc_examples_2_2 "example" with
+the transformed IPC finally ending up in the server's thread.
+
+The server checks that the received label refers to one of its objects. It then
+checks if the protocol value in the message tag matches the interface the
+object implements. Then it invokes the method specified in `MR[0]` with the
+rest of the arguments. Finally it returns the results via UTCB and message tag
+to the reply capability and waits for the next IPC.
+
+*/
