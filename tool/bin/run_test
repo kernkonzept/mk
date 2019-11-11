@@ -36,7 +36,8 @@ my $hwconfig_file = $ENV{TEST_HWCONFIG} || '';
 my $test_run_tags = $ENV{TEST_RUN_TAGS} || '';
 my $test_required_tags = $ENV{TEST_TAGS};
 my $roottask    = $ENV{TEST_ROOT_TASK} || 'moe';
-my $roottask_args = $ENV{TEST_ROOT_TASK_ARGS} || '';
+my $roottask_args  = $ENV{TEST_ROOT_TASK_ARGS} || '';
+my $bootstrap_args = $ENV{BOOTSTRAP_ARGS} || '';
 
 my $tmpdir      = $ENV{TEST_TMPDIR};
 make_path($tmpdir);
@@ -311,7 +312,7 @@ print $test_modules <<EOHEADER;
 
 entry maketest
 kernel $kernel $kernel_args
-bootstrap $bootstrap
+bootstrap $bootstrap $bootstrap_args
 sigma0 $sigma0
 roottask $roottask
 EOHEADER

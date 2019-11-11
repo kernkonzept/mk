@@ -25,6 +25,7 @@ GetOptions(
   'no-wrapper|W'    => \$nowrapper,
   'fiasco-args|f=s' => sub { $ENV{KERNEL_ARGS} = $_[1]; },
   'moe-args|m=s'    => sub { $ENV{MOE_ARGS} = $_[1]; },
+  'boot-args|b=s'   => sub { $ENV{BOOTSTRAP_ARGS} = $_[1]; },
   'test-args|t=s'   => sub { $ENV{TEST_ARGS} = $_[1]; },
   'run-tags|T=s'    => sub { $ENV{TEST_RUN_TAGS} = $_[1]; },
   'logfile|l=s'     => sub { $ENV{TEST_LOGFILE} = $_[1]; },
@@ -49,7 +50,7 @@ my $TAPPER_FD;
 my $pid = -1;
 my $expline;
 my $output_to_tapper_fd = 0;
-my $test_description = join(" ", map { $_ ? basename($_) : () } @ARGV, $target);
+my $test_description = $ENV{TEST_DESCRIPTION} || join(" ", map { $_ ? basename($_) : () } @ARGV, $target);
 
 my $LOG_FD;
 my $logfile;
