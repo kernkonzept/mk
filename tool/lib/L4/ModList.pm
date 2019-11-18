@@ -1,6 +1,7 @@
 
 package L4::ModList;
 use Exporter;
+use warnings;
 use vars qw(@ISA @EXPORT);
 @ISA    = qw(Exporter);
 @EXPORT = qw(get_module_entry search_file get_entries);

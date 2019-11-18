@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 # This tool is expected to work as EXTERNAL_TEST_STARTER for run_test.
 #

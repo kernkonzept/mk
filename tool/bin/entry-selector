@@ -1,4 +1,4 @@
-#! /usr/bin/perl -w
+#! /usr/bin/env perl
 #
 # (c) 2009-2011 Technische Universität Dresden
 # This file is part of TUD:OS and distributed under the terms of the
@@ -12,6 +12,7 @@
 # Maybe sometime later we could use -W again?
 
 use strict;
+use warnings;
 use File::Temp qw/tempfile/;
 
 BEGIN { unshift @INC, $ENV{L4DIR}.'/tool/lib'

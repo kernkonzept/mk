@@ -1,6 +1,7 @@
-#! /usr/bin/perl -W
+#! /usr/bin/env perl
 
 use strict;
+use warnings;
 
 my $do_cluster_subgraphs = 0;
 my $collapse_clusters = 0;

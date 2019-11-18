@@ -1,6 +1,7 @@
-#! /usr/bin/perl -W
+#! /usr/bin/env perl
 
 use strict;
+use warnings;
 
 my $if_lvl = 0;
 my $cpp = 0;

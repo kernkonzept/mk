@@ -1,4 +1,4 @@
-#! /usr/bin/perl
+#! /usr/bin/env perl
 
 # Read a file containing key=value entries and
 # output them into other key/value formats.

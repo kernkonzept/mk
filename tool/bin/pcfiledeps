@@ -1,4 +1,4 @@
-#! /usr/bin/perl -W
+#! /usr/bin/env perl
 #
 # 2009, Adam Lackorzynski <adam@os.inf.tu-dresden.de>
 #
@@ -6,6 +6,7 @@
 # 
 
 use strict;
+use warnings;
 
 my $pcfiledir = $ARGV[0];
 

@@ -1,4 +1,4 @@
-#! /usr/bin/perl -W
+#! /usr/bin/env perl
 #
 # 2008, 2009, Adam Lackorzynski <adam@os.inf.tu-dresden.de>
 #
@@ -6,6 +6,7 @@
 # while building the package. This script will generate a dot file.
 
 use strict;
+use warnings;
 
 my $objdir_base;
 my $srcdir_base;

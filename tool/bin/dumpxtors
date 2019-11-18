@@ -1,9 +1,10 @@
-#! /usr/bin/perl -w
+#! /usr/bin/env perl
 #
 # Adam Lackorzynski <adam@os.inf.tu-dresden.de>
 #
 
 use strict;
+use warnings;
 use File::Temp qw/ tempfile /;
 use Math::BigInt;
 
