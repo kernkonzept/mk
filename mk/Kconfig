@@ -42,6 +42,7 @@ config BUILD_ABI
 
 choice
 	prompt "Platform Selection"
+# ARCH_DEFAULT_PF
 
 INSERT_PLATFORMS
 
