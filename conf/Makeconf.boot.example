@@ -31,6 +31,8 @@ MODULE_SEARCH_PATH += /path/to/fiasco-build
 FIASCO_PATH-arm-integrator      = /path/to/fiasco-build-arm-integrator
 FIASCO_PATH-arm-rv_vexpress     = /path/to/fiasco-build-arm-rv_vexpress
 FIASCO_PATH-arm-rv_vexpress_a15 = /path/to/fiasco-build-arm-rv_vexpress_a15
+FIASCO_PATH-arm-arm_virt        = /path/to/fiasco-build-arm-arm_virt
+FIASCO_PATH-arm64-arm_virt      = /path/to/fiasco-build-arm64-arm_virt
 
 FIASCO_PATH-mips-malta          = /path/to/fiasco-build-mips-malta
 
