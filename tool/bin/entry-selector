@@ -47,7 +47,7 @@ if ($ARGV[0] eq 'menu')
       }
 
     system("dialog --visit-items --title 'Select entry to launch:' "
-        ." $backtitle -1 -1 0 ".
+        ." $backtitle -1 -1 1000 ".
         join(' ', map { "$_ '$e[$_]'" } (0 .. $#e) )." 2> $tmpfilename");
 
     if ($?)
