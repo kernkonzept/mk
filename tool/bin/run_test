@@ -35,7 +35,8 @@ my @more_mods   = split(' ', $ENV{REQUIRED_MODULES});
 my $hwconfig_file = $ENV{TEST_HWCONFIG} || '';
 my $test_run_tags = $ENV{TEST_RUN_TAGS} || '';
 my $test_required_tags = $ENV{TEST_TAGS};
-my $roottask;
+my $roottask    = $ENV{TEST_ROOT_TASK} || 'moe';
+my $roottask_args = $ENV{TEST_ROOT_TASK_ARGS} || '';
 
 my $tmpdir      = $ENV{TEST_TMPDIR};
 make_path($tmpdir);
@@ -220,7 +221,7 @@ my $test_env_cfg;
 my $test_env_cfg_name = "$tmpdir/test_env.lua";
 my $convert = "$FindBin::Bin/key-value-convert.pl"; # hwconfig converter in same path
 
-if ($ned_cfg)
+if ($ned_cfg and $roottask eq 'moe')
   {
     # Create an additional LUA config file where environment variables can
     # be exported to.
@@ -265,16 +266,20 @@ if ($ned_cfg)
 
     # Now set up boot for use with ned.
     (my $ned_cfg_name = $ned_cfg) =~ s/.*\///;
-    $roottask = "moe $moe_args rom/$ned_cfg_name";
+    $roottask .= " $moe_args rom/$ned_cfg_name";
     push(@module_list, "ned");
     push(@module_list, "test_env.lua");
     push(@module_list, $ned_cfg);
   }
-else
+elsif ($roottask eq 'moe')
   {
     # Run the test program directly as the init process.
-    $roottask = "moe --init=rom/$test_target $moe_args";
+    $roottask .= " --init=rom/$test_target $moe_args";
     $roottask .= " -- ".$test_args if $test_args;
+  }
+else
+  {
+    $roottask .= " -- ".$roottask_args if $roottask_args;
   }
 push(@module_list, "l4re");
 push(@module_list, map { s/:rw$/ :rw/; $_ } map { $_ } @more_mods);

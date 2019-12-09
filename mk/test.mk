@@ -61,9 +61,10 @@ CPPFLAGS += -DL4RE_ABS_SOURCE_DIR_PATH='"$(L4DIR_ABS)"'
 
 # variables that are forwarded to the test runner environment
 testvars_fix    := MODE ARCH NED_CFG REQUIRED_MODULES KERNEL_CONF L4LINUX_CONF \
-                    TEST_TARGET TEST_SETUP TEST_EXPECTED TEST_TAGS OBJ_BASE
+                    TEST_TARGET TEST_SETUP TEST_EXPECTED TEST_TAGS OBJ_BASE \
+                    TEST_ROOT_TASK
 testvars_conf   := TEST_TIMEOUT TEST_EXPECTED_REPEAT
-testvars_append := QEMU_ARGS MOE_ARGS
+testvars_append := QEMU_ARGS MOE_ARGS TEST_ROOT_TASK_ARGS
 
 # use either a target-specific value or the general version of a variable
 targetvar = $(or $($(1)_$(2)),$($(1)))

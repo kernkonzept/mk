@@ -295,6 +295,12 @@ Additional parameters to supply to moe.
 \par `TEST_ARGS`
 Additional arguments for the `TEST_STARTER` (tapper-wrapper per default).
 
+\par `TEST_ROOT_TASK`
+Alternative root task to be used during a test instead of moe.
+
+\par `TEST_ROOT_TASK_ARGS`
+Arguments passed to `TEST_ROOT_TASK` if `TEST_ROOT_TASK` is different from moe.
+
 \par `KERNEL_CONF`
 Features the Fiasco kernel must have been compiled with.
 A space-separated list of config options as used by
