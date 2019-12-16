@@ -311,7 +311,7 @@ in the directory of the L4Linux kernel.
 \par `TEST_SETUP`
 Command to execute before the test is run.
 The test will only be executed if the command returns 0.
-If the exit code is 2, the test is marked as skipped
+If the exit code is 69, the test is marked as skipped
 with the reason provided in the final line of stdout.
 
 \par `TEST_LOGFILE`
