@@ -60,6 +60,7 @@ foreach my $f (@ARGV) {
 }
 open(IN, "$kconfig_src_file") || die "Cannot open $kconfig_src_file: $!";
 open(OUT, ">$kconfig_obj_file") || die "Cannot open $kconfig_obj_file: $!";
+print OUT "# vi:set ft=kconfig:\n# This Kconfig is auto-generated.\n";
 while ($_=<IN>) {
   print OUT;
   if (/$tag ARCH_CHOICE_DEFAULT\W/x) {

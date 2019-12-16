@@ -44,7 +44,7 @@ choice
 	prompt "Platform Selection"
 # ARCH_DEFAULT_PF
 
-INSERT_PLATFORMS
+source "Kconfig.generated.platforms"
 
 config PLATFORM_TYPE_custom
 	bool "Custom platform"
@@ -82,7 +82,7 @@ config PLATFORM_UART_NR
 endmenu # Custom platform
 endif
 
-INSERT_PLATFORM_TYPES
+source "Kconfig.generated.platform_types"
 
 config USE_DROPS_STDDIR
 	def_bool n

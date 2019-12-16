@@ -243,58 +243,22 @@ DROPSCONF_CONFIG_MK_POST_HOOK:: check_build_tools $(OBJ_DIR)/Makefile
 	$(VEROBSE)$(LN) -snf $(L4DIR_ABS) $(OBJ_BASE)/source
 	$(VERBOSE)$(MAKE) checkconf
 
-define extract_var
-	$(1)=$$((cat $(2); echo printit:;                  \
-	         echo '	@echo $$($(3))') |                 \
-		$(MAKE) --no-print-directory -f - printit)
-endef
+KCONFIGS_ARCH     := $(wildcard $(L4DIR)/mk/arch/Kconfig.*.inc)
+KCONFIG_PLATFORMS := $(wildcard $(L4DIR)/mk/platforms/*.conf $(L4DIR)/conf/platforms/*.conf)
 
-define create_kconfig
-	$(VERBOSE)echo "# vi:set ft=kconfig:" > $(1)
-	$(VERBOSE)echo "# This Kconfig is auto-generated." >> $(1)
-	$(VERBOSE)pt="";                                             \
-	while IFS="" read l; do                                      \
-	  if [ "$$l" = "INSERT_PLATFORMS" ]; then                    \
-	    for p in $(wildcard $(L4DIR)/conf/platforms/*.conf       \
-	                        $(L4DIR)/mk/platforms/*.conf); do    \
-	      $(call extract_var,n,$$p,PLATFORM_NAME);               \
-	      pn=$${p##*/};                                          \
-	      pn=$${pn%.conf};                                       \
-	      echo "config PLATFORM_TYPE_$${pn}" >> $(1);            \
-	      echo "  bool \"$$n\"" >> $(1);                         \
-	      pt="$$pt  default \"$$pn\" if PLATFORM_TYPE_$${pn}\n"; \
-	      $(call extract_var,n,$$p,PLATFORM_ARCH);               \
-	      dep="";                                                \
-	      for a in $$n; do                                       \
-		if [ -z "$$dep" ]; then                              \
-		  dep="  depends on BUILD_ARCH_$$a";                 \
-		else                                                 \
-		  dep="$$dep || BUILD_ARCH_$$a";                     \
-		fi;                                                  \
-	      done;                                                  \
-	      echo "$$dep" >> $(1);                                  \
-	      echo "" >> $(1);                                       \
-	    done;                                                    \
-	  elif [ "$$l" = "INSERT_PLATFORM_TYPES" ]; then             \
-	    echo "config PLATFORM_TYPE" >> $(1);                     \
-	    echo "  string" >> $(1);                                 \
-	    echo -e "$$pt" >> $(1);                                  \
-	  else                                                       \
-	    echo "$$l" >> $(1);                                      \
-	  fi;                                                        \
-	done < $(2)
-endef
+$(KCONFIG_FILE)%platform_types $(KCONFIG_FILE)%platforms: Makefile $(L4DIR)/tool/bin/gen_kconfig_includes \
+                                                          $(KCONFIG_PLATFORMS)
+	$(file >$(KCONFIG_FILE_DEPS).platforms,$(KCONFIG_FILE): $^)
+	$(foreach f,$^,$(file >>$(KCONFIG_FILE_DEPS).platforms,$(f):))
+	$(VERBOSE)MAKE="$(MAKE)"; $(L4DIR)/tool/bin/gen_kconfig_includes $(KCONFIG_FILE) $(KCONFIG_PLATFORMS)
 
-KCONFIGS_ARCH := $(wildcard $(L4DIR)/mk/arch/Kconfig.*.inc)
+$(KCONFIG_FILE): $(KCONFIG_FILE_SRC) Makefile $(KCONFIGS_ARCH) $(L4DIR)/tool/bin/gen_kconfig\
+                 | $(KCONFIG_FILE).platform_types $(KCONFIG_FILE).platforms
+	$(file >$(KCONFIG_FILE_DEPS),$(KCONFIG_FILE): $^)
+	$(foreach f,$^,$(file >>$(KCONFIG_FILE_DEPS),$(f):))
+	$(VERBOSE)$(L4DIR)/tool/bin/gen_kconfig $(KCONFIG_FILE_SRC) $(KCONFIG_FILE) $(KCONFIGS_ARCH)
 
-$(KCONFIG_FILE): $(KCONFIG_FILE_SRC) Makefile $(wildcard $(L4DIR)/mk/platforms/*.conf $(L4DIR)/conf/platforms/*.conf) \
-                 $(KCONFIGS_ARCH) $(L4DIR)/tool/bin/gen_kconfig
-	$(VERBOSE)echo $(KCONFIG_FILE): $^ > $(KCONFIG_FILE_DEPS)
-	$(VERBOSE)$(foreach f,$^,echo $(f): >> $(KCONFIG_FILE_DEPS) ; )
-	$(VERBOSE)$(L4DIR)/tool/bin/gen_kconfig $(KCONFIG_FILE_SRC) $(KCONFIG_FILE).im $(KCONFIGS_ARCH)
-	+$(call create_kconfig,$@,$(KCONFIG_FILE).im)
-
--include $(KCONFIG_FILE_DEPS)
+-include $(KCONFIG_FILE_DEPS) $(KCONFIG_FILE_DEPS).platforms
 
 checkconf:
 	$(VERBOSE)if [ -n "$(GCCDIR)" -a ! -e $(GCCDIR)/include/stddef.h ]; then \
