@@ -284,14 +284,14 @@ sub create_image
       $flags = 2 if $i == 1; # sigma0
       $flags = 3 if $i == 2; # roottask
 
-      L4::ModList::fetch_remote_file($entry{mods}[$i]{command});
+      L4::ModList::fetch_remote_file($entry{mods}[$i]{file});
 
-      my $f = L4::ModList::search_file_or_die($entry{mods}[$i]{command},
+      my $f = L4::ModList::search_file_or_die($entry{mods}[$i]{file},
                                               $search_path);
 
       ${$d}{mods}[$i]
        = { L4::Image::fill_module($f,
-                                  basename($entry{mods}[$i]{command}), $flags,
+                                  $entry{mods}[$i]{command}, $flags,
                                   $entry{mods}[$i]{cmdline_quoted}) };
 
       error(${$d}{mods}[$i]{error}) if ${$d}{mods}[$i]{error};

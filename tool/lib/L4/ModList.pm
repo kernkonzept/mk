@@ -9,21 +9,42 @@ use vars qw(@ISA @EXPORT);
 
 my @internal_searchpaths;
 
+sub quoted { shift =~ s/"/\\"/gr; }
+sub trim { shift =~ s/^\s+|\s+$//gr; }
+
 sub get_command_and_cmdline
 {
   my $cmd_and_args = shift;
   my %opts = @_;
 
   my ($file, $args) = split /\s+/, $cmd_and_args, 2;
+  $file = trim($file);
+  $args = trim($args) if defined($args);
 
-  my $full = $file;
-  $full = $opts{fname} if exists $opts{fname};
-  $full .= " $args" if defined $args;
+  my $command = basename($file);
+  $command = trim($opts{fname}) if exists $opts{fname};
 
-  my $full_quoted = $full;
-  $full_quoted =~ s/"/\\"/g;
+  my $cmdline = $command;
+  $cmdline .= ' ' . $args if defined($args);
 
-  ($file, $full, $full_quoted);
+  $args = '' unless defined($args);
+
+  # $mod structure
+  (
+    # File name or absolute file path of file on host
+    file => $file,
+    # File name in L4Re environment: fname if specified otherwise basename($file)
+    command => $command,
+    # $command and $args separated by a space (no trailing space if no args)
+    cmdline => $cmdline,
+    # Arguments only
+    args => $args,
+    # $cmdline but " replaced with \"
+    cmdline_quoted => quoted($cmdline),
+    # $args but " replaced with \"
+    args_quoted => quoted($args),
+    opts => { %opts },
+  );
 }
 
 sub error($)
@@ -196,7 +217,7 @@ sub disassemble_line
   ($1, $2, $3);
 }
 
-# extract an entry with modules from a modules.list file
+## Extract an entry with modules from a modules.list file
 sub get_module_entry($$)
 {
   my ($mod_file, $entry_to_pick) = @_;
@@ -204,21 +225,21 @@ sub get_module_entry($$)
   my %groups;
 
   # preseed first 3 modules
-  $mods[0] = { command => 'fiasco',   cmdline => 'fiasco',
-               cmdline_quoted => 'fiasco', type => 'bin'};
-  $mods[1] = { command => 'sigma0',   cmdline => 'sigma0',
-               cmdline_quoted => 'sigma0', type => 'bin'};
-  $mods[2] = { command => 'roottask', cmdline => 'moe',
-               cmdline_quoted => 'moe',    type => 'bin'};
+  $mods[0] = { get_command_and_cmdline("fiasco") };
+  $mods[1] = { get_command_and_cmdline("sigma0") };
+  $mods[2] = {
+    get_command_and_cmdline("moe"),
+    command => 'roottask',
+  };
 
   my $process_mode = undef;
   my $found_entry = 0;
   my $global = 1;
   my $modaddr_title;
   my $modaddr_global;
-  my $bootstrap_command = "bootstrap";
-  my $bootstrap_cmdline = "bootstrap";
-  my $bootstrap_cmdline_quoted = "bootstrap";
+  my %bootstrap = (
+    get_command_and_cmdline("bootstrap"),
+  );
   my $linux_initrd;
   my $is_mode_linux;
 
@@ -268,32 +289,20 @@ sub get_module_entry($$)
         $process_mode = 'group';
         $current_group_name = (split /\s+/, handle_line_first($remaining, %opts))[0];
         next;
-      } elsif ($type eq 'default-bootstrap') {
-        my ($file, $full, $full_quoted) = get_command_and_cmdline(handle_line_first($remaining, %opts), %opts);
-        $bootstrap_command        = $file;
-        $bootstrap_cmdline        = $full;
-        $bootstrap_cmdline_quoted = $full_quoted;
+      }
+
+      my %modinfo = get_command_and_cmdline(handle_line_first($remaining, %opts), %opts);
+      if ($type eq 'default-bootstrap') {
+        %bootstrap = (%bootstrap, %modinfo);
         next;
       } elsif ($type eq 'default-kernel') {
-        my ($file, $full, $full_quoted) = get_command_and_cmdline(handle_line_first($remaining, %opts), %opts);
-        $mods[0]{command}         = $file;
-        $mods[0]{cmdline}         = $full;
-        $mods[0]{cmdline_quoted}  = $full_quoted;
-        $mods[0]{opts}            = { %opts };
+        $mods[0] = { %{$mods[0]}, %modinfo };
         next;
       } elsif ($type eq 'default-sigma0') {
-        my ($file, $full, $full_quoted) = get_command_and_cmdline(handle_line_first($remaining, %opts), %opts);
-        $mods[1]{command}         = $file;
-        $mods[1]{cmdline}         = $full;
-        $mods[1]{cmdline_quoted}  = $full_quoted;
-        $mods[1]{opts}            = { %opts };
+        $mods[1] = { %{$mods[1]}, %modinfo };
         next;
       } elsif ($type eq 'default-roottask') {
-        my ($file, $full, $full_quoted) = get_command_and_cmdline(handle_line_first($remaining, %opts), %opts);
-        $mods[2]{command}         = $file;
-        $mods[2]{cmdline}         = $full;
-        $mods[2]{cmdline_quoted}  = $full_quoted;
-        $mods[2]{opts}            = { %opts };
+        $mods[2] = { %{$mods[2]}, %modinfo };
         next;
       }
 
@@ -329,51 +338,30 @@ sub get_module_entry($$)
         $type = 'bin';
       } elsif ($type eq 'moe') {
         my $bn = (reverse split(/\/+/, $params[0]))[0];
-        $mods[2]{command}        = 'moe';
-        $mods[2]{cmdline}        = "moe rom/$bn";
-        $mods[2]{cmdline_quoted} = "moe rom/$bn";
-        $mods[2]{opts}           = { %opts };
+        $mods[2] = { get_command_and_cmdline("moe rom/$bn", %opts) };
         $type = 'bin';
-        @m = ($params[0]);
       }
       next if not defined $params[0] or $params[0] eq '';
 
       if ($process_mode eq 'entry') {
         foreach my $m (@params) {
 
-          my ($file, $full, $full_quoted) = get_command_and_cmdline($m, %opts);
+          %modinfo = get_command_and_cmdline($m, %opts);
 
           # special cases
           if ($type eq 'bootstrap') {
-            $bootstrap_command        = $file;
-            $bootstrap_cmdline        = $full;
-            $bootstrap_cmdline_quoted = $full_quoted;
+            %bootstrap = (%bootstrap, %modinfo);
           } elsif ($type =~ /(rmgr|roottask)/i) {
-            $mods[2]{command}         = $file;
-            $mods[2]{cmdline}         = $full;
-            $mods[2]{cmdline_quoted}  = $full_quoted;
-            $mods[2]{opts}            = { %opts };
+            $mods[2] = { %{$mods[2] || {}}, %modinfo };
           } elsif ($type eq 'kernel') {
-            $mods[0]{command}         = $file;
-            $mods[0]{cmdline}         = $full;
-            $mods[0]{cmdline_quoted}  = $full_quoted;
-            $mods[0]{opts}            = { %opts };
+            $mods[0] = { %{$mods[0] || {}}, %modinfo };
           } elsif ($type eq 'sigma0') {
-            $mods[1]{command}         = $file;
-            $mods[1]{cmdline}         = $full;
-            $mods[1]{cmdline_quoted}  = $full_quoted;
-            $mods[1]{opts}            = { %opts };
+            $mods[1] = { %{$mods[1] || {}}, %modinfo };
           } elsif ($type eq 'initrd') {
-            $linux_initrd      = $file;
+            $linux_initrd      = $modinfo{file};
             $is_mode_linux     = 1;
           } else {
-            push @mods, {
-                          type           => $type,
-                          command        => $file,
-                          cmdline        => $full,
-                          cmdline_quoted => $full_quoted,
-                          opts           => { %opts },
-                        };
+            push @mods, { %modinfo };
           }
         }
       } elsif ($process_mode eq 'group') {
@@ -389,22 +377,14 @@ sub get_module_entry($$)
     {
       error "No Linux kernel image defined\n" unless defined $mods[0]{cmdline};
       print STDERR "Entry '$entry_to_pick' is a Linux type entry\n";
-      my @files;
-      # @files is actually redundant but eases file selection for entry
-      # generators
-      push @files, $mods[0]{command};
-      push @files, $linux_initrd if defined $linux_initrd;
       my %r;
       %r = (
              # actually bootstrap is always the kernel in this
              # environment, for convenience we use $mods[0] because that
              # are the contents of 'kernel xxx' which sounds more
              # reasonable
-             bootstrap => { command        => $mods[0]{command},
-                            cmdline        => $mods[0]{cmdline},
-                            cmdline_quoted => $mods[0]{cmdline_quoted}},
+             bootstrap => { %{$mods[0]} },
              type      => 'Linux',
-             files     => [ @files ],
            );
       $r{initrd} = { cmdline => $linux_initrd } if defined $linux_initrd;
       return %r;
@@ -414,29 +394,21 @@ sub get_module_entry($$)
   my $m = $modaddr_title || $modaddr_global;
   if (defined $m)
     {
-      if ($bootstrap_cmdline =~ /-modaddr\s+/)
+      if ($bootstrap{cmdline} =~ /-modaddr\s+/)
         {
-          $bootstrap_cmdline =~ s/(-modaddr\s+)%modaddr%/$1$m/;
+          $bootstrap{cmdline} =~ s/(-modaddr\s+)%modaddr%/$1$m/;
         }
       else
         {
-          $bootstrap_cmdline .= " -modaddr $m";
+          $bootstrap{cmdline} .= " -modaddr $m";
         }
     }
 
-  my @files; # again, this is redundant but helps generator functions
-  push @files, $bootstrap_command;
-  push @files, $_->{command} foreach @mods;
-
   return (
-           bootstrap => { command        => $bootstrap_command,
-                          cmdline        => $bootstrap_cmdline,
-                          cmdline_quoted => $bootstrap_cmdline_quoted,
-                        },
+           bootstrap => \%bootstrap,
            mods    => [ @mods ],
            modaddr => $modaddr_title || $modaddr_global,
            type    => 'MB',
-           files   => [ @files ],
            entry   => $entry_to_pick,
          );
 }
@@ -652,21 +624,18 @@ sub generate_grub1_entry($$%)
   my %entry = @_;
   my $s = "title $entryname\n";
   my $c = $entry{bootstrap}{cmdline};
-  $c =~ s/^\S*\/([^\/]+\s*)/$1/;
   $s .= "kernel $prefix/$c\n";
 
   if (entry_is_linux(%entry) and defined $entry{initrd})
     {
       $c = $entry{initrd}{cmdline};
-      $c =~ s/^\S*\/([^\/]+\s*)/$1/;
       $s .= "initrd $prefix/$c\n";
       return $s;
     }
 
   foreach my $m (@{$entry{mods}})
     {
-      $c = $m->{cmdline};
-      $c =~ s/^\S+/$m->{unique_short_filepath}/;
+      $c = $m->{unique_short_filepath} . ' ' . $m->{args};
       $s .= "module $prefix/$c\n";
     }
   $s;
@@ -680,8 +649,7 @@ sub generate_grub2_entry($$%)
   $prefix = "/$prefix" if $prefix ne '' and $prefix !~ /^[\/(]/;
   my %entry = @_;
   # basename of first path
-  my ($c, $args) = split(/\s+/, $entry{bootstrap}{cmdline}, 2);
-  $args = '' unless defined $args;
+  my $args = $entry{bootstrap}{args};
   my $bn = $entry{bootstrap}{unique_short_filepath};
   my $s = "menuentry \"$entryname\" {\n";
 
@@ -691,10 +659,8 @@ sub generate_grub2_entry($$%)
       $s .= "  linux $prefix/$bn $args\n";
       if (defined $entry{initrd})
         {
-          $bn = $m->{unique_short_filepath};
-          my $c = $entry{initrd}{cmdline};
-          $c =~ s/^\S*(\/[^\/]+\s*)/$1/;
-          $s .= "  initrd $prefix$c\n";
+          my $c = $entry{initrd}{unique_short_filepath} . ' ' . $entry{initrd}{args};
+          $s .= "  initrd $prefix/$c\n";
         }
     }
   else
@@ -703,11 +669,9 @@ sub generate_grub2_entry($$%)
       $s .= "  multiboot $prefix/$bn $prefix/$bn $args\n";
       foreach my $m (@{$entry{mods}})
         {
-          $bn = $m->{unique_short_filepath};
-          my $c = $m->{cmdline};
-          $c =~ s/^\S*(\/[^\/]+\s*)/$1/;
-          $s .= "  echo Loading '$prefix/$bn $c'\n";
-          $s .= "  module $prefix/$bn $c\n";
+          my $moduleline = "$prefix/" . $m->{unique_short_filepath} . " " . $m->{args};
+          $s .= "  echo Loading '$moduleline'\n";
+          $s .= "  module $moduleline\n";
         }
     }
   $s .= "  echo Done, booting...\n";
@@ -729,7 +693,7 @@ sub merge_entries
     {
       foreach my $mod (@{$e->{mods}}, $e->{bootstrap})
         {
-          my $file = $mod->{command};
+          my $file = $mod->{file};
           fetch_remote_file($file);
           my $filepath;
           if (defined $uncompressdir)
@@ -744,7 +708,7 @@ sub merge_entries
             {
               $filepath = search_file_or_die($file, $module_path);
             }
-          my $bn = basename($file);
+          my $bn = $mod->{command};
           push @{$f{$bn}}, { fp => $filepath, entry => $e->{entry} };
           $mod->{file} = $filepath;
         }

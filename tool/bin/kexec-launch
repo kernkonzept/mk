@@ -16,6 +16,7 @@ BEGIN { unshift @INC, $ENV{L4DIR}.'/tool/lib'
 
 use L4::ModList;
 use File::Temp qw/tempdir/;
+use File::Basename qw/basename/;
 
 my $kernelname   = $ENV{KERNEL}     || 'bootstrap';
 my $module_path  = $ENV{SEARCHPATH} || ".";
@@ -25,23 +26,30 @@ my $unzip_tmp    = tempdir(CLEANUP => 1);
 
 die "No entry name given" unless defined $entryname;
 
-sub getfile($$)
+sub getfile
 {
-  my $command = shift;
-  my $cmdline = shift;
-  L4::ModList::fetch_remote_file($command);
-  my $f = L4::ModList::get_file_uncompressed_or_die($command, $module_path,
-                                                    $unzip_tmp);
-  $cmdline =~ s/^\S+\s*//;
-  $f.' '.$cmdline;
+  my $mod = shift;
+  L4::ModList::fetch_remote_file($mod->{file});
+  my $fp = L4::ModList::get_file_uncompressed_or_die($mod->{file}, $module_path,
+                                                     $unzip_tmp);
+  my $bn = basename($fp);
+
+  if ($bn ne $mod->{command})
+    {
+      my $link = "$unzip_tmp/" . $mod->{command};
+      symlink $fp, $link;
+      $fp = $link;
+    }
+
+  $fp.' '.$mod->{args};
 }
 
 my %entry = L4::ModList::get_module_entry($modulesfile, $entryname);
 
 my @mods = @{$entry{mods}};
-L4::ModList::fetch_remote_file($entry{bootstrap}{command});
-my $kernel = L4::ModList::search_file_or_die($entry{bootstrap}{command}, $module_path);
-my $moduleparams = join(' ', map { "--module=\"".getfile($_->{command}, $_->{cmdline})."\"" } @mods);
+L4::ModList::fetch_remote_file($entry{bootstrap}{file});
+my $kernel = L4::ModList::search_file_or_die($entry{bootstrap}{file}, $module_path);
+my $moduleparams = join(' ', map { "--module=\"".getfile($_)."\"" } @mods);
 
-print "kexec -l $kernel --command-line=\"$entry{bootstrap}{cmdline}\" ".
-      "$moduleparams ".join(' ', @ARGV)."\n";;
+print "kexec -l $kernel --command-line='$entry{bootstrap}{cmdline}' ".
+      "$moduleparams ".join(' ', @ARGV)."\n";

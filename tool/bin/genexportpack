@@ -92,8 +92,7 @@ foreach my $e (@entries)
     my @args;
 
     foreach (@mods) {
-      $_->{cmdline} =~ /^(\S+)\s*(.*)/;
-      (my $a = $2) =~ s/,/,,/g;
+      (my $a = $_->{args}) =~ s/,/,,/g;
       push @args, $_->{unique_short_filepath}.' '.$a;
     }
 
