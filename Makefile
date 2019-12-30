@@ -105,7 +105,7 @@ ifneq ($(strip $(BUILDDIR_TO_CREATE)),)
 ifneq ($(wildcard $(L4DIR)/mk/defconfig/config.$(T)),)
   DROPSCONF_DEFCONFIG=$(L4DIR)/mk/defconfig/config.$(T)
 endif
-all:: check_build_tools
+all::
 	@echo "Creating build directory \"$(BUILDDIR_TO_CREATE)\"..."
 	@if [ -e "$(BUILDDIR_TO_CREATE)" ]; then	\
 		echo "Already exists, aborting.";	\
