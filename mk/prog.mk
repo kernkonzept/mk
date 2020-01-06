@@ -106,8 +106,6 @@ else
   endif
 endif
 
-LDFLAGS += $(LDFLAGS_$@)
-
 include $(L4DIR)/mk/install.inc
 
 #VPATHEX = $(foreach obj, $(OBJS), $(firstword $(foreach dir, \
