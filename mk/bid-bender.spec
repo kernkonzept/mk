@@ -67,7 +67,7 @@ link_args =
   %{nocrt|r:;:%:read-pc-file(%(pc_file_dir) ldscripts)}
   %{o} -nostdlib %{static:-static;:--eh-frame-hdr} %{shared}
   %(link_pass_opts) %:foreach(%%{: -L%%*} %(l4libdir)) %{T*&L*}
-  %{!r:%{!dT:-dT %:search(main_%{static:stat;shared:rel;:dyn}.ld %(libdir))}}
+  %{!r:%{!dT:-dT %:search(main_%{static:stat;shared:rel;:dyn}.ld %(libdir));dT}}
   %{r|shared|static|-dynamic-linker*:;:--dynamic-linker=%(Link_DynLinker)
     %(Link_DynLinker:;:
       %:error(Link_DynLinker not specified, cannot link with shared libs.))}
