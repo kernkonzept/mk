@@ -447,6 +447,8 @@ CONDITIONAL_WARNINGS_MEDIUM_f = $(call checkcc,-Wmissing-prototypes)
 CONDITIONAL_WARNINGS_FULL_f   = $(call checkcc,-Wfloat-conversion) \
                                 $(call checkcc,-Wfloat-equal) \
                                 $(call checkcc,-Wlogical-op)
+GCCPREFIXOPT_f  = $(call checkcc,-fmacro-prefix-map=$(L4DIR_ABS)/= \
+                                 -fmacro-prefix-map=$(OBJ_BASE)/=)
 
 BID_NOSTDINC_clang ?= #-nostdlibinc
 BID_NOSTDINC_gcc   ?= -nostdinc

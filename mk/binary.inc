@@ -437,6 +437,8 @@ default_reloc = $(if $(call default_reloc_base,$(1)),\
 		          $(shell printf "0x%x" $$(($(RAM_BASE) + $(call default_reloc_base,$(1))))), \
 			  $(call default_reloc_base,$(1))))
 
+CCXX_FLAGS += $(if $(CONFIG_FULL_PATH_NAMES_IN_BINARIES),,$(GCCPREFIXOPT))
+
 # can be overwritten to get the old mode
 CFLAGS_C99 ?= -std=gnu99
 
