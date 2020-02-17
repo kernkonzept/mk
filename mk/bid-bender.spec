@@ -5,7 +5,7 @@ pc_file_dir = %:set-var(pc_file_dir %(l4obj)/pc)
 link_arg_opts =
   %:arg-option(L m z o O h e -entry fini init -defsym)
   %:arg-option(b -format A -architecture y -trace-symbol MF)
-  %:arg-option(-hash-style)
+  %:arg-option(-hash-style -version-script)
   %:arg-option(T Tbss Tdata Ttext Ttext-segment Trodata-segment Tldata-segment)
   %:arg-option(dT)
 
