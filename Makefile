@@ -246,14 +246,14 @@ DROPSCONF_CONFIG_MK_POST_HOOK:: check_build_tools $(OBJ_DIR)/Makefile
 KCONFIGS_ARCH     := $(wildcard $(L4DIR)/mk/arch/Kconfig.*.inc)
 KCONFIG_PLATFORMS := $(wildcard $(L4DIR)/mk/platforms/*.conf $(L4DIR)/conf/platforms/*.conf)
 
-$(KCONFIG_FILE)%platform_types $(KCONFIG_FILE)%platforms: Makefile $(L4DIR)/tool/bin/gen_kconfig_includes \
+$(KCONFIG_FILE)%platform_types $(KCONFIG_FILE)%platforms $(KCONFIG_FILE)%platforms.list: Makefile $(L4DIR)/tool/bin/gen_kconfig_includes \
                                                           $(KCONFIG_PLATFORMS)
 	$(file >$(KCONFIG_FILE_DEPS).platforms,$(KCONFIG_FILE): $^)
 	$(foreach f,$^,$(file >>$(KCONFIG_FILE_DEPS).platforms,$(f):))
 	$(VERBOSE)MAKE="$(MAKE)"; $(L4DIR)/tool/bin/gen_kconfig_includes $(KCONFIG_FILE) $(KCONFIG_PLATFORMS)
 
 $(KCONFIG_FILE): $(KCONFIG_FILE_SRC) Makefile $(KCONFIGS_ARCH) $(L4DIR)/tool/bin/gen_kconfig\
-                 | $(KCONFIG_FILE).platform_types $(KCONFIG_FILE).platforms
+                 | $(KCONFIG_FILE).platform_types $(KCONFIG_FILE).platforms $(KCONFIG_FILE).platforms.list
 	$(file >$(KCONFIG_FILE_DEPS),$(KCONFIG_FILE): $^)
 	$(foreach f,$^,$(file >>$(KCONFIG_FILE_DEPS),$(f):))
 	$(VERBOSE)$(L4DIR)/tool/bin/gen_kconfig $(KCONFIG_FILE_SRC) $(KCONFIG_FILE) $(KCONFIGS_ARCH)
@@ -628,24 +628,8 @@ help::
 	@echo " Add 'E=name' to directly select the entry without using the menu."
 	@echo " Modules are defined in conf/modules.list."
 
-listplatforms:
-	$(VERBOSE)for p in $(wildcard $(L4DIR)/conf/platforms/*.conf    \
-	                              $(L4DIR)/mk/platforms/*.conf); do \
-	  $(call extract_var,a,$$p,PLATFORM_ARCH);                      \
-	  for ar in $$a; do                                             \
-	    [ "$$ar" = "$(BUILD_ARCH)" ] && arch_hit=1;                 \
-	  done;                                                         \
-	  if [ -n "$$arch_hit" ]; then                                  \
-	    $(call extract_var,n,$$p,PLATFORM_NAME);                    \
-	    pn=$${p##*/};                                               \
-	    pn=$${pn%.conf};                                            \
-	    priv="";                                                    \
-	    [ $${p#$(L4DIR)/conf/platforms/} != $$p -a                  \
-	      -e $(L4DIR)/conf/platforms/$$pn.conf ] && priv=" [priv]"; \
-	    printf "%20s -- %s\n" $$pn "$$n$$priv";                     \
-	  fi;                                                           \
-	  unset arch_hit;                                               \
-	done | sort -b
+listplatforms: $(KCONFIG_FILE).platforms.list
+	$(VERBOSE)sed -nE "s/^\[$(BUILD_ARCH)\](.*)/\1/p" $(KCONFIG_FILE).platforms.list | sort -b
 
 
 .PHONY: elfimage rawimage uimage qemu vbox ux switch_ram_base \

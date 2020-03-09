@@ -19,11 +19,13 @@ PT=""
 OUTFILE=$1; shift
 
 echo "$PROLOGUE" >"$OUTFILE".platforms
+rm -f "$OUTFILE".platforms.list
 for p in "$@"; do
   pn=${p##*/}
   pn=${pn%.conf}
   echo "config PLATFORM_TYPE_$pn"
-  echo "  bool \"$(extract_var $p PLATFORM_NAME)\""
+  plat="$(extract_var $p PLATFORM_NAME)"
+  echo "  bool \"$plat\""
 
   DEP=""
   for a in $(extract_var $p PLATFORM_ARCH); do
@@ -32,6 +34,10 @@ for p in "$@"; do
     else
       DEP="$DEP || BUILD_ARCH_$a"
     fi
+    # Write list
+    unset priv
+    [ ${p%/conf/platforms/$pn.conf} != $p ] && priv=" [priv]"
+    printf "[%s] %20s -- %s\n" $a $pn "$plat$priv" >>"$OUTFILE".platforms.list
   done
   printf "$DEP\n\n"
 
