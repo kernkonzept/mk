@@ -84,39 +84,6 @@ sub handle_line
 
   return ( glob $r ) if exists $opts{glob};
 
-
-  # Deprecated start -- remove in 2016
-  if ($r =~ /^((perl|glob|shell):\s+)/)
-    {
-      substr $r, 0, length($1), "";
-
-      print STDERR "ATTENTION:\n".
-                   "  Using deprecated syntax '$2:' on line $.\n".
-                   "  Use option syntax now: <command>[$2] $r\n";
-
-      if ($2 eq 'perl')
-        {
-          my @m = eval $r;
-          die "perl: ".$@ if $@;
-          return @m;
-        }
-      elsif ($2 eq 'shell')
-        {
-          my @m = split /\n/, `$r`;
-          error "$mod_file:$.: Shell command failed\n" if $?;
-          return @m;
-        }
-      elsif ($2 eq 'glob')
-        {
-          return ( glob $r );
-        }
-      else
-        {
-          die "should not happen";
-        }
-    }
-  # Deprecated end
-
   return ( $r );
 }
 
