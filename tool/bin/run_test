@@ -331,6 +331,7 @@ if ($test_setup)
 
 my @runargs = qw(-serial stdio -nographic -monitor none);
 
+close($test_modules);
 close($test_env_cfg) if ($test_env_cfg);
 my $module_search_path=join(":", @modulepaths);
 my $qemu_options = join(' ', map { qq{"$_"} } (@qemu_args, @runargs));
