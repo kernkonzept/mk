@@ -62,6 +62,12 @@ sub handle_line
 
   $r =~ s/\s+$//;
 
+  if (exists $opts{arch})
+    {
+      my @a = split /\|+/, $opts{arch};
+      return unless grep /^$ENV{ARCH}$/, @a;
+    }
+
   if (exists $opts{perl})
     {
       my @m = eval $r;
@@ -74,13 +80,6 @@ sub handle_line
       my @m = split /\n/, `$r`;
       error "$mod_file:$.: Shell command failed\n" if $?;
       return @m;
-    }
-
-  if (exists $opts{arch})
-    {
-      my @a = split /\|+/, $opts{arch};
-      return ( $r ) if grep /^$ENV{ARCH}$/, @a;
-      return ();
     }
 
   return ( glob $r ) if exists $opts{glob};
