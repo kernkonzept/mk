@@ -10,7 +10,6 @@ package L4::Image;
 #    - JSON
 #    - just numbers, like --num-modules just gives out the number of
 #      modules?
-# - low-prio: implement patching for ELF files
 # - low-prio: implement patching for EFI files
 # - low-prio: provide feature generate grub.cfg/menu.lst to eventually
 #             replace genexportpack?
@@ -34,9 +33,12 @@ use File::Basename;
 use File::Temp qw/tempdir/;
 use Digest::MD5;
 use POSIX;
+use L4::Image::Utils qw/error check_sysread check_syswrite checked_sysseek/;
+use L4::Image::Elf;
+use L4::Image::Raw;
+use L4::Image::UImage;
 
 BEGIN { unshift @INC, dirname($0).'../lib'; }
-use Digest::CRC;
 
 use vars qw(@ISA @EXPORT);
 @ISA    = qw(Exporter);
@@ -94,45 +96,6 @@ sub round_page
   return ($_[0] + $ps - 1) & ~($ps - 1);
 }
 
-sub error
-{
-  print STDERR "Error: ", shift, "\n";
-  print STDERR "Call trace:\n";
-  my $i = 0;
-  my @d;
-  print STDERR $d[1].":".$d[2]." (".$d[3].")\n" while @d = caller($i++);
-
-  exit 1;
-}
-
-sub check_syswrite
-{
-  my $r = shift;
-  my $wr_size = shift;
-  error("Write error: $!") unless defined $r;
-  error("Did not write all data ($r < $wr_size)") if $wr_size != $r;
-  $r;
-}
-
-sub check_sysread
-{
-  my $r = shift;
-  my $rd_size = shift;
-  error("Read error: $!") unless defined $r;
-  error("Did not read all data ($r < $rd_size)") if $rd_size != $r;
-  $r;
-}
-
-sub checked_sysseek
-{
-  my ($fd, $p, $what) = @_;
-
-  my $r = sysseek($fd, $p, $what);
-  die "sysseek failed" unless defined $r;
-
-  return $r + 0;
-}
-
 sub get_file_type
 {
   my $fn = shift;
@@ -158,87 +121,6 @@ sub get_file_type
   close $fd;
 
   return $type;
-}
-
-sub file_image_prolog_len
-{
-  my $filetype = shift;
-  return 64 if $filetype == FILE_TYPE_UIMAGE;
-  return 0;
-}
-
-sub uimage_header_update
-{
-  my $fn = shift;
-
-  open(my $fd, "+<$fn") || error("Could not open '$fn': $!");
-  binmode $fd;
-
-  my $buf;
-  $r = sysread($fd, $buf, 64);
-  error("Could not read from file") unless $r;
-
-  my $uimage_pattern = "L>L>L>L>L>L>L>CCCCZ32";
-
-  my ($ih_magic,
-      $ih_hcrc,
-      $ih_time,
-      $ih_size,
-      $ih_load,
-      $ih_ep,
-      $ih_dcrc,
-      $ih_os,
-      $ih_arch,
-      $ih_type,
-      $ih_comp,
-      $ih_name) = unpack($uimage_pattern, $buf);
-
-  print("uimage: size=$ih_size ih_ep=$ih_ep name='$ih_name'\n");
-
-  $ih_size = (-s $fn) - 64;
-
-  my $ctx = Digest::CRC->new(type => "crc32");
-
-  $ctx->addfile($fd);
-
-  $ih_dcrc = $ctx->digest;
-
-  my $uimage_header = pack($uimage_pattern,
-                           $ih_magic,
-                           0,
-                           $ih_time,
-                           $ih_size,
-                           $ih_load,
-                           $ih_ep,
-                           $ih_dcrc,
-                           $ih_os,
-                           $ih_arch,
-                           $ih_type,
-                           $ih_comp,
-                           $ih_name);
-
-  $ctx = Digest::CRC->new(type => "crc32");
-  $ctx->add($uimage_header);
-  $ih_hcrc = $ctx->digest;
-
-  $uimage_header = pack($uimage_pattern,
-                        $ih_magic,
-                        $ih_hcrc,
-                        $ih_time,
-                        $ih_size,
-                        $ih_load,
-                        $ih_ep,
-                        $ih_dcrc,
-                        $ih_os,
-                        $ih_arch,
-                        $ih_type,
-                        $ih_comp,
-                        $ih_name);
-
-  checked_sysseek($fd, 0, 0);
-  syswrite($fd, $uimage_header, length($uimage_header));
-
-  close $fd;
 }
 
 # TODO: Add something with compression
@@ -321,6 +203,8 @@ sub read_attrs
   my $offset = shift;
   my %d;
   my $buf;
+
+  printf "attrs-offset: %x\n", $offset if 0;
 
   checked_sysseek($fd, $offset, 0);
   sysread($fd, $buf, 4);
@@ -461,9 +345,7 @@ sub process_image
         }
     }
 
-  my $image_prolog_len = file_image_prolog_len($file_type);
-
-  open(my $fd, "+<$fn") || return("Could not open '$fn': $!");
+  open(my $fd, "<$fn") || return("Could not open '$fn': $!");
 
   my ($image_info_file_pos, $error_text) = find_image_info($fd);
   error($error_text) if defined $error_text;
@@ -484,30 +366,19 @@ sub process_image
          $_module_data_start, $bin_addr_end_bin, $mod_header, $attrs_offset
     if 0;
 
-  my $data_area_start_offset = $_module_data_start - $_start;
+  # See L4::Image::Elf module for a description of the interface.
+  my $img;
+  if ($file_type == FILE_TYPE_UIMAGE) {
+    $img = L4::Image::UImage->new($fn, $_start);
+  } elsif ($file_type == FILE_TYPE_ELF) {
+    $img = L4::Image::Elf->new($fn);
+  } else {
+    $img = L4::Image::Raw->new($fn, $_start);
+  }
 
-  if ($mod_header != 0 and $file_type == FILE_TYPE_ELF)
-    {
-      # alternatively we could calculate this via PHDRs
-      my $cmd =  "LANG=C \${CROSS_COMPILE}objdump -FD"
-                ." --start-address=$_module_data_start"
-                ." --stop-address=".($_module_data_start + 1)
-                ." $fn";
-      my $mod_start_elffile_offset;
-      open(my $objdump, "$cmd |") || die "Could not call objdump: $!";
-      while (<$objdump>)
-        {
-          $mod_start_elffile_offset = hex($1) if /\(File Offset: (0x.+)\):/;
-        }
-      close $objdump;
-
-      die "Could not find out offset in ELF file"
-        unless defined $mod_start_elffile_offset;
-
-      $mod_header   = $mod_header - $data_area_start_offset + $mod_start_elffile_offset;
-      $attrs_offset = $attrs_offset - $data_area_start_offset + $mod_start_elffile_offset;
-      $data_area_start_offset = $mod_start_elffile_offset;
-    }
+  my $file_modhdr_start = $img->vaddr_to_file_offset($_start + $mod_header);
+  my $file_attrshdr_start = $img->vaddr_to_file_offset($_start + $attrs_offset)
+    if $attrs_offset;
 
   my %d;
   if ($mod_header == 0)
@@ -519,25 +390,16 @@ sub process_image
     }
   else
     {
-      %d = import_modules($fd,
-                          $image_prolog_len + $mod_header,
-                          $image_prolog_len + $attrs_offset,
-                          $workdir);
+      %d = import_modules($fd, $file_modhdr_start, $workdir);
       return($d{error}) if defined $d{error};
     }
 
   $d{image_info_file_pos} = $image_info_file_pos;
-
-  printf "Starting to write modules at offset 0x%x in $fn\n",
-         $_module_data_start - $_start
-    if 0;
-  #print "mbi-cmdline: $d{mbi_cmdline}\n";
-
   $d{structure_version} = $structure_version;
   $d{crc32}             = $crc32;
   $d{image_flags}       = $_flags;
-  $d{attrs}             = { read_attrs($fd, $attrs_offset + $image_prolog_len) }
-    if $attrs_offset;
+  $d{attrs}             = { read_attrs($fd, $file_attrshdr_start) }
+    if defined $file_attrshdr_start;
   $d{image_prolog_len}  = $image_prolog_len;
   $d{file_type}         = $file_type;
 
@@ -545,60 +407,47 @@ sub process_image
   $d{arch} = $arch_l4names[$archval_with_width];
   $d{arch} = "Unknown" unless defined $d{arch};
 
+  close($fd);
+
+  # Apply operation
   $cb->(\%d, @_);
 
   if ($opts->{gen_new_image})
     {
-      die "This tool does not yet support ELF files"
-        if $file_type == FILE_TYPE_ELF;
-
       my $checkresult = check_modules(%d);
       return $checkresult if $checkresult;
 
       my $ofn = $fn;
       $ofn = $opts->{outimagefile} if defined $opts->{outimagefile};
+      $tmp_ofn = $ofn . ".tmp";
 
-      if (defined $opts->{outimagefile})
-        {
-          checked_sysseek($fd, 0, 0);
-          my $sourceimage;
-          sysread($fd, $sourceimage, $data_area_start_offset + $image_prolog_len);
-          close $fd;
+      my $ofd = $img->objcpy_start($_module_data_start, $tmp_ofn);
+      my $module_start_pos = checked_sysseek($ofd, 0, 1);
+      my %offsets = export_modules($ofd, %d);
+      my $module_end_pos = checked_sysseek($ofd, 0, 1);
 
-          open($fd, "+>$ofn")
-            || return("Could not open '$ofn': $!");
-          syswrite($fd, $sourceimage);
-        }
-      else
-        {
-          printf "before export, data_area_start_offset=0x%x\n",
-                 $data_area_start_offset + $image_prolog_len if 0;
-          checked_sysseek($fd, $data_area_start_offset + $image_prolog_len, 0);
-        }
+      write_image_info($ofd, $image_info_file_pos,
+                       $_module_data_start - $_start,  %offsets);
 
-      my %offsets = export_modules($fd, %d);
-
-      my $file_end_pos = checked_sysseek($fd, 0, 1);
-      return("Failed to get filepos") unless defined $file_end_pos;
-      truncate($fd, $file_end_pos);
-
-      write_image_info($fd, $image_info_file_pos,
-                       $data_area_start_offset,  %offsets);
-
+      # Update optional pointer to _module_data_end
       if (($d{arch} eq 'arm' or $d{arch} eq 'arm64')
           and $bin_addr_end_bin)
         {
-          $r = checked_sysseek($fd, $bin_addr_end_bin - $_start, 0);
-          return("Failed to seek in file") unless defined $r;
-          $r = syswrite($fd, pack("Q<", $_start + $file_end_pos), 8);
-          return("Could not patch binary") if not defined $r or $r != 8;
+          $_module_data_end = $_module_data_start + $module_end_pos -
+                              $module_start_pos;
+          $r = checked_sysseek($ofd,
+                               $img->vaddr_to_file_offset($bin_addr_end_bin),
+                               0);
+          check_syswrite(syswrite($ofd, pack("Q<", $_module_data_end)), 8);
         }
 
-      close $fd;
-
-      # Update crc32 image checksum here
-
-      uimage_header_update($ofn) if $file_type == FILE_TYPE_UIMAGE;
+      $img->objcpy_finalize();
+      $img->dispose();
+      rename($tmp_ofn, $ofn) || error("Could not rename output file!");
+    }
+  else
+    {
+      $img->dispose();
     }
 
   return undef;
@@ -631,11 +480,9 @@ sub import_modules
 {
   my $fd = shift;
   my $offset_mod_header = shift;
-  my $offset_attrs = shift;
   my $file_store_path = shift;
 
   printf "mod-offset: %x\n", $offset_mod_header if 0;
-  printf "attrs-offset: %x\n", $offset_attrs if 0;
 
   checked_sysseek($fd, $offset_mod_header, 0);
 
