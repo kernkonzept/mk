@@ -94,6 +94,7 @@ sub op_info
   my $image_flags = ${$d}{image_flags};
   my $bit64 = $image_flags & 1; # TODO: use some constants here
 
+  print "Image type: ", (L4::Image::FILE_TYPES)[${$d}{file_type}], "\n";
   print "Bootstrap variant: ${$d}{structure_version}\n";
   #print "Image CRC32: ${$d}{crc32}\n";
   print "Image flags: $image_flags\n";

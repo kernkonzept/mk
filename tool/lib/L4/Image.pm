@@ -445,8 +445,6 @@ sub process_image
   my ($file_type, $err) = get_file_type($fn);
   return $err if $err;
 
-  print "Type: ", (FILE_TYPES)[$file_type], "\n" if 1;
-
   my $workdir;
 
   if ($opts->{mods_to_disk})
@@ -541,6 +539,7 @@ sub process_image
   $d{attrs}             = { read_attrs($fd, $attrs_offset + $image_prolog_len) }
     if $attrs_offset;
   $d{image_prolog_len}  = $image_prolog_len;
+  $d{file_type}         = $file_type;
 
   my $archval_with_width = $_flags & 0x1f;
   $d{arch} = $arch_l4names[$archval_with_width];
