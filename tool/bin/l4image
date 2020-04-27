@@ -905,7 +905,7 @@ EOH
       print "\n";
     }
 
-  exit shift;
+  exit 0;
 }
 
 # ---------------------------------------------------------
@@ -988,7 +988,7 @@ for (my $i = 0; $i < @ARGV; ++$i)
       }
     elsif ($arg eq '--help' or $arg eq '-h')
       {
-        help_and_exit(0);
+        help_and_exit();
       }
     elsif ($arg eq '--op')
       {
@@ -1005,7 +1005,16 @@ for (my $i = 0; $i < @ARGV; ++$i)
       }
   }
 
-help_and_exit(1) unless defined $imagefile;
+unless (defined $imagefile)
+  {
+    print "Missing input file. Use -h for commands and options.\n";
+    exit 1;
+  }
+if (@ARGV == 0)
+  {
+    print "Missing command. Use -h for commands and options.\n";
+    exit 1;
+  }
 
 
 my %process_opts;
