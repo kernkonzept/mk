@@ -50,7 +50,6 @@ my $target = $ENV{TEST_TARGET};
 my $TAPPER_FD;
 my $pid = -1;
 my $expline;
-my $output_to_tapper_fd = 0;
 my $test_description = $ENV{TEST_DESCRIPTION} || join(" ", map { $_ ? basename($_) : () } @ARGV, $target);
 
 my $LOG_FD;
@@ -243,13 +242,13 @@ sub readline_timeout
           $idx = length($readbuffer);
           while (sysread($handle, my $part, 128))
             {
-              print $part if !$output_to_tapper_fd;
+              print $part;
               print $LOG_FD $part if $LOG_FD;
               $readbuffer .= $part;
               $idx = index($readbuffer, "\n");
               last if $idx >= 0;
             }
-          STDOUT->flush() if $idx < 0;
+          STDOUT->flush();
         }
 
       $handle->blocking($was_blocking);
@@ -385,6 +384,8 @@ else
     $expline = "begin of TAP test output (TAP TEST START)";
     my $test_eof = 0;
     my $test_lastline;
+    my $output_to_tapper_fd = 0;
+    my @taplines;
 
     while ($_ = readline_timeout($test_proc, $timeout))
       {
@@ -402,11 +403,7 @@ else
               {
                 # strip color escapes
                 s/\e\[[\d,;\s]+[A-Za-z]//gi;
-                print $TAPPER_FD $_;
-              }
-            else
-              {
-                print $_;
+                push @taplines, $_;
               }
           }
         else
@@ -433,6 +430,13 @@ else
           {
             fail_test("Test program finished prematurely", $test_proc_exit_code)
           }
+      }
+    else
+      {
+        # Add newline to output forwarding so last line does not clutter what we send to TAPPER_FD
+        print "\n";
+
+        print $TAPPER_FD $_ foreach (@taplines);
       }
   }
 
