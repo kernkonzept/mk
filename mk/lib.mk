@@ -25,13 +25,13 @@ INSTALLDIR_LIB		?= $(DROPS_STDDIR)/lib/$(subst -,/,$(SYSTEM))
 INSTALLDIR_LIB_LOCAL	?= $(OBJ_BASE)/lib/$(subst -,/,$(SYSTEM))
 endif
 
-ifeq ($(CONFIG_BID_STRIP_PROGS),y)
-INSTALLFILE_LIB 	?= $(call copy_stripped_binary,$(1),$(2),644)
-INSTALLFILE_LIB_LOCAL 	?= $(call copy_stripped_binary,$(1),$(2),644)
-else
-INSTALLFILE_LIB		?= $(INSTALL) -m 644 $(1) $(2)
-INSTALLFILE_LIB_LOCAL	?= $(LN) -sf $(call absfilename,$(1)) $(2)
-endif
+do_strip=$(and $(CONFIG_BID_STRIP_PROGS),$(filter %.so,$(1)))
+INSTALLFILE_LIB         ?= $(if $(call do_strip,$(1)),                      \
+                                $(call copy_stripped_binary,$(1),$(2),644), \
+                                $(INSTALL) -m 644 $(1) $(2))
+INSTALLFILE_LIB_LOCAL   ?= $(if $(call do_strip,$(1)),                      \
+                                $(call copy_stripped_binary,$(1),$(2),644), \
+                                $(LN) -sf $(call absfilename,$(1)) $(2))
 
 INSTALLFILE		= $(INSTALLFILE_LIB)
 INSTALLDIR		= $(INSTALLDIR_LIB)
