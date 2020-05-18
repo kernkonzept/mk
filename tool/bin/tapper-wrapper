@@ -386,10 +386,19 @@ else
     my $test_lastline;
     my $output_to_tapper_fd = 0;
     my @taplines;
+    my $bundle_mode = 0;
+    my $bundle_plan = 0;
+    my $tap_test_block_count = 0;
 
     while ($_ = readline_timeout($test_proc, $timeout))
       {
-        if (/TAP TEST FINISH/)
+        if ($bundle_mode && $output_to_tapper_fd && /TAP TEST FINISH/)
+          {
+            $expline = "end of bundled TAP test output (BUNDLE TEST FINISH)";
+            $output_to_tapper_fd = 0;
+          }
+        elsif ( ($bundle_mode && !$output_to_tapper_fd && /BUNDLE TEST FINISH/) ||
+                (!$bundle_mode && /TAP TEST FINISH/) )
           {
             $test_eof = 1;
             last;
@@ -403,17 +412,40 @@ else
               {
                 # strip color escapes
                 s/\e\[[\d,;\s]+[A-Za-z]//gi;
-                push @taplines, $_;
+
+                # Filter out plans if bundled mode and sum them.
+                if ($bundle_mode && /^1\.\.([0-9]+)/)
+                  {
+                    $bundle_plan += $1;
+                  }
+                else
+                  {
+                    push @taplines, $_;
+                  }
               }
           }
-        else
+        elsif (/^(.*)TAP TEST START/)
           {
-            if (/^(.*)TAP TEST START/)
-              {
-                $output_to_tapper_fd = 1;
-                $tapper_prog_prefix = $1;
-                $expline = "end of TAP test output (TAP TEST FINISH)";
-              }
+            $tap_test_block_count++;
+            $output_to_tapper_fd = 1;
+            $tapper_prog_prefix = $1;
+            $expline = "end of TAP test output (TAP TEST FINISH)";
+          }
+        elsif (!$bundle_mode && /BUNDLE TEST START/)
+          {
+            $expline = "end of bundled TAP test output (BUNDLE TEST FINISH)";
+            $bundle_mode = 1;
+          }
+        elsif ($bundle_mode && /BUNDLE TEST EXPECT TEST COUNT (\d+)/)
+          {
+            my $tap_test_block_count_expect = 0+ $1;
+            my $status = ($tap_test_block_count_expect == $tap_test_block_count) ? "ok" : "not ok";
+            push @taplines, sprintf(
+              "$status - BUNDLE: Expected %d TAP TEST blocks, found %d.\n",
+              $tap_test_block_count_expect,
+              $tap_test_block_count
+            );
+            $bundle_plan++;
           }
       }
     if (!$test_eof)
@@ -437,6 +469,7 @@ else
         print "\n";
 
         print $TAPPER_FD $_ foreach (@taplines);
+        print $TAPPER_FD "1..$bundle_plan\n" if $bundle_mode;
       }
   }
 
