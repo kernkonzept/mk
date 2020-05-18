@@ -13,6 +13,13 @@ use Carp;
 use strict;
 use warnings;
 
+BEGIN {
+  unshift @INC, $ENV{L4DIR}.'/tool/lib'
+    if $ENV{L4DIR} && -d $ENV{L4DIR}.'/tool/lib/L4';
+}
+
+use L4::TestEnvLua;
+
 # Environment settings used below
 my $mode        = $ENV{MODE};
 my $arch        = $ENV{ARCH} or die "No architecture specified";
@@ -33,6 +40,7 @@ my $ned_cfg     = $ENV{NED_CFG};
 my $moe_args    = $ENV{MOE_ARGS};
 my @more_mods   = split(' ', $ENV{REQUIRED_MODULES});
 my $hwconfig_file = $ENV{TEST_HWCONFIG} || '';
+my $fiascoconfig_file = $ENV{TEST_FIASCOCONFIG} || '';
 my $test_run_tags = $ENV{TEST_RUN_TAGS} || '';
 my $test_required_tags = $ENV{TEST_TAGS};
 my $roottask    = $ENV{TEST_ROOT_TASK} || 'moe';
@@ -222,26 +230,39 @@ my $test_env_cfg;
 my $test_env_cfg_name = "$tmpdir/test_env.lua";
 my $convert = "$FindBin::Bin/key-value-convert.pl"; # hwconfig converter in same path
 
+sub read_file {
+  my $file = shift;
+  open(my $fh, "<", $file)
+    or confess "Could not read file $file";
+  my $contents = (do {local $/; <$fh>});
+  close($fh);
+  return $contents;
+}
+
+sub write_file {
+  my $file = shift;
+  my $contents = shift;
+
+  open(my $fh, ">", $file)
+    or confess "Could not write file $file";
+  print $fh $contents;
+  close($fh);
+}
+
 if ($ned_cfg and $roottask eq 'moe')
   {
     # Create an additional LUA config file where environment variables can
     # be exported to.
-    my $mod_list = '"'.join('","', map { s/:rw$//; $_ } map { $_ } @more_mods).'"';
+    my @mod_list = map { s/:rw$//; $_ } map { $_ } @more_mods;
     my $test_prog = $test_target;
     $test_prog .= ' '.$test_args if $test_args;
     open($test_env_cfg, '>', $test_env_cfg_name)
       or confess "Cannot create configuration file $test_env_cfg_name.";
 
-    print $test_env_cfg "local t = {}\n";
-    print $test_env_cfg "t.TEST_PROG = '$test_prog'\n";
-    print $test_env_cfg "t.REQUIRED_MODULES = {$mod_list}\n";
-    if ($hwconfig_file)
-      {
-        die "Hardware config '$hwconfig_file' not found." if (! -e $hwconfig_file);
-        # Provide hwconfig as hash
-        print $test_env_cfg "t.HWCONFIG = {}\n";
-        print $test_env_cfg qx($convert --to=lua --prefix='t.HWCONFIG.' '$hwconfig_file' | sort);
-      }
+    my $testenv = L4::TestEnvLua::generate_test_env($hwconfig_file, $fiascoconfig_file);
+
+    $testenv->{TEST_PROG} = $test_prog;
+    $testenv->{REQUIRED_MODULES} = \@mod_list;
 
     # Some more assembly required for L4Linux tests.
     if ($mode eq 'l4linux')
@@ -261,8 +282,10 @@ if ($ned_cfg and $roottask eq 'moe')
         my $ramdisk_bin = basename($ramdisk);
         my $ramdisk_size= qx(du -b $ramdisk);
         chomp($ramdisk_size);
-        print $test_env_cfg "t.L4LX_EXEC_CMD = 'rom/$l4linux_bin l4x_rd=rom/$ramdisk_bin ramdisk_size=$ramdisk_size l4re_testprog=/dev/rom/$test_target l4cdds.add=rom/$test_target console=ttyLv0'\n";
+        $testenv->{L4LX_EXEC_CMD} = "rom/$l4linux_bin l4x_rd=rom/$ramdisk_bin ramdisk_size=$ramdisk_size l4re_testprog=/dev/rom/$test_target l4cdds.add=rom/$test_target console=ttyLv0";
       }
+
+    print $test_env_cfg "local t = " . L4::TestEnvLua::to_lua($testenv) . "\n";
     print $test_env_cfg "return t\n";
 
     # Now set up boot for use with ned.

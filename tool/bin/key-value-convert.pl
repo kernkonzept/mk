@@ -29,8 +29,14 @@
 use 5.008;
 use strict;
 use warnings;
+
+BEGIN {
+  use FindBin;
+  unshift @INC, "$FindBin::Bin/../lib/";
+}
+
 use Getopt::Long;
-use Scalar::Util "looks_like_number";
+use L4::KeyValueConfig;
 
 my $targetformat = "shell";
 my $prefix = "";
@@ -40,39 +46,9 @@ GetOptions(
   "prefix=s", \$prefix,
 );
 
-# key/value syntax
-my $kv_regex = qr/^\s*(\w+)\s*=\s*(.*?)(\s*)$/;
+my @lines = <>;
 
-my %config =
-  map { my @ret;
-        $_ =~ $kv_regex;
-        my ($key, $val) = ($1, $2);
-        # keep existing outer quotes
-        if ($val =~ /^'[^']*'$/ || $val =~ /^"[^"]*"$/)
-          {
-            @ret = ($key => $val);
-          }
-        # numbers
-        elsif (looks_like_number($val))
-          {
-            @ret = ($key => $val);
-          }
-        # quote unquoted non-number strings;
-        # ignore strange inner quoted strings
-        elsif ($val !~ /['"]/)
-          {
-            @ret = ($key => "'$val'");
-          }
-        # ignore everything else
-        else
-          {
-            @ret = ();
-          }
-        @ret;
-      }
-  grep { /^\s*\w+\s*=/ } # looks like key=value at all
-  grep { $_ !~ /^\s*#/ } # ignore comment lines
-  <>;
+my %config = L4::KeyValueConfig::parse(1, @lines);
 
 my ($key, $val);
 if ($targetformat eq 'shell')
