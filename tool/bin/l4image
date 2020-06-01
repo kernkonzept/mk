@@ -190,7 +190,6 @@ sub find_modules
 sub do_remove
 {
   my $d = shift;
-  my $args = shift;
   my %found = @_;
   my $deleted = 0;
   for (my $i = 0; $i < ${$d}{num_mods}; ++$i)
@@ -209,7 +208,7 @@ sub op_remove
   my $d = shift;
   my $args = shift;
   my %found = find_modules($d, $args);
-  do_remove($d, $args, %found);
+  do_remove($d, %found);
 }
 
 sub op_insert_before
@@ -236,7 +235,7 @@ sub op_replace
   my $args = shift;
 
   my %found = find_modules($d, $args);
-  do_remove($d, $args, %found);
+  do_remove($d, %found);
 
   my @k = sort { $a <=> $b } keys %found;
   do_add_module($d, $args, $k[0]);
