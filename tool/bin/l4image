@@ -543,29 +543,30 @@ sub op_launch
 }
 
 my $help_module_add =
-  " --file                File to add as a module\n".
-  " --name                Name of the module\n".
-  " --type                Type of the module, use for: kernel sigma0 moe\n".
-  " --cmdline             Command line of the module\n";
+  "  --file                File to add as a module\n".
+  "  --name                Name of the module\n".
+  "  --type                Type of the module, use for: kernel sigma0 moe\n".
+  "  --cmdline             Command line of the module\n";
 
 my $help_module_find =
-  " --num                 Number of the module\n".
-  " --with-name           Name of the module\n".
-  " --regex               Regular expression to select module(s)\n";
+  "  --num                 Number of the module\n".
+  "  --with-name           Name of the module\n".
+  "  --regex               Regular expression to select module(s)\n";
 
 my $help_attrs =
-  " --set key value       Set a key to value.\n".
-  " --set-file key file   Set a key to contents of file.\n".
-  " --set-zero key size   Make space of 'size' byte for key.\n".
-  " --unset key           Delete key.\n".
-  " --get key             Get value of key.\n".
-  " --list                List all attributes.\n";
+  "  --set key value       Set a key to value.\n".
+  "  --set-file key file   Set a key to contents of file.\n".
+  "  --set-zero key size   Make space of 'size' byte for key.\n".
+  "  --unset key           Delete key.\n".
+  "  --get key             Get value of key.\n".
+  "  --list                List all attributes.\n";
 
 
 my %args = (
   list => {
     func => \&op_list,
-    help => "List modules in image.",
+    help => "List modules in image.\n".
+            "  -v    Show details.",
     args => {
       "-v" => 0,
     },
@@ -580,8 +581,7 @@ my %args = (
     mods_to_disk => 1,
     gen_new_image => 1,
     func => \&op_add,
-    help => "Add a module to the end of the image.".
-            "\n".
+    help => "Add a module to the end of the image.\n".
             $help_module_add.
             "",
   },
@@ -599,7 +599,6 @@ my %args = (
     gen_new_image => 1,
     func => \&op_insert_before,
     help => "Insert a module before the specified module.\n".
-            "\n".
             $help_module_add.
             $help_module_find.
             "",
@@ -618,7 +617,6 @@ my %args = (
     gen_new_image => 1,
     func => \&op_insert_after,
     help => "Insert a module after the specified module.\n".
-            "\n".
             $help_module_add.
             $help_module_find.
             "",
@@ -636,8 +634,7 @@ my %args = (
     mods_to_disk => 1,
     gen_new_image => 1,
     func => \&op_replace,
-    help => "Replace a module.".
-            "\n".
+    help => "Replace a module.\n".
             $help_module_add.
             $help_module_find.
             "",
@@ -652,7 +649,6 @@ my %args = (
     gen_new_image => 1,
     func => \&op_edit,
     help => "Edit a module.\n".
-            "\n".
             $help_module_find.
             "\n".
             "Uses EDITOR from environment variables, or vi or notepad.".
@@ -667,8 +663,7 @@ my %args = (
     mods_to_disk => 1,
     gen_new_image => 1,
     func => \&op_remove,
-    help => "Remove a module.".
-            "\n".
+    help => "Remove a module.\n".
             $help_module_find,
   },
   extract => {
@@ -696,7 +691,6 @@ my %args = (
     gen_new_image => 1,
     func => \&op_cmdline,
     help => "Modify the image's command line.\n".
-            "\n".
             "  --set                Command line.\n".
             "  --edit               Edit command line.\n".
             "",
@@ -716,7 +710,6 @@ my %args = (
     gen_new_image => \&do_attr_img_gen,
     func => \&op_attr,
     help => "Show and modify the image's global attributes.\n".
-            "\n".
             $help_attrs,
   },
   modattr => {
@@ -736,8 +729,7 @@ my %args = (
     mods_to_disk => \&do_attr_img_gen,
     gen_new_image => \&do_attr_img_gen,
     func => \&op_modattr,
-    help => "Show and modify attributes of a module.".
-            "\n".
+    help => "Show and modify attributes of a module.\n".
             $help_module_find.
             $help_attrs,
   },
@@ -748,8 +740,7 @@ my %args = (
     mods_to_disk => 1,
     gen_new_image => 1,
     func => \&op_foreachmod,
-    help => "Call a command for each module.".
-            "\n".
+    help => "Call a command for each module.\n".
             "  --cmd                Command to run for each module.\n".
             "\n".
             "The following environment variables are set:\n".
@@ -770,7 +761,6 @@ my %args = (
     func => \&op_create,
     help => "Add modules according to a modules.list-entry.\n".
             "Any other existing module is being removed.\n".
-            "\n".
             "  --entry              Entry to use\n".
             "  --modules-list-file  modules.list file to use\n".
             "  --search-path        Search path, colon or space separated\n".
@@ -787,8 +777,7 @@ my %args = (
       "--output-processing" => 1,
     },
     func => \&op_launch,
-    help => "Launch a command to run the image, e.g. QEMU.\n".
-            "\n".
+    help => "Launch a command to run the image, e.g. using QEMU.\n".
             "  --cmd                         Specify command to execute\n".
             "  --cmd-key                     Specify the attribute's key to get the\n".
             "                                command to execute from\n".
@@ -892,7 +881,7 @@ Simple examples:
    $0 -i bootstrap.uimage add --file /path/to/program
    $0 -i bootstrap.elf launch
 
-Commands:
+Operations:
 EOH
 
   foreach my $op (sort keys %args)
