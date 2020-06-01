@@ -130,7 +130,7 @@ sub do_add_module
     L4::Image::fill_module($args->{"--file"},
                            $args->{"--name"},
                            L4::Image::map_type_name_to_flag($args->{"--type"}),
-                           $args->{"--cmdine"})
+                           $args->{"--cmdline"})
   });
   error(${$d}{mods}[$pos]{error}) if ${$d}{mods}[$pos]{error};
   ${$d}{num_mods}++;
