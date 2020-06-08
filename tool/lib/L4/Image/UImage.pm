@@ -7,7 +7,7 @@ package L4::Image::UImage;
 use warnings;
 use Exporter;
 use Digest::CRC;
-use L4::Image::Utils qw/error check_sysread check_syswrite checked_sysseek/;
+use L4::Image::Utils qw/error check_sysread check_syswrite filepos_set/;
 
 use vars qw(@ISA @EXPORT);
 @ISA    = qw(Exporter);
@@ -24,7 +24,7 @@ sub uimage_header_update
   my $fd = $self->{'ofd'};
   my $buf;
 
-  checked_sysseek($fd, 0, 0);
+  filepos_set($fd, 0);
   check_sysread(sysread($fd, $buf, UIMAGE_HEADER_SIZE), UIMAGE_HEADER_SIZE);
 
   my $uimage_pattern = "L>L>L>L>L>L>L>CCCCZ32";
@@ -84,7 +84,7 @@ sub uimage_header_update
                         $ih_comp,
                         $ih_name);
 
-  checked_sysseek($fd, 0, 0);
+  filepos_set($fd, 0);
   check_syswrite(syswrite($fd, $uimage_header, length($uimage_header)),
                  UIMAGE_HEADER_SIZE);
 }
@@ -135,7 +135,7 @@ sub objcpy_start
 
   # copy initial part
   my $buf;
-  checked_sysseek($ifd, 0, 0);
+  filepos_set($ifd, 0);
   check_sysread(sysread($ifd, $buf, $offset), $offset);
   check_syswrite(syswrite($ofd, $buf), length($buf));
 

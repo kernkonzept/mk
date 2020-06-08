@@ -4,7 +4,8 @@ package L4::Image::Elf;
 
 use warnings;
 use Exporter;
-use L4::Image::Utils qw/error check_sysread check_syswrite checked_sysseek/;
+use L4::Image::Utils qw/error check_sysread check_syswrite checked_sysseek
+                        filepos_set/;
 
 use vars qw(@ISA @EXPORT);
 @ISA    = qw(Exporter);
@@ -166,7 +167,7 @@ sub read_phdrs
 
   my @phdr = ();
 
-  checked_sysseek($self->{'fd'}, $self->{'e_phoff'}, 0);
+  filepos_set($self->{'fd'}, $self->{'e_phoff'});
   for (my $i = 0; $i < $self->{'e_phnum'}; $i++) {
     push @phdr, $self->read_phdr();
   }
@@ -183,7 +184,7 @@ sub write_phdrs
   foreach (@{$self->{'phdr'}})
     {
       my $off = $self->{'e_phoff'} + $self->{'e_phentsize'} * $i;
-      checked_sysseek($self->{'fd'}, $off, 0);
+      filepos_set($self->{'fd'}, $off);
       $self->write_phdr($_);
       $i++;
     }
@@ -199,7 +200,7 @@ sub read_shdrs
 
   my @shdr = ();
 
-  checked_sysseek($self->{'fd'}, $self->{'e_shoff'}, 0);
+  filepos_set($self->{'fd'}, $self->{'e_shoff'});
   for (my $i = 0; $i < $self->{'e_shnum'}; $i++) {
     push @shdr, $self->read_shdr();
   }
@@ -216,7 +217,7 @@ sub write_shdrs
   foreach (@{$self->{'shdr'}})
     {
       my $off = $self->{'e_shoff'} + $self->{'e_shentsize'} * $i;
-      checked_sysseek($self->{'fd'}, $off, 0);
+      filepos_set($self->{'fd'}, $off);
       $self->write_shdr($_);
       $i++;
     }
@@ -278,7 +279,7 @@ sub patch
   # Write back ELF header.
   if ($self->{'class'} == ELFCLASS32)
     {
-      checked_sysseek($self->{'fd'}, 0x1C, 0);
+      filepos_set($self->{'fd'}, 0x1C);
       check_syswrite(syswrite($self->{'fd'},
                               $self->pack("LL",
                                           $self->{'e_phoff'},
@@ -287,7 +288,7 @@ sub patch
     }
   else
     {
-      checked_sysseek($self->{'fd'}, 0x20, 0);
+      filepos_set($self->{'fd'}, 0x20);
       check_syswrite(syswrite($self->{'fd'},
                               $self->pack("QQ",
                                           $self->{'e_phoff'},
@@ -326,7 +327,7 @@ sub new_fd
   my $fd = shift;
 
   my $elf_hdr;
-  checked_sysseek($fd, 0, 0);
+  filepos_set($fd, 0);
   check_sysread(sysread($fd, $elf_hdr, 0x40), 0x40);
   my ($elf_magic, $elf_class, $elf_data, $elf_version) =
     CORE::unpack("a4CCC", $elf_hdr);
@@ -452,7 +453,7 @@ sub objcpy_start
 
   # copy initial part
   my $buf;
-  checked_sysseek($ifd, 0, 0);
+  filepos_set($ifd, 0);
   check_sysread(sysread($ifd, $buf, $offset), $offset);
   check_syswrite(syswrite($ofd, $buf), length($buf));
 
@@ -475,7 +476,7 @@ sub objcpy_finalize
 
   # Copy remaining sections and headers
   my $buf;
-  checked_sysseek($ifd, $self->{'upd_file_end'}, 0);
+  filepos_set($ifd, $self->{'upd_file_end'});
   sysread($ifd, $buf, 0xffffffff);
   check_syswrite(syswrite($ofd, $buf), length($buf));
 

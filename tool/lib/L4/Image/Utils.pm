@@ -5,7 +5,8 @@ use Exporter;
 
 use vars qw(@ISA @EXPORT);
 @ISA    = qw(Exporter);
-@EXPORT = qw(error check_syswrite check_sysread checked_sysseek);
+@EXPORT = qw(error check_syswrite check_sysread checked_sysseek
+             filepos_get filepos_set);
 
 
 sub error
@@ -45,6 +46,16 @@ sub checked_sysseek
   die "sysseek failed" unless defined $r;
 
   return $r + 0;
+}
+
+sub filepos_get
+{
+  return checked_sysseek(shift, 0, 1);
+}
+
+sub filepos_set
+{
+  return checked_sysseek(shift, shift, 0);
 }
 
 1;

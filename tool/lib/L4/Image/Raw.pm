@@ -6,7 +6,7 @@ package L4::Image::Raw;
 
 use warnings;
 use Exporter;
-use L4::Image::Utils qw/error check_sysread check_syswrite checked_sysseek/;
+use L4::Image::Utils qw/error check_sysread check_syswrite filepos_set/;
 
 use vars qw(@ISA @EXPORT);
 @ISA    = qw(Exporter);
@@ -56,7 +56,7 @@ sub objcpy_start
 
   # copy initial part
   my $buf;
-  checked_sysseek($ifd, 0, 0);
+  filepos_set($ifd, 0);
   check_sysread(sysread($ifd, $buf, $offset), $offset);
   check_syswrite(syswrite($ofd, $buf), length($buf));
 

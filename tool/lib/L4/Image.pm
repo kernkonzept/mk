@@ -33,7 +33,8 @@ use File::Basename;
 use File::Temp qw/tempdir/;
 use Digest::MD5;
 use POSIX;
-use L4::Image::Utils qw/error check_sysread check_syswrite checked_sysseek/;
+use L4::Image::Utils qw/error check_sysread check_syswrite
+                        filepos_get filepos_set/;
 use L4::Image::Elf;
 use L4::Image::Raw;
 use L4::Image::UImage;
@@ -206,7 +207,7 @@ sub read_attrs
 
   printf "attrs-offset: %x\n", $offset if 0;
 
-  checked_sysseek($fd, $offset, 0);
+  filepos_set($fd, $offset);
   sysread($fd, $buf, 4);
   my $attr = unpack("A4", $buf);
   return %d if $attr ne 'ATTR';
@@ -308,7 +309,7 @@ sub find_image_info
   my $fd = shift;
 
   my $buf;
-  checked_sysseek($fd, 0, 0);
+  filepos_set($fd, 0);
   my $r = sysread($fd, $buf, 1 << 20); # would we be interrupted?
   return(0, "Could not read from file: $!") unless $r;
 
@@ -350,7 +351,7 @@ sub process_image
   my ($image_info_file_pos, $error_text) = find_image_info($fd);
   error($error_text) if defined $error_text;
 
-  checked_sysseek($fd, $image_info_file_pos + BOOTSTRAP_IMAGE_INFO_MAGIC_LEN, 0);
+  filepos_set($fd, $image_info_file_pos + BOOTSTRAP_IMAGE_INFO_MAGIC_LEN);
 
   my $buf;
   $r = sysread($fd, $buf, IMAGE_INFO_SIZE);
@@ -422,9 +423,9 @@ sub process_image
       $tmp_ofn = $ofn . ".tmp";
 
       my $ofd = $img->objcpy_start($_module_data_start, $tmp_ofn);
-      my $module_start_pos = checked_sysseek($ofd, 0, 1);
+      my $module_start_pos = filepos_get($ofd);
       my %offsets = export_modules($ofd, %d);
-      my $module_end_pos = checked_sysseek($ofd, 0, 1);
+      my $module_end_pos = filepos_get($ofd);
 
       write_image_info($ofd, $image_info_file_pos,
                        $_module_data_start - $_start,  %offsets);
@@ -435,9 +436,7 @@ sub process_image
         {
           $_module_data_end = $_module_data_start + $module_end_pos -
                               $module_start_pos;
-          $r = checked_sysseek($ofd,
-                               $img->vaddr_to_file_offset($bin_addr_end_bin),
-                               0);
+          $r = filepos_set($ofd, $img->vaddr_to_file_offset($bin_addr_end_bin));
           check_syswrite(syswrite($ofd, pack("Q<", $_module_data_end)), 8);
         }
 
@@ -484,7 +483,7 @@ sub import_modules
 
   printf "mod-offset: %x\n", $offset_mod_header if 0;
 
-  checked_sysseek($fd, $offset_mod_header, 0);
+  filepos_set($fd, $offset_mod_header);
 
   my %ds;
 
@@ -527,7 +526,7 @@ sub import_modules
 
   $ds{mbi_cmdline} = unpack('Z*', substr($data, $ds{mbi_cmdline} - $hdrlen));
 
-  my $opos = checked_sysseek($fd, 0, 1);
+  my $opos = filepos_get($fd);
   for (my $i = 0; $i < $ds{num_mods}; ++$i)
     {
       if ($mods[$i]{filepos_attr})
@@ -536,7 +535,7 @@ sub import_modules
           $mods[$i]{attrs} = { read_attrs($fd, $o + $mods[$i]{filepos_attr}) };
         }
     }
-  checked_sysseek($fd, $opos, 0);
+  filepos_set($fd, $opos);
 
   my $modules_list = "# vim:set ft=l4mods:\n";
   $modules_list .= "\n";
@@ -569,7 +568,7 @@ sub import_modules
           my $buf;
           my $r;
           my $sz = $mods[$i]{size};
-          checked_sysseek($fd, $mods[$i]{fileoffset}, 0);
+          filepos_set($fd, $mods[$i]{fileoffset});
           do
             {
               my $l = $sz;
@@ -629,10 +628,9 @@ sub write_image_info
 
   if (defined $offsets{attrs})
     {
-      checked_sysseek($fd, $image_info_file_pos
-                           + BOOTSTRAP_IMAGE_INFO_MAGIC_LEN
-                           + IMAGE_INFO_OFFSET_ATTR,
-                      0);
+      filepos_set($fd, $image_info_file_pos
+                       + BOOTSTRAP_IMAGE_INFO_MAGIC_LEN
+                       + IMAGE_INFO_OFFSET_ATTR);
       syswrite($fd, pack("q<", $data_area_start_offset + $offsets{attrs}), 8);
 
       printf "data_area_start_offset=%x\n", $data_area_start_offset if 0;
@@ -641,10 +639,9 @@ sub write_image_info
 
   if (defined $offsets{mod_header})
     {
-      checked_sysseek($fd, $image_info_file_pos
-                           + BOOTSTRAP_IMAGE_INFO_MAGIC_LEN
-                           + IMAGE_INFO_OFFSET_MOD_HEADER,
-                      0);
+      filepos_set($fd, $image_info_file_pos
+                       + BOOTSTRAP_IMAGE_INFO_MAGIC_LEN
+                       + IMAGE_INFO_OFFSET_MOD_HEADER);
       syswrite($fd, pack("q<", $data_area_start_offset + $offsets{mod_header}), 8);
       printf "data_area_start_offset=%x\n", $data_area_start_offset if 0;
       printf "offsets.mod_header=%x\n", $offsets{mod_header} if 0;
@@ -693,7 +690,7 @@ sub export_modules
 
   print "Writing out image\n" if 0;
 
-  my $initial_file_pos = checked_sysseek($fd, 0, 1);
+  my $initial_file_pos = filepos_get($fd);
 
   my %offsets;
 
@@ -706,7 +703,7 @@ sub export_modules
 
   for (my $i = 0; $i < $ds{num_mods}; ++$i)
     {
-      $filepos_attr = checked_sysseek($fd, 0, 1);
+      $filepos_attr = filepos_get($fd);
       $r = write_attrs($fd, %{$ds{mods}[$i]{attrs}});
       delete $ds{mods}[$i]{filepos_attr};
       $ds{mods}[$i]{filepos_attr} = $filepos_attr - $initial_file_pos if $r;
@@ -716,7 +713,7 @@ sub export_modules
 
   # ---------------------------------------------------
 
-  my $filestartpos = checked_sysseek($fd, 0, 1);
+  my $filestartpos = filepos_get($fd);
   die "Cannot get file position" unless defined $filestartpos;
   printf "filestartpos=%x\n", $filestartpos if 0;
 
@@ -808,7 +805,7 @@ sub export_modules
   print STDERR "Size of      payload: ", length($stor{data_payload}), "\n" if 0;
   print STDERR "End:                  ", $stor{files_offset}, "\n" if 0;
 
-  $offsets{mod_header} = checked_sysseek($fd, 0, 1) - $initial_file_pos;
+  $offsets{mod_header} = filepos_get($fd) - $initial_file_pos;
 
   check_syswrite(syswrite($fd, $stor{mod_info_payload}), length($stor{mod_info_payload}));
   check_syswrite(syswrite($fd, $stor{data_payload}), length($stor{data_payload}));
@@ -824,7 +821,7 @@ sub export_modules
       my $buf;
 
       my $clearto = $initial_file_pos + $stor{files_offsets}[$i];
-      my $pos = checked_sysseek($fd, 0, 1);
+      my $pos = filepos_get($fd);
       error("Internal error on file positions ($clearto, $pos)") if $clearto < $pos;
       if ($clearto > $pos)
         {
