@@ -92,6 +92,17 @@ sub generate_test_env {
       $fullconfig->{$key} = $converters{$key}->($hwconfig, $fiascoconfig);
     }
 
+  # Carry over any additional information from hwconfig that we did not handle
+  # here, so that we don't have to alter this for every hwconfig key we add.
+  if ($hwconfig)
+    {
+      for my $key (keys %$hwconfig)
+        {
+          $fullconfig->{$key} = $hwconfig->{$key}
+            unless exists $converters{$key};
+        }
+    }
+
   return $testenv;
 }
 
