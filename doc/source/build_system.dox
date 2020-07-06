@@ -262,6 +262,10 @@ When TARGET is undefined, these targets are added to the list of targets for
 the specified architecture. For all targets `SRC_C[C]` files must be
 defined separately.
 
+\par `TEST_KERNEL_ARGS`
+Arguments to append to the kernel command line. These are also appended when
+specifying custom ones via a .t-file's -f parameter or when using -d.
+
 \par `TEST_EXPECTED`
 File containing expected output.
 By default the variable is empty, which means the test binary
