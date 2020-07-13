@@ -278,18 +278,21 @@ sub get_module_entry($$)
         $mods[0]{command}         = $file;
         $mods[0]{cmdline}         = $full;
         $mods[0]{cmdline_quoted}  = $full_quoted;
+        $mods[0]{opts}            = { %opts };
         next;
       } elsif ($type eq 'default-sigma0') {
         my ($file, $full, $full_quoted) = get_command_and_cmdline(handle_line_first($remaining, %opts), %opts);
         $mods[1]{command}         = $file;
         $mods[1]{cmdline}         = $full;
         $mods[1]{cmdline_quoted}  = $full_quoted;
+        $mods[1]{opts}            = { %opts };
         next;
       } elsif ($type eq 'default-roottask') {
         my ($file, $full, $full_quoted) = get_command_and_cmdline(handle_line_first($remaining, %opts), %opts);
         $mods[2]{command}         = $file;
         $mods[2]{cmdline}         = $full;
         $mods[2]{cmdline_quoted}  = $full_quoted;
+        $mods[3]{opts}            = { %opts };
         next;
       }
 
@@ -322,6 +325,7 @@ sub get_module_entry($$)
         $mods[2]{command}        = 'moe';
         $mods[2]{cmdline}        = "moe rom/$bn";
         $mods[2]{cmdline_quoted} = "moe rom/$bn";
+        $mods[2]{opts}           = { %opts };
         $type = 'bin';
         @m = ($params[0]);
       }
@@ -341,14 +345,17 @@ sub get_module_entry($$)
             $mods[2]{command}         = $file;
             $mods[2]{cmdline}         = $full;
             $mods[2]{cmdline_quoted}  = $full_quoted;
+            $mods[2]{opts}            = { %opts };
           } elsif ($type eq 'kernel') {
             $mods[0]{command}         = $file;
             $mods[0]{cmdline}         = $full;
             $mods[0]{cmdline_quoted}  = $full_quoted;
+            $mods[0]{opts}            = { %opts };
           } elsif ($type eq 'sigma0') {
             $mods[1]{command}         = $file;
             $mods[1]{cmdline}         = $full;
             $mods[1]{cmdline_quoted}  = $full_quoted;
+            $mods[1]{opts}            = { %opts };
           } elsif ($type eq 'initrd') {
             $linux_initrd      = $file;
             $is_mode_linux     = 1;
@@ -358,6 +365,7 @@ sub get_module_entry($$)
                           command        => $file,
                           cmdline        => $full,
                           cmdline_quoted => $full_quoted,
+                          opts           => { %opts },
                         };
           }
         }
