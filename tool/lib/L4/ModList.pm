@@ -561,16 +561,23 @@ sub fetch_remote_file
   handle_remote_file(shift, 1);
 }
 
+sub is_gzipped_file
+{
+  my $file = shift;
+
+  open(my $f, $file) || error "Cannot open '$file': $!\n";
+  my $buf;
+  read $f, $buf, 2;
+  close $f;
+
+  return length($buf) >= 2 && unpack("n", $buf) == 0x1f8b;
+}
+
 sub get_or_copy_file_uncompressed_or_die($$$$$)
 {
   my ($command, $paths, $targetdir, $targetfilename, $copy) = @_;
 
   my $fp = L4::ModList::search_file_or_die($command, $paths);
-
-  open(F, $fp) || error "Cannot open '$fp': $!\n";
-  my $buf;
-  read F, $buf, 2;
-  close F;
 
   my $tf;
   if ($targetfilename) {
@@ -580,7 +587,7 @@ sub get_or_copy_file_uncompressed_or_die($$$$$)
     $tf = $targetdir.'/'.$f;
   }
 
-  if (length($buf) >= 2 && unpack("n", $buf) == 0x1f8b) {
+  if (is_gzipped_file($fp)) {
     print STDERR "'$fp' is a zipped file, uncompressing to '$tf'\n";
     system("zcat $fp >$tf");
     $fp = $tf;
