@@ -202,22 +202,6 @@ sub get_module_entry($$)
   my @mods;
   my %groups;
 
-  if ($entry_to_pick eq 'auto-build-entry') {
-    # Automatic build entry is being built.
-    # This image is useless but it always builds.
-
-    $mods[$_] = { command => 'Makefile', cmdline => 'Makefile',
-                  cmdline_quoted => 'Makefile', type => 'bin' } for 0..2;
-
-    return (
-      bootstrap => { command        => 'bootstrap',
-                     cmdline        => 'bootstrap',
-                     cmdline_quoted => 'bootstrap' },
-      mods    => [ @mods ],
-      modaddr => 0x200000,
-    );
-  }
-
   # preseed first 3 modules
   $mods[0] = { command => 'fiasco',   cmdline => 'fiasco',
                cmdline_quoted => 'fiasco', type => 'bin'};
