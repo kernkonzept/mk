@@ -306,6 +306,12 @@ sub get_module_entry($$)
       error "$mod_file_db{id_to_file}{$$fileentry[0]}:$$fileentry[1]: Invalid type \"$type\"\n"
         unless grep(/^$type$/, @valid_types);
 
+      # foo-nostrip is deprecated, use 'nostrip' option now. Added 2020-07.
+      if ($type =~ /(.+)-nostrip$/) {
+        print STDERR "Warning: Using '$type' is deprecated, use '$1"."[nostrip]' now\n";
+        $type = $1;
+        $opts{nostrip} = undef;
+      }
 
       if ($type eq 'set') {
         my ($varname, $value) = split /\s+/, $params[0], 2;
