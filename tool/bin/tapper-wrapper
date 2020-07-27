@@ -30,7 +30,8 @@ GetOptions(
   'run-tags|T=s'    => sub { $ENV{TEST_RUN_TAGS} = $_[1]; },
   'logfile|l=s'     => sub { $ENV{TEST_LOGFILE} = $_[1]; },
   'workdir=s'       => sub { $ENV{TEST_WORKDIR} = $_[1]; },
-  'image|i=s'       => sub { $ENV{IMAGE_TYPE} = $_[1]; }
+  'image|i=s'       => sub { $ENV{IMAGE_TYPE} = $_[1]; },
+  'hard-timeout=i'  => sub { $ENV{TEST_HARD_TIMEOUT} = $_[1]; },
 ) or pod2usage(-verbose => 99, -sections => "OPTIONS");
 
 pod2usage(-verbose => 99,
@@ -197,6 +198,14 @@ else
       }
   }
 
+my $hard_timeout = 0+ ($ENV{TEST_HARD_TIMEOUT} || 0);
+if ($hard_timeout)
+  {
+    $SIG{ALRM} = sub {
+      fail_test("Test did not finish within the hard timeout of $hard_timeout seconds");
+    };
+    alarm $hard_timeout;
+  }
 
 print $TAPPER_FD "TAP Version 13\n";
 
