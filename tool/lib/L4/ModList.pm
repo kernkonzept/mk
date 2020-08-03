@@ -292,7 +292,7 @@ sub get_module_entry($$)
         $mods[2]{command}         = $file;
         $mods[2]{cmdline}         = $full;
         $mods[2]{cmdline_quoted}  = $full_quoted;
-        $mods[3]{opts}            = { %opts };
+        $mods[2]{opts}            = { %opts };
         next;
       }
 
