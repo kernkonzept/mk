@@ -7,6 +7,9 @@
 #   $1.platforms $1.platform_types
 
 extract_var() {
+  # Don't pass make flags of the L4Re build system to the following make
+  # invocation (e.g. --trace), as additional output would be an interference.
+  unset -v MAKEFLAGS MFLAGS
   {
     cat "$1"
     printf "printit:\n\t@echo \$($2)\n"
