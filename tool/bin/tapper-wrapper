@@ -178,6 +178,8 @@ EOT
 }
 
 
+my $running_with_prove = 1;
+
 if ($ENV{TAPPER_OUTPUT})
   {
     open($TAPPER_FD, $ENV{TAPPER_OUTPUT}) or die "Cannot open tapper output\n";
@@ -194,6 +196,7 @@ else
     else
       {
         open(STDOUT, '>&', STDERR);
+        $running_with_prove = 0;
       }
   }
 
@@ -463,7 +466,7 @@ else
             fail_test("Test program finished prematurely", $test_proc_exit_code)
           }
       }
-    else
+    elsif ($running_with_prove || $bundle_mode)
       {
         # Add newline to output forwarding so last line does not clutter what we send to TAPPER_FD
         print "\n";
