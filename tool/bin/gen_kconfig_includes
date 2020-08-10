@@ -25,12 +25,12 @@ for p in "$@"; do
   pn=${pn%.conf}
   echo "config PLATFORM_TYPE_$pn"
   plat="$(extract_var $p PLATFORM_NAME)"
-  echo "  bool \"$plat\""
+  echo "	bool \"$plat\""
 
   DEP=""
   for a in $(extract_var $p PLATFORM_ARCH); do
     if [ -z "$DEP" ]; then
-      DEP="  depends on BUILD_ARCH_$a"
+      DEP="	depends on BUILD_ARCH_$a"
     else
       DEP="$DEP || BUILD_ARCH_$a"
     fi
