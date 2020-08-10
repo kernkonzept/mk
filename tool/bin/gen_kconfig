@@ -81,6 +81,15 @@ while ($_=<IN>) {
         if defined $archs{$i}{default_pf};
     }
   }
+  if (/$tag ARCH_PLATFORMS\W/x) {
+    my $f = "$kconfig_obj_file.platforms";
+    open(my $pf, $f) || die "Cannot open '$f': $!";
+    while (my $l = <$pf>)
+      {
+        print OUT $l;
+      }
+    close $pf;
+  }
   if (/$tag ARCH_NAME\W/x) {
     foreach my $i (sort keys %archs) {
       print OUT "\tdefault \"$archs{$i}{name}\"  if $i\n"

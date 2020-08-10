@@ -44,7 +44,7 @@ choice
 	prompt "Platform Selection"
 # ARCH_DEFAULT_PF
 
-source "Kconfig.generated.platforms"
+# ARCH_PLATFORMS
 
 config PLATFORM_TYPE_custom
 	bool "Custom platform"
