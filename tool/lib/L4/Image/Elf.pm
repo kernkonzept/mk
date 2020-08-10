@@ -5,7 +5,8 @@ package L4::Image::Elf;
 use warnings;
 use Exporter;
 use L4::Image::Utils qw/error check_sysread check_syswrite checked_sysseek
-                        filepos_set/;
+                        sysreadz filepos_set/;
+use File::Temp ();
 
 use vars qw(@ISA @EXPORT);
 @ISA    = qw(Exporter);
@@ -238,18 +239,19 @@ sub patch_entry
   my $offset = shift;
   my $amount = shift;
 
-  if (not $entry->{'adjust'}) {
-    # Must not be adjusted. Typically a SHT_NOBITS section.
-  } elsif ($entry->{'offset'} > $offset) {
-    # Entry is in file after patched location -> adjust location
-    $entry->{'offset'} += $amount;
-  } elsif (($entry->{'offset'} + $entry->{'filesz'}) >= $offset)
+  # Must not be adjusted. Typically a SHT_NOBITS section.
+  return unless $entry->{'adjust'};
+
+  if ($entry->{'offset'} > $offset)
+    {
+      # Entry is in file after patched location -> adjust location
+      $entry->{'offset'} += $amount;
+    }
+  elsif (($entry->{'offset'} + $entry->{'filesz'}) > $offset)
     {
       # Entry is covering patched location -> adjust size
       $entry->{'filesz'} += $amount;
-      if (defined $entry->{'memsz'}) {
-        $entry->{'memsz'} += $amount;
-      }
+      $entry->{'memsz'} += $amount if defined $entry->{'memsz'};
     }
 }
 
@@ -341,18 +343,18 @@ sub new_fd
     data => $elf_data,
   }, $class;
 
-  my ($e_phoff, $e_shoff, $e_phentsize, $e_phnum, $e_shentsize, $e_shnum);
+  my ($e_phoff, $e_shoff, $e_phentsize, $e_phnum, $e_shentsize, $e_shnum, $e_shstrndx);
   if ($elf_class == ELFCLASS32)
     {
       # 32-bit variant
-      ($e_phoff, $e_shoff, $e_phentsize, $e_phnum, $e_shentsize, $e_shnum) =
-        $self->unpack("LLx6SSSS", substr($elf_hdr, 0x1C));
+      ($e_phoff, $e_shoff, $e_phentsize, $e_phnum, $e_shentsize, $e_shnum, $e_shstrndx) =
+        $self->unpack("LLx6SSSSS", substr($elf_hdr, 0x1C));
     }
   elsif ($elf_class == ELFCLASS64)
     {
       # 64-bit variant
-      ($e_phoff, $e_shoff, $e_phentsize, $e_phnum, $e_shentsize, $e_shnum) =
-        $self->unpack("QQx6SSSS", substr($elf_hdr, 0x20));
+      ($e_phoff, $e_shoff, $e_phentsize, $e_phnum, $e_shentsize, $e_shnum, $e_shstrndx) =
+        $self->unpack("QQx6SSSSS", substr($elf_hdr, 0x20));
     }
   else
     { die("Unknown ELF class"); }
@@ -363,6 +365,7 @@ sub new_fd
   $self->{'e_phnum'}     = $e_phnum;
   $self->{'e_shentsize'} = $e_shentsize;
   $self->{'e_shnum'}     = $e_shnum;
+  $self->{'e_shstrndx'}  = $e_shstrndx;
 
   return $self;
 }
@@ -381,6 +384,47 @@ sub new
   binmode($fd);
 
   return $class->new_fd($fd);
+}
+
+# This detects if bootstrap is wrapping another bootstrap image in a .data.elf64
+# section. This is the case on amd64 where a 32-bit bootstrap is later loading a
+# 64-bit bootstrap, but the 64-bit version is the one actually containing the
+# modules of interest.
+#
+# Returns a tempfile object for the wrapped file which is deleted when going out
+# of scope or 0 if this is not a wrapping bootstrap image.
+sub inner_elf
+{
+  my $self = shift;
+  return undef unless $self->{'class'} == ELFCLASS32;
+
+  $self->read_shdrs();
+
+  my $shstrn_off = $self->{'shdr'}[$self->{'e_shstrndx'}]->{'offset'};
+  my $s = "";
+  foreach my $hdr (@{$self->{'shdr'}})
+    {
+      $section_name_offset = $shstrn_off + $hdr->{'name'};
+      filepos_set($self->{'fd'}, $section_name_offset);
+
+      $s = sysreadz($self->{'fd'});
+
+      # The .data.elf64 section name denotes an inner bootstrap elf image
+      if ($s eq '.data.elf64')
+        {
+          $self->{'inner-vaddr'} = $hdr->{'vaddr'};
+          $fh = File::Temp->new();
+          open my $ofd, '>', $fh->filename or die "$outfile: $!";
+          filepos_set($self->{'fd'}, $hdr->{'offset'});
+
+          # Unpack nested file to tmpfile ...
+          check_sysread(sysread($self->{'fd'}, $buf, $hdr->{'filesz'}), $hdr->{'filesz'});
+          check_syswrite(syswrite($ofd, $buf, $hdr->{'filesz'}), $hdr->{'filesz'});
+          return $fh;
+        }
+    }
+
+  return undef;
 }
 
 sub dispose

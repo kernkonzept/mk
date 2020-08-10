@@ -31,6 +31,7 @@ use warnings;
 use Exporter;
 use File::Basename;
 use File::Temp qw/tempdir/;
+use File::Copy qw/copy/;
 use Digest::MD5;
 use POSIX;
 use L4::Image::Utils qw/error check_sysread check_syswrite
@@ -331,6 +332,23 @@ sub process_image
 
   my ($file_type, $err) = get_file_type($fn);
   return $err if $err;
+  my $img;
+  if ($file_type == FILE_TYPE_ELF)
+    {
+      # We parse ELF images here already since the actual file is changed
+      # if an ELF64 bootstrap needs to be unwrapped from an ELF binary as is the
+      # case for amd64.
+      $img = L4::Image::Elf->new($fn);
+      my $inner_fh = $img->inner_elf();
+      if (defined $inner_fh)
+        {
+          my $inner_img = L4::Image::Elf->new($inner_fh->filename);
+          $inner_img->{'wrapper-fn'} = $fn;
+          $inner_img->{'wrapper-img'} = $img;
+          $img = $inner_img;
+          $fn = $inner_fh->filename;
+        }
+    }
 
   my $workdir;
 
@@ -371,11 +389,10 @@ sub process_image
     if 0;
 
   # See L4::Image::Elf module for a description of the interface.
-  my $img;
   if ($file_type == FILE_TYPE_UIMAGE) {
     $img = L4::Image::UImage->new($fn, $_start);
   } elsif ($file_type == FILE_TYPE_ELF) {
-    $img = L4::Image::Elf->new($fn);
+    # Already parsed above due to unwrapping ...
   } else {
     $img = L4::Image::Raw->new($fn, $_start);
   }
@@ -422,6 +439,7 @@ sub process_image
       return $checkresult if $checkresult;
 
       my $ofn = $fn;
+      $ofn = $img->{'wrapper-fn'} if exists $img->{'wrapper-fn'};
       $ofn = $opts->{outimagefile} if defined $opts->{outimagefile};
       $tmp_ofn = $ofn . ".tmp";
 
@@ -445,7 +463,31 @@ sub process_image
 
       $img->objcpy_finalize();
       $img->dispose();
-      rename($tmp_ofn, $ofn) || error("Could not rename output file!");
+      if (exists $img->{'wrapper-img'})
+        {
+          # If we unwrapped the binary, then rewrap it here
+          my $tmp_ofn_outer = $tmp_ofn . ".outer";
+          $outer = $img->{'wrapper-img'};
+          printf "Patching from outer vaddr: 0x%x\n", $outer->{'inner-vaddr'} if 0;
+          my $outer_fd = $outer->objcpy_start($outer->{'inner-vaddr'}, $tmp_ofn_outer);
+
+          open(my $inner_fd, $tmp_ofn) || die "Cannot open $tmp_ofn for reading: $!";
+          binmode $inner_fd;
+          my $len;
+          while ($len = sysread($inner_fd, my $buf, 4096))
+            {
+              syswrite($outer_fd, $buf, $len);
+            }
+          unlink $inner_fd;
+
+          $outer->objcpy_finalize();
+          $outer->dispose();
+          rename($tmp_ofn_outer, $ofn) || error("Could not rename output file!");
+        }
+      else
+        {
+          rename($tmp_ofn, $ofn) || error("Could not rename output file!");
+        }
     }
   else
     {

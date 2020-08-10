@@ -6,7 +6,7 @@ use Exporter;
 use vars qw(@ISA @EXPORT);
 @ISA    = qw(Exporter);
 @EXPORT = qw(error check_syswrite check_sysread checked_sysseek
-             filepos_get filepos_set);
+             filepos_get filepos_set sysreadz);
 
 
 sub error
@@ -36,6 +36,19 @@ sub check_sysread
   error("Read error: $!") unless defined $r;
   error("Did not read all data ($r < $rd_size)") if $rd_size != $r;
   $r;
+}
+
+sub sysreadz
+{
+  my $fd = shift;
+  my $result = "";
+  while (my $err = sysread($fd, my $s, 10) != 0)
+    {
+      error("Error reading zero terminated string") unless defined $err;
+      $result .= [split(/\0/, $s, 2)]->[0];
+      last if $s =~ /\0/;
+    }
+  $result;
 }
 
 sub checked_sysseek
