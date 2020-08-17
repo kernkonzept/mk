@@ -115,6 +115,6 @@ module fb-drv
 module mag
 module x86-legacy.devs
 module l4lx-x86.io
-module [uncompress] vmlinuz
+module[uncompress] vmlinuz
 module[perl] "ramdisk-$ENV{ARCH}.rd"
 
