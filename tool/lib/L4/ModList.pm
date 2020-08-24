@@ -179,7 +179,7 @@ sub readin_config($)
 
   if (0)
     {
-      print "$id_to_file{$$_[0]}($$_[0]):$$_[1]: $$_[2]\n" foreach (@contents);
+      print STDERR "$id_to_file{$$_[0]}($$_[0]):$$_[1]: $$_[2]\n" foreach (@contents);
     }
 
   return (
@@ -603,7 +603,7 @@ sub get_or_copy_file_uncompressed_or_die($$$$$)
     system("cmp -s $fp $tf");
     if ($?)
       {
-        print("cp $fp $tf\n");
+        print STDERR "cp $fp $tf\n";
         system("cp $fp $tf");
       }
     $fp = $tf;
