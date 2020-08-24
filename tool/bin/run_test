@@ -191,11 +191,19 @@ sub check_config
     }
 }
 
+# Remove whitespaces
+$test_run_tags =~ s/\s+//g;
+
+# propagate run tags to test
+if ($test_run_tags)
+  {
+    $test_args .= " --run_tags=" . $test_run_tags;
+  }
+
 # Are the tags required by the current test?
 if ($test_required_tags)
   {
-    # Remove whitespaces in both variables
-    $test_run_tags =~ s/\s+//g;
+    # Remove whitespaces
     $test_required_tags =~ s/\s+//g;
 
     # Create arrays
