@@ -59,6 +59,7 @@ link_pass_opts = %:set-var(link_pass_opts
   %{-gc-sections} %{gc-sections} %{-no-gc-sections} %{-hash-style*}
   # we always set -nostlib below so drop it but use it to avoid an error
   %{nostdlib:} %{no-pie:} %{pie} %{-no-dynamic-linker} %{-version-script*})
+  %{-wrap*}
 
 # linker arguments
 link_args =
