@@ -45,7 +45,8 @@ if ($nowrapper)
     exit($? == 69 ? 0 : $?);
   }
 
-my $timeout = $ENV{TEST_TIMEOUT} || 10;
+my $timeout = $ENV{TEST_TIMEOUT};
+$timeout = 10 unless defined $timeout;
 my $target = $ENV{TEST_TARGET};
 my $TAPPER_FD;
 my $pid = -1;
@@ -232,6 +233,7 @@ sub readline_timeout
 {
   my $handle = shift;
   my $timeout = shift;
+  $timeout = undef if $timeout == 0;
 
   my $idx = index($readbuffer, "\n");
   if ($idx < 0)
