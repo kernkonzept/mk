@@ -198,27 +198,53 @@ if (defined($test_required_tags))
     $test_run_tags =~ s/\s+//g;
     $test_required_tags =~ s/\s+//g;
 
-    # Convert both strings to arrays
-    my @test_forbidden_tags = map { s/^!(.*)/$1/; $_ } grep { /^!/ } split(/,/, $test_required_tags);
-    my @test_required_tags = grep { /^[^!]/} split(/,/, $test_required_tags);
-    my @test_run_tags = split(/,/, $test_run_tags);
+    # Create arrays
+    my @run_tags = split(",", $test_run_tags);
+    my @requirements = split(",", $test_required_tags);
 
-    # Remove empty elements (just in case)
-    @test_required_tags = grep { $_ ne '' } @test_required_tags;
-    @test_run_tags = grep { $_ ne '' } @test_run_tags;
-
-    # Check missing tags
-    my @tags_missing = array_minus(\@test_required_tags, \@test_run_tags);
-    if (scalar(@tags_missing) > 0)
+    # Parse run tags
+    my %parsed_run_tags;
+    foreach my $run_tag (@run_tags)
       {
-        exit_skip "requires additional run tags: " . join(", ", @tags_missing);
+        if ($run_tag =~ /^([A-Za-z0-9][A-Za-z0-9_-]*)(=([01yn]))?$/)
+          {
+            my $right_side = $3;
+            # If not = is specified assume 1
+            $right_side = 1 unless defined $2;
+            # map y/n to 1/0
+            my $value = { 0 => 0, 1 => 1, n => 0, y => 1 }->{$right_side};
+            $parsed_run_tags{$1} = 0+ $value;
+          }
+        else
+          {
+            exit_error "Invalid tag in TEST_RUN_TAGS: $run_tag\n";
+          }
       }
 
-    # Check forbidden tags
-    my @tags_forbidden = array_intersect(\@test_forbidden_tags, \@test_run_tags);
-    if (scalar(@tags_forbidden) > 0)
+    # Interpret test's tag requirements
+    my %conditions = (
+      ""  => [ sub { my $value = shift; return defined($value) && $value == 1; }, "set to 1" ],
+      "-" => [ sub { my $value = shift; return defined($value) && $value == 0; }, "set to 0" ],
+      "!" => [ sub { my $value = shift; return !defined($value) || $value == 0; }, "set to 0 or not specified" ],
+      "+" => [ sub { my $value = shift; return !defined($value) || $value == 1; }, "set to 1 or not specified" ],
+    );
+
+    foreach my $req (@requirements)
       {
-        exit_skip "not supported with run tags: " . join(", ", @tags_forbidden);
+        if ($req =~ /^([!+-]?)([A-Za-z0-9][A-Za-z0-9_-]*)/) # Is valid tag specification
+          {
+            my ($cb,$desc) = @{$conditions{$1}};
+            my $tag = $2;
+
+            if (!$cb->($parsed_run_tags{$tag}))
+              {
+                exit_skip "Running this test requires tag '$tag' to be $desc.\n";
+              }
+          }
+        else
+          {
+            exit_error "Invalid test tag specification: $req\n";
+          }
       }
   }
 

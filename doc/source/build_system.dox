@@ -337,13 +337,35 @@ TEST_WORKDIR is provided then TEST_LOGFILE is ignored as it is
 organized below workdir.
 
 \par `TEST_TAGS`
-Comma separated list of tags which have to be specified
-in order to run the test. Test will be skipped without error otherwise.
-Useful to mark tests, e.g. broken or slow.
-Tag names can basically contain any character except comma.
-Whitespace characters surrounding a tag name will be ignored.
-A tag starting with exclamation mark is checked to not appear
-in the specified run tags, otherwise the test is also skipped.
+
+List of conditions for tags provided during execution of a test. A tag
+can be set to 1, set to 0 or be unspecified via TEST_RUN_TAGS during
+execution. Therefore there are 4 possible conditions for a tag that can
+be specified in TEST_TAGS: tag, !tag, +tag and -tag. The following table
+shows the conditions they represent.
+
+TEST_RUN_TAGS \ TEST_TAGS | tag | !tag | +tag | -tag
+----------------------------------------------------
+tag or tag=1              |   y |      |    y |
+unspecified               |     |    y |    y |
+tag=0                     |     |    y |      |    y
+
+Example usage:
+
+The tag `long-running` is used by tests which take a long time and should
+be skipped by default. These tests are marked with the tag long-running
+unprefixed.
+
+The tag `hardware` is set to 1 at runtime when the tests will run on real
+hardware. Tests that must not run on real hardware are marked with
+`!hardware`.
+
+The tag `impl-def` is used by tests that test implementation details.
+They are run by default but can be excluded from execution by settings
+TEST_RUN_TAGS to impl-def=0. These tests are marked using `+impl-def`.
+
+If you want to specify multiple tag conditions they need to be separated
+with a comma.
 
 \par `TAPARCHIVE`
 Filename for an archive file to store the resulting TAP output.
@@ -411,34 +433,37 @@ or running one or more tests through the test harness
     prove -r test/t/amd64_amdfam10/l4f/l4re-core/
     prove -rv test/t/amd64_amdfam10/l4f/l4re-core/
 
-To run tests with tags (see `TEST_TAGS`), these tags need to be
-specified either in the environment variable `TEST_RUN_TAGS` or as
-arguments to the test.t files:
+TEST_TAGS allow for a way to include or exclude whole groups of tests
+during execution, primarily with prove. You can specify which tests to
+run at runtime using one of the following ways:
 
-    $ test/t/amd64_amdfam10/l4f/l4re-core/test_one.t --run-tags slow,gtest-shuffle
-    $ test/t/amd64_amdfam10/l4f/l4re-core/test_one.t -T slow,gtest-shuffle
-    $ prove -r test/t/amd64_amdfam10/l4f/l4re-core/ :: -T slow,gtest-shuffle
-    $ TEST_RUN_TAGS=slow,gtest-shuffle prove -r test/t/amd64_amdfam10/l4f/l4re-core/
+    $ test/t/amd64_amdfam10/l4f/l4re-core/test_one.t --run-tags slow,gtest-shuffle=0
+    $ test/t/amd64_amdfam10/l4f/l4re-core/test_one.t -T slow,gtest-shuffle=0
+    $ prove -r test/t/amd64_amdfam10/l4f/l4re-core/ :: -T slow,gtest-shuffle=0
+    $ TEST_RUN_TAGS=slow,gtest-shuffle=0 prove -r test/t/amd64_amdfam10/l4f/l4re-core/
 
-Without providing run tags, tests requiring certain tags are skipped:
+For each test tag requirements defined in the corresponding TEST_TAGS
+Makefile variable are tested. If the requirements for tags do not match
+the test is skipped. The SKIP message will provide insight why the test
+was skipped:
 
     $ make test
     ...
     test/t/amd64_amdfam10/test_one.t .... ok
-    test/t/amd64_amdfam10/test_two.t .... skipped: requires additional run tags: slow
+    test/t/amd64_amdfam10/test_two.t .... skipped: Running this test requires tag slow to be set to 1.
     test/t/amd64_amdfam10/test_three.t .. ok
 
 When tags are provided, the tests requiring those tags are now also
-executed, the tests that forbid them are skipped:
+executed while the tests that forbid them are skipped:
 
     $ TEST_RUN_TAGS=slow,gtest-shuffle
     $ make test
     ...
     test/t/amd64_amdfam10/test_one.t .... ok
     test/t/amd64_amdfam10/test_two.t .... ok
-    test/t/amd64_amdfam10/test_three.t .. skipped: not supported with run tags: gtest-shuffle
+    test/t/amd64_amdfam10/test_three.t .. skipped: Running this test requires tag gtest-shuffle to be set to 0 or not specified.
 
-Tests without any tags are always executed.
+For further details on how values in TEST_TAGS and TEST_RUN_TAGS interact, see the help text for TEST_TAGS.
 
 Running Tests in External Programs
 ----------------------------------
