@@ -8,6 +8,7 @@ use Pod::Usage;
 use File::Basename;
 use File::Temp "tempdir";
 use File::Path "make_path";
+use Scalar::Util qw(looks_like_number);
 
 my $help = 0;
 my $nowrapper = 0;
@@ -46,7 +47,7 @@ if ($nowrapper)
   }
 
 my $timeout = $ENV{TEST_TIMEOUT};
-$timeout = 10 unless defined $timeout;
+$timeout = 10 unless defined $timeout && looks_like_number($timeout);
 my $target = $ENV{TEST_TARGET};
 my $TAPPER_FD;
 my $pid = -1;
