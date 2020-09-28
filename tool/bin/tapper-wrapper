@@ -200,6 +200,8 @@ else
       }
   }
 
+$TAPPER_FD->autoflush(1);
+
 my $hard_timeout = 0+ ($ENV{TEST_HARD_TIMEOUT} || 0);
 if ($hard_timeout)
   {
