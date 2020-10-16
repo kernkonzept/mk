@@ -354,10 +354,6 @@ Makeconf.bid.local-helper:
 			$(if $(GCCIS_$(ARCH)_leon_f),GCCIS_$(ARCH)_leon),   \
 			echo $(v)=$(call $(v)_f,$(ARCH))                \
 			>>$(DROPSCONF_CONFIG_MK);)
-	$(VERBOSE)$(foreach v, crtbegin.o crtbeginS.o crtbeginT.o \
-	                       crtendS.o crtend.o, \
-			echo GCCLIB_FILE_$(v)=$(call GCCLIB_file_f,$(v))   \
-			>>$(DROPSCONF_CONFIG_MK);)
 	$(VERBOSE)$(foreach v, LD_GENDEP_PREFIX, echo $v=$($(v)) >>$(DROPSCONF_CONFIG_MK);)
 	$(VERBOSE)echo "HOST_SYSTEM=$(HOST_SYSTEM)" >>$(DROPSCONF_CONFIG_MK)
 	$(VERBOSE)# we need to call make again, because HOST_SYSTEM (set above) must be

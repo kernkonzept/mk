@@ -78,7 +78,7 @@ link_args =
   %{-dynamic-linker*}
   %(Link_Start) %o %{OBJ*:%*} %(Libs)
   %{static|static-pie:--start-group} %(Link_Libs)
-  %{!shared:%(libgcc);:%(libgcc_s)} %(libgcc_eh)
+  %{!shared:%(libgcc);:%(libgcc_s)} %:if-exists(%(libgcc_eh))
   %{static|static-pie:--end-group} %(Link_End)
   %{EL&EB}
   %{MD:%(generate_deps)} %:error-unused-options()
@@ -120,7 +120,7 @@ link_args_gcc =
       %:error(Link_DynLinker not specified, cannot link with shared libs.))}
   %{r|nostartfiles|nostdlib:;:%(Link_Start)} %o %(Libs)
   %{r|nodefaultlibs|nostdlib:;:%{static|static-pie:-Wl,--start-group}
-    %(Link_Libs) {!r:%{!shared:%(libgcc);:%(libgcc_s)} %(libgcc_eh)
+    %(Link_Libs) {!r:%{!shared:%(libgcc);:%(libgcc_s)} %:if-exists(%(libgcc_eh))
     %{static|static-pie:-Wl,--end-group}}}
   %{r|nostartfiles|nostdlib:;:%(Link_End)}
   %{!shared:%(libgcc);:%(libgcc_s)}
