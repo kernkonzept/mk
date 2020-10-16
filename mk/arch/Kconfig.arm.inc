@@ -43,6 +43,11 @@ config CPU_ARM_ARMV7A
 	bool "ARMv7A type CPU"
 	depends on BUILD_ARCH_arm
 
+config CPU_ARM_ARMV7R
+	bool "ARMv7R type CPU"
+	depends on BUILD_ARCH_arm
+	select ARCH_NO_MMU
+
 endchoice
 
 config CPU
@@ -56,6 +61,7 @@ config CPU
 	default "armv6t2"  if CPU_ARM_ARMV6T2
 	default "armv6zk"  if CPU_ARM_ARMV6ZK
 	default "armv7a"   if CPU_ARM_ARMV7A
+	default "armv7r"   if CPU_ARM_ARMV7R
 
 config CPU_ARMV6KPLUS
 	bool
