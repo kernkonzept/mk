@@ -13,6 +13,10 @@ _L4DIR_MK_LIB_MK=y
 
 ROLE = lib.mk
 
+ifeq ($(CONFIG_MMU),)
+TARGET := $(filter-out %.so,$(TARGET))
+endif
+
 include $(L4DIR)/mk/Makeconf
 
 # define INSTALLDIRs prior to including install.inc, where the install-
