@@ -265,6 +265,15 @@ REQUIRES_LIBS += $(REQUIRES_LIBS_$(ARCH)) $(call BID_mode_var,REQUIRES_LIBS)
 LDFLAGS	+= $(strip $(LDFLAGS_$(OSYSTEM)) $(LDFLAGS_$@) $(LDFLAGS_$@_$(OSYSTEM)))
 CARCHFLAGS += $(CARCHFLAGS_$(ARCH)) $(CARCHFLAGS_$(ARCH)_$(CPU))
 
+CFLAGS        += $(CFLAGS-y)
+CXXFLAGS      += $(CXXFLAGS-y)
+CPPFLAGS      += $(CPPFLAGS-y)
+SRC_C         += $(SRC_C-y)
+SRC_CC        += $(SRC_CC-y)
+SRC_S         += $(SRC_S-y)
+DEFINES       += $(DEFINES-y)
+REQUIRES_LIBS += $(REQUIRES_LIBS-y)
+
 # ---------------------------------
 
 BID_MISSING_LIBS :=
@@ -457,7 +466,6 @@ CFLAGS  += $(CFLAGS_C99)
 CFLAGS  += $(CFLAGS_L4_GENERIC)
 DEFINES += $(call bid_flag_variants,DEFINES)
 DEFINES += -DSYSTEM_$(subst -,_,$(SYSTEM)) -DARCH_$(ARCH) -DCPUTYPE_$(CPU) -DL4API_$(L4API)
-DEFINES += $(DEFINES-y)
 DEFINES += -D_GNU_SOURCE $(if $(L4API),,-DL4_MINIMAL_LIBC)
 ifdef DEBUG
 ifneq (,$(filter 0 n N, $(DEBUG)))
@@ -503,7 +511,6 @@ CXXFLAGS+= $(OPTS) $(filter-out $(foreach w,-Wbad-function-cast -Wstrict-prototy
                                             $(w) $(patsubst -W%,-Wno-%,$(w))),\
                                 $(WARNINGS))
 CXXFLAGS+= $(GCCWNONOEXCEPTTYPE) $(GCCWNOPSABI)
-CXXFLAGS+= $(CXXFLAGS-y)
 CXXFLAGS+= -fno-common
 CXXFLAGS+= $(CXXFLAGS_L4_GENERIC)
 
