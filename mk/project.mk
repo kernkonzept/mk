@@ -1,5 +1,4 @@
 include $(L4DIR)/mk/Makeconf
-BID_PRJ_DIR_MAX_DEPTH ?= 4
 
 ifneq ($(S),)
 # handle explicit subdir builds here
@@ -21,9 +20,6 @@ $(filter $(BID_DCOLON_TARGETS),$(MAKECMDGOALS)):: $(ALL_SUBDIRS)
 
 else
 # handle normal targets
-
-
-find_prj_dirs = $(shell $(L4DIR)/mk/pkgfind $(1) $(BID_PRJ_DIR_MAX_DEPTH))
 
 # all our packages
 ifeq ($(ALL_SUBDIRS),)

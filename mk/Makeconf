@@ -133,6 +133,10 @@ PAGER		?= less
 DISASM_CMD      ?= $(OBJDUMP) -lCSd $(1) | $(PAGER)
 IMAGES_DIR      ?= $(OBJ_BASE)/images
 
+# Tools to find packages in projects
+BID_PRJ_DIR_MAX_DEPTH ?= 4
+find_prj_dirs = $(shell $(L4DIR)/mk/pkgfind $(1) $(BID_PRJ_DIR_MAX_DEPTH))
+
 # functions that are handy
 absfilename_target_dir_needs_to_exist = $(foreach w,$(1),$(addsuffix /$(notdir $(w)),$(shell cd $(dir $(w)) 2>/dev/null&&$(PWDCMD))))
 absfilename     = $(abspath $(1))

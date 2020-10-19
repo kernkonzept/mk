@@ -250,3 +250,5 @@ config EXPERIMENTAL
 	  Use with caution!
 
 endmenu
+
+# PKG_KCONFIG

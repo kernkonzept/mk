@@ -278,11 +278,19 @@ $(KCONFIG_FILE)%platform_types $(KCONFIG_FILE)%platforms $(KCONFIG_FILE)%platfor
 	$(foreach f,$^,$(file >>$(KCONFIG_FILE_DEPS).platforms,$(f):))
 	$(VERBOSE)MAKE="$(MAKE)"; $(L4DIR)/tool/bin/gen_kconfig_includes $(KCONFIG_FILE) $(KCONFIG_PLATFORMS)
 
-$(KCONFIG_FILE): $(KCONFIG_FILE_SRC) Makefile $(KCONFIGS_ARCH) $(L4DIR)/tool/bin/gen_kconfig\
+# Kconfig.L4 files must be next to the Control file
+PKG_KCONFIG_L4_FILES := $(wildcard $(addsuffix /Kconfig.L4,$(call find_prj_dirs,$(SRC_DIR))))
+
+$(KCONFIG_FILE): $(KCONFIG_FILE_SRC) $(PKG_KCONFIG_L4_FILES) Makefile \
+                 $(KCONFIGS_ARCH) $(L4DIR)/tool/bin/gen_kconfig \
                  | $(KCONFIG_FILE).platform_types $(KCONFIG_FILE).platforms $(KCONFIG_FILE).platforms.list
 	$(file >$(KCONFIG_FILE_DEPS),$(KCONFIG_FILE): $^)
 	$(foreach f,$^,$(file >>$(KCONFIG_FILE_DEPS),$(f):))
-	$(VERBOSE)$(L4DIR)/tool/bin/gen_kconfig $(KCONFIG_FILE_SRC) $(KCONFIG_FILE) $(KCONFIGS_ARCH)
+	$(VERBOSE)$(L4DIR)/tool/bin/gen_kconfig \
+	         --kconfig-src-file $(KCONFIG_FILE_SRC) \
+	         --kconfig-obj-file $(KCONFIG_FILE) \
+	         $(foreach f,$(KCONFIGS_ARCH),--kconfig-arch-file $(f)) \
+	         $(foreach f,$(PKG_KCONFIG_L4_FILES),--kconfig-pkg-file $(f))
 
 -include $(KCONFIG_FILE_DEPS) $(KCONFIG_FILE_DEPS).platforms
 
