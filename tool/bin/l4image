@@ -545,7 +545,7 @@ sub op_launch
 my $help_module_add =
   "  --file                File to add as a module\n".
   "  --name                Name of the module\n".
-  "  --type                Type of the module, use for: kernel sigma0 moe\n".
+  "  --type                Type of the module, use for: kernel sigma0 roottask\n".
   "  --cmdline             Command line of the module\n";
 
 my $help_module_find =
