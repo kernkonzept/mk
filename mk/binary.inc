@@ -139,7 +139,7 @@ install relink scrub:: $(foreach arch,$(TARGET_SYSTEMS),\
                                           $(OBJ_DIR)/OBJ-$(arch)/$(BID_OBJ_Makefile))
 	$(if $(TARGET_SYSTEMS),  $(VERBOSE)set -e ; \
 	    for d in $(TARGET_SYSTEMS) ; do \
-	    	PWD=$OBJ-$$d $(MAKE) -C $(OBJ_DIR)/OBJ-$$d -f $(BID_OBJ_Makefile) \
+	        PWD=$(OBJ_DIR)/OBJ-$$d $(MAKE) -C $(OBJ_DIR)/OBJ-$$d -f $(BID_OBJ_Makefile) \
 			$@ ; done )
 
 .PHONY: pre-obj
