@@ -114,7 +114,7 @@ SYSTEM_TO_ARCH = $(shell echo $(1)|$(SED) -e 's/[_-].*//')
 SYSTEM_TO_CPU = $(shell echo $(1)|$(SED) -ne 's/[^-_]*_\([^-]*\).*/\1/p')
 SYSTEM_TO_L4API = $(shell echo $(1)|$(SED) -ne 's/.*-\(.*\)/\1/p')
 
-$(foreach sys,$(TARGET_SYSTEMS),$(OBJ_DIR)/OBJ-$(sys)/$(BID_OBJ_Makefile)):$(OBJ_DIR)/OBJ-%/$(BID_OBJ_Makefile):$(OBJ_DIR)/.general.d
+$(foreach sys,$(TARGET_SYSTEMS),$(OBJ_DIR)/OBJ-$(sys)/$(BID_OBJ_Makefile)):$(OBJ_DIR)/OBJ-%/$(BID_OBJ_Makefile):$(OBJ_DIR)/.general.d $(L4DIR_ABS)/mk/binary.inc
 	@install -d $(dir $@)
 	@echo 'L4DIR=$(L4DIR_ABS)'>$@
 	@echo 'OBJ_BASE=$(OBJ_BASE)'>>$@
