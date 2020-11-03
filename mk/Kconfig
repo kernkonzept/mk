@@ -3,6 +3,9 @@ mainmenu "L4Re Configuration"
 config ARCH_ENABLE_STACK_PROTECTOR
 	bool
 
+config ARCH_NO_MMU
+	bool
+
 choice
 	prompt "Target Architecture"
 #  ARCH_CHOICE_DEFAULT
@@ -83,6 +86,11 @@ endmenu # Custom platform
 endif
 
 source "Kconfig.generated.platform_types"
+
+config MMU
+	bool
+	default y
+	depends on !ARCH_NO_MMU
 
 config USE_DROPS_STDDIR
 	def_bool n
