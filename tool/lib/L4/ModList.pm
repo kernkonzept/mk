@@ -566,7 +566,8 @@ sub search_file_or_die($$)
   my $file = shift;
   my $paths = shift;
   my $f = search_file($file, $paths);
-  error "Could not find '$file' with path '$paths'\n" unless defined $f;
+  error "Could not find\n  '$file'\n\nwithin paths\n  " .
+        join("\n  ", split(/[:\s]+/, $paths)) . "\n" unless defined $f;
   $f;
 }
 
