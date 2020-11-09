@@ -192,7 +192,7 @@ sub check_config
 }
 
 # Are the tags required by the current test?
-if (defined($test_required_tags))
+if ($test_required_tags)
   {
     # Remove whitespaces in both variables
     $test_run_tags =~ s/\s+//g;
