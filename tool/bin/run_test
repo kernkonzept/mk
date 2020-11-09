@@ -323,6 +323,7 @@ if ($ned_cfg and $roottask eq 'moe')
     $roottask .= " $moe_args rom/$ned_cfg_name";
     push(@module_list, "ned");
     push(@module_list, "test_env.lua");
+    push(@module_list, "lib_test.lua");
     push(@module_list, $ned_cfg);
   }
 elsif ($roottask eq 'moe')
