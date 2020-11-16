@@ -114,7 +114,8 @@ all::
 	@mkdir -p "$(BUILDDIR_TO_CREATE)"
 	@cp $(DROPSCONF_DEFCONFIG) $(BUILDDIR_TO_CREATE)/.kconfig
 	@echo CONFIG_PLATFORM_TYPE_$(PT)=y >> $(BUILDDIR_TO_CREATE)/.kconfig
-	@$(MAKE) B= BUILDDIR_TO_CREATE= O=$(BUILDDIR_TO_CREATE) olddefconfig
+	@$(MAKE) B= BUILDDIR_TO_CREATE= O=$(BUILDDIR_TO_CREATE) olddefconfig \
+	  || ( $(RM) -r "$(BUILDDIR_TO_CREATE)" ; exit 1 )
 	@echo "done."
 else
 
