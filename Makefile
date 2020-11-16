@@ -17,8 +17,7 @@ BUILD_TOOLS    = bash bison flex gawk perl tput \
 BUILD_TOOLS_pkg/uvmm  := dtc
 
 CMDS_WITHOUT_OBJDIR := help checkbuild checkbuild.% up update check_build_tools
-CMDS_NO_PROJECT_MK  := $(CMDS_WITHOUT_OBJDIR) \
-                       listplatforms listentries
+CMDS_PROJECT_MK     := all clean cleanall install scrub cont doc help
 
 # our default target is all::
 all::
@@ -73,16 +72,15 @@ MAKECONFLOCAL		= /dev/null
 
 
 # Use project.mk if we use the default goal (MAKECMDGOALS is empty)
-# or if any our goals are not CMDS_NO_PROJECT_MK goals.
-# If all goals are CMDS_NO_PROJECT_MK use 'Makeconf', that saves us
+# or any of the goals listed in CMDS_PROJECT_MK, this saves us
 # from running the time consuming project.mk find operations.
 ifeq ($(MAKECMDGOALS),)
   include $(L4DIR)/mk/project.mk
 else
-  ifeq ($(filter-out $(CMDS_NO_PROJECT_MK),$(MAKECMDGOALS)),)
-    include $(L4DIR)/mk/Makeconf
-  else
+  ifneq ($(filter $(CMDS_PROJECT_MK),$(MAKECMDGOALS)),)
     include $(L4DIR)/mk/project.mk
+  else
+    include $(L4DIR)/mk/Makeconf
   endif
 endif
 
