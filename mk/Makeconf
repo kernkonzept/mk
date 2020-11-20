@@ -37,7 +37,7 @@ $(if $(ROLE),$(OBJ_DIR)/.general.d: $(L4DIR)/mk/$(ROLE))
 
 strip_quotes = $(patsubst "%,%,$(patsubst %",%,$(1)))#"
 
-CROSS_COMPILE    ?= $(CROSS_COMPILE_$(ARCH))
+CROSS_COMPILE    ?= $(if $(CROSS_COMPILE_$(ARCH)_$(CPU)),$(CROSS_COMPILE_$(ARCH)_$(CPU)),$(CROSS_COMPILE_$(ARCH)))
 
 
 OFORMAT           = $(OFORMAT_$(ARCH))
