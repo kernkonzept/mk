@@ -384,6 +384,12 @@ if ($test_setup)
 
 my @runargs = qw(-serial stdio -nographic -monitor none);
 
+# set default machine type for all test on x86/64 to q35.
+if ($arch =~ /(amd64|x86)/)
+  {
+    push(@runargs, qw(-M q35));
+  }
+
 close($test_modules);
 close($test_env_cfg) if ($test_env_cfg);
 my $module_search_path=join(":", @modulepaths);
