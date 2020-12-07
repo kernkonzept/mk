@@ -30,8 +30,6 @@ unless (defined $isofilename) {
 
 my $tmpdir    = tempdir(CLEANUP => 1); 
 
-system("mkdir -p \"$tmpdir\"");
-
 L4::Grub::prepare_grub1_dir($tmpdir);
 
 open(A, ">$tmpdir/boot/grub/menu.lst")
