@@ -1,10 +1,11 @@
 
 package L4::ModList;
 use Exporter;
+use File::Basename;
 use warnings;
 use vars qw(@ISA @EXPORT);
 @ISA    = qw(Exporter);
-@EXPORT = qw(get_module_entry search_file get_entries);
+@EXPORT = qw(get_module_entry search_file get_entries merge_entries);
 
 my @internal_searchpaths;
 
@@ -436,6 +437,7 @@ sub get_module_entry($$)
            modaddr => $modaddr_title || $modaddr_global,
            type    => 'MB',
            files   => [ @files ],
+           entry   => $entry_to_pick,
          );
 }
 
@@ -655,7 +657,7 @@ sub generate_grub1_entry($$%)
   foreach my $m (@{$entry{mods}})
     {
       $c = $m->{cmdline};
-      $c =~ s/^\S*\/([^\/]+\s*)/$1/;
+      $c =~ s/^\S+/$m->{unique_short_filepath}/;
       $s .= "module $prefix/$c\n";
     }
   $s;
@@ -671,7 +673,7 @@ sub generate_grub2_entry($$%)
   # basename of first path
   my ($c, $args) = split(/\s+/, $entry{bootstrap}{cmdline}, 2);
   $args = '' unless defined $args;
-  my $bn = (reverse split(/\/+/, $c))[0];
+  my $bn = $entry{bootstrap}{unique_short_filepath};
   my $s = "menuentry \"$entryname\" {\n";
 
   if (entry_is_linux(%entry))
@@ -680,7 +682,7 @@ sub generate_grub2_entry($$%)
       $s .= "  linux $prefix/$bn $args\n";
       if (defined $entry{initrd})
         {
-          $bn = (reverse split(/\/+/, $entry{initrd}{cmdline}))[0];
+          $bn = $m->{unique_short_filepath};
           my $c = $entry{initrd}{cmdline};
           $c =~ s/^\S*(\/[^\/]+\s*)/$1/;
           $s .= "  initrd $prefix$c\n";
@@ -692,8 +694,7 @@ sub generate_grub2_entry($$%)
       $s .= "  multiboot $prefix/$bn $prefix/$bn $args\n";
       foreach my $m (@{$entry{mods}})
         {
-          # basename
-          $bn = (reverse split(/\/+/, $m->{command}))[0];
+          $bn = $m->{unique_short_filepath};
           my $c = $m->{cmdline};
           $c =~ s/^\S*(\/[^\/]+\s*)/$1/;
           $s .= "  echo Loading '$prefix/$bn $c'\n";
@@ -702,6 +703,74 @@ sub generate_grub2_entry($$%)
     }
   $s .= "  echo Done, booting...\n";
   $s .= "}\n";
+}
+
+# Merge multiple entries such that we only need to copy a file
+# once to a boot medium (e.g. ISO file, target, etc.)
+# For that, the entries will be augmented with additional entries 'file' and
+# 'unique_short_filepath'.
+sub merge_entries
+{
+  my $module_path = shift;
+  my $uncompressdir = shift;
+  my @entries = @_;
+
+  my %f;
+  foreach my $e (@entries)
+    {
+      foreach my $mod (@{$e->{mods}}, $e->{bootstrap})
+        {
+          my $file = $mod->{command};
+          my $filepath;
+          if (defined $uncompressdir)
+            {
+              # generate a file-path for the uncompressed file that is as
+              # unique as the other file-path (same path -> same content)
+              (my $ufn = $file) =~ s,/,_,g;
+              $filepath = copy_file_uncompressed_or_die($file, $module_path,
+                                                        $uncompressdir, $ufn);
+            }
+          else
+            {
+              $filepath = search_file_or_die($file, $module_path);
+            }
+          my $bn = basename($file);
+          push @{$f{$bn}}, { fp => $filepath, entry => $e->{entry} };
+          $mod->{file} = $filepath;
+        }
+    }
+
+  my %r;
+  foreach my $bn (keys %f)
+    {
+      my %tmp;
+      foreach my $e (@{$f{$bn}})
+        {
+          push @{$tmp{$e->{fp}}}, $e->{entry};
+        }
+
+      if (keys %tmp == 1)
+        {
+          $r{$_} = $bn foreach keys %tmp;
+        }
+      else
+        {
+          my $subdir = 1;
+          foreach my $fp (keys %tmp)
+            {
+              $r{$fp} = "$subdir/$bn";
+              $subdir++;
+            }
+        }
+    }
+
+  foreach my $e (@entries)
+    {
+      foreach my $mod (@{$e->{mods}}, $e->{bootstrap})
+        {
+          $mod->{unique_short_filepath} = $r{$mod->{file}};
+        }
+    }
 }
 
 return 1;

@@ -17,7 +17,8 @@ BEGIN { unshift @INC, $ENV{L4DIR}.'/tool/lib'
 use L4::ModList;
 use L4::Grub;
 use File::Temp qw/tempdir/;
-use File::Basename qw/basename/;
+use File::Basename qw/basename dirname/;
+use File::Copy;
 
 my $qemu         = $ENV{QEMU}         || 'qemu';
 my $module_path  = $ENV{SEARCHPATH}   || ".";
@@ -67,58 +68,64 @@ my %files;
 
 my $x86_based = ($ENV{ARCH} eq 'x86' or $ENV{ARCH} eq 'amd64') ? 1 : 0;
 
+my @entries;
 foreach my $entryname (@ARGV)
   {
     print "Processing entry '$entryname'\n";
     my %entry = L4::ModList::get_module_entry($modulesfile, $entryname);
+    push @entries, \%entry;
+  }
+
+L4::ModList::merge_entries($module_path, $unzip_tmp, @entries);
+
+foreach my $e (@entries)
+  {
+    my $entryname = $e->{entry};
     print GRUB1 L4::ModList::generate_grub1_entry($opts{grubentrytitle} || $entryname,
                                                   $opts{grubpathprefix},
-                                                  %entry), "\n";
+                                                  %$e), "\n";
     print GRUB2 L4::ModList::generate_grub2_entry($opts{grubentrytitle} || $entryname,
                                                   $opts{grubpathprefix},
-                                                  %entry);
+                                                  %$e);
 
-    my @mods = @{$entry{mods}};
+    my @mods = @{$e->{mods}};
     my @args;
 
     foreach (@mods) {
       $_->{cmdline} =~ /^(\S+)\s*(.*)/;
-
-      $files{$_->{command}} = basename($1);
       (my $a = $2) =~ s/,/,,/g;
-
-      push @args, $files{$_->{command}}.' '.$a;
+      push @args, $_->{unique_short_filepath}.' '.$a;
     }
 
-    L4::ModList::get_file_uncompressed_or_die($_->{command}, $module_path,
-                                              $unzip_tmp)
-      foreach @mods;
-
-    my $kernel_w_path;
+    my $kernel;
     my $initrd_arg = '';
     if ($x86_based) {
-      $kernel_w_path = L4::ModList::search_file_or_die($entry{bootstrap}{command}, $module_path);
       $initrd_arg = "                  -initrd \"".join(',', @args)."\" \\\n";
+      $kernel = $e->{bootstrap}{unique_short_filepath};
     } else {
       die "Need to specify IMAGE_FILE environment variable for non-x86 use."
         unless defined $image_file;
       print STDERR "$image_file\n";
-      $kernel_w_path = $image_file;
+      ($kernel = $image_file) =~ s@.*/@@;
     }
-    (my $kernel = $kernel_w_path) =~ s@.*/@@;
 
     print QEMU
       "     $entryname) $qemu -kernel $kernel \\\n".
-      "                  -append \"$entry{bootstrap}{cmdline}\" \\\n".
+      "                  -append \"$e->{bootstrap}{cmdline}\" \\\n".
       $initrd_arg.
       "                  $qemu_options \"\$@\";;\n";
 
-    $files{$kernel_w_path} = $kernel;
+    foreach (@{$e->{mods}}, $e->{bootstrap})
+      {
+        my $usf = $_->{unique_short_filepath};
+        if (! -e $targetdir."/".$usf)
+          {
+            my $subpath = $targetdir."/".dirname($usf);
+            mkdir $subpath || die "Could not mkdir $subpath: $!";
+            copy($_->{file}, $targetdir."/".$usf);
+          }
+      }
   }
-
-L4::ModList::copy_file_uncompressed_or_die($_, $module_path,
-                                           $targetdir, $files{$_})
-  foreach keys %files;
 
 print QEMU "  *) echo \"Give entry:\"\n";
 print QEMU map { "     echo \"   $_\"\n" } @ARGV;
