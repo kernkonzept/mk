@@ -15,13 +15,17 @@ LIBCXX_INCLUDE = -I$(OBJ_BASE)/include/contrib/libstdc++-v3        \
 
 #############################################################################
 
+STATIC_PIE_LDFLAGS = $(if $(or $(CONFIG_BID_PIE_ALL), \
+                               $(and $(CONFIG_BID_PIE_VOLUNTARY),$(BID_CAN_PIE))), \
+                       -static-pie,-static)
+
 ################################
 # sigma0 mode
 ################################
 
 BID_SUPPORTED_all_sigma0        = y
 LIBCINCDIR_all_sigma0           = $(LIBC_INCLUDE)
-LDFLAGS_all_sigma0              = -static -gc-sections
+LDFLAGS_all_sigma0              = $(STATIC_PIE_LDFLAGS) -gc-sections
 
 
 ################################
@@ -31,7 +35,7 @@ LDFLAGS_all_sigma0              = -static -gc-sections
 BID_SUPPORTED_all_static        = y
 LIBCINCDIR_all_static           = $(LIBCXX_INCLUDE) $(LIBC_INCLUDE)
 REQUIRES_LIBS_all_static        = stdlibs
-LDFLAGS_all_static              = -static -gc-sections
+LDFLAGS_all_static              = $(STATIC_PIE_LDFLAGS) -gc-sections
 
 #####################################
 # shared mode -- programs are linked against shared libs

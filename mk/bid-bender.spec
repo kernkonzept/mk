@@ -67,17 +67,20 @@ link_args =
   %:read-pc-file(%(pc_file_dir) %{PC*:%*})
   %{nocrt|r:;:%:read-pc-file(%(pc_file_dir) ldscripts)}
   %{o} -nostdlib %{static:-static;:--eh-frame-hdr} %{shared}
+  %{static-pie:-static -pie --no-dynamic-linker -z text}
   %(link_pass_opts) %:foreach(%%{: -L%%*} %(l4libdir)) %{T*&L*}
-  %{!r:%{!dT:-dT %:search(main_%{static:stat;shared:rel;:dyn}.ld %(libdir));dT}}
-  %{r|shared|static|-dynamic-linker*:;:--dynamic-linker=%(Link_DynLinker)
+  %{!r:%{!dT:-dT %:search(main_%{static:stat;static-pie:pie;shared:rel;:dyn}.ld
+                          %(libdir));dT}}
+  %{r|shared|static|static-pie|-dynamic-linker*:;:
+    --dynamic-linker=%(Link_DynLinker)
     %(Link_DynLinker:;:
       %:error(Link_DynLinker not specified, cannot link with shared libs.))}
   %{-dynamic-linker*}
   %(Link_Start) %o %{OBJ*:%*} %{pie:%(Libs_pic);:%(Libs)}
-  %{static:--start-group} %{pie:%(Link_Libs_pic);:%(Link_Libs)}
+  %{static|static-pie:--start-group} %{pie:%(Link_Libs_pic);:%(Link_Libs)}
   %{!shared:%(libgcc);:%(libgcc_s)}
   %(libgcc_eh) %{!shared:%(libgcc);:%(libgcc_s)}
-  %{static:--end-group} %(Link_End)
+  %{static|static-pie:--end-group} %(Link_End)
   %{EL&EB}
   %{MD:%(generate_deps)} %:error-unused-options()
 
@@ -102,20 +105,24 @@ link_pass_opts_gcc   = %:set-var(link_pass_opts_gcc %{Wl,*&Xlinker*})
 
 link_args_gcc =
   %(gcc_arg_opts)%(link_output_args_gcc)
-  %{pie:}%{no-pie:}%{nostdlib:}%{static:}%{shared:}%{nostdinc:}
+  %{pie:}%{no-pie:}%{nostdlib:}%{static:}%{static-pie:}%{shared:}%{nostdinc:}
   %{std*:} %{m*:}
   %:read-pc-file(%(pc_file_dir) %{PC*:%*})
   %{r}
   %{r|nocrt|nostartfiles|nostdlib:;:%:read-pc-file(%(pc_file_dir) ldscripts)}
   %{o} -nostdlib %{static:-static;:-Wl,--eh-frame-hdr} %{shared}
+  %{static-pie:-static -pie --no-dynamic-linker -z text}
   %(link_pass_opts_gcc) %{W*:} %{f*:} %{u*} %{O*} %{g*} %{T*&L*}
-  %{!r:%{!dT:-Wl,-dT,%:search(main_%{static:stat;shared:rel;:dyn}.ld %(libdir))}}
-  %{r|shared|static|-dynamic-linker*:;:-Wl,--dynamic-linker=%(Link_DynLinker)
+  %{!r:%{!dT:-Wl,-dT,%:search(main_%{static:stat;static-pie:pie;shared:rel;:dyn}.ld
+                              %(libdir))}}
+  %{r|shared|static|static-pie|-dynamic-linker*:;:
+    -Wl,--dynamic-linker=%(Link_DynLinker)
     %(Link_DynLinker:;:
       %:error(Link_DynLinker not specified, cannot link with shared libs.))}
   %{r|nostartfiles|nostdlib:;:%(Link_Start)} %o %(Libs)
-  %{r|nodefaultlibs|nostdlib:;:%{static:-Wl,--start-group} %(Link_Libs)
-    %{!r:%{!shared:%(libgcc);:%(libgcc_s)} %(libgcc_eh) %{static:-Wl,--end-group}}}
+  %{r|nodefaultlibs|nostdlib:;:%{static|static-pie:-Wl,--start-group} %(Link_Libs)
+    %{!r:%{!shared:%(libgcc);:%(libgcc_s)} %(libgcc_eh)
+      %{static|static-pie:-Wl,--end-group}}}
   %{r|nostartfiles|nostdlib:;:%(Link_End)}
   %{!shared:%(libgcc);:%(libgcc_s)}
   %{EL&EB}

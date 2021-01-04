@@ -441,6 +441,8 @@ CFLAGS_C99 ?= -std=gnu99
 
 ifneq ($(MODE),host)
 CFLAGS_L4_GENERIC += $(CCXX_FLAGS) $(CARCHFLAGS) $(GCCSTACKPROTECTOROPT)
+CFLAGS_L4_NOPIC   += $(call BID_mode_var,NOPICFLAGS)
+CFLAGS_L4_PIC     += $(PICFLAGS)
 endif
 
 
@@ -482,6 +484,8 @@ CXXFLAGS_L4_GENERIC += $(CARCHFLAGS) $(CCXX_FLAGS)
 CXXFLAGS_L4_GENERIC += $(if $(GCC_HAS_ATOMICS),-DL4_GCC_HAS_ATOMICS)
 CXXFLAGS_L4_GENERIC += $(GCCSTACKPROTECTOROPT)
 CXXFLAGS_L4_GENERIC += -fuse-cxa-atexit
+CXXFLAGS_L4_NOPIC   += $(call BID_mode_var,NOPICFLAGS)
+CXXFLAGS_L4_PIC     += $(PICFLAGS)
 endif
 
 CXXFLAGS+= $(if $(CONFIG_BID_GCC_OMIT_FP),-fomit-frame-pointer,-fno-omit-frame-pointer)
@@ -498,6 +502,7 @@ FFLAGS  += $(OPTS)
 FFLAGS  += $(call bid_flag_variants,FFLAGS)
 FFLAGS  += $(filter-out $(GCCPREFIXOPT),$(CFLAGS_L4_GENERIC))
 
+NOPICFLAGS += $(if $(CONFIG_BID_PIE),-fPIE)
 PICFLAGS += -fPIC -U__PIC__ -D__PIC__=1
 
 # select NOPIEFLAGS and NOPICFLAGS, use the most specific mode variable
