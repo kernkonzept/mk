@@ -681,7 +681,7 @@ checkbuild: $(if $(USE_CONFIGS),$(addprefix checkbuild.,$(USE_CONFIGS)),$(patsub
 report:
 	@echo -e $(EMPHSTART)"============================================================="$(EMPHSTOP)
 	@echo -e $(EMPHSTART)" Note, this report might disclose private information"$(EMPHSTOP)
-	@echo -e $(EMPHSTART)" Please review (and edit) before sending it to public lists"$(EMPHSTOP)
+	@echo -e $(EMPHSTART)" Please review (and edit) before making it public"$(EMPHSTOP)
 	@echo -e $(EMPHSTART)"============================================================="$(EMPHSTOP)
 	@echo
 	@echo "make -v:"
@@ -757,8 +757,11 @@ report:
 	fi
 	@lsb_release -a || true
 	@echo
-	@echo "Running as PID"
-	@id -u || true
+	@echo "Running as PID / User"
+	@id || true
+	@echo
+	@echo Locale info:
+	@locale
 	@echo
 	@echo "Archive information:"
 	@echo "SVN:"
@@ -791,9 +794,9 @@ report:
 	@echo Configuration:
 	@for i in $(OBJ_DIR)/.config.all $(OBJ_DIR)/.kconfig   \
 	          $(OBJ_DIR)/Makeconf.local                    \
-		  $(L4DIR_ABS)/Makeconf.local                  \
-		  $(OBJ_DIR)/conf/Makeconf.boot                \
-		  $(L4DIR_ABS)/conf/Makeconf.boot; do          \
+	          $(L4DIR_ABS)/Makeconf.local                  \
+	          $(OBJ_DIR)/conf/Makeconf.boot                \
+	          $(L4DIR_ABS)/conf/Makeconf.boot; do          \
 	  if [ -e "$$i" ]; then                                \
 	    echo "______start_______________________________:";\
 	    echo "$$i:";                                       \
@@ -805,7 +808,7 @@ report:
 	done
 	@echo -e $(EMPHSTART)"============================================================="$(EMPHSTOP)
 	@echo -e $(EMPHSTART)" Note, this report might disclose private information"$(EMPHSTOP)
-	@echo -e $(EMPHSTART)" Please review (and edit) before sending it to public lists"$(EMPHSTOP)
+	@echo -e $(EMPHSTART)" Please review (and edit) before making it public"$(EMPHSTOP)
 	@echo -e $(EMPHSTART)"============================================================="$(EMPHSTOP)
 
 help::
