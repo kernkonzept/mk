@@ -102,6 +102,7 @@ sub get_file_type
   my $fn = shift;
 
   open(my $fd, $fn) || return (FILE_TYPE_ERROR, "Cannot open '$fn': $!");
+  binmode $fd;
 
   my $buf;
 
@@ -151,6 +152,7 @@ sub fill_module
     {
       return ( error => "Failed to open '$m_file': $!" );
     }
+  binmode $ff;
   $md5uncomp->addfile($ff);
   close $ff;
   $d{md5sum_compr}   = $md5uncomp->hexdigest;
@@ -347,6 +349,7 @@ sub process_image
     }
 
   open(my $fd, "<$fn") || return("Could not open '$fn': $!");
+  binmode $fd;
 
   my ($image_info_file_pos, $error_text) = find_image_info($fd);
   error($error_text) if defined $error_text;
@@ -564,6 +567,7 @@ sub import_modules
           die "'name' in mod$i contains path elements" if $mods[$i]{name} =~ m,/,;
           my $modfn = "$file_store_path/$mods[$i]{name}";
           open(my $filefd, ">$modfn") || die "Cannot open $modfn for writing: $!";
+          binmode $filefd;
 
           my $buf;
           my $r;
@@ -816,6 +820,7 @@ sub export_modules
 
       my $fn = $stor{files}[$i];
       open(my $o, $fn) || die "Cannot open $fn: $!";
+      binmode $o;
 
       my $sz = -s $fn;
       my $buf;
