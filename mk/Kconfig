@@ -249,4 +249,38 @@ config EXPERIMENTAL
 
 	  Use with caution!
 
+choice
+	prompt "Position independent executables"
+	depends on EXPERIMENTAL
+	default BID_PIE_NONE
+
+config BID_PIE_NONE
+	bool "no"
+	help
+	  Do not support position independent executables.
+
+config BID_PIE_VOLUNTARY
+	bool "selected packages"
+	help
+	  Build position independent executables where beneficial. All
+	  libraries are built as position independent. Executables are only
+	  linked position independent if the package indicated to do so.
+	  Enabling this option will add some executable size and runtime
+	  overhead.
+
+config BID_PIE_ALL
+	bool "everything"
+	help
+	  Build all executables as position independent. This is not supported
+	  by all packages on all platforms and might break their build.
+	  Enabling this option will add some executable size and runtime
+	  overhead.
+
+endchoice
+
+config BID_PIE
+	bool
+	default y
+	depends on BID_PIE_VOLUNTARY || BID_PIE_ALL
+
 endmenu
