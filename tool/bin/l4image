@@ -284,6 +284,8 @@ sub create_image
       $flags = 2 if $i == 1; # sigma0
       $flags = 3 if $i == 2; # roottask
 
+      L4::ModList::fetch_remote_file($entry{mods}[$i]{command});
+
       my $f = L4::ModList::search_file_or_die($entry{mods}[$i]{command},
                                               $search_path);
 

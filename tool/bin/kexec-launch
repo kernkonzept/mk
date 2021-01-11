@@ -29,6 +29,7 @@ sub getfile($$)
 {
   my $command = shift;
   my $cmdline = shift;
+  L4::ModList::fetch_remote_file($command);
   my $f = L4::ModList::get_file_uncompressed_or_die($command, $module_path,
                                                     $unzip_tmp);
   $cmdline =~ s/^\S+\s*//;
@@ -38,6 +39,7 @@ sub getfile($$)
 my %entry = L4::ModList::get_module_entry($modulesfile, $entryname);
 
 my @mods = @{$entry{mods}};
+L4::ModList::fetch_remote_file($entry{bootstrap}{command});
 my $kernel = L4::ModList::search_file_or_die($entry{bootstrap}{command}, $module_path);
 my $moduleparams = join(' ', map { "--module=\"".getfile($_->{command}, $_->{cmdline})."\"" } @mods);
 

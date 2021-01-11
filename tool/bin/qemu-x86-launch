@@ -54,6 +54,7 @@ my %entry = L4::ModList::get_module_entry($modulesfile, $entryname);
 
 my @mods = @{$entry{mods}};
 my $kernel = L4::ModList::search_file_or_die($entry{bootstrap}{command}, $module_path);
+L4::ModList::fetch_remote_file($_->{command}) foreach (@{$entry{mods}});
 my $initrd = join(',', map { qemu_get_file($_->{command}, $_->{cmdline_quoted}) } @mods);
 my (undef, $args) = split /\s+/, $entry{bootstrap}{cmdline_quoted}, 2;
 $args = "" unless defined $args;

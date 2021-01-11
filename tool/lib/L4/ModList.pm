@@ -730,6 +730,7 @@ sub merge_entries
       foreach my $mod (@{$e->{mods}}, $e->{bootstrap})
         {
           my $file = $mod->{command};
+          fetch_remote_file($file);
           my $filepath;
           if (defined $uncompressdir)
             {
