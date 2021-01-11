@@ -476,6 +476,25 @@ sub get_entries($)
   return @entry_list;
 }
 
+# internal function
+sub handle_remote_file_get_file_in_dir
+{
+  my $lpath = shift;
+  my $lfile = "__unknown_yet__";
+  if (opendir(my $dh, $lpath))
+    {
+      my @entries = readdir $dh;
+      die "Too many/few files in $lpath" if @entries != 3;
+      foreach (@entries)
+        {
+          $lfile = $_ if $_ ne '.' and $_ ne '..';
+        }
+      closedir $dh;
+    }
+
+  return "$lpath/$lfile";
+}
+
 sub handle_remote_file
 {
   my $file = shift;
@@ -487,17 +506,19 @@ sub handle_remote_file
       my $rhost = $2;
       my $rpath = $3;
 
-      (my $lfile = $file) =~ s,[\s/:~],_,g;
-      $lfile = "$output_dir/$lfile";
+      (my $lpath = $file) =~ s,[\s/:~],_,g;
+      $lpath = "$output_dir/$lpath";
 
       if ($fetch_file)
         {
           print STDERR "Retrieving $file...\n";
-          system("rsync -azS $rhost:$rpath $lfile 1>&2");
+
+          mkdir $lpath || die "Cannot create directory '$lpath'";
+          system("rsync -azS $rhost:$rpath $lpath 1>&2");
           die "rsync failed" if $?;
         }
 
-      return $lfile;
+      return handle_remote_file_get_file_in_dir($lpath);
     }
 
   if ($file =~ /^(https?:\/\/.+)/)
@@ -509,7 +530,7 @@ sub handle_remote_file
 
       if ($fetch_file)
         {
-          print STDERR "Retrieving ($$, $ARGV[0]) $file...\n";
+          print STDERR "Retrieving $file...\n";
 
           # So we do not know the on-disk filename of the URL we're downloading
           # and since we want to use -N and as -N and -O don't play together,
@@ -520,19 +541,7 @@ sub handle_remote_file
           die "wget failed" if $?;
         }
 
-      my $lfile = "__unknown_yet__";
-      if (opendir(my $dh, $lpath))
-        {
-          my @entries = readdir $dh;
-          die "Too many/few files in $lpath" if @entries != 3;
-          foreach (@entries)
-            {
-              $lfile = $_ if $_ ne '.' and $_ ne '..';
-            }
-          closedir $dh;
-        }
-
-      return "$lpath/$lfile";
+      return handle_remote_file_get_file_in_dir($lpath);
     }
 
   if ($file =~ /^((ssh\+)?git:\/\/.+)/)
