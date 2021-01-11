@@ -428,17 +428,15 @@ if ($ENV{IMAGE_TYPE})
 
 if (my $test_starter = $ENV{EXTERNAL_TEST_STARTER})
   {
-    # MODULES_LIST is set
-    my $piperead;
-    if (!open ($piperead, '-|', $test_starter))
+    system($test_starter);
+    # system returns -1 if test_starter could not be executed
+    if ($? == -1)
       {
-        print "Error starting $test_starter: $!\n";
+        print "Failed to execute test starter $test_starter: $!\n";
         exit 1;
       }
-    STDOUT->autoflush(1);
-    print $_ while <$piperead>;
-    close $piperead;
-    exit 0;
+
+    exit ($? >> 8);
   }
 
 
