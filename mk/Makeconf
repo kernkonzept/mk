@@ -150,6 +150,15 @@ define create_dir
   $(if $(wildcard $(1)),true $(1) exists,$(INSTALL) -d $(1))
 endef
 
+# Generate the dotted name of a file name
+# 1: filename
+BID_dot_fname = $(dir $1).$(notdir $1)
+
+# Compare two strings, return something if they are unequal
+# 1: string
+# 2: string
+BID_cmp_str_ne = $(filter-out _$(subst $(BID_SPACE),_SPC_,$1),_$(subst $(BID_SPACE),_SPC_,$2))
+
 # Strip binary $(1) to $(2) and set target file mode to $(3)
 define copy_stripped_binary
   $(call create_dir,$(dir $(2))/.debug); \
@@ -319,7 +328,13 @@ BID_IDENT	= $(1)
 ifeq ($(call BID_IDENT,$$),)
 BID_DOLLARQUOTE	= $$
 endif
-BID_COMMA	= ,
+BID_COMMA  := ,
+BID_POUND  := \#
+BID_EMPTY  :=
+BID_SPACE  := $(BID_EMPTY) $(BID_EMPTY)
+BID_SQUOTE := '
+BID_DQUOTE := "
+
 
 ifneq ($(PL),)
 PL_j := -j $(PL)
