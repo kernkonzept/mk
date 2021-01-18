@@ -319,9 +319,9 @@ BID_LINK_MODE_host = $(L4DIR)/tool/bin/l4-bender $(if $(VERBOSE),,--trace-exec) 
                      -t host-ld $(bid_bender_default_vars) -Dlinker="$(1)" \
                      --spec=$(L4DIR)/mk/bid-bender.spec --
 
-BID_link_deps_file = $(dir $(1)).$(notdir $(1)).pcs.d
+BID_link_deps_file = $(call BID_dot_fname,$1).pcs.d
 
-BID_LINK_DEPS = $(addprefix $(dir $(1)),$(addprefix .$(notdir $(1)),.d .pcs.d))
+BID_LINK_DEPS = $(call BID_dot_fname,$1).d $(call BID_link_deps_file,$1)
 
 ifeq ($(BID_MISSING_PCS),)
  ifneq ($(SYSTEM),)
@@ -874,10 +874,10 @@ $(if $(BID_ALLOW_CPP_AS_CPLUSPLUS_FILE),$(eval $(call BID_GENERATE_S_MAKE_RULE,%
 	@$(BUILD_MESSAGE)
 	$(VERBOSE)$(MKDIR) $(@D)
 	$(VERBOSE)$(CPP) $(CFLAGS) $(addprefix -I, $(PRIVATE_INCDIR)) -x assembler-with-cpp -Wp,-MD,$(@D)/.$(@F).d,-MT$@,-MP -nostdinc -o $@.pre $<
-	$(VERBOSE)$(DTC) $(DTC_FLAGS) $(addprefix -i , $(PRIVATE_INCDIR)) -i $(dir $<) -d $(@D)/.$(@F).d-x -O dtb -b 0 -o $@ $@.pre
-	$(VERBOSE)$(SED) -e "s|$@.pre|$<|" $(@D)/.$(@F).d-x | \
+	$(VERBOSE)$(DTC) $(DTC_FLAGS) $(addprefix -i , $(PRIVATE_INCDIR)) -i $(dir $<) -d $(call BID_dot_fname,$@).d-x -O dtb -b 0 -o $@ $@.pre
+	$(VERBOSE)$(SED) -e "s|$@.pre|$<|" $(call BID_dot_fname,$@).d-x | \
 		perl -ne 'print "$$_\n"; if (/^.*:\s*(.*)$$/) { print "$$_:\n" foreach (split(/ /,$$1)); }' >> $(@D)/.$(@F).d
-	$(VERBOSE)$(RM) $(@D)/.$(@F).d-x $@.pre
+	$(VERBOSE)$(RM) $(call BID_dot_fname,$@).d-x $@.pre
 
 define bin_to_asm_recipe
 	echo -e ".section .rodata, \"a\"\n"    \
@@ -897,9 +897,9 @@ $(addsuffix .bin.S,$(SRC_DATA)): %.bin.S: % $(GENERAL_D_LOC)
 	$(VERBOSE)$(MKDIR) $(@D)
 	$(VERBOSE)$(call bin_to_asm_recipe,$<,$@,$(subst -,_,$(subst /,_,$(subst .,_,$(strip $(*F))))))
 
-DEPS	+= $(foreach file,$(ALLOBJS), $(dir $(file)).$(notdir $(file)).d)
-DEPS	+= $(foreach file,$(ALLDPI), $(dir $(file)).$(notdir $(file)).d)
-DEPS	+= $(foreach file,$(filter %.dtb, $(INSTALL_TARGET)), $(dir $(file)).$(notdir $(file)).d)
+DEPS	+= $(foreach file,$(ALLOBJS), $(call BID_dot_fname,$(file)).d)
+DEPS	+= $(foreach file,$(ALLDPI), $(call BID_dot_fname,$(file)).d)
+DEPS	+= $(foreach file,$(filter %.dtb, $(INSTALL_TARGET)), $(call BID_dot_fname,$(file)).d)
 
 # Common clean Rules
 
