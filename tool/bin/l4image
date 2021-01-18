@@ -950,7 +950,7 @@ for (my $i = 0; $i < @ARGV; ++$i)
         mkdir "$tmpdir/l4image/lib/L4";
         mkdir "$tmpdir/l4image/lib/Digest";
         system("cp $0 $tmpdir/l4image/bin");
-        system("cp $libdir/L4/*.pm $tmpdir/l4image/lib/L4");
+        system("cp -a $libdir/L4/{Image,{Grub,Image,ModList}.pm} $tmpdir/l4image/lib/L4");
         system("cp $libdir/Digest/*.pm $tmpdir/l4image/lib/Digest");
         system("cd $tmpdir && tar czvf $outfile.tar.gz l4image");
         system("cd $tmpdir && zip -r9v $outfile.zip l4image");
