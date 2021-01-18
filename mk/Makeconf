@@ -122,7 +122,6 @@ MKFLAGS		+=$(MKFLAGS_$@)
 NM		?= $(CROSS_COMPILE)nm
 OBJCOPY		?= $(CROSS_COMPILE)objcopy
 OBJDUMP		?= $(CROSS_COMPILE)objdump
-PKG_CONFIG      = pkg-config
 PWDCMD		= pwd -P
 RANLIB		?= $(CROSS_COMPILE)ranlib
 $(call dv,RM)   = rm -f
