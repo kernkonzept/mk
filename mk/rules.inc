@@ -38,12 +38,42 @@ $(1): $(2) $(GENERAL_D_LOC)
 	$$(DEPEND_VERBOSE)$$(call DEPEND_EXTEND_FUNC, $$(*F).d, $$(dir $$@).$$(notdir $$@).d)
 endef
 
+prereqs_changed = $(filter-out FORCE .general.d,$?)
+
+escape_cmd = $(subst $$,$$$$,$(subst $(BID_POUND),\$(BID_POUND),$(subst $(BID_SQUOTE),'\$(BID_SQUOTE)',$1)))
+
+buildinfo_missing = $(if $(filter $(origin deps_$@),undefined),build-deps-$@)$(if $(source_$@),,build-source-$@)
+
+ifneq ($(BID_TRACE),)
+  bid_trace = $(if $(wildcard $@), \
+                $(if $(prereqs_changed), because prerequisites '$(prereqs_changed)' changed, \
+                  $(if $(buildinfo_missing), because build info missing, \
+                    $(if $(call BID_cmp_str_ne,$1,$(cmd_$@)), because command changed))), \
+                because target missing)
+endif
+
+define BID_call_compiler_default
+  $(if $(buildinfo_missing)$(prereqs_changed)$(call BID_cmp_str_ne,$1,$(cmd_$@)), \
+      $(call COMP_MESSAGE,$(bid_trace));                                      \
+      $(BID_MAKE_RULE_CREATE_SUBDIR)                                          \
+      $1 || exit 1;                                                           \
+      $(OBJ_BASE)/scripts/basic/fixdep $(call BID_dot_fname,$@).d             \
+                   $@ '$(call escape_cmd,$1)' > $(call BID_dot_fname,$@).cmd; \
+      $(RM) $(call BID_dot_fname,$@).d)
+endef
+
+BID_call_compiler_F = $(COMP_MESSAGE); $(BID_MAKE_RULE_CREATE_SUBDIR) $1
+
+# BID_call_compiler_default works only for gcc/clang as gfortran generates
+# different deps file that fixdep cannot process. For this reason we compile
+# Fortran the traditional way of depending on $(GENERAL_D_LOC).
+# The comma placement is on purpose to avoid a leading space in the command.
 # Template for our make rules (make rules that do not use gendep)
 define BID_MAKE_RULE_template_nongendep
-$(1): $(2) $(GENERAL_D_LOC)
-	@$$(COMP_MESSAGE)
-	$$(VERBOSE)$$(BID_MAKE_RULE_CREATE_SUBDIR)
-	$$(VERBOSE)$$($(BID_$(3)_COMPILER)) -c $$(DEPFLAGS) $$(DEPFLAGS_$(3)) $$(CPPFLAGS) $$($(3)FLAGS) $(4) $$< -o $$@
+$1: $2 $(if $(BID_call_compiler_$3),$(GENERAL_D_LOC),FORCE)
+	$$(VERBOSE)$$(call $(if $(BID_call_compiler_$3),BID_call_compiler_$3,BID_call_compiler_default) \
+	                   ,$$($(BID_$(3)_COMPILER)) -c $$(DEPFLAGS) $$(DEPFLAGS_$(3)) $$(CPPFLAGS) \
+	                                            $$($(3)FLAGS) $(4) $$< -o $$@)
 endef
 
 # which template rule do we really use
