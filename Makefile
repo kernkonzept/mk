@@ -850,3 +850,9 @@ test:
 	 prove $(if $(TAPARCHIVE),-a $(TAPARCHIVE)) $(if $(VERBOSE),,-v) \
 	       -m -r "bid-tests/$${TESTS#bid-tests/}"); \
 	rm -fr "$$tmptestdir"
+
+
+.PHONY: kunit-test
+kunit-test:
+	$(VERBOSE)$(common_envvars) $(tool_envvars) \
+	  OBJ_DIR=$(OBJ_DIR) $(L4DIR)/tool/bin/gen_kunit_test

@@ -1,0 +1,112 @@
+#! /usr/bin/env bash
+
+# Copyright (C) 2021 Kernkonzept GmbH.
+# Author(s): Philipp Eppelt <philipp.eppelt@kernkonzept.com>
+
+# This script searches for kernel unit test binaries prefixed with test_
+# in the folder in SEARCHPATH where the fiasco binary is found.
+# Then it generates one test starter script per unit test binary.
+# Optionally, the KERNEL environemnt variable can be set, then only test_ files
+# in the same directory are considered.
+
+shopt -s extglob # needed for UTEST_BINS expansion.
+
+# Check expected caller-provided environment
+if [[ -z "$L4DIR" || -z "$SEARCHPATH" || -z "$ARCH" || -z "$OBJ_DIR" ]]; then
+  echo "Please provide all of the following variables in the environment:\
+ L4DIR, SEARCHPATH, ARCH, OBJ_DIR."
+  exit 1
+fi
+
+# absolute path for L4DIR
+if [[ ${L4DIR:0:1} != "/" ]]; then
+  L4DIR=$(pwd)/$L4DIR
+fi
+
+# find given file name ($1) in the SEARCHPATH list.
+# Return path of containing folder, otherwise empty string.
+function find_path_of () {
+  local file_name=$1
+  local PATH_LIST=( ${SEARCHPATH[@]//:/ } )
+
+  for path in "${PATH_LIST[@]}"; do
+    if [[ -e "$path/$file_name" ]]; then
+      echo "$path"
+      break
+    fi
+  done
+}
+
+## find kernel path
+if [[ -z "$KERNEL" ]]; then
+  KERNEL_PATH=$( find_path_of fiasco )
+else
+  KERNEL_PATH=$( dirname "$KERNEL" )
+fi
+
+if [[ -z "$KERNEL_PATH" ]]; then
+  echo "Kernel binary not found in $SEARCHPATH."
+  exit 1
+fi
+
+# collect "test_" files
+UTEST_BINS=( "$KERNEL_PATH"/test_!(*.*) )
+
+if [[ ${#UTEST_BINS[@]} -eq 0 ]]; then
+  echo "No unit test binaries found in $KERNEL_PATH."
+  exit 2
+fi
+
+# Output directory
+OUT_DIR=$OBJ_DIR/test/kunit
+
+if [[ ! -d "$OUT_DIR" ]]; then
+  if ! mkdir -p "$OUT_DIR"; then
+    echo "Could not create $OUT_DIR."
+    exit 3
+  fi
+fi
+
+# NOTE: prove wants to see .t files!
+OUT_FILE_SUFFIX=.t
+
+## foreach file in fiasco_utest_files
+for file in "${UTEST_BINS[@]}"; do
+  [[ -e "$file" ]] || continue
+
+  # ##*/ - strip path
+  OUT_FILE=${OUT_DIR}/${file##*/}${OUT_FILE_SUFFIX}
+
+  # generate .t file, overwrite existing files
+  if [[ $KUNIT_VERBOSE ]]; then
+    echo "Generating ${OUT_FILE}.."
+  fi
+
+  cat > "$OUT_FILE" <<EOF
+#! /usr/bin/env bash
+set -a
+L4DIR=$L4DIR
+SEARCHPATH=$SEARCHPATH
+ARCH=$ARCH
+KERNEL=$file
+KERNEL_UNIT_TEST=1
+TEST_TESTFILE="\$0"
+OBJ_BASE=$OBJ_DIR
+
+# Variables run_test expects, but we do not need here.
+TEST_SETUP="\$TEST_SETUP"
+TEST_TARGET="\$TEST_TARGET"
+
+# No user land modules for kernel unit tests.
+NED_CFG=""
+MOE_ARGS=""
+REQUIRED_MODULES=""
+
+: \${TEST_STARTER:=$L4DIR/tool/bin/default-test-starter}
+set +a
+exec \$TEST_STARTER "\$@"
+EOF
+
+  chmod a+x "$OUT_FILE"
+
+done
