@@ -929,6 +929,22 @@ for (my $i = 0; $i < @ARGV; ++$i)
         splice(@ARGV, $i, 2);
         $i--;
       }
+    elsif ($arg eq '--create-l4image-script')
+      {
+        # this is an internal function, do not advertise
+        my $outfile = $ARGV[$i + 1];
+        die "Need to give output file" unless defined $outfile;
+        # Requires to have libpar-perl installed
+        system("pp -n -P -o $outfile -I $libdir"
+               ." -M L4::Image:: -M L4::ModList -M L4::Digest::CRC $0");
+        my $o = `$outfile -h 2>&1`;
+        if ($?)
+          {
+            print "Creation failed:\n$o";
+            exit 1;
+          }
+        exit 0;
+      }
     elsif ($arg eq '--create-l4image-binary')
       {
         # this is an internal function, do not advertise
@@ -950,8 +966,7 @@ for (my $i = 0; $i < @ARGV; ++$i)
         mkdir "$tmpdir/l4image/lib/L4";
         mkdir "$tmpdir/l4image/lib/Digest";
         system("cp $0 $tmpdir/l4image/bin");
-        system("cp -a $libdir/L4/{Image,{Grub,Image,ModList}.pm} $tmpdir/l4image/lib/L4");
-        system("cp $libdir/Digest/*.pm $tmpdir/l4image/lib/Digest");
+        system("cp -a $libdir/L4/{Digest,Image,{Grub,Image,ModList}.pm} $tmpdir/l4image/lib/L4");
         system("cd $tmpdir && tar czvf $outfile.tar.gz l4image");
         system("cd $tmpdir && zip -r9v $outfile.zip l4image");
         exit 0;

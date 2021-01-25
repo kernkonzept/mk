@@ -6,7 +6,7 @@ package L4::Image::UImage;
 
 use warnings;
 use Exporter;
-use Digest::CRC;
+use L4::Digest::CRC;
 use L4::Image::Utils qw/error check_sysread check_syswrite filepos_set/;
 
 use vars qw(@ISA @EXPORT);
