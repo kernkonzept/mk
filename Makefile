@@ -17,7 +17,8 @@ BUILD_TOOLS    = bash bison flex gawk perl tput \
 BUILD_TOOLS_pkg/uvmm  := dtc
 
 CMDS_WITHOUT_OBJDIR := help checkbuild checkbuild.% up update check_build_tools
-CMDS_PROJECT_MK     := all clean cleanall install scrub cont doc help
+CMDS_PROJECT_MK     := all clean cleanall install scrub cont doc help \
+                       $(wildcard $(MAKECMDGOALS))
 
 # our default target is all::
 all::
