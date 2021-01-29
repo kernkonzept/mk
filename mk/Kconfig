@@ -120,6 +120,10 @@ config ETAGS
 	string
 	default "etags"
 
+config BID_OPTIMIZE_SIZE
+	bool "Optimize for size (-Os)"
+	help
+	  Use -Os instead of -O2 to build smaller executables.
 
 config BID_DEBUG_INFO
 	bool "Generate debug information"
