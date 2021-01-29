@@ -282,6 +282,14 @@ config BID_PIE_ALL
 
 endchoice
 
+config BID_THUMB
+	bool "Build thumb code"
+	depends on EXPERIMENTAL
+	depends on BUILD_ARCH_arm
+	help
+	  Build with -mthumb by default. This will reduce the code size at the
+	  slight expense of execution speed.
+
 config BID_PIE
 	bool
 	default y

@@ -18,7 +18,7 @@ CARCHFLAGS_arm_armv6zk    = $(GCCARMV6ZKFPOPT_arm)
 CARCHFLAGS_arm_armv7a     = $(GCCARMV7AFPOPT_arm)
 CARCHFLAGS_arm_armv7r     = $(GCCARMV7RFPOPT_arm)
 
-CCXX_FLAGS_arm   += -marm
+CCXX_FLAGS_arm   += $(if $(CONFIG_BID_THUMB),-mthumb,-marm)
 CC_arm            = $(CROSS_COMPILE)gcc
 CXX_arm           = $(CROSS_COMPILE)g++
 FC_arm            = $(CROSS_COMPILE)gfortran
