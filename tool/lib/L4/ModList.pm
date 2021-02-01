@@ -669,7 +669,7 @@ sub generate_grub2_entry($$%)
       $s .= "  multiboot $prefix/$bn $prefix/$bn $args\n";
       foreach my $m (@{$entry{mods}})
         {
-          my $moduleline = "$prefix/" . $m->{unique_short_filepath} . " " . $m->{args};
+          my $moduleline = "$prefix/" . $m->{unique_short_filepath} . " " . $m->{cmdline};
           $s .= "  echo Loading '$moduleline'\n";
           $s .= "  module $moduleline\n";
         }
