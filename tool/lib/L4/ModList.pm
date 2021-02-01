@@ -87,7 +87,7 @@ sub handle_line
   if (exists $opts{arch})
     {
       my @a = split /\|+/, $opts{arch};
-      return unless grep /^$ENV{ARCH}$/, @a;
+      return () unless grep /^$ENV{ARCH}$/, @a;
     }
 
   if (exists $opts{perl})
@@ -107,11 +107,6 @@ sub handle_line
   return ( glob $r ) if exists $opts{glob};
 
   return ( $r );
-}
-
-sub handle_line_first
-{
-  return (handle_line(shift, @_))[0];
 }
 
 sub readin_config($)
@@ -287,22 +282,27 @@ sub get_module_entry($$)
         next;
       } elsif ($type eq 'group') {
         $process_mode = 'group';
-        $current_group_name = (split /\s+/, handle_line_first($remaining, %opts))[0];
+        $current_group_name = (split /\s+/, (handle_line($remaining, %opts))[0])[0];
         next;
-      }
-
-      my %modinfo = get_command_and_cmdline(handle_line_first($remaining, %opts), %opts);
-      if ($type eq 'default-bootstrap') {
-        %bootstrap = (%bootstrap, %modinfo);
+      } elsif ($type eq 'default-bootstrap') {
+        my $s = (handle_line($remaining, %opts))[0];
+        next unless defined $s;
+        %bootstrap = (%bootstrap, get_command_and_cmdline($s, %opts) );
         next;
       } elsif ($type eq 'default-kernel') {
-        $mods[0] = { %{$mods[0]}, %modinfo };
+        my $s = (handle_line($remaining, %opts))[0];
+        next unless defined $s;
+        $mods[0] = { %{$mods[0]}, get_command_and_cmdline($s, %opts) };
         next;
       } elsif ($type eq 'default-sigma0') {
-        $mods[1] = { %{$mods[1]}, %modinfo };
+        my $s = (handle_line($remaining, %opts))[0];
+        next unless defined $s;
+        $mods[1] = { %{$mods[1]}, get_command_and_cmdline($s, %opts) };
         next;
       } elsif ($type eq 'default-roottask') {
-        $mods[2] = { %{$mods[2]}, %modinfo };
+        my $s = (handle_line($remaining, %opts))[0];
+        next unless defined $s;
+        $mods[2] = { %{$mods[2]}, get_command_and_cmdline($s, %opts) };
         next;
       }
 
@@ -346,7 +346,7 @@ sub get_module_entry($$)
       if ($process_mode eq 'entry') {
         foreach my $m (@params) {
 
-          %modinfo = get_command_and_cmdline($m, %opts);
+          my %modinfo = get_command_and_cmdline($m, %opts);
 
           # special cases
           if ($type eq 'bootstrap') {
