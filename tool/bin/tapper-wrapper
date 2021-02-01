@@ -169,7 +169,7 @@ sub fail_test
 
   print $TAPPER_FD <<EOT;
 1..1
-not ok 1 - execution - $test_description
+not ok 1 - execution - exit code $exit_code - $test_description
   ---
   message: $long_msg
   severity: fail
@@ -277,7 +277,7 @@ sub readline_timeout
 }
 
 
-my $test_proc_exit_code;
+my $test_proc_exit_code = 0;
 if ($ENV{TEST_EXPECTED})
   {
     # search for expected output file in searchpath
@@ -378,7 +378,7 @@ if ($ENV{TEST_EXPECTED})
         chomp $res_msg;
         print $TAPPER_FD <<EOEXT;
 1..1
-${res}ok 1 - execution - $test_description
+${res}ok 1 - execution - exit code $test_proc_exit_code - $test_description
   ---
   message: $res_msg
   ...
