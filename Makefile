@@ -833,26 +833,32 @@ help::
 	@echo "                       excluding internal information."
 	@echo "  report           - Print out host configuration information."
 	@echo "  help             - Print this help text."
-	@echo "  test             - Execute unit tests."
+	@echo "  test             - Run kernel and user-land tests. If 'TEST_KUNIT_DIR' is"
+	      "                     not provided, only user-land tests run."
 	@echo "  listplatforms    - List available platforms."
 
 
+.PHONY: test
 test:
 	$(VERBOSE)taparchive="$(TAPARCHIVE)"; \
 	if [ -n "$${taparchive%%/*}" ]; then \
 	  echo "ERROR: TAPARCHIVE must be an absolute path."; \
 	  exit 1; \
 	fi
-	$(VERBOSE)tmptestdir=$$(mktemp -d); \
+	$(VERBOSE)if [ -z "$(TEST_KUNIT_DIR)" ]; then \
+	  echo "INFO: TEST_KUNIT_DIR not provided. No kernel tests."; \
+	fi
+	$(VERBOSE)test_tmp_dir=$$(mktemp -d); \
+	\
 	ln -fs "$(OBJ_BASE)/test/t/$(ARCH)_$(CPU)/$(BUILD_ABI)" \
-	       "$${tmptestdir}/bid-tests"; \
-	(cd $$tmptestdir && \
+	       "$${test_tmp_dir}/bid-tests"; \
+	\
+	$(if $(TEST_KUNIT_DIR),\
+	  $(L4DIR)/tool/bin/gen_kunit_test --ddir=$${test_tmp_dir}/kunit-tests \
+	    --sdir=$(TEST_KUNIT_DIR) --obj-base=$(OBJ_BASE);) \
+	\
+	(cd $${test_tmp_dir} && \
 	 prove $(if $(TAPARCHIVE),-a $(TAPARCHIVE)) $(if $(VERBOSE),,-v) \
-	       -m -r "bid-tests/$${TESTS#bid-tests/}"); \
-	rm -fr "$$tmptestdir"
-
-
-.PHONY: kunit-test
-kunit-test:
-	$(VERBOSE)$(common_envvars) $(tool_envvars) \
-	  OBJ_DIR=$(OBJ_DIR) $(L4DIR)/tool/bin/gen_kunit_test
+	       -m -r $(if $(TEST_KUNIT_DIR),kunit-tests) \
+	       "bid-tests/$${TESTS#bid-tests/}"); \
+	rm -fr "$${test_tmp_dir}"

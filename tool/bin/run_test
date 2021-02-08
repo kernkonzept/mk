@@ -33,13 +33,13 @@ my $bootstrap   = $ENV{BOOTSTRAP} || 'bootstrap';
 my @modulepaths = split(/[:\s]+/, $ENV{SEARCHPATH});
 # need a split according to the rules of shell quoting
 my @qemu_args   = split("\0", qx:perl -e 'foreach (\@ARGV) { print "\$_\\0";}' -- $ENV{QEMU_ARGS}:) if $ENV{QEMU_ARGS};
-my $test_setup  = $ENV{TEST_SETUP};
-my $test_target = $ENV{TEST_TARGET};
+my $test_setup  = $ENV{TEST_SETUP} || '';
+my $test_target = $ENV{TEST_TARGET} || '';
 my $test_args   = $ENV{TEST_ARGS} || '';
 my $test_kernel_args = $ENV{TEST_KERNEL_ARGS} || '';
-my $ned_cfg     = $ENV{NED_CFG};
-my $moe_args    = $ENV{MOE_ARGS};
-my @more_mods   = split(' ', $ENV{REQUIRED_MODULES});
+my $ned_cfg     = $ENV{NED_CFG} || '';
+my $moe_args    = $ENV{MOE_ARGS} || '';
+my @more_mods   = split(' ', $ENV{REQUIRED_MODULES} || '');
 my $hwconfig_file = $ENV{TEST_HWCONFIG} || '';
 my $fiascoconfig_file = $ENV{TEST_FIASCOCONFIG} || '';
 my $test_run_tags = $ENV{TEST_RUN_TAGS} || '';
@@ -47,7 +47,7 @@ my $test_required_tags = $ENV{TEST_TAGS};
 my $roottask    = $ENV{TEST_ROOT_TASK} || 'moe';
 my $roottask_args  = $ENV{TEST_ROOT_TASK_ARGS} || '';
 my $bootstrap_args = $ENV{BOOTSTRAP_ARGS} || '';
-my $is_kunit_test  = $ENV{KERNEL_UNIT_TEST} || 0;
+my $is_kunit_test  = $ENV{TEST_KERNEL_UNIT} || 0;
 
 # kernel arguments required by test
 $kernel_args .= " " . $test_kernel_args if $test_kernel_args;

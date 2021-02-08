@@ -3,110 +3,126 @@
 # Copyright (C) 2021 Kernkonzept GmbH.
 # Author(s): Philipp Eppelt <philipp.eppelt@kernkonzept.com>
 
-# This script searches for kernel unit test binaries prefixed with test_
-# in the folder in SEARCHPATH where the fiasco binary is found.
-# Then it generates one test starter script per unit test binary.
-# Optionally, the KERNEL environemnt variable can be set, then only test_ files
-# in the same directory are considered.
+function print_usage () {
+      echo -e "Generate .t-files for kernel tests."
 
-shopt -s extglob # needed for UTEST_BINS expansion.
+      echo -e "Usage:\n\tgen_kunit_test --sdir=<> --ddir=<> --obj-base=<> [-v]"
 
-# Check expected caller-provided environment
-if [[ -z "$L4DIR" || -z "$SEARCHPATH" || -z "$ARCH" || -z "$OBJ_DIR" ]]; then
-  echo "Please provide all of the following variables in the environment:\
- L4DIR, SEARCHPATH, ARCH, OBJ_DIR."
-  exit 1
-fi
+      echo "Parameters:"
+      echo -e "\t--sdir= \tAbsolute path to the directory containing the" \
+              "kernel test files."
 
-# absolute path for L4DIR
-if [[ ${L4DIR:0:1} != "/" ]]; then
-  L4DIR=$(pwd)/$L4DIR
-fi
+      echo -e "\t--ddir= \tAbsolute path to the directory where the .t-files" \
+              "shall be placed."
 
-# find given file name ($1) in the SEARCHPATH list.
-# Return path of containing folder, otherwise empty string.
-function find_path_of () {
-  local file_name=$1
-  local PATH_LIST=( ${SEARCHPATH[@]//:/ } )
-
-  for path in "${PATH_LIST[@]}"; do
-    if [[ -e "$path/$file_name" ]]; then
-      echo "$path"
-      break
-    fi
-  done
+      echo -e "\t--obj-base= \tAbsolute path to the L4Re build dir."
+      echo -e "\t-v \t\tPrint information during script execution."
 }
 
-## find kernel path
-if [[ -z "$KERNEL" ]]; then
-  KERNEL_PATH=$( find_path_of fiasco )
-else
-  KERNEL_PATH=$( dirname "$KERNEL" )
+# default initialize variables for command line arguments
+source_dir=""
+dest_dir=""
+obj_base=""
+verbose=""
+
+# parse command line
+for i in "$@"; do
+  case "$i" in
+    --usage|-h|--help)
+      print_usage
+      exit 0
+      ;;
+
+    --sdir=*)
+      source_dir=${i#*=}
+      ;;
+
+    --ddir=*)
+      dest_dir=${i#*=}
+      ;;
+
+    --obj-base=*)
+      obj_base=${i#*=}
+      ;;
+
+    -v)
+      verbose=1
+      ;;
+
+    *)
+      if [[ ${verbose} ]]; then
+        echo "Ignoring additional argument ${i}"
+      fi
+      ;;
+  esac;
+done;
+
+# verbose output
+if [[ ${verbose} ]]; then
+  echo "source_dir=${source_dir} dest_dir=${dest_dir} obj_base=${obj_base}"
 fi
 
-if [[ -z "$KERNEL_PATH" ]]; then
-  echo "Kernel binary not found in $SEARCHPATH."
+
+# Check provided parameters
+if [[ -z ${source_dir} || -z ${dest_dir} ]]; then
+  echo "Please provide source and destination directory paths."
   exit 1
 fi
 
-# collect "test_" files
-UTEST_BINS=( "$KERNEL_PATH"/test_!(*.*) )
+if [[ -z ${obj_base} ]]; then
+  echo "Please provide the L4Re build directory path."
+  exit 1
+fi
 
-if [[ ${#UTEST_BINS[@]} -eq 0 ]]; then
-  echo "No unit test binaries found in $KERNEL_PATH."
+shopt -s nullglob
+
+# collect all test binaries
+utest_bins=( "${source_dir}"/test_* )
+
+if [[ ${#utest_bins[@]} -eq 0 ]]; then
+  echo "No unit test binaries found in ${source_dir}. No files generated."
   exit 2
 fi
 
-# Output directory
-OUT_DIR=$OBJ_DIR/test/kunit
-
-if [[ ! -d "$OUT_DIR" ]]; then
-  if ! mkdir -p "$OUT_DIR"; then
-    echo "Could not create $OUT_DIR."
-    exit 3
-  fi
+# ensure destination directory exists.
+if ! mkdir -p "${dest_dir}"; then
+  echo "Could not create ${dest_dir}."
+  exit 3
 fi
 
-# NOTE: prove wants to see .t files!
-OUT_FILE_SUFFIX=.t
 
-## foreach file in fiasco_utest_files
-for file in "${UTEST_BINS[@]}"; do
-  [[ -e "$file" ]] || continue
+# Generate .t-file for each found test binary.
+for file in "${utest_bins[@]}"; do
 
   # ##*/ - strip path
-  OUT_FILE=${OUT_DIR}/${file##*/}${OUT_FILE_SUFFIX}
+  out_file=${dest_dir}/${file##*/}.t
 
   # generate .t file, overwrite existing files
-  if [[ $KUNIT_VERBOSE ]]; then
-    echo "Generating ${OUT_FILE}.."
+  if [[ ${verbose} ]]; then
+    echo "Generating ${out_file}.."
   fi
 
-  cat > "$OUT_FILE" <<EOF
+  cat > "${out_file}" <<EOF
 #! /usr/bin/env bash
+
 set -a
-L4DIR=$L4DIR
-SEARCHPATH=$SEARCHPATH
-ARCH=$ARCH
-KERNEL=$file
-KERNEL_UNIT_TEST=1
+L4DIR="${obj_base}"/source
+OBJ_BASE="${obj_base}"
+OBJ_DIR="${obj_base}"
+ARCH=$("${obj_base}"/source/tool/kconfig/scripts/config \
+  --file "${obj_base}"/.config --state CONFIG_BUILD_ARCH)
+
+SEARCHPATH="${source_dir}"${SEARCHPATH:+:${SEARCHPATH}}
+KERNEL="${file}"
+TEST_KERNEL_UNIT=1
+
 TEST_TESTFILE="\$0"
-OBJ_BASE=$OBJ_DIR
 
-# Variables run_test expects, but we do not need here.
-TEST_SETUP="\$TEST_SETUP"
-TEST_TARGET="\$TEST_TARGET"
-
-# No user land modules for kernel unit tests.
-NED_CFG=""
-MOE_ARGS=""
-REQUIRED_MODULES=""
-
-: \${TEST_STARTER:=$L4DIR/tool/bin/default-test-starter}
+: \${TEST_STARTER:=\${L4DIR}/tool/bin/default-test-starter}
 set +a
 exec \$TEST_STARTER "\$@"
 EOF
 
-  chmod a+x "$OUT_FILE"
+  chmod a+x "${out_file}"
 
 done
