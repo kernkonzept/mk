@@ -12,6 +12,13 @@
 ifeq ($(origin _L4DIR_MK_TEST_MK),undefined)
 _L4DIR_MK_TEST_MK=y
 
+# Helper for qemu's smp flag
+ifneq ($(filter $(ARCH),x86 amd64),)
+qemu_smp = -smp $(1),cores=$(1)
+else
+qemu_smp = -smp $(1)
+endif
+
 # auto-fill TARGET with builds for test_*.c[c] if necessary
 # TARGETS_$(ARCH) - contains a list of tests specific for this architecture
 ifndef TARGET
