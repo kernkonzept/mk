@@ -64,7 +64,12 @@ use constant {
   BOOTSTRAP_MOD_INFO_MAGIC_MOD_LEN => 32,
 };
 
-my @arch_l4names = qw/x86 amd64 arm arm64 mips mips sparc sparc ppc32 powerpc/;
+my @arch_l4names = qw/x86 amd64
+                      arm arm64
+                      mips mips
+                      ppc32 powerpc
+                      sparc sparc
+                      riscv riscv/;
 
 use constant {
   FILE_TYPE_ERROR   => 0,
