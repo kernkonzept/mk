@@ -337,20 +337,20 @@ TEST_WORKDIR is provided then TEST_LOGFILE is ignored as it is
 organized below workdir.
 
 \par `TEST_TAGS`
-
+\parblock
 List of conditions for tags provided during execution of a test. A tag
 can be set to 1, set to 0 or be unspecified via TEST_RUN_TAGS during
 execution. Therefore there are 4 possible conditions for a tag that can
 be specified in TEST_TAGS: tag, !tag, +tag and -tag. The following table
 shows the conditions they represent.
 
-TEST_RUN_TAGS \ TEST_TAGS | tag | !tag | +tag | -tag
-----------------------------------------------------
-tag or tag=1              |   y |      |    y |
-unspecified               |     |    y |    y |
-tag=0                     |     |    y |      |    y
+|TEST_RUN_TAGS \ TEST_TAGS | tag | !tag | +tag | -tag|
+|--------------------------|-----|------|------|-----|
+|tag or tag=1              |   y |      |    y |     |
+|unspecified               |     |    y |    y |     |
+|tag=0                     |     |    y |      |    y|
 
-Example usage:
+_Example usage:_
 
 The tag `long-running` is used by tests which take a long time and should
 be skipped by default. These tests are marked with the tag long-running
@@ -366,6 +366,7 @@ TEST_RUN_TAGS to impl-def=0. These tests are marked using `+impl-def`.
 
 If you want to specify multiple tag conditions they need to be separated
 with a comma.
+\endparblock
 
 \par `TAPARCHIVE`
 Filename for an archive file to store the resulting TAP output.
