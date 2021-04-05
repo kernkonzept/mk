@@ -12,6 +12,7 @@ use Scalar::Util qw(looks_like_number);
 
 my $help = 0;
 my $nowrapper = 0;
+my $max_lines_read = $ENV{MAX_LINES_READ} || 100000;
 Getopt::Long::Configure ("bundling");
 GetOptions(
   'help|h'  => \$help,
@@ -33,6 +34,7 @@ GetOptions(
   'workdir=s'       => sub { $ENV{TEST_WORKDIR} = $_[1]; },
   'image|i=s'       => sub { $ENV{IMAGE_TYPE} = $_[1]; },
   'hard-timeout=i'  => sub { $ENV{TEST_HARD_TIMEOUT} = $_[1]; },
+  'max-lines-read=i'=> sub { $max_lines_read = 0+ $_[1]; },
 ) or pod2usage(-verbose => 99, -sections => "OPTIONS");
 
 pod2usage(-verbose => 99,
@@ -230,6 +232,8 @@ $pid = open(my $test_proc, "-|", @ARGV) or die "Failed to execute $ARGV[0].\n";
 
 my $readbuffer = '';
 
+my $lines_read = 0;
+
 sub readline_timeout
 {
   my $handle = shift;
@@ -273,6 +277,11 @@ sub readline_timeout
     }
 
   $outline =~ s/\r+\n/\n/g;
+  $lines_read++;
+
+  fail_test("Stopping test prematurely after $lines_read lines read.")
+    if $lines_read >= $max_lines_read;
+
   return $outline;
 }
 
