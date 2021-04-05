@@ -834,7 +834,7 @@ help::
 	@echo "  report           - Print out host configuration information."
 	@echo "  help             - Print this help text."
 	@echo "  test             - Run kernel and user-land tests. If 'TEST_KUNIT_DIR' is"
-	      "                     not provided, only user-land tests run."
+	@echo "                     not provided, only user-land tests run."
 	@echo "  listplatforms    - List available platforms."
 
 
