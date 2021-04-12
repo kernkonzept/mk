@@ -90,8 +90,7 @@ fi
 
 # Prepare environment
 set -a
-L4DIR="${obj_base}/source"
-OBJ_DIR="${obj_base}"
+L4DIR=$(realpath "${obj_base}/source")
 OBJ_BASE="${obj_base}"
 ARCH=$("${obj_base}"/source/tool/kconfig/scripts/config \
   --file "${obj_base}"/.config --state CONFIG_BUILD_ARCH)

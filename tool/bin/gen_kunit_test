@@ -106,9 +106,8 @@ for file in "${utest_bins[@]}"; do
 #! /usr/bin/env bash
 
 set -a
-L4DIR="${obj_base}"/source
+L4DIR=$(realpath "${obj_base}"/source)
 OBJ_BASE="${obj_base}"
-OBJ_DIR="${obj_base}"
 ARCH=$("${obj_base}"/source/tool/kconfig/scripts/config \
   --file "${obj_base}"/.config --state CONFIG_BUILD_ARCH)
 
