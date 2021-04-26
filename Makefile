@@ -710,6 +710,12 @@ report:
 	@echo -n "python -V: "
 	@python -V || true
 	@echo
+	@echo -n "python2 -V: "
+	@python2 -V || true
+	@echo
+	@echo -n "python3 -V: "
+	@python3 -V || true
+	@echo
 	@echo "svn --version: "
 	@svn --version || true
 	@echo
