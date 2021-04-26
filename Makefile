@@ -444,12 +444,13 @@ define checkx86amd64build
 	fi
 endef
 define genimage
-	+$(VERBOSE)$(entryselection);                                     \
-	$(MKDIR) $(IMAGES_DIR);                                           \
-	PWD=$(PWD)/pkg/bootstrap/server/src $(common_envvars)             \
-	    $(MAKE) -C pkg/bootstrap/server/src ENTRY="$$e"               \
-	            BOOTSTRAP_MODULES_LIST=$$ml $(1)                      \
-		    BOOTSTRAP_MODULE_PATH_BINLIB="$(BUILDDIR_SEARCHPATH)" \
+	+$(VERBOSE)$(entryselection);                                                 \
+	$(MKDIR) $(IMAGES_DIR);                                                       \
+	PWD=$(PWD)/pkg/bootstrap/server/src $(common_envvars)                         \
+	    QEMU_BINARY_NAME=$(if $(QEMU_PATH),$(QEMU_PATH),$(QEMU_ARCH_MAP_$(ARCH))) \
+	    $(MAKE) -C pkg/bootstrap/server/src ENTRY="$$e"                           \
+	            BOOTSTRAP_MODULES_LIST=$$ml $(1)                                  \
+		    BOOTSTRAP_MODULE_PATH_BINLIB="$(BUILDDIR_SEARCHPATH)"             \
 		    BOOTSTRAP_SEARCH_PATH="$(MODULE_SEARCH_PATH)"
 endef
 
