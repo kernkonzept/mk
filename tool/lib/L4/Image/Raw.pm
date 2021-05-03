@@ -5,6 +5,7 @@
 package L4::Image::Raw;
 
 use warnings;
+use strict;
 use Exporter;
 use L4::Image::Utils qw/error check_sysread check_syswrite filepos_set/;
 

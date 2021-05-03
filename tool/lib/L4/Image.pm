@@ -28,6 +28,7 @@ package L4::Image;
 #      (For debug symbols we will add code anyway.)
 
 use warnings;
+use strict;
 use Exporter;
 use File::Basename;
 use File::Temp qw/tempdir/;
@@ -380,7 +381,7 @@ sub process_image
   filepos_set($fd, $image_info_file_pos + BOOTSTRAP_IMAGE_INFO_MAGIC_LEN);
 
   my $buf;
-  $r = sysread($fd, $buf, IMAGE_INFO_SIZE);
+  my $r = sysread($fd, $buf, IMAGE_INFO_SIZE);
   return("Could not read from binary ($r)")
     if not defined $r or $r != IMAGE_INFO_SIZE;
   my ($crc32, $structure_version, $_flags, $_start, $_end,
@@ -426,7 +427,6 @@ sub process_image
   $d{image_flags}       = $_flags;
   $d{attrs}             = { read_attrs($fd, $file_attrshdr_start) }
     if defined $file_attrshdr_start;
-  $d{image_prolog_len}  = $image_prolog_len;
   $d{file_type}         = $file_type;
 
   my $archval_with_width = $_flags & 0x1f;
@@ -446,7 +446,7 @@ sub process_image
       my $ofn = $fn;
       $ofn = $img->{'wrapper-fn'} if exists $img->{'wrapper-fn'};
       $ofn = $opts->{outimagefile} if defined $opts->{outimagefile};
-      $tmp_ofn = $ofn . ".tmp";
+      my $tmp_ofn = $ofn . ".tmp";
 
       my $ofd = $img->objcpy_start($_module_data_start, $tmp_ofn);
       my $module_start_pos = filepos_get($ofd);
@@ -460,8 +460,8 @@ sub process_image
       if (($d{arch} eq 'arm' or $d{arch} eq 'arm64')
           and $bin_addr_end_bin)
         {
-          $_module_data_end = $_module_data_start + $module_end_pos -
-                              $module_start_pos;
+          my $_module_data_end = $_module_data_start + $module_end_pos -
+                                 $module_start_pos;
           $r = filepos_set($ofd, $img->vaddr_to_file_offset($bin_addr_end_bin));
           check_syswrite(syswrite($ofd, pack("Q<", $_module_data_end)), 8);
         }
@@ -472,7 +472,7 @@ sub process_image
         {
           # If we unwrapped the binary, then rewrap it here
           my $tmp_ofn_outer = $tmp_ofn . ".outer";
-          $outer = $img->{'wrapper-img'};
+          my $outer = $img->{'wrapper-img'};
           printf "Patching from outer vaddr: 0x%x\n", $outer->{'inner-vaddr'} if 0;
           my $outer_fd = $outer->objcpy_start($outer->{'inner-vaddr'}, $tmp_ofn_outer);
 
@@ -627,7 +627,7 @@ sub import_modules
               $l = $chunk_size if $l > $chunk_size;
 
               $r = sysread($fd, $buf, $l);
-              die "Could not read from $fn" unless defined $r;
+              die "Could not read" unless defined $r;
 
               check_syswrite(syswrite($filefd, $buf, $r), $r) if $r;
               $sz -= $r;
@@ -754,7 +754,7 @@ sub export_modules
 
   for (my $i = 0; $i < $ds{num_mods}; ++$i)
     {
-      $filepos_attr = filepos_get($fd);
+      my $filepos_attr = filepos_get($fd);
       $r = write_attrs($fd, %{$ds{mods}[$i]{attrs}});
       delete $ds{mods}[$i]{filepos_attr};
       $ds{mods}[$i]{filepos_attr} = $filepos_attr - $initial_file_pos if $r;

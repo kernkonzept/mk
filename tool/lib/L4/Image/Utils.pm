@@ -1,6 +1,7 @@
 package L4::Image::Utils;
 
 use warnings;
+use strict;
 use Exporter;
 
 use vars qw(@ISA @EXPORT);

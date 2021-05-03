@@ -3,6 +3,7 @@
 package L4::Image::Elf;
 
 use warnings;
+use strict;
 use Exporter;
 use L4::Image::Utils qw/error check_sysread check_syswrite checked_sysseek
                         sysreadz filepos_set/;
@@ -404,7 +405,7 @@ sub inner_elf
   my $s = "";
   foreach my $hdr (@{$self->{'shdr'}})
     {
-      $section_name_offset = $shstrn_off + $hdr->{'name'};
+      my $section_name_offset = $shstrn_off + $hdr->{'name'};
       filepos_set($self->{'fd'}, $section_name_offset);
 
       $s = sysreadz($self->{'fd'});
@@ -413,13 +414,16 @@ sub inner_elf
       if ($s eq '.data.elf64')
         {
           $self->{'inner-vaddr'} = $hdr->{'vaddr'};
-          $fh = File::Temp->new();
-          open my $ofd, '>', $fh->filename or die "$outfile: $!";
+          my $fh = File::Temp->new();
+          open my $ofd, '>', $fh->filename or die "$fh->filename: $!";
           filepos_set($self->{'fd'}, $hdr->{'offset'});
 
           # Unpack nested file to tmpfile ...
-          check_sysread(sysread($self->{'fd'}, $buf, $hdr->{'filesz'}), $hdr->{'filesz'});
-          check_syswrite(syswrite($ofd, $buf, $hdr->{'filesz'}), $hdr->{'filesz'});
+          my $buf;
+          check_sysread(sysread($self->{'fd'}, $buf, $hdr->{'filesz'}),
+                        $hdr->{'filesz'});
+          check_syswrite(syswrite($ofd, $buf, $hdr->{'filesz'}),
+                         $hdr->{'filesz'});
           return $fh;
         }
     }
