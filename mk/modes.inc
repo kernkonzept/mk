@@ -3,16 +3,6 @@
 #
 # Makefile-Include for defining modes
 
-ifneq ($(L4_MULTITHREADED),)
-  $(error L4_MULTITHREADED is obsolete, just remove, reentrance is default now, you might want to add 'libpthread' to REQUIRES_LIBS)
-endif
-
-ifneq ($(MODE_USE_C),)
-  $(error MODE_USE_C is obsolete, add l4re_c and/or l4re_c-util to REQUIRES_LIBS as needed)
-endif
-
-
-
 LIBC_INCLUDE   = $(BID_NOSTDINC)                                   \
                  -I$(OBJ_BASE)/include/uclibc                      \
                  $(if $(CONFIG_USE_DROPS_STDDIR),                  \
