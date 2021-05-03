@@ -239,10 +239,17 @@ sub op_replace
   my $args = shift;
 
   my %found = find_modules($d, $args, 0);
-  do_remove($d, %found);
+  my $pos = (keys %found)[0];
 
-  my @k = sort { $a <=> $b } keys %found;
-  do_add_module($d, $args, $k[0]);
+  error("Need to give a file via --file option")
+    unless defined $args->{"--file"};
+
+  L4::Image::update_module($d->{mods}[$pos],
+                           $args->{"--file"},
+                           $args->{"--name"},
+                           $args->{"--type"},
+                           $args->{"--cmdline"});
+  error(${$d}{mods}[$pos]{error}) if ${$d}{mods}[$pos]{error};
 }
 
 sub default_editor

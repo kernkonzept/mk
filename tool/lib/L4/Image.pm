@@ -170,6 +170,36 @@ sub fill_module
   return %d;
 }
 
+sub update_module
+{
+  my $d = shift;
+  my $m_file = shift;
+  my $m_name = shift;
+  my $m_type = shift;
+  my $m_cmdline = shift;
+
+  return ( error => "File '$m_file' does not exist" ) unless -e $m_file;
+
+  $d->{name}     = $m_name if defined $m_name;
+  $d->{cmdline}  = $m_cmdline if defined $m_cmdline;
+  $d->{flags}    = map_type_name_to_flag($m_type) if defined $m_type;
+  $d->{filepath} = $m_file;
+
+  my $md5uncomp = Digest::MD5->new;
+  my $ff;
+  if (!open($ff, $m_file))
+    {
+      return ( error => "Failed to open '$m_file': $!" );
+    }
+  binmode $ff;
+  $md5uncomp->addfile($ff);
+  close $ff;
+  $d->{md5sum_compr}   = $md5uncomp->hexdigest;
+  $d->{md5sum_uncompr} = $md5uncomp->hexdigest;
+  $d->{size} = -s $m_file;
+  $d->{size_uncompressed} = -s $m_file;
+}
+
 sub check_modules
 {
   my (%ds) = @_;
