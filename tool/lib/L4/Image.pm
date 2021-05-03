@@ -14,8 +14,8 @@ package L4::Image;
 # - low-prio: provide feature generate grub.cfg/menu.lst to eventually
 #             replace genexportpack?
 # - implement check that perl and C data structures match
-#   - IMPORTANT
-#   - first step: wrap pack und unpack in wrapper functions and place
+#   - DONE: IMPORTANT
+#   - NOT YET: first step: wrap pack und unpack in wrapper functions and place
 #     them centrally in Image.pm so it's harder to miss a conversion
 # - remove %ds{num_ds} in code, it's implicit through the array size
 #
@@ -990,6 +990,95 @@ sub export_modules
     }
 
   return %offsets;
+}
+
+
+# Built-in Self Test, needs path to bootstrap/server/src
+sub self_test_data_structure_equality
+{
+  my $bootstrap_src_dir    = shift;
+  my $cross_compile_prefix = $ENV{CROSS_COMPILE} || '';
+  my $prog_cc              = $ENV{CC}      || "${cross_compile_prefix}gcc";
+  my $prog_objcopy         = $ENV{OBJCOPY} || "${cross_compile_prefix}objcopy";
+
+  my $tmpdir = tempdir('XXXXXXXX', CLEANUP => 1, TMPDIR => 1);
+
+  my $file_c    = "$tmpdir/mod.c";
+  my $file_o    = "$tmpdir/mod.o";
+  my $file_hdr  = "$tmpdir/mod.hdr";
+  my $file_info = "$tmpdir/mod.info";
+
+  open(my $fd, ">$file_c") || die "Could not create $file_c: $!";
+  print $fd "#include \"mod_info.h\"\n\n";
+  print $fd "const struct Mod_header hdr __attribute__((section(\"mod_hdr\"))) = {\n".
+            "  .magic       = BOOTSTRAP_MOD_INFO_MAGIC_HDR,\n",
+            "  .num_mods    = 0x11112222,\n",
+            "  .flags       = 0x33334444,\n",
+            "  .mbi_cmdline = 0x5555666677778888,\n",
+            "  .mods        = 0x9999aaaabbbbcccc,\n",
+            "\n".
+            "};\n";
+  print $fd "const struct Mod_info info __attribute__((section(\"mod_info\"))) = {\n".
+            "  .magic             = BOOTSTRAP_MOD_INFO_MAGIC_HDR,\n",
+            "  .flags             = 0xbdcd68126055f328,\n",
+            "  .start             = 0xbe31753aba35dd18,\n",
+            "  .size              = 0xc62f8d56,\n",
+            "  .size_uncompressed = 0x5696b2b1,\n",
+            "  .name              = 0x4a281faa8a66d5a3,\n",
+            "  .cmdline           = 0x69bfd22890e04a56,\n",
+            "  .md5sum_compr      = 0x93ad5abc5dac1339,\n",
+            "  .md5sum_uncompr    = 0x5070cb26b9046c8f,\n",
+            "  .attrs             = 0xf4d4986f5504680f,\n",
+            "\n".
+            "};\n";
+  close $fd;
+
+  system("$prog_cc -I$bootstrap_src_dir -g -W -Wall -o $file_o -c $file_c");
+  die "Compile failed" if $?;
+
+  system("$prog_objcopy -O binary -j mod_hdr  $file_o $file_hdr");
+  system("$prog_objcopy -O binary -j mod_info $file_o $file_info");
+
+  die "MOD_HEADER_SIZE size mismatch" if -s $file_hdr != dsi('MOD_HEADER_SIZE');
+  die "MOD_INFO_SIZE size mismatch" if -s $file_info != dsi('MOD_INFO_SIZE');
+
+  sub longlong_check
+  {
+    my ($ll_val, $tag, $hi_val, $lo_val) = @_;
+    my ($lo, $hi) = unpack("L<L<", pack("Q<", $ll_val));
+    die "$tag mismatch" if $lo != $lo_val or $hi != $hi_val;
+  }
+
+  open($fd, $file_hdr) or die "Cannot open $file_hdr: $!";
+  my $buf;
+  check_sysread(sysread($fd, $buf, dsi('MOD_HEADER_SIZE')), dsi('MOD_HEADER_SIZE'));
+  my ($hdr_magic, $num_mods, $flags, $mbi_cmdline, $mods_offset)
+    = unpack(dsi('TEMPLATE_MOD_HEADER'), $buf);
+  die "Hdr magic mismatch"       if $hdr_magic ne dsi('BOOTSTRAP_MOD_INFO_MAGIC_HDR');
+  die "Hdr num_mods mismatch"    if $num_mods    != 0x11112222;
+  die "Hdr flags mismatch"       if $flags       != 0x33334444;
+  longlong_check($mbi_cmdline, "Hdr mbi_cmdline", 0x55556666, 0x77778888);
+  longlong_check($mods_offset, "Hdr mods",        0x9999aaaa, 0xbbbbcccc);
+  close $fd;
+
+  open($fd, $file_info) or die "Cannot open $file_info: $!";
+  check_sysread(sysread($fd, $buf, dsi('MOD_INFO_SIZE')), dsi('MOD_INFO_SIZE'));
+  my ($magic, $flags_info, $start, $size, $size_uncompressed,
+       $name, $cmdline, $md5sum_compr, $md5sum_uncompr, $attrs)
+    = unpack(dsi('TEMPLATE_MOD_INFO'), $buf);
+  die "Info magic mismatch"  if $hdr_magic ne dsi('BOOTSTRAP_MOD_INFO_MAGIC_HDR');
+  die "Info size mismatch"   if $size != 0xc62f8d56;
+  die "Info size_uncompressed mismatch"  if $size_uncompressed != 0x5696b2b1;
+  longlong_check($flags_info,     "Info flags ",         0xbdcd6812, 0x6055f328);
+  longlong_check($start,          "info start",          0xbe31753a, 0xba35dd18);
+  longlong_check($name,           "Info name",           0x4a281faa, 0x8a66d5a3);
+  longlong_check($cmdline,        "Info cmdline",        0x69bfd228, 0x90e04a56);
+  longlong_check($md5sum_compr,   "Info md5sum_compr",   0x93ad5abc, 0x5dac1339);
+  longlong_check($md5sum_uncompr, "Info md5sum_uncompr", 0x5070cb26, 0xb9046c8f);
+  longlong_check($attrs,          "Info attrs",          0xf4d4986f, 0x5504680f);
+  close $fd;
+
+  print "Self-test ok.\n";
 }
 
 return 1;

@@ -1010,6 +1010,11 @@ for (my $i = 0; $i < @ARGV; ++$i)
         system("ssh $host rm -r $remotedir/l4image $remotedir/l4image.tar.gz");
         exit 0;
       }
+    elsif ($arg eq '--selftest')
+      {
+        L4::Image::self_test_data_structure_equality("$libdir/../../pkg/bootstrap/server/src");
+        exit 0;
+      }
     elsif ($arg eq '--help' or $arg eq '-h')
       {
         help_and_exit();
