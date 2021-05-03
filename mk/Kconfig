@@ -235,4 +235,13 @@ config MAKECONFS_ADD
 	  which will be included in every source directory as
 	  Makeconf.<suffix>.
 
+config EXPERIMENTAL
+	bool "Prompt for experimental features"
+	help
+	  Experimental features are available when enabling this option.
+	  This encompases features that are still in development and might not
+	  work correctly for all packages on all architectures at all times.
+
+	  Use with caution!
+
 endmenu
