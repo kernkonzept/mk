@@ -48,6 +48,9 @@ my $roottask    = $ENV{TEST_ROOT_TASK} || 'moe';
 my $roottask_args  = $ENV{TEST_ROOT_TASK_ARGS} || '';
 my $bootstrap_args = $ENV{BOOTSTRAP_ARGS} || '';
 my $is_kunit_test  = $ENV{TEST_KERNEL_UNIT} || 0;
+my $kunit_verbose = $ENV{TEST_KUNIT_VERBOSE} || 0;
+my $kunit_restart = $ENV{TEST_KUNIT_RESTART} || 0;
+my $kunit_debug = $ENV{TEST_KUNIT_DEBUG} || 0;
 
 # kernel arguments required by test
 $kernel_args .= " " . $test_kernel_args if $test_kernel_args;
@@ -348,6 +351,27 @@ else
 push(@module_list, "l4re") unless $is_kunit_test;
 push(@module_list, map { s/:rw$/ :rw/; $_ } map { $_ } @more_mods);
 push(@module_list, $test_target) unless $is_kunit_test;
+
+if ($is_kunit_test)
+  {
+    my $hw_cores = 1;
+    if ($hwconfig_file)
+      {
+        my $hwconfig = L4::TestEnvLua::readconfig($hwconfig_file);
+        $hw_cores = $hwconfig->{NUM_CPUS};
+      }
+
+    my $opts_string = "";
+    $opts_string .= $kunit_verbose ? '1' : '0';
+    $opts_string .= $kunit_restart ? '1' : '0';
+    $opts_string .= $kunit_debug ? '1' : '0';
+    $opts_string .= 0; # reserved
+
+    # format the number of cores as fixed-length string.
+    $opts_string .= sprintf("%04d", $hw_cores);
+
+    $kernel_args .= "-utest_opts=" . $opts_string;
+  }
 
 # If any binary was linked dynamically, we need to add the necessary .so files.
 my @inmods = map { get_module($_) } @module_list;

@@ -17,10 +17,13 @@ Getopt::Long::Configure ("bundling");
 GetOptions(
   'help|h'  => \$help,
   'debug|d' => sub { $ENV{TEST_ARGS} = '-vvv';
+                     $ENV{TEST_KUNIT_VERBOSE} = 1;
+                     $ENV{TEST_KUNIT_DEBUG} = 1;
                      $ENV{KERNEL_ARGS} = '-serial_esc';
                      $nowrapper = 1;
                    },
-  'verbose|v'       => sub { $ENV{TEST_ARGS} .= ' -v'; },
+  'verbose|v'       => sub { $ENV{TEST_ARGS} .= ' -v';
+                             $ENV{TEST_KUNIT_VERBOSE} = 1 },
   'record|r'        => sub { $ENV{TEST_ARGS} .= ' -r'; },
   'only|o=s'        => sub { $ENV{TEST_ARGS} .= " --gtest_filter=*$_[1]"; },
   'shuffle:i'       => \&gtest_shuffle_seed,
@@ -553,6 +556,11 @@ $TEST_SCRIPT [options]
                    file, the line number of the test, and the name of the test.
 
   For more options to gtest try running with: --test-args -h
+
+ Options for kunit test appications:
+ --verbose, -v     Run test in verbose mode.
+ --debug, -d       Enter the kernel debugger, if the test fails. Short for:
+                     -W -v -f "-serial_esc"
 
 =head1 DESCRIPTION
 
