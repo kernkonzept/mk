@@ -47,23 +47,63 @@ use vars qw(@ISA @EXPORT);
 @ISA    = qw(Exporter);
 @EXPORT = qw();
 
-use constant {
+my %DSI = (
+  STRUCTURE_VERSION => 2,
   BOOTSTRAP_IMAGE_INFO_MAGIC => "<< L4Re Bootstrap Image Info >>",
   BOOTSTRAP_IMAGE_INFO_MAGIC_LEN => 32,
-  TEMPLATE_IMAGE_INFO => "L<L<Q<Q<Q<Q<Q<Q<Q<", # without the MAGIC
-  IMAGE_INFO_SIZE => 64, # without the MAGIC
-  IMAGE_INFO_OFFSET_MOD_HEADER => 48,
-  IMAGE_INFO_OFFSET_ATTR       => 56,
+  TEMPLATE_IMAGE_INFO_HDR => "L<L<",
+  IMAGE_INFO_HDR_SIZE => 8,
 
-  TEMPLATE_MOD_HEADER => "A32L<L<q<q<",
-  TEMPLATE_MOD_INFO   => "A32L<Q<L<L<q<q<q<q<q<",
-  MOD_HEADER_SIZE     => 56,
-  MOD_INFO_SIZE       => 92,
-  BOOTSTRAP_MOD_INFO_MAGIC_HDR     => "<< L4Re-bootstrap-modinfo-hdr >>",
-  BOOTSTRAP_MOD_INFO_MAGIC_HDR_LEN => 32,
-  BOOTSTRAP_MOD_INFO_MAGIC_MOD     => "<< L4Re-bootstrap-modinfo-mod >>",
-  BOOTSTRAP_MOD_INFO_MAGIC_MOD_LEN => 32,
-};
+  V_1 => {
+    TEMPLATE_IMAGE_INFO_TAIL => "Q<Q<Q<Q<Q<Q<Q<",
+    IMAGE_INFO_TAIL_SIZE => 56,
+    IMAGE_INFO_OFFSET_MOD_HEADER => 48,
+    IMAGE_INFO_OFFSET_ATTR       => 56,
+
+    TEMPLATE_MOD_HEADER => "A32L<L<q<q<",
+    TEMPLATE_MOD_INFO   => "A32L<Q<L<L<q<q<q<q<q<",
+    MOD_HEADER_SIZE     => 56,
+    MOD_INFO_SIZE       => 92,
+    BOOTSTRAP_MOD_INFO_MAGIC_HDR     => "<< L4Re-bootstrap-modinfo-hdr >>",
+    BOOTSTRAP_MOD_INFO_MAGIC_HDR_LEN => 32,
+    BOOTSTRAP_MOD_INFO_MAGIC_MOD     => "<< L4Re-bootstrap-modinfo-mod >>",
+    BOOTSTRAP_MOD_INFO_MAGIC_MOD_LEN => 32,
+  },
+  V_2 => {
+    TEMPLATE_IMAGE_INFO_TAIL => "Q<Q<Q<Q<Q<Q<Q<",
+    IMAGE_INFO_TAIL_SIZE => 56,
+    IMAGE_INFO_OFFSET_MOD_HEADER => 48,
+    IMAGE_INFO_OFFSET_ATTR       => 56,
+
+    TEMPLATE_MOD_HEADER => "A32L<L<q<q<",
+    TEMPLATE_MOD_INFO   => "A32Q<Q<L<L<q<q<q<q<q<",
+    MOD_HEADER_SIZE     => 56,
+    MOD_INFO_SIZE       => 96,
+    BOOTSTRAP_MOD_INFO_MAGIC_HDR     => "<< L4Re-bootstrap-modinfo-hdr >>",
+    BOOTSTRAP_MOD_INFO_MAGIC_HDR_LEN => 32,
+    BOOTSTRAP_MOD_INFO_MAGIC_MOD     => "<< L4Re-bootstrap-modinfo-mod >>",
+    BOOTSTRAP_MOD_INFO_MAGIC_MOD_LEN => 32,
+  },
+);
+
+sub dsi
+{
+  my $n = shift;
+  my $v = $DSI{STRUCTURE_VERSION};
+
+  return $DSI{TEMPLATE_IMAGE_INFO_HDR}.$DSI{"V_$v"}{TEMPLATE_IMAGE_INFO_TAIL}
+    if $n eq 'TEMPLATE_IMAGE_INFO';
+
+  return $DSI{IMAGE_INFO_HDR_SIZE} + $DSI{"V_$v"}{IMAGE_INFO_TAIL_SIZE}
+    if $n eq 'IMAGE_INFO_SIZE';
+
+  return $DSI{"V_$v"}{$n} if defined $DSI{"V_$v"}{$n};
+  error("Unknown DSI member '$n'") unless defined $DSI{$n};
+  return $DSI{$n};
+}
+
+my $DSI_CUR_ver = $DSI{STRUCTURE_VERSION};
+my $DSI_CUR = $DSI{"V_$DSI_CUR_ver"};
 
 my @arch_l4names = qw/x86 amd64
                       arm arm64
@@ -354,7 +394,7 @@ sub find_image_info
   my $r = sysread($fd, $buf, 1 << 20); # would we be interrupted?
   return(0, "Could not read from file: $!") unless $r;
 
-  my $pos = index($buf, BOOTSTRAP_IMAGE_INFO_MAGIC);
+  my $pos = index($buf, $DSI{BOOTSTRAP_IMAGE_INFO_MAGIC});
   return(0, "Did not find image info") if $pos == -1;
 
   #printf "Found image info at 0x%x\n", $pos;
@@ -411,19 +451,32 @@ sub process_image
   my ($image_info_file_pos, $error_text) = find_image_info($fd);
   error($error_text) if defined $error_text;
 
-  filepos_set($fd, $image_info_file_pos + BOOTSTRAP_IMAGE_INFO_MAGIC_LEN);
+  filepos_set($fd, $image_info_file_pos + $DSI{BOOTSTRAP_IMAGE_INFO_MAGIC_LEN});
 
   my $buf;
-  my $r = sysread($fd, $buf, IMAGE_INFO_SIZE);
-  return("Could not read from binary ($r)")
-    if not defined $r or $r != IMAGE_INFO_SIZE;
-  my ($crc32, $structure_version, $_flags, $_start, $_end,
-      $_module_data_start, $bin_addr_end_bin, $mod_header, $attrs_offset)
-    = unpack(TEMPLATE_IMAGE_INFO, $buf);
 
-  printf "crc32=%x structure_version=%x _flags=%x _start=%x _end=%x ".
+  my $r = sysread($fd, $buf, $DSI{IMAGE_INFO_HDR_SIZE});
+  return("Could not read from binary ($r)")
+    if not defined $r or $r != $DSI{IMAGE_INFO_HDR_SIZE};
+  my $crc32;
+  ($crc32, $DSI_CUR_ver)
+    = unpack($DSI{TEMPLATE_IMAGE_INFO_HDR}, $buf);
+
+  $DSI_CUR = $DSI{"V_$DSI_CUR_ver"};
+
+  error("Unsupported structure version $DSI_CUR_ver")
+    unless defined $DSI_CUR->{TEMPLATE_IMAGE_INFO_TAIL};
+
+  $r = sysread($fd, $buf, $DSI_CUR->{IMAGE_INFO_TAIL_SIZE});
+  return("Could not read from binary ($r)")
+    if not defined $r or $r != $DSI_CUR->{IMAGE_INFO_TAIL_SIZE};
+  my ($_flags, $_start, $_end,
+      $_module_data_start, $bin_addr_end_bin, $mod_header, $attrs_offset)
+    = unpack($DSI_CUR->{TEMPLATE_IMAGE_INFO_TAIL}, $buf);
+
+  printf "crc32=%x DSI_CUR_ver=%x _flags=%x _start=%x _end=%x ".
          "_module_data_start=%x bin_addr_end_bin=%x mod_header=%x attrs=%x\n",
-         $crc32, $structure_version, $_flags, $_start, $_end,
+         $crc32, $DSI_CUR_ver, $_flags, $_start, $_end,
          $_module_data_start, $bin_addr_end_bin, $mod_header, $attrs_offset
     if 0;
 
@@ -457,7 +510,7 @@ sub process_image
     }
 
   $d{image_info_file_pos} = $image_info_file_pos;
-  $d{structure_version} = $structure_version;
+  $d{structure_version} = $DSI_CUR_ver;
   $d{crc32}             = $crc32;
   $d{image_flags}       = $_flags;
   $d{attrs}             = { read_attrs($fd, $file_attrshdr_start) }
@@ -573,20 +626,20 @@ sub import_modules
   my %ds;
 
   my $hdr;
-  check_sysread(sysread($fd, $hdr, MOD_HEADER_SIZE), MOD_HEADER_SIZE);
+  check_sysread(sysread($fd, $hdr, $DSI_CUR->{MOD_HEADER_SIZE}), $DSI_CUR->{MOD_HEADER_SIZE});
 
   ($ds{magic}, $ds{num_mods}, $ds{flags}, $ds{mbi_cmdline}, $ds{mods_offset})
-    = unpack(TEMPLATE_MOD_HEADER, $hdr);
+    = unpack($DSI_CUR->{TEMPLATE_MOD_HEADER}, $hdr);
 
   return ('error' => "Invalid module info file header at file offset $offset_mod_header")
-    if $ds{magic} ne BOOTSTRAP_MOD_INFO_MAGIC_HDR;
+    if $ds{magic} ne $DSI_CUR->{BOOTSTRAP_MOD_INFO_MAGIC_HDR};
 
   my @mods;
   for (my $i = 0; $i < $ds{num_mods}; ++$i)
     {
-      $mods[$i]{image_filepos} = MOD_HEADER_SIZE + $i * MOD_INFO_SIZE;
+      $mods[$i]{image_filepos} = $DSI_CUR->{MOD_HEADER_SIZE} + $i * $DSI_CUR->{MOD_INFO_SIZE};
       my $buf;
-      check_sysread(sysread($fd, $buf, MOD_INFO_SIZE), MOD_INFO_SIZE);
+      check_sysread(sysread($fd, $buf, $DSI_CUR->{MOD_INFO_SIZE}), $DSI_CUR->{MOD_INFO_SIZE});
 
       my $magic;
       ($magic, $mods[$i]{flags}, $mods[$i]{start},
@@ -594,16 +647,16 @@ sub import_modules
        $mods[$i]{name}, $mods[$i]{cmdline},
        $mods[$i]{md5sum_compr}, $mods[$i]{md5sum_uncompr},
        $mods[$i]{filepos_attr})
-        = unpack(TEMPLATE_MOD_INFO, $buf);
+        = unpack($DSI_CUR->{TEMPLATE_MOD_INFO}, $buf);
 
       return ('error' => 'Invalid module header')
-        if $magic ne BOOTSTRAP_MOD_INFO_MAGIC_MOD;
+        if $magic ne $DSI_CUR->{BOOTSTRAP_MOD_INFO_MAGIC_MOD};
     }
 
   # TODO should we check for addressing mode here? or at least enforce that
   # we only have relative addressing popping up here
 
-  my $hdrlen = MOD_HEADER_SIZE + $ds{num_mods} * MOD_INFO_SIZE;
+  my $hdrlen = $DSI_CUR->{MOD_HEADER_SIZE} + $ds{num_mods} * $DSI_CUR->{MOD_INFO_SIZE};
 
   my $data;
   # read up to 100kb mbi-info, eof might be earlier for empty images
@@ -616,7 +669,7 @@ sub import_modules
     {
       if ($mods[$i]{filepos_attr})
         {
-          my $o = $offset_mod_header + MOD_HEADER_SIZE + $i * MOD_INFO_SIZE;
+          my $o = $offset_mod_header + $DSI_CUR->{MOD_HEADER_SIZE} + $i * $DSI_CUR->{MOD_INFO_SIZE};
           $mods[$i]{attrs} = { read_attrs($fd, $o + $mods[$i]{filepos_attr}) };
         }
     }
@@ -635,14 +688,14 @@ sub import_modules
 
   for (my $i = 0; $i < $ds{num_mods}; ++$i)
     {
-      my $offs = MOD_HEADER_SIZE + $i * MOD_INFO_SIZE - $hdrlen;
+      my $offs = $DSI_CUR->{MOD_HEADER_SIZE} + $i * $DSI_CUR->{MOD_INFO_SIZE} - $hdrlen;
 
       $mods[$i]{name}           = unpack('Z*', substr($data, $mods[$i]{name} + $offs));
       $mods[$i]{cmdline}        = unpack('Z*', substr($data, $mods[$i]{cmdline} + $offs));
       $mods[$i]{md5sum_compr}   = unpack('Z*', substr($data, $mods[$i]{md5sum_compr} + $offs));
       $mods[$i]{md5sum_uncompr} = unpack('Z*', substr($data, $mods[$i]{md5sum_uncompr} + $offs));
 
-      $mods[$i]{fileoffset} = $offset_mod_header + $mods[$i]{start} + MOD_HEADER_SIZE + $i * MOD_INFO_SIZE;
+      $mods[$i]{fileoffset} = $offset_mod_header + $mods[$i]{start} + $DSI_CUR->{MOD_HEADER_SIZE} + $i * $DSI_CUR->{MOD_INFO_SIZE};
 
       if (defined $file_store_path)
         {
@@ -715,8 +768,8 @@ sub write_image_info
   if (defined $offsets{attrs})
     {
       filepos_set($fd, $image_info_file_pos
-                       + BOOTSTRAP_IMAGE_INFO_MAGIC_LEN
-                       + IMAGE_INFO_OFFSET_ATTR);
+                       + $DSI{BOOTSTRAP_IMAGE_INFO_MAGIC_LEN}
+                       + $DSI_CUR->{IMAGE_INFO_OFFSET_ATTR});
       syswrite($fd, pack("q<", $data_area_start_offset + $offsets{attrs}), 8);
 
       printf "data_area_start_offset=%x\n", $data_area_start_offset if 0;
@@ -726,8 +779,8 @@ sub write_image_info
   if (defined $offsets{mod_header})
     {
       filepos_set($fd, $image_info_file_pos
-                       + BOOTSTRAP_IMAGE_INFO_MAGIC_LEN
-                       + IMAGE_INFO_OFFSET_MOD_HEADER);
+                       + $DSI{BOOTSTRAP_IMAGE_INFO_MAGIC_LEN}
+                       + $DSI_CUR->{IMAGE_INFO_OFFSET_MOD_HEADER});
       syswrite($fd, pack("q<", $data_area_start_offset + $offsets{mod_header}), 8);
       printf "data_area_start_offset=%x\n", $data_area_start_offset if 0;
       printf "offsets.mod_header=%x\n", $offsets{mod_header} if 0;
@@ -801,7 +854,10 @@ sub export_modules
 
   my $filestartpos = filepos_get($fd);
   die "Cannot get file position" unless defined $filestartpos;
-  printf "filestartpos=%x\n", $filestartpos if 0;
+
+  # Ensure 8-byte alignment of mod-header and mod-info
+  $filestartpos = ($filestartpos + 7) & ~7;
+  filepos_set($fd, $filestartpos);
 
   my %stor;
 
@@ -821,18 +877,18 @@ sub export_modules
   printf "files_offset: %x\n", $stor{files_offset} if 0;
   for (my $round = 0; $round < 2; ++$round)
     {
-      my $hdrlen = MOD_HEADER_SIZE + $ds{num_mods} * MOD_INFO_SIZE;
+      my $hdrlen = $DSI_CUR->{MOD_HEADER_SIZE} + $ds{num_mods} * $DSI_CUR->{MOD_INFO_SIZE};
       $stor{mod_info_payload_offset} = 0;
 
       $stor{data_payload} = '';
       $stor{mod_info_payload} = '';
-      my $hdrdata = pack(TEMPLATE_MOD_HEADER,
-                         BOOTSTRAP_MOD_INFO_MAGIC_HDR,
+      my $hdrdata = pack($DSI_CUR->{TEMPLATE_MOD_HEADER},
+                         $DSI_CUR->{BOOTSTRAP_MOD_INFO_MAGIC_HDR},
                          $ds{num_mods},
                          $ds{flags},
                          $hdrlen + store_add_string(\%stor,
                                                     $ds{mbi_cmdline} || ''),
-                         MOD_HEADER_SIZE); # offset to mods
+                         $DSI_CUR->{MOD_HEADER_SIZE}); # offset to mods
       store_add_info(\%stor, $hdrdata);
 
       for (my $i = 0; $i < $ds{num_mods}; ++$i)
@@ -860,8 +916,8 @@ sub export_modules
                         + $stor{mod_info_payload_offset})
             if defined $ds{mods}[$i]{filepos_attr};
 
-          my $modinfodata = pack(TEMPLATE_MOD_INFO,
-                                 BOOTSTRAP_MOD_INFO_MAGIC_MOD,
+          my $modinfodata = pack($DSI_CUR->{TEMPLATE_MOD_INFO},
+                                 $DSI_CUR->{BOOTSTRAP_MOD_INFO_MAGIC_MOD},
                                  $ds{mods}[$i]{flags},
                                  $fileoffset, # start
                                  $ds{mods}[$i]{size},
