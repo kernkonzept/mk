@@ -262,11 +262,11 @@ sub op_edit
   my $d = shift;
   my $args = shift;
   my %found = find_modules($d, $args, 0);
-  my @k = sort { $a <=> $b } keys %found;
+  my $pos = (keys %found)[0];
   my $editor = $ENV{EDITOR} || default_editor();
-  system("$editor ${$d}{mods}[$k[0]]{filepath}");
-  ${$d}{mods}[$k[0]]{size}              = -s ${$d}{mods}[$k[0]]{filepath};
-  ${$d}{mods}[$k[0]]{size_uncompressed} = -s ${$d}{mods}[$k[0]]{filepath};
+  system("$editor ${$d}{mods}[$pos]{filepath}");
+  L4::Image::update_module($d->{mods}[$pos], ${$d}{mods}[$pos]{filepath});
+  error(${$d}{mods}[$pos]{error}) if ${$d}{mods}[$pos]{error};
 }
 
 sub create_image
