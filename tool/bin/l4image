@@ -184,7 +184,7 @@ sub find_modules
 
   error("Search for module did not yield a result") if keys %found == 0;
   error("Found multiple matching modules (".join(", ", keys %found).
-        ") but need exactly one");
+        ") but need exactly one")
     if $multiple == 0 && keys %found > 1;
   print "Processing module(s) ", join(", ", keys %found), "\n";
 
