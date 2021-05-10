@@ -1,6 +1,6 @@
 L4DIR ?= ..
 
-TARGET     := $(wildcard gendep elf-patcher)
+TARGET     := $(wildcard gendep elf-patcher elf-util)
 TARGET_doc := $(wildcard gendep)
 
 all::
