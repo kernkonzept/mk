@@ -35,11 +35,6 @@ $(if $(ROLE),$(OBJ_DIR)/.general.d: $(L4DIR)/mk/$(ROLE))
 
 -include $(wildcard $(L4DIR)/mk/arch/Makeconf.*)
 
-ifneq ($(SYSTEM_TARGET),) # Added late 2015
-  CROSS_COMPILE=$(SYSTEM_TARGET)
-  $(info The variable SYSTEM_TARGET has been deprecated in favor of CROSS_COMPILE.)
-endif
-
 strip_quotes = $(patsubst "%,%,$(patsubst %",%,$(1)))#"
 
 CROSS_COMPILE    ?= $(CROSS_COMPILE_$(ARCH))
