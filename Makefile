@@ -513,6 +513,7 @@ uimage: check_and_adjust_ram_base
 
 itb: check_and_adjust_ram_base
 	$(call genimage,BOOTSTRAP_DO_ITB=y)
+	$(VERBOSE)$(if $(POST_IMAGE_CMD),$(call POST_IMAGE_CMD,$(IMAGES_DIR)/bootstrap.itb))
 
 rawimage: check_and_adjust_ram_base
 	$(call genimage,BOOTSTRAP_DO_UIMAGE= BOOTSTRAP_DO_RAW_IMAGE=y)
