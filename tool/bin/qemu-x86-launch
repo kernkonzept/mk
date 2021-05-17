@@ -62,17 +62,5 @@ my $qemu_cmd =
       "$qemu -kernel $kernel -append \"$args\" ".
       "-initrd \"$initrd\" $qemu_options";
 
-# check installed qemu version
-my $o = `$qemu -version 2>&1`;
-if ($?)
-  {
-    print "Failed to launch QEmu ($qemu)\n";
-    exit $?;
-  }
-if ($o !~ /\s(\d+)\.(\d+)/ || ($1 == 0 && $2 < 13))
-  {
-    print "\nYour installed Qemu is too old, please upgrade to at least version 0.13.\n\n";
-    exit 1;
-  }
 print "$qemu_cmd\n";
 system("$qemu_cmd");
