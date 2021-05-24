@@ -13,6 +13,9 @@ config CPU_ARM_ARMV8A
 
 endchoice
 
+config KERNEL_CPU_VIRT
+	bool "Kernel supports virtualization"
+
 config CPU
 	string
 	default "armv8a"   if CPU_ARM_ARMV8A
