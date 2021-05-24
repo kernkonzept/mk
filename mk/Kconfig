@@ -211,7 +211,7 @@ config BID_GCC_STACK_PROTECTOR
 endchoice
 
 config BID_GENERATE_MAPFILE
-	bool #"Generate Map-files for binaries"
+	bool "Generate Map-files for binaries"
 	help
 	  Enabling this option will generate map-files together with the
 	  binaries. This might be handy for debugging purposes. See ld(1)
