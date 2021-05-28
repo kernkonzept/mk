@@ -34,6 +34,8 @@ SRC_CC_IS_CXX11 ?= y
 # our default Makefile-name in the OBJ-Subdirs
 BID_OBJ_Makefile ?= Makefile
 
+TARGET := $(if $(RETARGET_$(TARGET)),$(RETARGET_$(TARGET)),$(TARGET))
+
 ifeq ($(SYSTEM),) # if we have no system yet, build the subdirs
 #################################################################
 #
