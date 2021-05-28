@@ -40,6 +40,7 @@ use L4::Image::Utils qw/error check_sysread check_syswrite
 use L4::Image::Elf;
 use L4::Image::Raw;
 use L4::Image::UImage;
+use L4::Image::Regions;
 
 BEGIN { unshift @INC, dirname($0).'../lib'; }
 
@@ -787,6 +788,24 @@ sub write_image_info
     }
 }
 
+sub get_xip_addr
+{
+  my $fn = shift;
+  my $ret;
+
+  open(my $elfutil, "LANG=C $ENV{OBJ_BASE}/bin/host/elf-util --show-infos $fn |") || die("Cannot get infos from '$fn'");
+  while (<$elfutil>)
+    {
+      chomp;
+      $ret = hex($1) if /^XIP_ADDR_1=([0-9a-fx]+)$/i;
+    }
+  close $elfutil;
+
+  die "Could not find XIP address of $fn" unless defined $ret;
+
+  return $ret;
+}
+
 sub store_add_info
 {
   my $stor = shift;
@@ -811,18 +830,6 @@ sub store_mod_off
   return $o - $$stor{mod_info_payload_offset};
 }
 
-sub store_file_add
-{
-  my $stor = shift;
-  my $file = shift;
-  my $arch = shift;
-  my $o = $$stor{files_offset};
-  push @{$$stor{files}}, $file;
-  push @{$$stor{files_offsets}}, $o;
-  $$stor{files_offset} = round_page($$stor{files_offset} + -s $file, $arch);
-  return $o;
-}
-
 sub export_modules
 {
   my ($fd, %ds) = @_;
@@ -830,6 +837,7 @@ sub export_modules
   print "Writing out image\n" if 0;
 
   my $initial_file_pos = filepos_get($fd);
+  die "Cannot get file position" unless defined $initial_file_pos;
 
   my %offsets;
 
@@ -869,12 +877,31 @@ sub export_modules
   print "num_mods: $ds{num_mods}\n" if 0;
 
   my $size_attrs = 0;
+  my $regions = L4::Image::Regions->new(page_size($ds{arch}));
+
+  # Place xip modules first. They have a fixed location.
+  foreach my $m (@{$ds{mods}})
+    {
+      die "No on-disk file for mod" unless defined $m->{filepath};
+      die "No such file '$m->{filepath}'" unless -e $m->{filepath};
+      $m->{file_size} = -s $m->{filepath};
+
+      if (defined $m->{xip})
+        {
+          my $loc = get_xip_addr($m->{filepath}) - $m->{xip};
+          die "XIP location before flash image start: $m->{filepath}: $loc" unless $loc >= 0;
+          $regions->add($loc, $loc + $m->{file_size}) || error("XIP location for $m->{filepath} already occupied");
+          $m->{file_offset} = $loc
+        }
+      else
+        {
+          delete $m->{file_offset};
+        }
+    }
 
   # round=0: gather how much payload data is there
   # round=1: use fileoffset with proper value according to known payload size
   my $mods_start = $filestartpos - $initial_file_pos;
-  $stor{files_offset} = $mods_start;
-  printf "files_offset: %x\n", $stor{files_offset} if 0;
   for (my $round = 0; $round < 2; ++$round)
     {
       my $hdrlen = $DSI_CUR->{MOD_HEADER_SIZE} + $ds{num_mods} * $DSI_CUR->{MOD_INFO_SIZE};
@@ -893,15 +920,22 @@ sub export_modules
 
       for (my $i = 0; $i < $ds{num_mods}; ++$i)
         {
-          die "No on-disk file for mod$i" unless defined $ds{mods}[$i]{filepath};
-          die "No such file '$ds{mods}[$i]{filepath}'"
-            unless -e $ds{mods}[$i]{filepath};
+          my $fileoffset = 0;
+          if ($round == 1)
+            {
+              if (defined $ds{mods}[$i]{file_offset})
+                {
+                  $fileoffset = $ds{mods}[$i]{file_offset};
+                }
+              else
+                {
+                  $fileoffset = $regions->alloc($ds{mods}[$i]{file_size});
+                  $ds{mods}[$i]{file_offset} = $fileoffset;
+                }
+            }
 
-          my $fileoffset = store_mod_off(\%stor,
-                                         store_file_add(\%stor,
-                                                        $ds{mods}[$i]{filepath},
-                                                        $ds{arch}))
-                           - $mods_start;
+          $fileoffset = store_mod_off(\%stor, $fileoffset)
+                        - $mods_start - $initial_file_pos;
 
           $ds{mods}[$i]{flags} &= ~(1 << 4); # we use relative addressing
 
@@ -939,13 +973,14 @@ sub export_modules
                              $ds{arch});
           undef %stor;
           printf "Files offset: %x\n", $o if 0;
-          $stor{files_offset} = $o;
+          $regions->add(0, $o+$initial_file_pos) || error("Not enough room for headers");
         }
     }
 
   print STDERR "Size of info_payload: ", length($stor{mod_info_payload}), "\n" if 0;
   print STDERR "Size of      payload: ", length($stor{data_payload}), "\n" if 0;
-  print STDERR "End:                  ", $stor{files_offset}, "\n" if 0;
+  print STDERR "Allocation          : " if 0;
+  $regions->dump() if 0;
 
   $offsets{mod_header} = filepos_get($fd) - $initial_file_pos;
 
@@ -954,24 +989,26 @@ sub export_modules
 
   for (my $i = 0; $i < $ds{num_mods}; ++$i)
     {
-      print STDERR "$i: writeout: $stor{files}[$i] size=", -s $stor{files}[$i], "\n" if 0;
+      my $fn = $ds{mods}[$i]{filepath};
+      my $pos = $ds{mods}[$i]{file_offset};
+      printf STDERR "mod%02d: writeout: $fn @ %x size=%d\n", $i, $pos, -s $fn if 0;
 
-      my $fn = $stor{files}[$i];
       open(my $o, $fn) || die "Cannot open $fn: $!";
       binmode $o;
 
       my $sz = -s $fn;
       my $buf;
 
-      my $clearto = $initial_file_pos + $stor{files_offsets}[$i];
-      my $pos = filepos_get($fd);
-      error("Internal error on file positions ($clearto, $pos)") if $clearto < $pos;
-      if ($clearto > $pos)
-        {
-          printf("clearing to %x\n", $clearto) if 0;
-          syswrite($fd, pack("C", 0) x ($clearto - $pos), $clearto - $pos);
-        }
+      #my $clearto = $initial_file_pos + $stor{files_offsets}[$i];
+      #my $pos = filepos_get($fd);
+      #error("Internal error on file positions ($clearto, $pos)") if $clearto < $pos;
+      #if ($clearto > $pos)
+      #  {
+      #    printf("clearing to %x\n", $clearto) if 0;
+      #    syswrite($fd, pack("C", 0) x ($clearto - $pos), $clearto - $pos);
+      #  }
 
+      sysseek($fd, $pos, 0);
       do
         {
           my $l = $sz;

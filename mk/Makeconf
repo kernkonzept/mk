@@ -262,7 +262,7 @@ endif
 
 # if we're working on a program that wants the RAM_BASE be considered in its
 # linking address, source a possible privately configured one
-ifneq ($(RELOC_PHYS),)
+ifneq ($(RELOC_PHYS)$(if $(CONFIG_MMU),,y),)
 INCLUDE_BOOT_CONFIG := required
 endif
 
@@ -577,6 +577,8 @@ $(GENERAL_D_LOC): $(L4DIR)/mk/Makeconf $(EXTRA_GENERAL_D_DEP)
 		$(OBJ_BASE)/.config.all)
 	$(DEPEND_VERBOSE)$(call BID_DEPEND_GENERAL_D_COND,\
 		$(OBJ_BASE)/Makeconf.local)
+	$(DEPEND_VERBOSE)$(call BID_DEPEND_GENERAL_D_COND,\
+		$(OBJ_BASE)/conf/Makeconf.local)
 	$(DEPEND_VERBOSE)$(call BID_DEPEND_GENERAL_D_COND,\
 		$(L4DIR)/Makeconf.local)
 	$(DEPEND_VERBOSE)$(call BID_DEPEND_GENERAL_D_COND,\

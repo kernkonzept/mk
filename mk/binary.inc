@@ -437,14 +437,31 @@ else
   GCCSTACKPROTECTOROPT = $(GCCNOSTACKPROTOPT)
 endif # stack protector
 
+reloc_phys_base = $(if $(XIP_$(1)),$(PLATFORM_FLASH_BASE),$(RAM_BASE))
+
 default_reloc_base = $(firstword $(DEFAULT_RELOC_$(1)) \
                                  $(DEFAULT_RELOC_$(ARCH)) \
                                  $(DEFAULT_RELOC) \
                                  $(if $(NO_DEFAULT_RELOC),,0x01000000))
 default_reloc = $(if $(call default_reloc_base,$(1)),\
-                     $(if $(RELOC_PHYS), \
-		          $(shell printf "0x%x" $$(($(RAM_BASE) + $(call default_reloc_base,$(1))))), \
-			  $(call default_reloc_base,$(1))))
+                     $(if $(or $(RELOC_PHYS),$(if $(CONFIG_MMU),,1)), \
+                          $(shell printf "0x%x" $$(($(call reloc_phys_base,$(1)) + $(call default_reloc_base,$(1))))), \
+                          $(call default_reloc_base,$(1))))
+
+data_reloc_base = $(firstword $(DATA_RELOC_$(1)) \
+                              $(DATA_RELOC_$(ARCH)) \
+                              $(DATA_RELOC))
+data_reloc = $(firstword $(if $(call data_reloc_base,$(1)),\
+                              $(if $(or $(RELOC_PHYS),$(if $(CONFIG_MMU),,1)), \
+                                   $(shell printf "0x%x" $$(($(RAM_BASE) + $(call data_reloc_base,$(1))))), \
+                                   $(call data_reloc_base,$(1)))))
+
+default_heap_size = $(firstword $(if $(NO_DEFAULT_RELOC)$(CONFIG_MMU),\
+                                     ,\
+                                     $(DEFAULT_HEAP_SIZE_$(1)) \
+                                     $(DEFAULT_HEAP_SIZE_$(ARCH)) \
+                                     $(DEFAULT_HEAP_SIZE) \
+                                     0x10000))
 
 CCXX_FLAGS += $(if $(CONFIG_FULL_PATH_NAMES_IN_BINARIES),,$(GCCPREFIXOPT))
 
@@ -729,14 +746,23 @@ ifneq ($(MODE),shared)
     define make_per_target_reloc
       $$(error DEFAULT_RELOC / DEFAULT_RELOC_$(1) must not be set if MODE is l4linux or host)
     endef
+    define make_per_target_heap_size
+      $$(error DEFAULT_HEAP_SIZE / DEFAULT_HEAP_SIZE_$(1) must not be set if MODE is l4linux or host)
+    endef
   else
     define make_per_target_reloc
       $(1): $$(BID_RAM_BASE_DEP)
       LDFLAGS_$(1) += -Ttext-segment=$$(firstword $$(call default_reloc,$(1)))
+      LDFLAGS_$(1) += $$(if $$(call data_reloc,$(1)),-Tdata=$$(call data_reloc,$(1)))
+    endef
+    define make_per_target_heap_size
+      LDFLAGS_$(1) += --defsym=__heap_size=$$(firstword $$(call default_heap_size,$(1)))
     endef
   endif
 else
   define make_per_target_reloc
+  endef
+  define make_per_target_heap_size
   endef
 endif
 
@@ -755,7 +781,8 @@ define gen_target_vars_and_deps
   $(foreach src,$(call get_target_var,SRC_C,$(1))            \
                 $(call get_target_var,SRC_CC,$(1)),          \
                 $(call gen_src_to_dpe_deps,$(src)))          \
-  $(if $(call default_reloc,$(1)),$(eval $(call make_per_target_reloc,$(1))))
+  $(if $(call default_reloc,$(1)),$(eval $(call make_per_target_reloc,$(1)))) \
+  $(if $(call default_heap_size,$(1)),$(eval $(call make_per_target_heap_size,$(1))))
 endef
 
 # Generate dependency rules and target-specific variables for all

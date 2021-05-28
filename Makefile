@@ -560,6 +560,10 @@ rawimage: check_and_adjust_ram_base
 	$(call genimage,BOOTSTRAP_DO_UIMAGE= BOOTSTRAP_DO_RAW_IMAGE=y)
 	$(VERBOSE)$(if $(POST_IMAGE_CMD),$(call POST_IMAGE_CMD,$(IMAGES_DIR)/bootstrap.raw))
 
+flashimage: check_and_adjust_ram_base
+	$(call genimage,BOOTSTRAP_DO_FLASH_IMAGE=y)
+	$(VERBOSE)$(if $(POST_IMAGE_CMD),$(call POST_IMAGE_CMD,$(IMAGES_DIR)/bootstrap.raw))
+
 fastboot fastboot_rawimage: rawimage
 	$(VERBOSE)$(FASTBOOT_BOOT_CMD) \
 	  $(if $(FASTBOOT_IMAGE),$(FASTBOOT_IMAGE),$(IMAGES_DIR)/bootstrap.raw)
