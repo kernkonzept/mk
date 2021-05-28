@@ -3,7 +3,7 @@ pc_file_dir = %:set-var(pc_file_dir %(l4obj)/pc)
 
 # options that take an extra argument
 link_arg_opts =
-  %:arg-option(L m z o O h e -entry fini init -defsym)
+  %:arg-option(L m z o O h e -entry fini init -defsym Map)
   %:arg-option(b -format A -architecture y -trace-symbol MF)
   %:arg-option(-hash-style -version-script)
   %:arg-option(T Tbss Tdata Ttext Ttext-segment Trodata-segment Tldata-segment)
@@ -55,7 +55,7 @@ link_pass_opts = %:set-var(link_pass_opts
   %{-discard-*}
   %{x} %{X} %{S} %{s} %{t} %{z} %{Z} %{n} %{N} %{init*} %{fini*}
   %{soname*} %{h} %{E} %{-export-dynamic&-no-export-dynamic}
-  %{e} %{-entry*} %{-defsym*} %{b} %{-format*} %{A} %{-architecture*}
+  %{e} %{-entry*} %{-defsym*} %{Map*} %{b} %{-format*} %{A} %{-architecture*}
   %{-gc-sections} %{gc-sections} %{-no-gc-sections} %{-hash-style*}
   # we always set -nostlib below so drop it but use it to avoid an error
   %{nostdlib:} %{no-pie:} %{pie} %{-no-dynamic-linker} %{-version-script*})
