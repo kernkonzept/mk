@@ -437,7 +437,7 @@ else
   GCCSTACKPROTECTOROPT = $(GCCNOSTACKPROTOPT)
 endif # stack protector
 
-reloc_phys_base = $(if $(XIP_$(1)),$(PLATFORM_FLASH_BASE),$(RAM_BASE))
+reloc_phys_base = $(if $(XIP_$(1)),$(if $(PLATFORM_FLASH_BASE),$(PLATFORM_FLASH_BASE),$(error PLATFORM_FLASH_BASE not set)),$(RAM_BASE))
 
 default_reloc_base = $(firstword $(DEFAULT_RELOC_$(1)) \
                                  $(DEFAULT_RELOC_$(ARCH)) \
