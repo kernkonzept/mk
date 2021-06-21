@@ -98,15 +98,19 @@ foreach my $e (@entries)
 
     my $kernel;
     my $initrd_arg = '';
+    my %bootstrap_entry;
     if ($x86_based) {
       $initrd_arg = "                  -initrd \"".join(',', @args)."\" \\\n";
       $kernel = $e->{bootstrap}{unique_short_filepath};
+      $bootstrap_entry{file} = $e->{bootstrap}{file};
     } else {
       die "Need to specify IMAGE_FILE environment variable for non-x86 use."
         unless defined $image_file;
       print STDERR "$image_file\n";
+      $bootstrap_entry{file} = $image_file;
       ($kernel = $image_file) =~ s@.*/@@;
     }
+    $bootstrap_entry{unique_short_filepath} = $kernel;
 
     print QEMU
       "     $entryname) $qemu -kernel $kernel \\\n".
@@ -114,7 +118,7 @@ foreach my $e (@entries)
       $initrd_arg.
       "                  $qemu_options \"\$@\";;\n";
 
-    foreach (@{$e->{mods}}, $e->{bootstrap})
+    foreach (@{$e->{mods}}, \%bootstrap_entry)
       {
         my $usf = $_->{unique_short_filepath};
         if (! -e $targetdir."/".$usf)
