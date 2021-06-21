@@ -75,6 +75,8 @@ sub do_deps($@)
           $deps{$p}{l4config} = 1;
         } elsif ($realfile =~ /^$srcdir_base\/mk\/bid-bender\.spec$/) {
           $deps{$p}{l4config} = 1;
+        } elsif ($realfile =~ /^$srcdir_base\/mk\/arch\/Makeconf\..+$/) {
+          $deps{$p}{l4config} = 1;
         } elsif ($realfile =~ /^$srcdir_base\/tool\/.+$/) {
           $deps{$p}{l4tool} = 1;
         } elsif (   $realfile =~ /\/(libgcc(_eh)?\.a|crt(begin[TS]?|end[S]?)\.o|include(-fixed)?\/(std(arg|def|bool)|limits|unwind|float|omp|[ex]?mmintrin|mm_malloc)\.h)$/
