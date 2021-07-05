@@ -433,7 +433,6 @@ sub process_image
     $img = L4::Image::Raw->new($fn, $_start);
   }
 
-  my $file_modhdr_start = $img->vaddr_to_file_offset($_start + $mod_header);
   my $file_attrshdr_start = $img->vaddr_to_file_offset($_start + $attrs_offset)
     if $attrs_offset;
 
@@ -447,6 +446,9 @@ sub process_image
     }
   else
     {
+      my $file_modhdr_start = $img->vaddr_to_file_offset($_start + $mod_header);
+      error("Virtual offset " . ($_start + $mod_header) . " not found in binary")
+        unless defined $file_modhdr_start;
       %d = import_modules($fd, $file_modhdr_start, $workdir);
       return($d{error}) if defined $d{error};
     }
