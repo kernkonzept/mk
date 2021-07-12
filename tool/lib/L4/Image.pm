@@ -542,7 +542,7 @@ sub creation_info
   my $tag = shift;
 
   my %a;
-  $a{"l4i:$tag-date"} = strftime("%a, %d %b %Y %T %Z%z", localtime());
+  $a{"l4i:$tag-date"} = strftime("%Y-%m-%d %T %Z%z", localtime());
   my $hostname = `hostname`;
   chomp $hostname;
   $a{"l4i:$tag-host"} = $hostname;
