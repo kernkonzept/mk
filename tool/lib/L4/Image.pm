@@ -369,13 +369,14 @@ sub process_image
   my ($file_type, $err) = get_file_type($fn);
   return $err if $err;
   my $img;
+  my $inner_fh;
   if ($file_type == FILE_TYPE_ELF)
     {
       # We parse ELF images here already since the actual file is changed
       # if an ELF64 bootstrap needs to be unwrapped from an ELF binary as is the
       # case for amd64.
       $img = L4::Image::Elf->new($fn);
-      my $inner_fh = $img->inner_elf();
+      $inner_fh = $img->inner_elf();
       if (defined $inner_fh)
         {
           my $inner_img = L4::Image::Elf->new($inner_fh->filename);
