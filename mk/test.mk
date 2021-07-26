@@ -29,7 +29,7 @@ $(foreach t, $(TARGETS_C), $(eval SRC_C_$(t) += $(t).c))
 TARGET += $(TARGETS_CC) $(TARGETS_C) $(TARGETS_$(ARCH))
 endif
 
-SYSTEMS ?= arm-l4f arm64-l4f mips-l4f x86-l4f amd64-l4f
+SYSTEMS ?= arm-l4f arm64-l4f mips-l4f x86-l4f amd64-l4f riscv-l4f
 MODE ?= shared
 TEST_MODE ?= default
 ROLE = test.mk

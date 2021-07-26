@@ -1,0 +1,30 @@
+# vim:se ft=make:
+
+CROSS_COMPILE_riscv       = riscv64-linux-gnu-
+ASFLAGS_riscv             = -Wa,--noexecstack
+CPU_BITS_riscv            = $(CONFIG_CPU_RISCV_BITS)
+ELF_BINARY_TYPE_riscv     = elf$(CPU_BITS_riscv)
+LD_EMULATION_CHOICE_riscv = $(ELF_BINARY_TYPE_riscv)lriscv
+OFORMAT_riscv             = $(ELF_BINARY_TYPE_riscv)-littleriscv
+BFD_ARCH_riscv            = littleriscv
+L4_KIP_ADDR_riscv        ?= 0x7fff0000
+L4_STACK_ADDR_riscv      ?= 0x70000000
+
+# Since version 2.38, binutils by default targets the ISA specification version
+# 20191213, where the CSR instructions and the FENCE.I instruction have been
+# moved from the I extension into separate extensions: Zicsr and Zifencei
+RISCV_ZICSR_ZIFENCEI_f    = $(if $(call checkcc,-march=$(CPU)_zicsr_zifencei \
+                                                -mabi=$(CPU_ABI) \
+                                                -mcmodel=medany),_zicsr_zifencei)
+CARCHFLAGS_riscv         += -march=$(CPU)$(RISCV_ZICSR_ZIFENCEI) \
+                            -mabi=$(CPU_ABI) -mcmodel=medany
+LDFLAGS_riscv            += -z noexecstack
+
+SYSTEMS_ABI              += riscv-l4f
+SYSTEMS_PLAIN            += riscv-plain
+# As of now (gcc-12) there is no option to prevent the compiler from generating
+# FPU instructions. So we just have to assume that the compiler does not do it,
+# until it introduces a flag able to prevent it.
+GCCNOFPU_riscv            =
+
+QEMU_ARCH_MAP_riscv       = qemu-system-riscv$(CPU_BITS_riscv)

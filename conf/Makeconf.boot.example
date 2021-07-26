@@ -66,9 +66,13 @@ QEMU_OPTIONS-arm64-arm_virt      += -M virt,virtualization=true,iommu=smmuv3 -cp
 
 QEMU_OPTIONS-mips-malta          += -M malta -m 256 -cpu P5600
 
+QEMU_OPTIONS-riscv-riscv_virt    += -bios default -M virt -m 1024 -smp 4
+QEMU_OPTIONS-riscv-sifive_u      += -bios default -M sifive_u -m 1024 -smp 4
+
 QEMU_OPTIONS-arm   += $(QEMU_OPTIONS-arm-$(PLATFORM_TYPE))
 QEMU_OPTIONS-arm64 += $(QEMU_OPTIONS-arm64-$(PLATFORM_TYPE))
 QEMU_OPTIONS-mips  += $(QEMU_OPTIONS-mips-$(PLATFORM_TYPE))
+QEMU_OPTIONS-riscv += $(QEMU_OPTIONS-riscv-$(PLATFORM_TYPE))
 QEMU_OPTIONS-x86   += -m 512 -M q35
 QEMU_OPTIONS-amd64 += -m 512 -M q35
 #QEMU_OPTIONS-amd64 += -m 1024 -enable-kvm -M q35,kernel_irqchip=split -cpu host -device intel-iommu,intremap=on,eim=on
