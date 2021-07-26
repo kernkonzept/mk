@@ -9,10 +9,12 @@ use File::Basename;
 use File::Temp "tempdir";
 use File::Path "make_path";
 use Scalar::Util qw(looks_like_number);
+use Time::HiRes "time";
 
 my $help = 0;
 my $nowrapper = 0;
 my $max_lines_read = $ENV{MAX_LINES_READ} || 100000;
+my $test_timestamps = !!$ENV{TEST_TIMESTAMPS};
 Getopt::Long::Configure ("bundling");
 GetOptions(
   'help|h'  => \$help,
@@ -38,6 +40,7 @@ GetOptions(
   'image|i=s'       => sub { $ENV{IMAGE_TYPE} = $_[1]; },
   'hard-timeout=i'  => sub { $ENV{TEST_HARD_TIMEOUT} = $_[1]; },
   'max-lines-read=i'=> sub { $max_lines_read = 0+ $_[1]; },
+  'timestamps'      => sub { $test_timestamps = 1; },
 ) or pod2usage(-verbose => 99, -sections => "OPTIONS");
 
 pod2usage(-verbose => 99,
@@ -80,6 +83,10 @@ if ($logfile)
   {
     open $LOG_FD, ">>", $logfile or die "Can not open logfile '$logfile'\n";
   }
+
+sub get_timestamp {
+  return sprintf("[%8.3fs] ", (time() - $^T));
+}
 
 sub gtest_shuffle_seed
 {
@@ -231,6 +238,13 @@ if ($number_of_runs == 0 and $ENV{HARNESS_ACTIVE})
     exit_test(69);
   }
 
+if ($test_timestamps)
+  {
+    my $timestamp = get_timestamp();
+    print $timestamp;
+    print $LOG_FD $timestamp if $LOG_FD;
+  }
+
 $pid = open(my $test_proc, "-|", @ARGV) or die "Failed to execute $ARGV[0].\n";
 
 my $readbuffer = '';
@@ -257,8 +271,14 @@ sub readline_timeout
           $idx = length($readbuffer);
           while (sysread($handle, my $part, 128))
             {
-              print $part;
-              print $LOG_FD $part if $LOG_FD;
+              my $log_part = $part;
+              if ($test_timestamps)
+                {
+                  my $timestamp = get_timestamp();
+                  $log_part =~ s/\n/\n$timestamp/gm;
+                }
+              print $log_part;
+              print $LOG_FD $log_part if $LOG_FD;
               $readbuffer .= $part;
               $idx = index($readbuffer, "\n");
               last if $idx >= 0;
