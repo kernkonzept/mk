@@ -165,28 +165,29 @@ sub find_modules
       error("'$pos' is not a number") unless $pos =~ /^\d+$/;
       error("No such module $pos, only ${$d}{num_mods} modules available")
         if $pos >= ${$d}{num_mods};
-      $found{$pos} = 1;
+      $found{$pos} = $pos;
     }
   elsif (defined $args->{"--with-name"})
     {
       for (my $i = 0; $i < ${$d}{num_mods}; ++$i)
         {
-          $found{$i} = 1 if ${$d}{mods}[$i]{name} eq $args->{"--with-name"};
+          $found{$i} = $i if ${$d}{mods}[$i]{name} eq $args->{"--with-name"};
         }
     }
   elsif (defined $args->{"--regex"})
     {
       for (my $i = 0; $i < ${$d}{num_mods}; ++$i)
         {
-          $found{$i} = 1 if ${$d}{mods}[$i]{name} =~ /$args->{"--regex"}/;
+          $found{$i} = ${$d}{mods}[$i]{name}
+            if ${$d}{mods}[$i]{name} =~ /$args->{"--regex"}/;
         }
     }
 
   error("Search for module did not yield a result") if keys %found == 0;
-  error("Found multiple matching modules (".join(", ", keys %found).
+  error("Found multiple matching modules (".join(", ", values %found).
         ") but need exactly one")
     if $multiple == 0 && keys %found > 1;
-  print "Processing module(s) ", join(", ", keys %found), "\n";
+  print "Processing module(s) ", join(", ", values %found), "\n";
 
   return %found;
 }
