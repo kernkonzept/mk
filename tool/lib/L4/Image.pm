@@ -178,7 +178,7 @@ sub update_module
   my $m_type = shift;
   my $m_cmdline = shift;
 
-  return ( error => "File '$m_file' does not exist" ) unless -e $m_file;
+  return "File '$m_file' does not exist" unless -e $m_file;
 
   $d->{name}     = $m_name if defined $m_name;
   $d->{cmdline}  = $m_cmdline if defined $m_cmdline;
@@ -189,7 +189,7 @@ sub update_module
   my $ff;
   if (!open($ff, $m_file))
     {
-      return ( error => "Failed to open '$m_file': $!" );
+      return "Failed to open '$m_file': $!";
     }
   binmode $ff;
   $md5uncomp->addfile($ff);
@@ -198,6 +198,8 @@ sub update_module
   $d->{md5sum_uncompr} = $md5uncomp->hexdigest;
   $d->{size} = -s $m_file;
   $d->{size_uncompressed} = -s $m_file;
+
+  return undef;
 }
 
 sub check_modules

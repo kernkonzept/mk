@@ -1,6 +1,6 @@
 #! /usr/bin/env perl
 #
-# Copyright 2019, Adam Lackorzynski <adam@l4re.org>
+# Copyright 2019-2021, Adam Lackorzynski <adam@l4re.org>
 #
 use strict;
 use warnings;
@@ -244,12 +244,12 @@ sub op_replace
   error("Need to give a file via --file option")
     unless defined $args->{"--file"};
 
-  L4::Image::update_module($d->{mods}[$pos],
-                           $args->{"--file"},
-                           $args->{"--name"},
-                           $args->{"--type"},
-                           $args->{"--cmdline"});
-  error(${$d}{mods}[$pos]{error}) if ${$d}{mods}[$pos]{error};
+  my $r = L4::Image::update_module($d->{mods}[$pos],
+                                   $args->{"--file"},
+                                   $args->{"--name"},
+                                   $args->{"--type"},
+                                   $args->{"--cmdline"});
+  error($r) if $r;
 }
 
 sub default_editor
@@ -265,8 +265,10 @@ sub op_edit
   my $pos = (keys %found)[0];
   my $editor = $ENV{EDITOR} || default_editor();
   system("$editor ${$d}{mods}[$pos]{filepath}");
-  L4::Image::update_module($d->{mods}[$pos], ${$d}{mods}[$pos]{filepath});
-  error(${$d}{mods}[$pos]{error}) if ${$d}{mods}[$pos]{error};
+
+  my $r = L4::Image::update_module($d->{mods}[$pos],
+                                   ${$d}{mods}[$pos]{filepath});
+  error($r) if $r;
 }
 
 sub create_image
