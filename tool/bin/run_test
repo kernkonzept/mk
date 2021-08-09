@@ -31,6 +31,8 @@ my $l4linux     = $ENV{"L4LX_KERNEL_${arch}"} || $ENV{L4LX_KERNEL};
 my $ramdisk     = $ENV{"LINUX_RAMDISK_${arch}"} || $ENV{LINUX_RAMDISK};
 my $bootstrap   = $ENV{BOOTSTRAP} || 'bootstrap';
 my @modulepaths = split(/[:\s]+/, $ENV{SEARCHPATH});
+unshift @modulepaths, split(/:[\s]+/, $ENV{MODULE_SEARCH_PATH})
+  if defined($ENV{MODULE_SEARCH_PATH}) && $ENV{MODULE_SEARCH_PATH} ne "";
 # need a split according to the rules of shell quoting
 my @qemu_args   = split("\0", qx:perl -e 'foreach (\@ARGV) { print "\$_\\0";}' -- $ENV{QEMU_ARGS}:) if $ENV{QEMU_ARGS};
 my $test_setup  = $ENV{TEST_SETUP} || '';
