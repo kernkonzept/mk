@@ -559,6 +559,10 @@ $TEST_SCRIPT [options]
                    provided then --logfile is ignored as it is
                    organized below workdir.
 
+  --timestamps     Prefix output sent to logfiles with time in seconds
+                   since test was started. Alternatively the environment
+                   variable TEST_TIMESTAMPS can be set 1.
+
  Options for gtest test applications:
   --verbose,-v     Run test in verbose mode. Repeat for increased verbosity.
   --only,-o <TEST> Only run given test.
