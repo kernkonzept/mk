@@ -64,7 +64,7 @@ The L4Re specific parts will be described herein.
       pthread_attr_init(&attr);
       attr.create_flags |= PTHREAD_L4_ATTR_NO_START;
 
-      if (pthread_create(t, &pattr, pthread_func, nullptr))
+      if (pthread_create(t, &attr, pthread_func, nullptr))
         // failure...
 
       pthread_attr_destroy(&attr);
