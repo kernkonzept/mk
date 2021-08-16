@@ -10,6 +10,7 @@ of the L4Re programming environment from the tutorial.
 \todo All subpages need cleaning. Level of detail here?
 
 - \subpage l4re_concepts_naming
+- \subpage l4re_concepts_mapping
 - \subpage l4re_concepts_env_and_start
 - \subpage l4re_concepts_ds_rm
 - \subpage l4re_concepts_stdio
@@ -118,6 +119,36 @@ objects) completely define the execution environment of an application.
 Mandatory security policies can be defined by well known properties of the
 initial objects and carefully handled access rights to them.
 
+\page l4re_concepts_mapping Spaces and Mappings
+
+Each task in the L4Re system has access to two resource spaces (three on IA32)
+which are maintained by the kernel. These are the
+-# object space,
+-# memory space, and
+-# IO-port space (only on IA32).
+
+The entities addressed in each space are capabilities to objects, virtual memory
+pages, and IO ports. The addresses are unsigned integers and the largest valid
+address depends on which space is referenced, the hardware, and the
+configuration of the kernel. Although a program can access memory at byte
+granularity, from the kernel's point of view the address granularity in the
+memory space is not bytes but pages, as determined by the hardware. The address
+of a capability is also called its "capability slot".
+
+Flexpages describe a range in any of the spaces that has a power-of-two length
+and is also aligned to this length. They additionally hold access rights
+information and further space specific information.
+
+When a resource is present at some address in a task's corresponding resource
+space, then we say that resource is mapped to that task. For example, a
+capability to the task's main thread may be mapped to capability slot 5, or the
+first page of the code segment a thread executes is mapped to virtual memory
+page 12345. However, there need not be any resource mapped to an address.
+
+Tasks can exchange resources through a process called "mapping" during IPC and
+using the L4::Task::map() method. The sending task specifies a send flexpage and
+the receiving task a receive flexpage. The resources mapped to the send flexpage
+will then be mapped to the receive flexpage by the kernel.
 
 \page l4re_concepts_env_and_start Initial Environment and Application Bootstrapping
 
