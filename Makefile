@@ -911,8 +911,10 @@ help::
 	@echo "                       excluding internal information."
 	@echo "  report           - Print out host configuration information."
 	@echo "  help             - Print this help text."
-	@echo "  test             - Run kernel and user-land tests. If 'TEST_KUNIT_DIR' is"
-	@echo "                     not provided, only user-land tests run."
+	@echo "  test             - Run user-land tests and optionally also kernel tests."
+	@echo "                     In order to run kernel tests, TEST_KUNIT_DIR must be set to"
+	@echo "                     the directory containing test binaries (usually 'utest' in"
+	@echo "                     the kernel build directory)."
 	@echo "                     Use make's -jX parameter to run tests in parallel."
 	@echo "  listplatforms    - List available platforms."
 
