@@ -72,6 +72,7 @@ QEMU_OPTIONS-mips-malta          += -M malta -m 256 -cpu P5600
 QEMU_OPTIONS-arm   += $(QEMU_OPTIONS-arm-$(PLATFORM_TYPE))
 QEMU_OPTIONS-arm64 += $(QEMU_OPTIONS-arm64-$(PLATFORM_TYPE))
 QEMU_OPTIONS-mips  += $(QEMU_OPTIONS-mips-$(PLATFORM_TYPE))
+QEMU_OPTIONS-amd64 += -m 512
 QEMU_OPTIONS       += $(QEMU_OPTIONS-$(ARCH))
 
 # The path to the QEMU binary - optional
