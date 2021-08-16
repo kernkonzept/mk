@@ -32,10 +32,17 @@ of the L4Re programming environment from the tutorial.
 Memory management in L4-based systems is done by user-level applications, the
 role is usually called \em pager. Tasks can give other tasks full or
 restricted access rights to parts of their own memory. The kernel offers means
-to grant the memory in a secure way, often referred to as *memory* mapping.
+to give access to memory in a secure way, often referred to as *memory* mapping.
 
-The described mechanism can be used to construct a memory hierarchy among
-tasks.  The root of the hierarchy is `sigma0`, which initially gets all
+The mapping mechanism allows one task to resolve page faults of another: A
+thread usually has a pager assigned to it. When the thread causes a page fault,
+the kernel sends an IPC message to the pager with information about the page
+fault. The pager answers this IPC by either providing a backing page, or with an
+error. The kernel will map the backing page into the address space of the
+faulting thread's task.
+
+These mechanisms can be used to construct a memory and paging hierarchy among
+tasks. The root of the hierarchy is `sigma0`, which initially gets all
 system resources and hands them out once on a first-come-first-served basis.
 Memory resources can be mapped between tasks at a page-size granularity. This
 size is predetermined by the CPU's memory management unit and is commonly set
