@@ -372,7 +372,7 @@ if ($is_kunit_test)
     # format the number of cores as fixed-length string.
     $opts_string .= sprintf("%04d", $hw_cores);
 
-    $kernel_args .= "-utest_opts=" . $opts_string;
+    $kernel_args .= " -utest_opts=" . $opts_string;
   }
 
 # If any binary was linked dynamically, we need to add the necessary .so files.
