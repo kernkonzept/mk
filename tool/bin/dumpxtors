@@ -185,8 +185,10 @@ sub dump_xtor_symbols
 	}
     }
 
-  print C("[33;1m")."$sym1($start) - $sym2($end)".C("[m")." (in priority order):\n";
+  my $num_constructors = (hex($end) - hex($start)) / ($bits / 8);
+  print C("[33;1m")."$sym1($start) - $sym2($end)".C("[m")." ($num_constructors constructors, in priority order):\n";
   my @nm_output = `$nm $file`;
+  my $counter = 0;
   foreach my $v (@vals) {
     my @o = grep { /^$v/ } @nm_output;
     map { s/(\s_GLOBAL__I\.\d+_)(_Z)/$1 ... $2/ } @o;
@@ -200,10 +202,11 @@ sub dump_xtor_symbols
         chomp $o;
       }
     if ($o eq '') {
-      print "$v: Address not found in binary\n";
+      print "$counter: $v Address not found in binary\n";
     } else {
-      print "$o\n";
+      print "$counter: $o\n";
     }
+    $counter++;
   }
 
 }
