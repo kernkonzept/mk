@@ -96,6 +96,9 @@ for file in "${utest_bins[@]}"; do
 
   # ##*/ - strip path
   out_file=${dest_dir}/${file##*/}.t
+  exp_file=${file/test_/expected_}
+  expected=
+  [[ ${exp_file} != ${file} && -f ${exp_file} ]] && expected=${exp_file}
 
   # generate .t file, overwrite existing files
   if [[ ${verbose} ]]; then
@@ -114,6 +117,7 @@ ARCH=$("${obj_base}"/source/tool/kconfig/scripts/config \
 SEARCHPATH="${source_dir}"${SEARCHPATH:+:${SEARCHPATH}}
 KERNEL="${file}"
 TEST_KERNEL_UNIT=1
+TEST_EXPECTED="${expected}"
 
 TEST_TESTFILE="\$0"
 
