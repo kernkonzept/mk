@@ -437,12 +437,12 @@ define entryselection
 	     $(RM) $(OBJ_BASE)/.entry-selector.tmp;              \
 	   fi
 endef
-define checkx86amd64build
-	$(VERBOSE)if [ "$(ARCH)" != "x86" -a "$(ARCH)" != "amd64" ]; then      \
-	  echo "This mode can only be used with architectures x86 and amd64."; \
-	  exit 1;                                                              \
-	fi
+
+# 1: list of allowed architectures
+define check_for_arch
+	$(if $(filter $(ARCH),$1),,$(error ERROR: Architecture '$(ARCH)' is not supported for target $@))
 endef
+
 define genimage
 	+$(VERBOSE)$(entryselection);                                                 \
 	$(MKDIR) $(IMAGES_DIR);                                                       \
@@ -528,7 +528,7 @@ fastboot_uimage: uimage
 	  $(if $(FASTBOOT_IMAGE),$(FASTBOOT_IMAGE),$(IMAGES_DIR)/bootstrap.uimage)
 
 efiimage: check_and_adjust_ram_base
-	$(checkx86amd64build)
+	$(call check_for_arch,x86 amd64 arm64)
 	$(call genimage,BOOTSTRAP_DO_UIMAGE= BOOTSTRAP_DO_RAW_IMAGE= BOOTSTRAP_DO_UEFI=y)
 
 ifneq ($(filter $(ARCH),x86 amd64),)
@@ -547,7 +547,7 @@ qemu: $(QEMU_KERNEL_TYPE)
 endif
 
 vbox: $(if $(VBOX_ISOTARGET),$(VBOX_ISOTARGET),grub2iso)
-	$(checkx86amd64build)
+	$(call check_for_arch,x86 amd64)
 	$(VERBOSE)if [ -z "$(VBOX_VM)" ]; then                                 \
 	  echo "Need to set name of configured VirtualBox VM im 'VBOX_VM'.";   \
 	  exit 1;                                                              \
@@ -580,7 +580,7 @@ ux:
 GRUB_TIMEOUT ?= 0
 
 define geniso
-	$(checkx86amd64build)
+	$(call check_for_arch,x86 amd64)
 	$(VERBOSE)$(entryselection);                                         \
 	 $(MKDIR) $(IMAGES_DIR);                                             \
 	 ISONAME=$(IMAGES_DIR)/$$(echo $$e | tr '[ A-Z]' '[_a-z]').iso;      \
