@@ -79,7 +79,7 @@ link_args =
   %{EL&EB}
   %{MD:%(generate_deps)} %:error-unused-options()
 
-# executed when called as 'ld-l4' (l4 linker)
+# executed when called with '-t ld' (L4 linker with ld)
 ld = %(check_linker) %:exec(%(linker) %(link_args))
 
 
@@ -118,7 +118,7 @@ link_args_gcc =
   %{EL&EB}
   %{MD:%(generate_deps)} %:error-unused-options()
 
-# executed when called with '-t ld' (l4 linker)
+# executed when called with '-t gcc-ld' (L4 linker with gcc)
 gcc-ld = %(check_linker) %:exec(%(linker) %(link_args_gcc))
 
 
@@ -137,5 +137,5 @@ link_host_mode_args =
   %{MD:%(generate_deps)} %:error-unused-options()
 
 # executed when called with '-t host-ld', host linker.
-host-ld =  %(check_linker) %:exec(%(linker) %(link_host_mode_args))
+host-ld = %(check_linker) %:exec(%(linker) %(link_host_mode_args))
 
