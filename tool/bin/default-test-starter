@@ -4,4 +4,4 @@ if [ -n "$TEST_TMPDIR" ]; then GOT_TMPDIR=1; else export TEST_TMPDIR=`mktemp -d`
 
 trap "{ if [ x$GOT_TMPDIR != x1 -a -d $TEST_TMPDIR ]; then rm -r $TEST_TMPDIR; fi; }" EXIT
 
-$L4DIR/tool/bin/tapper-wrapper $L4DIR/tool/bin/run_test "$@"
+$L4DIR/tool/bin/tap-wrapper $L4DIR/tool/bin/run_test "$@"
