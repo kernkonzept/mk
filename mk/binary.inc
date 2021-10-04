@@ -70,6 +70,13 @@ ifneq ($(BID_MISSING_PCS),)
   $(if $(BID_FAIL_ON_MISSING),$(error $(text)), $(info $(text)))
 endif
 
+ifneq ($(filter l4linux targetsys,$(MODE)),)
+  ifneq ($(GCCLIBCAVAIL),y)
+    $(info Skipping target in $(SRC_DIR) as the target compiler cannot compile them.)
+    SYSTEMS :=
+  endif
+endif
+
 # intersection with BUILD_SYSTEMS
 
 # filter the systems from the local SYSTEMS variable ($2), that match
