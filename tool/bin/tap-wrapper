@@ -63,11 +63,10 @@ if ($nowrapper)
 
 my $timeout = $ENV{TEST_TIMEOUT};
 $timeout = 10 unless defined $timeout && looks_like_number($timeout);
+$L4::TapWrapper::timeout = $timeout;
 my $target = $ENV{TEST_TARGET};
-my $TAP_FD;
-my $pid = -1;
 my $expline;
-my $test_description = $ENV{TEST_DESCRIPTION} || join(" ", map { $_ ? basename($_) : () } @ARGV, $target);
+$L4::TapWrapper::test_description = $ENV{TEST_DESCRIPTION} || join(" ", map { $_ ? basename($_) : () } @ARGV, $target);
 
 my $LOG_FD;
 my $logfile;
@@ -101,111 +100,13 @@ sub gtest_shuffle_seed
   $ENV{TEST_GTEST_SHUFFLE_SEED} = $_[1];
 }
 
-sub get_ps_tree
-{
-  my ($pid) = @_;
-
-  return () unless $pid && $pid > 1;
-
-  my @pids = ($pid);
-  eval
-    {
-      require Proc::Killfam;
-      require Proc::ProcessTable;
-      @pids = Proc::Killfam::get_pids([grep { $_->state ne 'defunct' } @{Proc::ProcessTable->new->table}], $pid);
-    };
-  if ($@) # no Proc::Killfam available; use external 'pstree';
-    {
-      # 'echo' turns deeper pstree output into one line;
-      # pids are in (parens), so 'split' on '()' and take every 2nd entry
-      my @pstree = map { split(/[()]/) } qx{echo \$(pstree -lp $pid)};
-      @pids = @pstree[grep $_ % 2, 0..$#pstree];
-      @pids = grep { system("ps -ax -o pid=,stat= | grep -q '^$_ Z\$'") != 0 } @pids; # ignore zombies
-    }
-  return @pids;
-}
-
-# Kill a process tree beginning from the leaf nodes;
-sub kill_ps_tree
-{
-  my ($pid) = @_;
-
-  return unless $pid > 1;
-
-  while (my @pids = get_ps_tree($pid))
-    {
-      my $innerpid = $pids[-1];
-      if ($innerpid)
-        {
-          kill 'SIGTERM', $innerpid;
-          waitpid $innerpid, 0;
-        }
-    }
-  kill 'SIGTERM', $pid;
-  waitpid $pid, 0;
-}
-
-sub exit_test
-{
-  my ($exit_code) = @_;
-
-  # graceful exit override
-  $exit_code = 0
-    if (not defined $exit_code     # default
-        or $exit_code == 69        # SKIP tests
-        or $ENV{HARNESS_ACTIVE});  # run under 'prove'
-
-  # tell test runner to finish up
-  # signals aren't passed to whole children tree - kill explicit
-  kill_ps_tree($pid);
-  $pid = -1; # clean behaviour on multiple calling
-
-  close($TAP_FD);
-  exit($exit_code);
-}
-
-sub extract_expected
-{
-  my $exp = shift;
-  chomp $exp;
-
-  if ($exp =~ /^([^|]+)\s+\|\s+(.*)\s*$/)
-    {
-      return '^'.$1.'\\W+\\| '.$2;
-    }
-  else
-    {
-      return '^\\s*'.$exp.'\\s*$';
-    }
-}
-
-sub fail_test
-{
-  my $long_msg = shift;
-  chomp $long_msg;
-  my $exit_code = shift;
-  $exit_code = 1 if not defined $exit_code;
-
-  print $TAP_FD <<EOT;
-1..1
-not ok 1 - execution - exit code $exit_code - $test_description
-  ---
-  message: $long_msg
-  severity: fail
-  ...
-EOT
-
-  exit_test($exit_code)
-}
-
-
 if ($ENV{TAPPER_OUTPUT})
   {
-    open($TAP_FD, $ENV{TAPPER_OUTPUT}) or die "Cannot open tap output\n";
+    open($L4::TapWrapper::TAP_FD, $ENV{TAPPER_OUTPUT}) or die "Cannot open tapper output\n";
   }
 else
   {
-    open($TAP_FD, '>&', STDOUT);
+    open($L4::TapWrapper::TAP_FD, '>&', STDOUT);
     if ($ENV{HARNESS_ACTIVE})
       {
         # Supress normal output when running within a prove harness.
@@ -219,7 +120,7 @@ else
       }
   }
 
-$TAP_FD->autoflush(1);
+$L4::TapWrapper::TAP_FD->autoflush(1);
 
 if (defined($ENV{TEST_TAP_PLUGINS}))
   {
@@ -236,22 +137,18 @@ my $hard_timeout = 0+ ($ENV{TEST_HARD_TIMEOUT} || 0);
 if ($hard_timeout)
   {
     $SIG{ALRM} = sub {
-      fail_test("Test did not finish within the hard timeout of $hard_timeout seconds");
+      L4::TapWrapper::fail_test("Test did not finish within the hard timeout of $hard_timeout seconds");
     };
     alarm $hard_timeout;
   }
 
-print $TAP_FD "TAP Version 13\n";
-
-# Number of times the test should be repeated.
-my $number_of_runs = 1;
-$number_of_runs = $ENV{TEST_EXPECTED_REPEAT} if $ENV{TEST_EXPECTED_REPEAT} or length($ENV{TEST_EXPECTED_REPEAT});
-
-if ($number_of_runs == 0 and $ENV{HARNESS_ACTIVE})
+print $L4::TapWrapper::TAP_FD "TAP Version 13\n";
+my $repeat = $ENV{TEST_EXPECTED_REPEAT};
+if (looks_like_number($repeat) and $repeat == 0 and $ENV{HARNESS_ACTIVE})
   {
-    print $TAP_FD "1..0 # SKIP ";
-    print $TAP_FD "infinite test cannot be run when harness is active\n";
-    exit_test(69);
+    print $L4::TapWrapper::TAP_FD "1..0 # SKIP ";
+    print $L4::TapWrapper::TAP_FD "infinite test cannot be run when harness is active\n";
+    L4::TapWrapper::exit_test(69);
   }
 
 if ($test_timestamps)
@@ -261,10 +158,9 @@ if ($test_timestamps)
     print $LOG_FD $timestamp if $LOG_FD;
   }
 
-$pid = open(my $test_proc, "-|", @ARGV) or die "Failed to execute $ARGV[0].\n";
+$L4::TapWrapper::pid = open(my $test_proc, "-|", @ARGV) or die "Failed to execute $ARGV[0].\n";
 
 my $readbuffer = '';
-
 my $lines_read = 0;
 
 sub readline_timeout
@@ -304,7 +200,7 @@ sub readline_timeout
 
       $handle->blocking($was_blocking);
 
-      fail_test("Test timed out after $timeout seconds. Was expecting: $expline")
+      L4::TapWrapper::fail_test("Test timed out after $timeout seconds. Was expecting: $L4::TapWrapper::expline")
         if $idx < 0;
     }
 
@@ -318,7 +214,7 @@ sub readline_timeout
   $outline =~ s/\r+\n/\n/g;
   $lines_read++;
 
-  fail_test("Stopping test prematurely after $lines_read lines read.")
+  L4::TapWrapper::fail_test("Stopping test prematurely after $lines_read lines read.")
     if $lines_read >= $max_lines_read;
 
   return $outline;
@@ -326,149 +222,46 @@ sub readline_timeout
 
 
 my $test_proc_exit_code = 0;
+
+# Compat for now. Should be specified as required plugin by the test in future
 if ($ENV{TEST_EXPECTED})
   {
-    # search for expected output file in searchpath
-    my $expout_file = $ENV{TEST_EXPECTED};
-    if (! -e $expout_file or -d $expout_file)
-      {
-        foreach my $p (split(/:/, $ENV{SEARCHPATH}))
-          {
-            if (-e "$p/$expout_file" and ! -d "$p/$expout_file")
-              {
-                $expout_file = "$p/$expout_file";
-                last;
-              }
-          }
-      }
-
-    # read expected output from a file and check against true output
-    open(my $expect_fd, '<', $expout_file)
-      or fail_test("Can't open expected output ('$expout_file')");
-
-    $expline = '(L4 Bootstrapper|Welcome to L4/Fiasco.OC!)';
-
-    my $expoutput = extract_expected($expline);
-    my $num_res = 1;
-    my $wait_until = time + 2 * $timeout;
-    my $test_eof = 1;
-    my $test_lastline;
-
-    while ($_ = readline_timeout($test_proc, $timeout))
-      {
-        $test_lastline = $_;
-        # strip color escapes
-        s/\e\[[\d,;\s]+[A-Za-z]//gi;
-        if (/$expoutput/)
-          {
-            if (!($expline = <$expect_fd>))
-              {
-                if ($number_of_runs == 1)
-                  {
-                    $test_eof = 0;
-                    last;
-                  }
-                else
-                  {
-                    $number_of_runs-- if ($number_of_runs > 0);
-                    # rewind the expected file
-                    close($expect_fd);
-                    open($expect_fd, '<', $expout_file)
-                      or fail_test("Can't open expected output ('$expout_file')");
-
-                    $expline = <$expect_fd>;
-                  }
-              }
-            $expoutput = extract_expected($expline);
-            $num_res++;
-            $wait_until = time + 2 * $timeout;
-          }
-        else
-          {
-            if (time > $wait_until)
-              {
-                $test_eof = 0;
-                last;
-              }
-          }
-      }
-
-    close $expect_fd;
-
-    my $res = '';
-    my $res_msg;
-    if ($test_eof and !close($test_proc))
-      {
-        $test_proc_exit_code = $? >> 8;
-        if ($test_proc_exit_code == 69)
-          {
-            print $TAP_FD "1..0 # SKIP $test_lastline\n";
-          }
-        else
-          {
-            $res = 'not ';
-            $res_msg = "Failed to execute test. ($test_proc_exit_code)";
-          }
-      }
-    elsif ($expline)
-      {
-        $res = "not ";
-        $num_res++;
-        $res_msg = "Expected output not found in line $num_res : $expline";
-      }
-    else
-      {
-        $res_msg = "${num_res} lines of output matched.";
-      }
-
-    if ($res_msg)
-      {
-        chomp $res_msg;
-        print $TAP_FD <<EOEXT;
-1..1
-${res}ok 1 - execution - exit code $test_proc_exit_code - $test_description
-  ---
-  message: $res_msg
-  ...
-EOEXT
-      }
+    L4::TapWrapper::load_plugin("OutputMatching", { file => $ENV{TEST_EXPECTED} });
   }
 else
   {
-    L4::TapWrapper::load_plugin("TAPOutput"); # Compat for now
-    L4::TapWrapper::load_plugin("BundleMode"); # Compat for now
-    # look for TAP output
-    $expline = "begin of TAP test output (TAP TEST START)";
-    my $test_eof = 0;
-    my $test_lastline;
-    $L4::TapWrapper::TAP_FD = $TAP_FD;
-    while ($_ = readline_timeout($test_proc, $timeout))
+    L4::TapWrapper::load_plugin("BundleMode"); # Should be the default?
+    L4::TapWrapper::load_plugin("TAPOutput"); # Should be the default?
+  }
+
+# look for TAP output
+#$expline = "begin of TAP test output (TAP TEST START)";
+my $test_eof = 0;
+my $test_lastline = "";
+
+while ($_ = readline_timeout($test_proc, $L4::TapWrapper::timeout))
+  {
+    $test_lastline = $_;
+    last if $test_eof = L4::TapWrapper::process_input($_);
+  }
+if (!$test_eof)
+  {
+    waitpid $L4::TapWrapper::pid, 0;
+    $L4::TapWrapper::pid = -1;
+    $test_proc_exit_code = $? >> 8;
+    if ($test_proc_exit_code == 69)
       {
-        $test_lastline = $_;
-        last if $test_eof = L4::TapWrapper::process_input($_);
-      }
-    if (!$test_eof)
-      {
-        waitpid $pid, 0;
-        $pid = -1;
-        $test_proc_exit_code = $? >> 8;
-        if ($test_proc_exit_code == 69)
-          {
-            print $TAP_FD "1..0 # SKIP $test_lastline\n";
-            exit_test($test_proc_exit_code);
-          }
-        else
-          {
-            fail_test("Test program finished prematurely", $test_proc_exit_code)
-          }
+        print $L4::TapWrapper::TAP_FD "1..0 # SKIP $test_lastline\n";
+        L4::TapWrapper::exit_test($test_proc_exit_code);
       }
     else
       {
-        L4::TapWrapper::finalize();
+        L4::TapWrapper::fail_test("Test program finished prematurely", $test_proc_exit_code)
       }
   }
 
-exit_test($test_proc_exit_code);
+L4::TapWrapper::finalize();
+L4::TapWrapper::exit_test($test_proc_exit_code);
 
 __END__
 
@@ -600,5 +393,9 @@ syntax is as follows:
 
 Please see lib/L4/TapWrapper/Plugin.pm for details on the low level interface
 for implementing plugins.
+
+For compatibility currently C<BundleMode> and C<TAPOutput> are loaded per
+default, unless an expected output file is provided (C<TEST_EXPECTED>) in which
+case the C<OutputMatching> plugin is used.
 
 =cut
