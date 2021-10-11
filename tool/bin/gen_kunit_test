@@ -95,7 +95,8 @@ fi
 for file in "${utest_bins[@]}"; do
 
   # ##*/ - strip path
-  out_file=${dest_dir}/${file##*/}.t
+  basename=${file##*/}
+  out_file=${dest_dir}/${basename}.t
   exp_file=${file/test_/expected_}
   expected=
   [[ ${exp_file} != ${file} && -f ${exp_file} ]] && expected=${exp_file}
@@ -120,6 +121,7 @@ TEST_KERNEL_UNIT=1
 TEST_EXPECTED="${expected}"
 
 TEST_TESTFILE="\$0"
+TEST_DESCRIPTION="${basename}"
 
 : \${TEST_STARTER:=\${L4DIR}/tool/bin/default-test-starter}
 set +a
