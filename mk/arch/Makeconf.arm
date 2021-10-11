@@ -14,7 +14,7 @@ CARCHFLAGS_arm_armv5te    = -march=armv5te
 CARCHFLAGS_arm_armv6      = -march=armv6
 CARCHFLAGS_arm_armv6t2    = -march=armv6t2
 CARCHFLAGS_arm_armv6zk    = -march=armv6zk
-CARCHFLAGS_arm_armv7a     = -march=armv7-a
+CARCHFLAGS_arm_armv7a     = $(GCCARMV7AFPOPT_arm)
 CARCHFLAGS_arm_armv7r     = -march=armv7-r
 
 CCXX_FLAGS_arm   += -marm
