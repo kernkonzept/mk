@@ -53,6 +53,7 @@ my $is_kunit_test  = $ENV{TEST_KERNEL_UNIT} || 0;
 my $kunit_verbose = $ENV{TEST_KUNIT_VERBOSE} || 0;
 my $kunit_restart = $ENV{TEST_KUNIT_RESTART} || 0;
 my $kunit_debug = $ENV{TEST_KUNIT_DEBUG} || 0;
+my $kunit_record = $ENV{TEST_KUNIT_RECORD} || 0;
 
 # kernel arguments required by test
 $kernel_args .= " " . $test_kernel_args if $test_kernel_args;
@@ -367,7 +368,7 @@ if ($is_kunit_test)
     $opts_string .= $kunit_verbose ? '1' : '0';
     $opts_string .= $kunit_restart ? '1' : '0';
     $opts_string .= $kunit_debug ? '1' : '0';
-    $opts_string .= 0; # reserved
+    $opts_string .= $kunit_record ? '1' : '0';
 
     # format the number of cores as fixed-length string.
     $opts_string .= sprintf("%04d", $hw_cores);
