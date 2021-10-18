@@ -10,12 +10,12 @@ CARCHFLAGS_arm_armv4      = -march=armv4
 CARCHFLAGS_arm_armv4t     = -march=armv4t
 CARCHFLAGS_arm_armv5      = -march=armv5
 CARCHFLAGS_arm_armv5t     = -march=armv5t
-CARCHFLAGS_arm_armv5te    = -march=armv5te
-CARCHFLAGS_arm_armv6      = -march=armv6
-CARCHFLAGS_arm_armv6t2    = -march=armv6t2
-CARCHFLAGS_arm_armv6zk    = -march=armv6zk
+CARCHFLAGS_arm_armv5te    = $(GCCARMV5TEFPOPT_arm)
+CARCHFLAGS_arm_armv6      = $(GCCARMV6FPOPT_arm)
+CARCHFLAGS_arm_armv6t2    = $(GCCARMV6T2FPOPT_arm)
+CARCHFLAGS_arm_armv6zk    = $(GCCARMV6ZKFPOPT_arm)
 CARCHFLAGS_arm_armv7a     = $(GCCARMV7AFPOPT_arm)
-CARCHFLAGS_arm_armv7r     = -march=armv7-r
+CARCHFLAGS_arm_armv7r     = $(GCCARMV7RFPOPT_arm)
 
 CCXX_FLAGS_arm   += -marm
 CC_arm            = $(CROSS_COMPILE)gcc
