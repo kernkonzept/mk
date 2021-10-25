@@ -36,10 +36,12 @@ sub has_tag { return 0; }
 
 sub process_any {
   my $self = shift;
-  my $line = shift;
-  $self->check_end($line) if $self->{in_block};
-  $self->process_mine($line) if $self->{in_block} || $self->has_tag($line);
-  $self->check_start($line) unless $self->{in_block};
+  $self->{raw_line} = shift;
+  $self->{clean_line} = $self->{raw_line};
+  $self->check_end($self->{raw_line}) if $self->{in_block};
+  $self->process_mine($self->{clean_line})
+    if $self->{in_block} || $self->has_tag($self->{raw_line});
+  $self->check_start($self->{raw_line}) unless $self->{in_block};
 }
 
 # Called for anything belonging to the plugin (as determined by block or tag)
@@ -94,8 +96,11 @@ matches the tag indicating that it belongs to the plugin, B<false> otherwise.
 The function is only called if we are not currently in a block context for the
 plugin (See C<check_start> and C<check_end> below.
 
-The default implementation returns 0, indicating that no tagged lines exist for
-the plugin.
+The default implementation returns 0, indicating that no tagged lines exist
+for the plugin. The plugin may set the clean_line data member on the class, in
+case it wants the processing function to receive the cleaned up data without
+the tag. The argument to the function is equivalent to C<$self-E<gt>{raw_line}>
+and C<$self-E<gt>{clean_line}>.
 
 =item C<check_start> / C<check_end>
 
