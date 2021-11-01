@@ -20,10 +20,14 @@ BEGIN {
 
 use L4::TestEnvLua;
 
+my $obj_base    = $ENV{OBJ_BASE};
+
+# Load l4defs
+my $l4defs      = do "${obj_base}/l4defs.pl.inc" || {};
+
 # Environment settings used below
 my $mode        = $ENV{MODE};
 my $arch        = $ENV{ARCH} or die "No architecture specified";
-my $obj_base    = $ENV{OBJ_BASE};
 my $kernel      = $ENV{"KERNEL_${arch}"} || $ENV{KERNEL} || 'fiasco';
 my $kernel_args = $ENV{KERNEL_ARGS} || '';
 my $sigma0      = $ENV{SIGMA0} || "sigma0";
@@ -54,6 +58,12 @@ my $kunit_verbose = $ENV{TEST_KUNIT_VERBOSE} || 0;
 my $kunit_restart = $ENV{TEST_KUNIT_RESTART} || 0;
 my $kunit_debug = $ENV{TEST_KUNIT_DEBUG} || 0;
 my $kunit_record = $ENV{TEST_KUNIT_RECORD} || 0;
+my $test_platform_allow = $ENV{TEST_PLATFORM_ALLOW} || "";
+my $test_platform_deny = $ENV{TEST_PLATFORM_DENY} || "";
+my $platform = $ENV{PT} || $l4defs->{L4_PLATFORM_TYPE} || undef;
+
+print STDERR "Warning: Unable to determine platform type."
+  unless defined $platform;
 
 # kernel arguments required by test
 $kernel_args .= " " . $test_kernel_args if $test_kernel_args;
@@ -197,6 +207,21 @@ sub check_config
       print "WARNING: $binname config not found at $cfgfile\n";
     }
 }
+
+# Check platform limitations
+$test_platform_allow =~ s/^\s+|\s+$//g; # Strip whitespaces front and back
+$test_platform_deny =~ s/^\s+|\s+$//g; # Strip whitespaces front and back
+if ($test_platform_allow || $test_platform_deny)
+  {
+    exit_error "Test must not have both TEST_PLATFORM_ALLOW and TEST_PLATFORM_DENY set."
+      if $test_platform_allow && $test_platform_deny;
+
+    exit_skip "Platform $platform is not listed in TEST_PLATFORM_ALLOW ($test_platform_allow)."
+      if $test_platform_allow && scalar(grep { $_ eq $platform } split(/\s+/, $test_platform_allow)) == 0;
+
+    exit_skip "Platform $platform is listed in TEST_PLATFORM_DENY ($test_platform_deny)"
+      if $test_platform_deny && scalar(grep { $_ eq $platform } split(/\s+/, $test_platform_deny)) != 0;
+  }
 
 # Remove whitespaces
 $test_run_tags =~ s/\s+//g;

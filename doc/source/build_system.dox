@@ -368,6 +368,26 @@ If you want to specify multiple tag conditions they need to be separated
 with a comma.
 \endparblock
 
+\par `TEST_PLATFORM_ALLOW` and `TEST_PLATFORM_DENY`
+\parblock
+Deny and allow lists of platforms a test is banned from or limited to.
+If you list platforms in the TEST_PLATFORM_ALLOW variable the test will
+only be run on these listed platforms and will be skipped on any other
+platform. If you list platforms in the TEST_PLATFORM_DENY variable the
+test will be skipped on the listed platforms and will be run on any other
+platform. You can only use one of these variables per test, not both.
+See mk/platforms/ for the various identifiers.
+
+_Example usage:_
+
+# Do not run this test on the Raspberry Pi platform
+TEST_PLATFORM_DENY_test_xyz := rpi
+
+# Only run this test on this test on the RCar3 platform.
+TEST_PLATFORM_ALLOW_test_abc := rcar3
+
+\endparblock
+
 \par `TAPARCHIVE`
 Filename for an archive file to store the resulting TAP output.
 
