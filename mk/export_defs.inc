@@ -21,6 +21,7 @@ MODE = static
 
 ifneq ($(SYSTEM),)
 
+L4_PLATFORM_TYPE             = $(PLATFORM_TYPE)
 L4_SYSTEM                    = $(ARCH)_$(CPU)
 L4_CC                        = $(CC)
 L4_CXX                       = $(CXX)
@@ -76,6 +77,7 @@ all::
 	@echo "# vim:se ft=pl:"                                                >> $(L4DEF_FILE_PL)
 	@echo "# --- Automatically created, do not modify ---"                 >> $(L4DEF_FILE_PL)
 	@echo "{"                                                              >> $(L4DEF_FILE_PL)
+	@$(call do_output_all,L4_PLATFORM_TYPE)
 	@$(call do_output_all,L4_SYSTEM)
 	@$(call do_output_all,L4_CC)
 	@$(call do_output_all,L4_CXX)
