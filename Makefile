@@ -188,8 +188,9 @@ clean cleanall install::
 
 L4DEF_FILE_MK ?= $(OBJ_BASE)/l4defs.mk.inc
 L4DEF_FILE_SH ?= $(OBJ_BASE)/l4defs.sh.inc
+L4DEF_FILE_PL ?= $(OBJ_BASE)/l4defs.pl.inc
 
-l4defs: $(L4DEF_FILE_MK) $(L4DEF_FILE_SH)
+l4defs: $(L4DEF_FILE_MK) $(L4DEF_FILE_SH) $(L4DEF_FILE_PL)
 
 generate_l4defs_files = \
 	$(VERBOSE)tmpdir=$(OBJ_BASE)/l4defs.gen.dir &&                 \
@@ -202,7 +203,7 @@ generate_l4defs_files = \
 	echo "BUILD_MESSAGE ="                          >> $$tmpdir/Makefile && \
 	cat $(L4DIR)/mk/export_defs.inc                 >> $$tmpdir/Makefile && \
 	PWD=$$tmpdir $(MAKE) -C $$tmpdir -f $$tmpdir/Makefile          \
-	  CALLED_FOR=$(1) L4DEF_FILE_MK=$(L4DEF_FILE_MK) L4DEF_FILE_SH=$(L4DEF_FILE_SH) && \
+	  CALLED_FOR=$(1) L4DEF_FILE_MK=$(L4DEF_FILE_MK) L4DEF_FILE_SH=$(L4DEF_FILE_SH) L4DEF_FILE_PL=$(L4DEF_FILE_PL) && \
 	$(RM) -r $$tmpdir
 
 $(L4DEF_FILE_MK): $(OBJ_DIR)/.Package.deps pkg/l4re-core \
@@ -211,14 +212,18 @@ $(L4DEF_FILE_MK): $(OBJ_DIR)/.Package.deps pkg/l4re-core \
 	+$(call generate_l4defs_files,minimal)
 	+$(call generate_l4defs_files,shared)
 	+$(call generate_l4defs_files,sharedlib)
+	+$(call generate_l4defs_files,finalize)
 
 $(L4DEF_FILE_SH): $(L4DEF_FILE_MK)
+
+$(L4DEF_FILE_PL): $(L4DEF_FILE_MK)
 
 regen_l4defs:
 	+$(call generate_l4defs_files,static)
 	+$(call generate_l4defs_files,minimal)
 	+$(call generate_l4defs_files,shared)
 	+$(call generate_l4defs_files,sharedlib)
+	+$(call generate_l4defs_files,finalize)
 
 .PHONY: l4defs regen_l4defs
 endif # empty $(S)

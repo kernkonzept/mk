@@ -10,8 +10,9 @@ OBJ_DIR = $(SRC_DIR)/build
 # the target file
 L4DEF_FILE_MK ?= l4defs.mk.inc
 L4DEF_FILE_SH ?= l4defs.sh.inc
+L4DEF_FILE_PL ?= l4defs.pl.inc
 
-do_output_all   = echo '$(1) = $($(1))' >> $(L4DEF_FILE_MK); echo '$(1)="$($(1))"' >> $(L4DEF_FILE_SH);
+do_output_all   = echo '$(1) = $($(1))' >> $(L4DEF_FILE_MK); echo '$(1)="$($(1))"' >> $(L4DEF_FILE_SH); echo '  "$(1)" => "$($(1))",' >> $(L4DEF_FILE_PL);
 do_output_mk    = echo '$(1) = $($(1))' >> $(L4DEF_FILE_MK);
 
 ifeq ($(CALLED_FOR),static)
@@ -70,6 +71,11 @@ all::
 	@echo "}"                                                              >> $(L4DEF_FILE_SH)
 	@echo ""                                                               >> $(L4DEF_FILE_SH)
 	@:
+	@echo -e $(EMPHSTART)"Creating $(L4DEF_FILE_PL)"$(EMPHSTOP)
+	@echo "# Definitions for 'perl' from L4 BID"                            > $(L4DEF_FILE_PL)
+	@echo "# vim:se ft=pl:"                                                >> $(L4DEF_FILE_PL)
+	@echo "# --- Automatically created, do not modify ---"                 >> $(L4DEF_FILE_PL)
+	@echo "{"                                                              >> $(L4DEF_FILE_PL)
 	@$(call do_output_all,L4_SYSTEM)
 	@$(call do_output_all,L4_CC)
 	@$(call do_output_all,L4_CXX)
@@ -178,3 +184,17 @@ endif
 include $(L4DIR)/mk/lib.mk
 
 endif # called for sharedlib
+
+# Used to add any trailing lines required.
+ifeq ($(CALLED_FOR),finalize)
+
+ifneq ($(SYSTEM),)
+all::
+	@echo "}"                                                              >> $(L4DEF_FILE_PL)
+else
+all::
+endif
+
+include $(L4DIR)/mk/prog.mk
+
+endif # called for finalize
