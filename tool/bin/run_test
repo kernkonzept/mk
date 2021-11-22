@@ -18,16 +18,13 @@ BEGIN {
     if $ENV{L4DIR} && -d $ENV{L4DIR}.'/tool/lib/L4';
 }
 
+use L4::Makeconf;
 use L4::TestEnvLua;
-
-my $obj_base    = $ENV{OBJ_BASE};
-
-# Load l4defs
-my $l4defs      = do "${obj_base}/l4defs.pl.inc" || {};
 
 # Environment settings used below
 my $mode        = $ENV{MODE};
 my $arch        = $ENV{ARCH} or die "No architecture specified";
+my $obj_base    = $ENV{OBJ_BASE};
 my $kernel      = $ENV{"KERNEL_${arch}"} || $ENV{KERNEL} || 'fiasco';
 my $kernel_args = $ENV{KERNEL_ARGS} || '';
 my $sigma0      = $ENV{SIGMA0} || "sigma0";
@@ -60,7 +57,9 @@ my $kunit_debug = $ENV{TEST_KUNIT_DEBUG} || 0;
 my $kunit_record = $ENV{TEST_KUNIT_RECORD} || 0;
 my $test_platform_allow = $ENV{TEST_PLATFORM_ALLOW} || "";
 my $test_platform_deny = $ENV{TEST_PLATFORM_DENY} || "";
-my $platform = $ENV{PT} || $l4defs->{L4_PLATFORM_TYPE} || undef;
+my $platform = $ENV{PT};
+
+$platform = L4::Makeconf::get($obj_base,"PLATFORM_TYPE") unless defined $platform;
 
 print STDERR "Warning: Unable to determine platform type.\n"
   unless defined $platform;
