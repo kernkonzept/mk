@@ -200,8 +200,12 @@ sub readline_timeout
 
       $handle->blocking($was_blocking);
 
-      L4::TapWrapper::fail_test("Test timed out after $timeout seconds. Was expecting: $L4::TapWrapper::expline")
-        if $idx < 0;
+      if ($idx < 0)
+        {
+          my $exp = $L4::TapWrapper::expline;
+          L4::TapWrapper::fail_test("Test timed out after $timeout seconds." .
+            (defined($exp)?" Was expecting: $exp":""));
+        }
     }
 
   my $outline = '';
