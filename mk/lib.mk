@@ -46,11 +46,6 @@ ifneq ($(filter-out lib host,$(MODE)),)
 $(error MODE=$(MODE) not possible when building libraries)
 endif
 
-# removed 2014/02
-ifneq ($(BUILD_PIC),)
-$(error BUILD_PIC=$(BUILD_PIC) is obsolete, use <xxx>.p.a as extra TARGET instead)
-endif
-
 # all libraries are built using the wraped utcb-getter
 CPPFLAGS          += -DL4SYS_USE_UTCB_WRAP=1
 
