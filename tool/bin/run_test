@@ -62,7 +62,7 @@ my $test_platform_allow = $ENV{TEST_PLATFORM_ALLOW} || "";
 my $test_platform_deny = $ENV{TEST_PLATFORM_DENY} || "";
 my $platform = $ENV{PT} || $l4defs->{L4_PLATFORM_TYPE} || undef;
 
-print STDERR "Warning: Unable to determine platform type."
+print STDERR "Warning: Unable to determine platform type.\n"
   unless defined $platform;
 
 # kernel arguments required by test
