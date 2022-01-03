@@ -422,6 +422,8 @@ endif
 # TEMP-only
 $(if $(filter x86 arm arm64 amd64 mips sparc ppc32,$(SYSTEMS)), $(error Please appends "-plain" to each architecture in SYSTEMS ))
 
+LDFLAGS += $(if $(CONFIG_BID_LD_EMIT_UNWIND),--eh-frame-hdr,)
+
 bid_flag_variants = $($(1)-y) $($(1)_$(ARCH)) $($(1)_$(ARCH)-y) \
                     $($(1)_$(OSYSTEM)) $($(1)_$(OSYSTEM)-y) \
                     $($(1)_$@) $($(1)_$@-y) $($(1)_$@_$(OSYSTEM)) $($(1)_$@_$(OSYSTEM)-y) \
@@ -501,6 +503,7 @@ CFLAGS_L4_PIC     += $(PICFLAGS)
 endif
 
 CFLAGS  += $(if $(CONFIG_BID_GCC_OMIT_FP),-fomit-frame-pointer,-fno-omit-frame-pointer)
+CFLAGS  += $(if $(CONFIG_BID_LD_EMIT_UNWIND),-funwind-tables,-fno-unwind-tables)
 CFLAGS	+= $(OPTS) $(WARNINGS)
 CFLAGS  += -fno-common
 CFLAGS  += $(CFLAGS_C99)
@@ -554,6 +557,7 @@ CXXFLAGS_EARLY += $(if $(filter 1-15,$(BID_COMPILER_IS_CLANG)-$(GCCVERSION)),-st
 CXXFLAGS_EARLY += $(if $(filter 1-9 1-10,$(BID_COMPILER_IS_GCC)-$(GCCVERSION)),-std=gnu++17)
 
 CXXFLAGS+= $(if $(CONFIG_BID_GCC_OMIT_FP),-fomit-frame-pointer,-fno-omit-frame-pointer)
+CXXFLAGS+= $(if $(CONFIG_BID_LD_EMIT_UNWIND),-funwind-tables,-fno-unwind-tables)
 CXXFLAGS+= $(OPTS) $(filter-out $(foreach w,-Wbad-function-cast -Wstrict-prototypes -Wmissing-prototypes,\
                                             $(w) $(patsubst -W%,-Wno-%,$(w))),\
                                 $(WARNINGS))

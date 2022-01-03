@@ -51,7 +51,7 @@ link_pass_opts = %:set-var(link_pass_opts
   %{x} %{X} %{S} %{s} %{t} %{z} %{Z} %{n} %{N} %{init*} %{fini*}
   %{soname*} %{h} %{E} %{-export-dynamic&-no-export-dynamic}
   %{e} %{-entry*} %{-defsym*} %{Map*} %{b} %{-format*} %{A} %{-architecture*}
-  %{-gc-sections} %{gc-sections} %{-no-gc-sections} %{-hash-style*}
+  %{-gc-sections} %{gc-sections} %{-no-gc-sections} %{-hash-style*} %{-eh-frame-hdr}
   # we always set -nostlib below so drop it but use it to avoid an error
   %{nostdlib:} %{no-pie:} %{pie} %{-no-dynamic-linker} %{-version-script*})
   %{-wrap*}

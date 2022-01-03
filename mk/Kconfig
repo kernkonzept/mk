@@ -179,6 +179,17 @@ config BID_STRIP_BINARIES
 
 	  If unsure, say 'Y'.
 
+config BID_LD_EMIT_UNWIND
+	bool "GCC: Emit unwind tables"
+	help
+	  If enabled, gcc will be passed the '-funwind-tables' cmdline
+	  option, adding unwind tables for all generated code. Binaries will
+	  be larger, but without unwind tables no backtraces can be created
+	  on most architectures (except on x86) and no exception handling
+	  can be provided by LLVM's libunwind.
+
+	  If unsure, say 'N'.
+
 config BID_GCC_OMIT_FP
 	bool "GCC: Omit Frame-pointers"
 	default y
