@@ -52,12 +52,6 @@ L4_STACK_SIZE           ?= $(if $(L4_STACK_SIZE_MAIN_THREAD),$(L4_STACK_SIZE_MAI
 CC_WHITELIST-gcc     := 4.9 5 6 7 8 9 10 11 12
 CC_WHITELIST-clang   := 3.5 3.6 3.7 3.8 3.9
 
-# This is quite bad: There is no other chance to disable the page-alignedment
-# of the linker. The linker aligns the first section at 0x100000 for AMD64!
-# We don't want this. Be careful for interactions with objcopy -S!
-#LDNMAGIC           ?= -n
-#LDFLAGS_amd64      += $(LDNMAGIC)
-
 VERBOSE          = $(if $(CONFIG_VERBOSE),,@)
 DEPEND_VERBOSE   = $(if $(CONFIG_DEPEND_VERBOSE),,@)
 DROPS_STDDIR     = $(patsubst "%",%,$(CONFIG_DROPS_STDDIR))
