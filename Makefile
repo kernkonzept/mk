@@ -20,7 +20,30 @@ CMDS_WITHOUT_OBJDIR := help checkbuild checkbuild.% check_build_tools
 CMDS_PROJECT_MK     := all clean cleanall install scrub cont doc help sysroot \
                        $(wildcard $(MAKECMDGOALS))
 
-# our default target is all::
+# Hack, see project.mk
+BID_DCOLON_TARGETS := all clean cleanall install scrub DROPSCONF_CONFIG_MK_POST_HOOK olddefconfig oldconfig config
+
+# This goes very early
+# TODO: should be done in mk/Makeconf to catch all make invocations (maybe
+#        there's a better way?)
+ifneq ($(if $(B)$(BID_SANDBOX_IN_PROGRESS),,$(SANDBOX_ENABLE)),)
+
+.PHONY: $(MAKECMDGOALS) do-all-make-targets
+
+do-all-make-targets:
+	$(VERBOSE)BID_SANDBOX_IN_PROGRESS=1 \
+	   $(L4DIR)/tool/bin/sandbox \
+	              --sys-dir "$(or $(SANDBOX_SYSDIR),/)" \
+	              --dir-rw "$(OBJ_DIR)" \
+	              --dir-ro "$(if $(L4DIR_ABS),$(L4DIR_ABS),$(PWD))" \
+	              --cmd "$(MAKE) -C $(OBJ_DIR) $(MAKECMDGOALS)"
+
+include $(L4DIR)/mk/Makeconf
+
+$(filter-out $(BID_DCOLON_TARGETS),$(MAKECMDGOALS)):  do-all-make-targets
+$(filter     $(BID_DCOLON_TARGETS),$(MAKECMDGOALS)):: do-all-make-targets
+
+else
 all::
 
 #####################
@@ -1008,3 +1031,5 @@ test:
 	       $(addprefix bid-tests/,$(filter-out bid-tests/% kunit-tests/%,$(TESTS))) \
 	       ); \
 	rm -fr "$${test_tmp_dir}"
+
+endif
