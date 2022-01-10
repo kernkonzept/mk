@@ -3,6 +3,7 @@
 use strict;
 use warnings;
 use File::Basename;
+use File::Find;
 
 my $searchdir = shift;
 my $outfile = shift;
@@ -17,65 +18,54 @@ if (not defined $outfile)
 
 open(my $out, ">$outfile") or die "Cannot open '$outfile': $!";
 
-my %db;
+my @db;
 
-open(my $fh_find, "find '$searchdir' -name '.*.cmd' |") or die "Cannot launch 'find': $!";
-while (my $file = <$fh_find>)
-  {
-    chomp $file;
+sub add_cmd
+{
+  return unless /\.cmd$/;
 
-    my $cmd;
-    my $source;
-    my $obj;
-    open(my $fh_cmd, $file) or die "Cannot open '$file': $!";
-    while (<$fh_cmd>)
-      {
-        chomp;
-        $cmd    = $1 if /^cmd_\S+\s+:=\s+(.+)/;
-        $source = $1 if /^source_\S+\s+:=\s+(.+)/;
-        $obj    = $1 if /^cmd_(\S+)\s+:=\s+.+/;
-      }
+  open(my $fh_cmd, $_) or die "Cannot open '$File::Find::name': $!";
+  my $cmd;
+  my $source;
+  my $obj;
+  while (<$fh_cmd>)
+    {
+      chomp;
+      $cmd    = $1 if /^cmd_\S+\s+:=\s+(.+)/;
+      $source = $1 if /^source_\S+\s+:=\s+(.+)/;
+      $obj    = $1 if /^cmd_(\S+)\s+:=\s+.+/;
+    }
 
-    if (defined $cmd and defined $source and defined $obj)
-      {
-        my $dir = dirname($file);
-        my $subdir = dirname($obj);
-        my $subdir_len = length($subdir) + 1;
-        $subdir_len = 0 if $subdir eq '.';
-        $dir = substr($dir, 0, length($dir) - $subdir_len);
+  return unless defined $cmd and defined $source and defined $obj;
 
-        my %e = ( cmd => $cmd, dir => $dir, obj => $obj );
-        $db{$source} = { %e };
-      }
+  my $obj_dir = dirname($obj);
+  my $obj_path = $File::Find::dir =~ s|\Q/$obj_dir\E$||r;
 
-    close $fh_cmd;
+  sub json_escape { return shift =~ s/(["\\])/\\$1/gr; }
+
+  push @db, {
+    "file"      => json_escape($source),
+    "directory" => json_escape($obj_path),
+    "command"   => json_escape($cmd),
+    "output"    => json_escape("$obj_path/$obj"),
   }
+}
 
-close $fh_find;
+find(\&add_cmd, $searchdir);
+
+my @sorted = sort { $b->{file} cmp $a->{file} } @db;
 
 print $out "[\n";
 my $comma = "";
-foreach my $source (sort keys %db)
+for my $entry (@sorted)
   {
-    (my $dir = $db{$source}{dir}) =~ s/(["\\])/\\$1/g;
-    (my $cmd = $db{$source}{cmd}) =~ s/(["\\])/\\$1/g;
     print $out $comma;
     print $out "  {\n";
-    print $out "    \"file\": \"$source\",\n";
-    print $out "    \"directory\": \"$dir\",\n";
-    print $out "    \"command\": \"$cmd\",\n";
-    print $out "    \"output\": \"$dir/$db{$source}{obj}\"\n";
+    print $out "    \"file\": \"$entry->{file}\",\n";
+    print $out "    \"directory\": \"$entry->{directory}\",\n";
+    print $out "    \"command\": \"$entry->{command}\",\n";
+    print $out "    \"output\": \"$entry->{output}\"\n";
     print $out "  }";
     $comma = ",\n";
   }
 print $out "\n]\n";
-
-close $out;
-
-# Did we do it right?
-system("echo '{}' | jq . 2>&1 > /dev/null");
-if ($? == 0)
-  {
-    my $o = `jq < $outfile`;
-    print $o if $?;
-  }
