@@ -118,7 +118,7 @@ all::
 	@echo "done."
 else
 
-all:: $(BUILD_DIRS) $(if $(S),,l4defs)
+all:: $(BUILD_DIRS) $(if $(S),,l4defs regen_compile_commands_json)
 
 endif
 
@@ -225,10 +225,24 @@ regen_l4defs:
 	+$(call generate_l4defs_files,sharedlib)
 	+$(call generate_l4defs_files,finalize)
 
-compile_commands.json:
-	$(L4DIR)/tool/bin/gen_ccj $(OBJ_DIR) $(L4DIR)/compile_commands.json
+COMPILE_COMMANDS_JSON = compile_commands.json
 
-.PHONY: l4defs regen_l4defs compile_commands.json
+$(COMPILE_COMMANDS_JSON):
+	$(GEN_MESSAGE)
+	$(VERBOSE)$(L4DIR)/tool/bin/gen_ccj $(OBJ_DIR) $@
+
+# Automatically regenerate compile_commands.json if the file is already
+# there and if we build the build-directory the compile_commands.json file
+# was originally created from.
+regen_compile_commands_json:
+	$(VERBOSE)if [ -e "$(COMPILE_COMMANDS_JSON)" ]; then \
+	  if grep -qF "$(OBJ_DIR)" $(COMPILE_COMMANDS_JSON); then  \
+	    $(call GEN_MESSAGE,$(COMPILE_COMMANDS_JSON)); \
+	    $(L4DIR)/tool/bin/gen_ccj $(OBJ_DIR) $(COMPILE_COMMANDS_JSON); \
+	  fi; \
+	fi
+
+.PHONY: l4defs regen_l4defs compile_commands.json regen_compile_commands_json
 endif # empty $(S)
 
 #####################
