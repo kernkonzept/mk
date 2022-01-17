@@ -6,7 +6,7 @@ BFD_ARCH_arm64            = aarch64
 L4_KIP_ADDR_arm64        ?= 0xb0000000
 L4_STACK_ADDR_arm64      ?= 0xb0000000
 
-CARCHFLAGS_arm64_armv8a   = -march=armv8-a
+CARCHFLAGS_arm64_armv8a   = -march=armv8-a $(GCCARM64OUTLINEATOMICSOPT_arm64)
 
 CC_arm64          = $(CROSS_COMPILE)gcc
 CXX_arm64         = $(CROSS_COMPILE)g++

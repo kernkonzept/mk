@@ -333,6 +333,7 @@ Makeconf.bid.local-helper:
 			$(if $(GCCARMV7AFPOPT_$(ARCH)_f),GCCARMV7AFPOPT_$(ARCH)) \
 			$(if $(GCCARMV7RFPOPT_$(ARCH)_f),GCCARMV7RFPOPT_$(ARCH)) \
 			$(if $(GCCARMV7VEFPOPT_$(ARCH)_f),GCCARMV7VEFPOPT_$(ARCH)) \
+			$(if $(GCCARM64OUTLINEATOMICSOPT_$(ARCH)_f),GCCARM64OUTLINEATOMICSOPT_$(ARCH)) \
 			$(if $(GCCNOFPU_$(ARCH)_f),GCCNOFPU_$(ARCH))    \
 			$(if $(GCCIS_$(ARCH)_leon_f),GCCIS_$(ARCH)_leon),   \
 			echo $(v)=$(call $(v)_f,$(ARCH))                \
