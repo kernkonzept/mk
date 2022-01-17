@@ -103,6 +103,7 @@ roottask moe rom/l4lx.cfg
 module l4lx.cfg
 module l4re
 module ned
+module[arch=arm64] arch/l4/boot/dts/simple.dtb
 module[uncompress] vmlinuz
 module[perl] "ramdisk-$ENV{ARCH}.rd"
 
