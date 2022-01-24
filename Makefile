@@ -387,7 +387,7 @@ ifneq ($(CONFIG_INT_CPP_NAME_SWITCH),)
 		rm -f $$X $$X.{o,out};
 endif
 ifneq ($(CONFIG_INT_LD_NAME_SWITCH),)
-	$(VERBOSE) set -e; echo INT_LD_NAME=$$($(LD) 2>&1 | perl -p -e 's,^(.+/)?(.+):.+,$$2,') >> $(DROPSCONF_CONFIG_MK)
+	$(VERBOSE)set -e; echo INT_LD_NAME=$$(LC_ALL=C $(firstword $(LD)) 2>&1 | perl -p -e 's,^(.+/)?(.+):.+,$$2,') >> $(DROPSCONF_CONFIG_MK)
 endif
 	$(VERBOSE)emulations=$$(LC_ALL=C $(firstword $(LD)) --help |     \
 	                        grep -i "supported emulations:" |        \
