@@ -96,7 +96,7 @@ link_output_args_gcc = %:output-option(l*)
 
 # pass all -Wl, and -Xlinker flags as output to the linker, preserving the order
 # with all -l and non-option args
-link_pass_opts_gcc   = %:set-var(link_pass_opts_gcc %:(%{Wl,*&Xlinker*:%w%*}))
+link_pass_opts_gcc   = %:set-var(link_pass_opts_gcc %{Wl,*&Xlinker*})
 
 link_args_gcc =
   %(gcc_arg_opts)%(link_output_args_gcc)
@@ -105,16 +105,17 @@ link_args_gcc =
   %:read-pc-file(%(pc_file_dir) %{PC*:%*})
   %{r}
   %{r|nocrt|nostartfiles|nostdlib:;:%:read-pc-file(%(pc_file_dir) ldscripts)}
-  %{o} -nostdlib %{static:-static;:--eh-frame-hdr} %{shared}
+  %{o} -nostdlib %{static:-static;:-Wl,--eh-frame-hdr} %{shared}
   %(link_pass_opts_gcc) %{W*:} %{f*:} %{u*} %{O*} %{g*} %{T*&L*}
-  %{!r:%{!dT:-dT %:search(main_%{static:stat;shared:rel;:dyn}.ld %(libdir))}}
-  %{r|shared|static|-dynamic-linker*:;:--dynamic-linker=%(Link_DynLinker)
+  %{!r:%{!dT:-Wl,-dT,%:search(main_%{static:stat;shared:rel;:dyn}.ld %(libdir))}}
+  %{r|shared|static|-dynamic-linker*:;:-Wl,--dynamic-linker=%(Link_DynLinker)
     %(Link_DynLinker:;:
       %:error(Link_DynLinker not specified, cannot link with shared libs.))}
   %{r|nostartfiles|nostdlib:;:%(Link_Start)} %o %(Libs)
-  %{r|nodefaultlibs|nostdlib:;:%{static:--start-group} %(Link_Libs)
-  %{!r:%{!shared:%(libgcc);:%(libgcc_s)} %(libgcc_eh) %{static:--end-group}}}
+  %{r|nodefaultlibs|nostdlib:;:%{static:-Wl,--start-group} %(Link_Libs)
+    %{!r:%{!shared:%(libgcc);:%(libgcc_s)} %(libgcc_eh) %{static:-Wl,--end-group}}}
   %{r|nostartfiles|nostdlib:;:%(Link_End)}
+  %{!shared:%(libgcc);:%(libgcc_s)}
   %{EL&EB}
   %{MD:%(generate_deps)} %:error-unused-options()
 
