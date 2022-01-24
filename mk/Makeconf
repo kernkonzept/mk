@@ -465,6 +465,14 @@ GCCPREFIXOPT_f  = $(call checkcc,-fmacro-prefix-map=$(L4DIR_ABS)/= \
 BID_NOSTDINC_clang ?= #-nostdlibinc
 BID_NOSTDINC_gcc   ?= -nostdinc
 BID_NOSTDINC       ?= $(BID_NOSTDINC_$(BID_COMPILER_TYPE))
+
+# Options that must be filtered from gcc since they are linker flags
+BID_GCC_OPTS=-static -shared -nostdlib -Wl$(BID_COMMA)% -L% -l% -PC% -nocrt1 -nocrt -r
+
+# Tool to filter LD flags for the corresponding tool invocation type
+#  Convert arguments to a format compatible with gcc invocation
+ldflags_to_gcc=$(foreach o,$(1),$(if $(filter $(BID_GCC_OPTS),$o),$o,$(addprefix -Wl$(BID_COMMA),$o)))
+
 ifneq ($(strip $(GCCDIR)),)
 GCCINCDIR	= $(GCCDIR)/include $(GCCINCFIXEDPATH)
 I_GCCINCDIR	= $(addprefix -isystem ,$(GCCINCDIR))

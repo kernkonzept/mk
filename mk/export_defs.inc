@@ -26,8 +26,8 @@ L4_SYSTEM                    = $(ARCH)_$(CPU)
 L4_CC                        = $(CC)
 L4_CXX                       = $(CXX)
 L4_LD                        = $(LD)
-L4_LDFLAGS_LD_STATIC         = $(filter-out -l%,$(BID_LDFLAGS_FOR_LINKING_LD))
-L4_LDFLAGS_GCC_STATIC        = $(filter-out -l%,$(BID_LDFLAGS_FOR_LINKING_GCC))
+L4_LDFLAGS_LD_STATIC         = $(filter-out -l%,$(LDFLAGS))
+L4_LDFLAGS_GCC_STATIC        = $(filter-out -l%,$(call ldflags_to_gcc,$(LDFLAGS)))
 L4_LDFLAGS_DYNAMIC_LINKER_LD = $(LDFLAGS_DYNAMIC_LINKER)
 L4_LDFLAGS_DYNAMIC_LINKER_GCC= $(LDFLAGS_DYNAMIC_LINKER_GCC)
 L4_LIBDIRS                   = $(addprefix -L,$(L4LIBDIR))
@@ -147,8 +147,8 @@ MODE = shared
 
 ifneq ($(SYSTEM),)
 
-L4_LDFLAGS_LD_SHARED  = $(filter-out -l%,$(BID_LDFLAGS_FOR_LINKING_LD))
-L4_LDFLAGS_GCC_SHARED = $(filter-out -l%,$(BID_LDFLAGS_FOR_LINKING_GCC))
+L4_LDFLAGS_LD_SHARED  = $(filter-out -l%,$(LDFLAGS))
+L4_LDFLAGS_GCC_SHARED = $(filter-out -l%,$(call ldflags_to_gcc,$(LDFLAGS)))
 L4_LDS_so             = $(LDS_so)
 L4_LDS_dyn_bin        = $(LDS_dyn_bin)
 

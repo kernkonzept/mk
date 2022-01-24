@@ -140,18 +140,13 @@ ifneq ($(SRC_CC),)
 LINK_PROGRAM  := $(call bid_call_if,BID_LINK_MODE_host,$(LINK_PROGRAM-CXX-host-$(HOST_LINK)))
 endif
 
-BID_LDFLAGS_FOR_LINKING_LD  = $(LDFLAGS)
-BID_LDFLAGS_FOR_GCC         = $(filter     -static -shared -nostdlib -Wl$(BID_COMMA)% -L% -l% -PC% -nocrt1,$(LDFLAGS))
-BID_LDFLAGS_FOR_LD          = $(filter-out -static -shared -nostdlib -Wl$(BID_COMMA)% -L% -l% -PC% -nocrt1,$(LDFLAGS))
-BID_LDFLAGS_FOR_LINKING_GCC = $(addprefix -Wl$(BID_COMMA),$(BID_LDFLAGS_FOR_LD)) $(BID_LDFLAGS_FOR_GCC)
-
 ifeq ($(LINK_PROGRAM),)
 LINK_PROGRAM  := $(BID_LINK)
 BID_LDFLAGS_FOR_LINKING = $(call BID_mode_var,NOPIEFLAGS) -MD -MF $(call BID_link_deps_file,$@) \
-                          $(addprefix -PC,$(REQUIRES_LIBS)) $(BID_LDFLAGS_FOR_LINKING_LD)
+                          $(addprefix -PC,$(REQUIRES_LIBS)) $(LDFLAGS)
 else
 BID_LDFLAGS_FOR_LINKING = $(call BID_mode_var,NOPIEFLAGS) -MD -MF $(call BID_link_deps_file,$@) \
-                          $(if $(HOST_LINK_TARGET),$(CCXX_FLAGS)) $(BID_LDFLAGS_FOR_LINKING_GCC)
+                          $(if $(HOST_LINK_TARGET),$(CCXX_FLAGS)) $(call ldflags_to_gcc,$(LDFLAGS))
 endif
 
 $(TARGET): $(OBJS) $(LIBDEPS)

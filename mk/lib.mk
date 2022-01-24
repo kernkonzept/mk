@@ -82,11 +82,6 @@ LDFLAGS += $(addprefix -L, $(L4LIBDIR))
 LDFLAGS += $(LIBCLIBDIR)
 LDFLAGS_SO ?= -shared
 
-BID_LDFLAGS_FOR_LINKING_DYN_LD  = $(LDFLAGS)
-BID_LDFLAGS_FOR_GCC_DYN         = $(filter     -static -shared -nostdlib -Wl$(BID_COMMA)% -L% -l%,$(LDFLAGS))
-BID_LDFLAGS_FOR_LD_DYN          = $(filter-out -static -shared -nostdlib -Wl$(BID_COMMA)% -L% -l%,$(LDFLAGS))
-BID_LDFLAGS_FOR_LINKING_DYN_GCC = $(addprefix -Wl$(BID_COMMA),$(BID_LDFLAGS_FOR_LD_DYN)) $(BID_LDFLAGS_FOR_GCC_DYN)
-
 
 LDSCRIPT       = $(LDS_so)
 LDSCRIPT_INCR ?= /dev/null
