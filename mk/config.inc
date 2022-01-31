@@ -45,7 +45,7 @@ kconfig_call = [ -d $@ ] || install -d $(OBJ_BASE)/include/l4; \
                Kconfig=$(KCONFIG_FILE) \
 	       KCONFIG_AUTOHEADER=include/l4/bid_config.h \
 	       KCONFIG_CONFIG=.kconfig \
-	       KCONFIG_AUTOCONFIG=.kconfig.auto \
+	       KCONFIG_AUTOCONFIG=include/config/auto.conf \
 	       KCONFIG_TRISTATE=.kconfig.tristate \
 	       l4re_srcdir=$(L4DIR_ABS)
 
