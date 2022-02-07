@@ -121,7 +121,7 @@ TEST_KERNEL_UNIT=1
 TEST_EXPECTED="${expected}"
 
 TEST_TESTFILE="\$0"
-TEST_DESCRIPTION="${basename}"
+TEST_DESCRIPTION="kunit_test \$TEST_TESTFILE"
 
 : \${TEST_STARTER:=\${L4DIR}/tool/bin/default-test-starter}
 set +a

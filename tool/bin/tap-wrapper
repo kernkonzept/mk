@@ -64,16 +64,17 @@ if ($nowrapper)
 my $timeout = $ENV{TEST_TIMEOUT};
 $timeout = 10 unless defined $timeout && looks_like_number($timeout);
 $L4::TapWrapper::timeout = $timeout;
+my $testfile = $ENV{TEST_TESTFILE};
 my $target = $ENV{TEST_TARGET};
 my $expline;
-$L4::TapWrapper::test_description = $ENV{TEST_DESCRIPTION} || join(" ", map { $_ ? basename($_) : () } @ARGV, $target);
+$L4::TapWrapper::test_description = $ENV{TEST_DESCRIPTION} || ($testfile ? "run $testfile" : '') || join(" ", map { $_ ? basename($_) : () } @ARGV, $target);
 
 my $LOG_FD;
 my $logfile;
 my $workdir = $ENV{TEST_WORKDIR};
 if ($workdir)
   {
-    my ($name, $path, $suffix) = fileparse($ENV{TEST_TESTFILE} || $target || "", ".t");
+    my ($name, $path, $suffix) = fileparse($testfile || $target || "", ".t");
     my $testworkdir   = "$workdir/$path$name";
     my $logdir        = "$testworkdir/log"; # tap-wrapper logs
     my $rundir        = "$testworkdir/run"; # run_test modules.list, ned files, etc.
