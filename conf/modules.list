@@ -67,6 +67,14 @@ module ned
 module hello.cfg
 module hello
 
+entry hello-2
+kernel fiasco -serial_esc
+roottask moe rom/hello-2.cfg
+module l4re
+module ned
+module hello-2.cfg
+module hello
+
 entry hello-shared
 roottask moe --init=rom/ex_hello_shared
 module l4re
