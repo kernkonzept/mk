@@ -127,12 +127,33 @@ sub grub2_mkisofs($$@)
   my $opt = '';
   system("$mkr --output=/dev/null /dev/null -f >/dev/null 2>&1");
   $opt = " -as mkisofs" unless $?;
+
+
+  # Check whether the installed grub works for either PC or UEFI. Assumes
+  # that only one variant is installed, as we do not really know how to
+  # select the variant.
+  my $is_pc;
+  my $is_efi;
+  system("$mkr --install-modules=vbe --output=/dev/null /dev/null -f >/dev/null 2>&1");
+  $is_pc = $? == 0;
+
+  system("$mkr --install-modules=lsefi --output=/dev/null /dev/null -f >/dev/null 2>&1");
+  $is_efi = $? == 0;
+
+  die "grub-mkrescue does not seem to work for either PC or UEFI targets. GRUB not (properly) installed?"
+    if not $is_pc and not $is_efi;
+
+  print "Note: Take care, ISO can be PC or UEFI\n" if $is_efi and $is_pc;
+
   my $cmd = "$mkr --output=\"$isofilename\" $dir ".
             join(' ', @morefiles)." --$opt -f";
   system("$cmd");
   die "Failed to create ISO" if $?;
   # grub-mkrescue does not propagate internal tool errors
   die "Failed to create ISO" unless -e $isofilename;
+
+  print "Note: Created UEFI ISO, remember to add '-bios /usr/share/qemu/OVMF.fd' to your QEMU call\n\n"
+    if $is_efi;
 }
 
 
