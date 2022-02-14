@@ -103,7 +103,10 @@ for file in "${utest_bins[@]}"; do
 
   # generate .t file, overwrite existing files
   if [[ ${verbose} ]]; then
-    echo "Generating ${out_file}.."
+    echo "Generating ${out_file}"
+    if [[ -n "${expected}" ]]; then
+      echo "  EXPECTED file: '$exp_file' ($(stat --printf='%s' $expected) bytes)"
+    fi
   fi
 
   cat > "${out_file}" <<EOF
