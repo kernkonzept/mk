@@ -53,8 +53,12 @@ CONFIG_MK_PLATFORM      = $(OBJ_BASE)/.config.platform
 
 INCLUDE_BOOT_CONFIG    := optional
 
-ifneq ($(filter $(CMDS_WITHOUT_OBJDIR),$(MAKECMDGOALS)),)
+# Do not require Makeconf if *all* targets work without a builddir.
+# The default target does not!
+ifeq ($(filter-out $(CMDS_WITHOUT_OBJDIR),$(MAKECMDGOALS)),)
+ifneq ($(MAKECMDGOALS),)
 IGNORE_MAKECONF_INCLUDE=1
+endif
 endif
 
 ifneq ($(B)$(BUILDDIR_TO_CREATE),)
