@@ -72,7 +72,8 @@ testvars_fix    := MODE ARCH NED_CFG REQUIRED_MODULES KERNEL_CONF L4LINUX_CONF \
                     TEST_ROOT_TASK TEST_DESCRIPTION TEST_KERNEL_ARGS SIGMA0 \
                     TEST_PLATFORM_ALLOW TEST_PLATFORM_DENY
 testvars_conf   := TEST_TIMEOUT TEST_EXPECTED_REPEAT
-testvars_append := QEMU_ARGS MOE_ARGS TEST_ROOT_TASK_ARGS BOOTSTRAP_ARGS
+testvars_append := QEMU_ARGS MOE_ARGS TEST_ROOT_TASK_ARGS BOOTSTRAP_ARGS \
+                   TEST_TAP_PLUGINS
 
 # use either a target-specific value or the general version of a variable
 targetvar = $(or $($(1)_$(2)),$($(1)))

@@ -280,6 +280,23 @@ loop are still alive. Note that such endless tests can only be run by
 directly executing the test script. They will be skipped when run in a
 test harness like `prove`.
 
+\par `TEST_TAP_PLUGIN`
+Specify the plugin that is used to process the output of the test run.
+The syntax is of the values is:
+
+  plugin1:arg1=a,arg2=b plugin2:arg=foo
+
+Multiple plugins separated by a space are loaded in order. Spaces are not
+allowed inside a plugin specification. One or more arguments are optionally
+passed to the plugin separated by commas and delimited by a colon.
+
+If the variable is not specified the plugins for TAPOutput and OutputMatching
+(depending on the TEST_EXPECTED variable) are automatically loaded.
+
+For the supported plugins and their options please refer to their in-line
+documentation in tool/lib/L4/TapWrapper/Plugin/. The plugin name corresponds to
+the file stem name in that directory.
+
 \par `TEST_TIMEOUT`
 Non-standard timeout after which the test run is aborted
 (useful for tests involving sleep).

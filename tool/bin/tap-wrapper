@@ -233,16 +233,20 @@ sub readline_timeout
 
 my $test_proc_exit_code = 0;
 
-# Compat for now. Should be specified as required plugin by the test in future
-if ($ENV{TEST_EXPECTED})
-  {
-    L4::TapWrapper::load_plugin("OutputMatching", { file => $ENV{TEST_EXPECTED} });
-  }
-else
-  {
-    L4::TapWrapper::load_plugin("BundleMode"); # Should be the default?
-    L4::TapWrapper::load_plugin("TAPOutput"); # Should be the default?
-  }
+
+if (!@L4::TapWrapper::_plugins)
+{
+  # Compat for now. Should be specified as required plugin by the test in future
+  if ($ENV{TEST_EXPECTED})
+    {
+      L4::TapWrapper::load_plugin("OutputMatching", { file => $ENV{TEST_EXPECTED} });
+    }
+  else
+    {
+      L4::TapWrapper::load_plugin("BundleMode"); # Should be the default?
+      L4::TapWrapper::load_plugin("TAPOutput"); # Should be the default?
+    }
+}
 
 # look for TAP output
 #$expline = "begin of TAP test output (TAP TEST START)";
