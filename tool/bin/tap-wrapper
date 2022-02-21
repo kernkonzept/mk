@@ -152,17 +152,12 @@ if (looks_like_number($repeat) and $repeat == 0 and $ENV{HARNESS_ACTIVE})
     L4::TapWrapper::exit_test(69);
   }
 
-if ($test_timestamps)
-  {
-    my $timestamp = get_timestamp();
-    print $timestamp;
-    print $LOG_FD $timestamp if $LOG_FD;
-  }
-
 $L4::TapWrapper::pid = open(my $test_proc, "-|", @ARGV) or die "Failed to execute $ARGV[0].\n";
 
 my $readbuffer = '';
 my $lines_read = 0;
+
+my $buffer_is_at_newline = 1;
 
 sub readline_timeout
 {
@@ -188,7 +183,17 @@ sub readline_timeout
               if ($test_timestamps)
                 {
                   my $timestamp = get_timestamp();
-                  $log_part =~ s/\n/\n$timestamp/gm;
+                  $log_part =~ s/\n(.)/\n$timestamp$1/gm;
+                  if ($buffer_is_at_newline)
+                    {
+                      $log_part = $timestamp . $log_part;
+                      $buffer_is_at_newline = 0;
+                    }
+
+                  if (substr($log_part,-1) eq "\n")
+                    {
+                      $buffer_is_at_newline = 1;
+                    }
                 }
               print $log_part;
               print $LOG_FD $log_part if $LOG_FD;
