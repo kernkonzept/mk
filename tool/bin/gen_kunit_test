@@ -97,15 +97,14 @@ for file in "${utest_bins[@]}"; do
   # ##*/ - strip path
   basename=${file##*/}
   out_file=${dest_dir}/${basename}.t
-  exp_file=${file/test_/expected_}
-  expected=
-  [[ ${exp_file} != ${file} && -f ${exp_file} ]] && expected=${exp_file}
+  conf_file=${file/test_/config_}
 
   # generate .t file, overwrite existing files
   if [[ ${verbose} ]]; then
     echo "Generating ${out_file}"
-    if [[ -n "${expected}" ]]; then
-      echo "  EXPECTED file: '$exp_file' ($(stat --printf='%s' $expected) bytes)"
+    if [[ -f "${conf_file}" ]]; then
+      echo "  test config file: '$conf_file'"
+      sed -e 's/^/    => /' "$conf_file
     fi
   fi
 
@@ -121,10 +120,10 @@ ARCH=$("${obj_base}"/source/tool/kconfig/scripts/config \
 SEARCHPATH="${source_dir}"${SEARCHPATH:+:${SEARCHPATH}}
 KERNEL="${file}"
 TEST_KERNEL_UNIT=1
-TEST_EXPECTED="${expected}"
-
 TEST_TESTFILE="\$0"
 TEST_DESCRIPTION="kunit_test \$TEST_TESTFILE"
+
+$( [ -f "$conf_file" ] && cat "$conf_file")
 
 : \${TEST_STARTER:=\${L4DIR}/tool/bin/default-test-starter}
 set +a
