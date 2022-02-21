@@ -14,9 +14,9 @@ sub new {
   my $self = L4::TapWrapper::Plugin->new();
 
   $self->{args} = shift;
-  print "Tag: $self->{args}{tag}\n";
   L4::TapWrapper::fail_test("Tag not specified for plugin!")
     unless defined($self->{args}{tag});
+  print "Tag: $self->{args}{tag}\n";
 
   $self->inhibit_exit() if $self->{args}{require_blocks};
   return bless $self, $type;
