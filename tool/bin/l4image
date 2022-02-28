@@ -319,15 +319,32 @@ sub op_create
   my $d = shift;
   my $args = shift;
 
-  error("Need to give entry name via --entry option")
-    unless $args->{"--entry"};
-  error("Need to give search paths via --search-path option")
-    unless $args->{"--search-path"};
-  error("Need to give modules.list file via --modules-list-file option")
-    unless $args->{"--modules-list-file"};
+  my $modules_list = $args->{"--modules-list-file"};
+  my $entry = $args->{"--entry"};
+  my $searchpath = $args->{"--search-path"} || '.';
 
-  create_image($d, $args->{"--modules-list-file"}, $args->{"--entry"},
-               $args->{"--search-path"});
+  $modules_list = "modules.list"
+    if not defined $modules_list and -e "modules.list";
+
+  error("Need to give modules.list file via --modules-list-file option")
+    unless $modules_list;
+
+  if (not defined $entry)
+    {
+      my @entries = L4::ModList::get_entries($modules_list);
+
+      if (@entries == 1)
+        {
+          $entry = $entries[0];
+        }
+      else
+        {
+          error("Need to give entry name via --entry option")
+            unless $args->{"--entry"};
+        }
+    }
+
+  create_image($d, $modules_list, $entry, $searchpath);
 }
 
 sub op_pack
@@ -691,7 +708,8 @@ my %args = (
     mods_to_disk => 1,
     func => sub { error("--outputdir (global option) not given") unless defined $workdir; },
     help => "Unpack each file from the image.\n".
-            "Use global --outputdir argument (before --op) to specify output directory\n",
+            "Use global --outputdir argument (before --op) to specify output directory\n".
+            "Use 'create' command in outputdir to reassamble.\n",
   },
   pack => {
     gen_new_image => 1,
@@ -783,8 +801,12 @@ my %args = (
     help => "Add modules according to a modules.list-entry.\n".
             "Any other existing module is being removed.\n".
             "  --entry              Entry to use\n".
-            "  --modules-list-file  modules.list file to use\n".
+            "                       Can be omitted if modules.list file only\n".
+            "                       contains a single entry.\n".
+            "  --modules-list-file  modules.list file to use.\n".
+            "                       Defaults to 'modules.list'.\n".
             "  --search-path        Search path, colon or space separated\n".
+            "                       Defaults to '.'.\n".
             "\n".
             "",
   },
