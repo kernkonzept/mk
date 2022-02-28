@@ -506,6 +506,17 @@ sub op_launch
   $cmd = ${$d}{attrs}{$args->{"--cmd-key"}} if $args->{"--cmd-key"};
   $cmd = $args->{"--cmd"} if $args->{"--cmd"};
 
+  if ($args->{"--cmd-mod"})
+    {
+      $_ = $cmd;
+      eval $args->{"--cmd-mod"};
+
+      error("Processing of --cmd-mod '".$args->{"--cmd-mod"}."' failed")
+        if $@;
+
+      $cmd = $_;
+    }
+
   error("No command line specification specified or found in image")
     unless defined $cmd;
 
@@ -814,6 +825,7 @@ my %args = (
     args => {
       "--cmd" => 1,
       "--cmd-key" => 1,
+      "--cmd-mod" => 1,
       "--show-cmd" => 0,
       "--output-processing-perl-line" => 1,
       "--output-processing-perl" => 1,
@@ -824,6 +836,9 @@ my %args = (
             "  --cmd                         Specify command to execute\n".
             "  --cmd-key                     Specify the attribute's key to get the\n".
             "                                command to execute from\n".
+            "  --cmd-mod                     Specify perl expression to modify the launch\n".
+            "                                command stored in the image. The stored\n".
+            "                                command is available via \$_.\n".
             "  --show-cmd                    Only show the command that would be executed\n".
             "  --output-processing           Command to process output of launched\n".
             "                                command with\n".
