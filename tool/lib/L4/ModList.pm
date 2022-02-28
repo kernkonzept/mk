@@ -212,12 +212,35 @@ sub disassemble_line
   ($1, $2, $3);
 }
 
+sub check_env_var
+{
+  my ($envvar, $type) = @_;
+
+  if ($type eq 'path')
+    {
+      $ENV{$envvar} = "/env-var/$envvar/is/not/set" unless defined $ENV{$envvar};
+    }
+  elsif ($type eq 'word')
+    {
+      $ENV{$envvar} = "env-var-$envvar-not-set" unless defined $ENV{$envvar};
+    }
+  else
+    {
+      die "Unknown type '$type'";
+    }
+};
+
 ## Extract an entry with modules from a modules.list file
 sub get_module_entry($$)
 {
   my ($mod_file, $entry_to_pick) = @_;
   my @mods;
   my %groups;
+
+  check_env_var('L4DIR', 'path');
+  check_env_var('PLATFORM_TYPE', 'word');
+  check_env_var('ARCH', 'word');
+  check_env_var('SRC_BASE_ABS', 'path');
 
   # preseed first 3 modules
   $mods[0] = { get_command_and_cmdline("fiasco") };
