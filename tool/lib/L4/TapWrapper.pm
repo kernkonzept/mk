@@ -10,8 +10,6 @@ use Data::Dumper;
 $Data::Dumper::Terse = 1;
 $Data::Dumper::Indent = 0;
 
-BEGIN { unshift @INC, dirname($0).'/../lib'; }
-
 use L4::TapWrapper::Util qw/kill_ps_tree/;
 
 our @_plugins;

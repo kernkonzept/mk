@@ -6,7 +6,6 @@ use strict;
 use warnings;
 
 use File::Basename;
-BEGIN { unshift @INC, dirname($0) . '/../lib'; }
 
 use parent 'L4::TapWrapper::Plugin::TagPluginBase';
 use L4::TapWrapper;
@@ -47,6 +46,10 @@ sub process_mine {
 sub finalize {
   return shift->{matcher}->finalize(@_);
 }
+
+1;
+
+__END__
 
 =head1 Plugin for matching tagged lines
 

@@ -6,8 +6,6 @@ use warnings;
 use File::Basename;
 use Scalar::Util qw(looks_like_number);
 
-BEGIN { unshift @INC, dirname($0) . '/../lib'; }
-
 use parent 'L4::TapWrapper::Plugin';
 use L4::TapWrapper;
 
