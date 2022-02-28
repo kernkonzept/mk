@@ -267,19 +267,16 @@ LIBCINCDIR    ?= $(call BID_mode_var,LIBCINCDIR)
 LIBCLIBDIR    ?= $(call BID_mode_var,LIBCLIBDIR)
 LDSCRIPT      ?= $(call BID_mode_var,LDSCRIPT)
 LDFLAGS       += $(call BID_mode_var,LDFLAGS)
-REQUIRES_LIBS += $(REQUIRES_LIBS_$(ARCH)) $(call BID_mode_var,REQUIRES_LIBS)
+REQUIRES_LIBS += $(call BID_mode_var,REQUIRES_LIBS)
 
-LDFLAGS	+= $(strip $(LDFLAGS_$(OSYSTEM)) $(LDFLAGS_$@) $(LDFLAGS_$@_$(OSYSTEM)))
 CARCHFLAGS += $(CARCHFLAGS_$(ARCH)) $(CARCHFLAGS_$(ARCH)_$(CPU))
 
-CFLAGS        += $(CFLAGS-y)
-CXXFLAGS      += $(CXXFLAGS-y)
-CPPFLAGS      += $(CPPFLAGS-y)
-SRC_C         += $(SRC_C-y)
-SRC_CC        += $(SRC_CC-y)
-SRC_S         += $(SRC_S-y)
-DEFINES       += $(DEFINES-y)
-REQUIRES_LIBS += $(REQUIRES_LIBS-y)
+bid_link_flag_variants = $($(1)-y) $($(1)_$(OSYSTEM)) $($(1)_$(OSYSTEM)-y) \
+                         $($(1)_$@) $($(1)_$@-y) $($(1)_$@_$(OSYSTEM)) $($(1)_$@_$(OSYSTEM)-y) \
+                         $($(1)_$(<F)_$(OSYSTEM)) $($(1)_$(<F)_$(OSYSTEM)-y)
+
+LDFLAGS       += $(call bid_link_flag_variants,LDFLAGS)
+REQUIRES_LIBS += $(call bid_link_flag_variants,REQUIRES_LIBS)
 
 # ---------------------------------
 
@@ -392,9 +389,11 @@ LDFLAGS += --hash-style=sysv
 endif
 endif
 
-bid_flag_variants = $($(1)_$(OSYSTEM)) $($(1)_$@) $($(1)_$(@D)) $($(1)_$<) \
-                    $($(1)_$(@D)/$(<F)) \
-                    $($(1)_$(<F)) $($(1)_$(<D)) $($(1)_$(<F)_$(OSYSTEM))
+bid_flag_variants = $($(1)-y) $($(1)_$(OSYSTEM)) $($(1)_$(OSYSTEM)-y) \
+                    $($(1)_$@) $($(1)_$@-y) $($(1)_$@_$(OSYSTEM)) $($(1)_$@_$(OSYSTEM)-y) \
+                    $($(1)_$(@D)) $($(1)_$<) $($(1)_$(@D)/$(<F)) \
+                    $($(1)_$(<F)) $($(1)_$(<F)_$(OSYSTEM)) $($(1)_$(<F)_$(OSYSTEM)-y) \
+                    $($(1)_$(<D))
 
 OPTS_DEBUG-$(CONFIG_BID_DEBUG_INFO) = -g
 OPTS_DEBUG       ?= $(OPTS_DEBUG-y)
@@ -614,11 +613,13 @@ convert_cc_to_o_file = $(patsubst %.cc,%$(2).o, $(filter %.cc,$(1)))     \
 # arg: 1 - name of the variable (<var>), e.g. SRC_C
 #      2 - target name
 #
-get_target_var = $(strip                                     \
-                   $($(1))                                   \
-                   $(if $(OSYSTEM),$($(1)_$(OSYSTEM)))       \
-                   $($(1)_$(2))                              \
-                   $(if $(OSYSTEM),$($(1)_$(2)_$(OSYSTEM))))
+get_target_var = $(strip                                                 \
+                   $($(1)) $($(1)-y)                                     \
+                   $(if $(OSYSTEM),                                      \
+                     $($(1)_$(OSYSTEM)) $($(1)_$(OSYSTEM)-y))            \
+                   $($(1)_$(2)) $($(1)_$(2)-y)                           \
+                   $(if $(OSYSTEM),                                      \
+                     $($(1)_$(2)_$(OSYSTEM)) $($(1)_$(2)_$(OSYSTEM)-y)))
 
 # convert list of Fortran file names to .o files
 # arg: 1 - list of files
