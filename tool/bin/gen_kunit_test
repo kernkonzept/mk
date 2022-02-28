@@ -104,7 +104,7 @@ for file in "${utest_bins[@]}"; do
     echo "Generating ${out_file}"
     if [[ -f "${conf_file}" ]]; then
       echo "  test config file: '$conf_file'"
-      sed -e 's/^/    => /' "$conf_file
+      sed -e 's/^/    => /' "$conf_file"
     fi
   fi
 
