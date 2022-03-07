@@ -280,8 +280,8 @@ loop are still alive. Note that such endless tests can only be run by
 directly executing the test script. They will be skipped when run in a
 test harness like `prove`.
 
-\par `TEST_TAP_PLUGIN`
-Specify the plugin that is used to process the output of the test run.
+\par `TEST_TAP_PLUGINS`
+Specify the plugins that are used to process the output of the test run.
 The syntax is of the values is:
 
   plugin1:arg1=a,arg2=b plugin2:arg=foo
