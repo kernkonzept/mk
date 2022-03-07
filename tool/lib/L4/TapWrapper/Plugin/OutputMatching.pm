@@ -12,8 +12,9 @@ use L4::TapWrapper;
 sub new {
   my $type = shift;
   my $self = L4::TapWrapper::Plugin->new( () );
-  my $args = shift;
-  my $file = $args->{file};
+  $self->{args} = shift;
+  $self->{args}{literal} = 0 unless defined $self->{args}{literal};
+  my $file = $self->{args}{file};
   if (! -e $file or -d $file)
     {
       foreach my $p (split(/:/, $ENV{SEARCHPATH}))
@@ -55,6 +56,8 @@ sub get_next_line {
       seek($fd, 0, 0); # Rewind
       $L4::TapWrapper::expline = <$fd>;
     }
+  chomp $L4::TapWrapper::expline;
+  return $L4::TapWrapper::expline if $self->{args}{literal};
   return extract_expected($L4::TapWrapper::expline);
 }
 
@@ -74,7 +77,8 @@ sub check_start {
 sub process_mine {
   my $self = shift;
   (my $data = shift) =~ s/\e\[[\d,;\s]+[A-Za-z]//gi; #Strip color escapes
-  if ($data =~ m/$self->{next_line}/)
+  if ((!$self->{args}{literal} && $data =~ m/$self->{next_line}/) ||
+      ($data =~ m/^\Q$self->{next_line}\E$/))
     {
       $self->{num_res}++;
       $self->{next_line} = $self->get_next_line();
@@ -89,7 +93,6 @@ sub process_mine {
 sub extract_expected
 {
   my $exp = shift;
-  chomp $exp;
 
   if ($exp =~ /^([^|]+)\s+\|\s+(.*)\s*$/)
     {

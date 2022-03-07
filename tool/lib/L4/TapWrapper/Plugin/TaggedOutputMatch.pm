@@ -20,7 +20,7 @@ sub new {
     unless defined($self->{args}{file});
 
   # Also forces printing to tap fd!
-  $self->{matcher} = L4::TapWrapper::Plugin::OutputMatching->new({ file => $self->{args}{file} });
+  $self->{matcher} = L4::TapWrapper::Plugin::OutputMatching->new({ file => $self->{args}{file}, literal => $self->{args}{literal} });
   # We have tags, so we are always "in block"
   $self->{matcher}->check_start("L4 Bootstrapper");
   $self->{inhibit_exit} = $self->{matcher}{inhibit_exit}; # We must wait for the data
@@ -73,6 +73,11 @@ The tag for which the output should be matched. Only lines matching this tag
 
 The file that contains the expected output lines. Must be found using the
 module search path.
+
+=item C<literal>
+
+The contents of the file that is matched are to be matched literally and not as
+a regular expression.
 
 =item C<nounexpected>
 
