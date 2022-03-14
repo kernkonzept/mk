@@ -159,6 +159,7 @@ my $lines_read = 0;
 
 my $buffer_is_at_newline = 1;
 
+# Returns read line or undef in case of a timeout
 sub readline_timeout
 {
   my $handle = shift;
@@ -203,25 +204,18 @@ sub readline_timeout
             }
           STDOUT->flush();
         }
-
       $handle->blocking($was_blocking);
 
-      if ($idx < 0)
-        {
-          my $exp = $L4::TapWrapper::expline;
-          L4::TapWrapper::fail_test("Test timed out after $timeout seconds." .
-            (defined($exp)?" Was expecting: $exp":""));
-        }
+      # Timeout
+      return undef if $idx < 0;
     }
 
   my $outline = '';
-
-  if ($idx >= 0 and $readbuffer)
+  if ($readbuffer)
     {
       $outline = substr($readbuffer, 0, $idx + 1, '');
+      $outline =~ s/\r+\n/\n/g;
     }
-
-  $outline =~ s/\r+\n/\n/g;
   $lines_read++;
 
   L4::TapWrapper::fail_test("Stopping test prematurely after $lines_read lines read.")
@@ -252,14 +246,24 @@ if (!@L4::TapWrapper::_plugins)
 #$expline = "begin of TAP test output (TAP TEST START)";
 my $test_eof = 0;
 my $test_lastline = "";
+my $test_current_read;
 
-while ($_ = readline_timeout($test_proc, $L4::TapWrapper::timeout))
+while ($test_current_read = readline_timeout($test_proc, $L4::TapWrapper::timeout))
   {
-    $test_lastline = $_;
-    last if $test_eof = L4::TapWrapper::process_input($_);
+    $test_lastline = $test_current_read;
+    last if ($test_eof = L4::TapWrapper::process_input($test_lastline)) && ! $L4::TapWrapper::wait_for_more;
   }
+
 if (!$test_eof)
   {
+    if (!defined($test_current_read))
+      {
+        my $exp = $L4::TapWrapper::expline;
+        my $msg = "Test timed out after $timeout seconds.";
+        $msg .= defined($exp) ? " Was expecting: $exp" : "";
+        L4::TapWrapper::fail_test($msg)
+      }
+
     waitpid $L4::TapWrapper::pid, 0;
     $L4::TapWrapper::pid = -1;
     $test_proc_exit_code = $? >> 8;

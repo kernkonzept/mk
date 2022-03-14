@@ -17,6 +17,7 @@ our $TAP_FD;
 our $print_to_tap_fd = 1;
 our %_have_plugins = ();
 our $timeout;
+our $wait_for_more = 0;
 our $test_description;
 our $expline;
 our $pid = -1;
@@ -193,6 +194,14 @@ variable. Defaults to the name of the test target.
 A string describing what is expected from the output next. Used for more
 informative diganostic output. This is mainly used by the OutputMatching plugin,
 since the concept is ambiguous in the presence of multiple plugins.
+
+=item C<wait_for_more>
+
+A boolean variable indicating if, after all plugins signaled that the no longer
+block exiting, we should wait for more data. Plugins that expect data of
+undetermined amount after others have finished processing should set this to 1.
+
+Defaults to 0.
 
 =back
 
