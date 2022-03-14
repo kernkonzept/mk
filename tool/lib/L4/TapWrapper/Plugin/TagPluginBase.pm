@@ -23,9 +23,10 @@ sub new {
 
 sub check_start {
   my $self = shift;
-  return unless shift =~ m/^@@ $self->{args}{tag} @< BLOCK *(.*)/;
+  return unless shift =~ m/^(.*)@@ $self->{args}{tag} @< BLOCK *(.*)/;
   $self->{in_block} = 1;
-  $self->{block_info} = $1;
+  $self->{block_prefix} = $1;
+  $self->{block_info} = $2;
 
   # Inhibit unless we already do because we require more blocks
   $self->inhibit_exit() unless $self->{args}{require_blocks};
@@ -33,7 +34,8 @@ sub check_start {
 
 sub check_end {
   my $self = shift;
-  return unless shift =~ m/^@@ $self->{args}{tag} BLOCK >@/;
+  $self->{clean_line} =~ s/^\Q$self->{block_prefix}\E//;
+  return unless shift =~ m/^\Q$self->{block_prefix}\E@@ $self->{args}{tag} BLOCK >@/;
   $self->{in_block} = 0;
   $self->permit_exit()
     unless $self->{args}{require_blocks} && --$self->{args}{require_blocks};
@@ -41,7 +43,7 @@ sub check_end {
 
 sub has_tag {
   my $self = shift;
-  return $self->{clean_line} =~ s/^@@ $self->{args}{tag}://;
+  return $self->{clean_line} =~ s/^.*@@ $self->{args}{tag}://;
 }
 
 1;
