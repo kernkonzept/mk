@@ -35,6 +35,11 @@ sub load_plugin
   $_have_plugins{$name} = $plugin;
 }
 
+sub has_plugins_loaded
+{
+  return !!@_plugins;
+}
+
 # Removes named plugin and returns reference (if it existed, undef otherwise)
 sub steal_plugin
 {

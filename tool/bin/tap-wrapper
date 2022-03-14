@@ -134,6 +134,10 @@ if (defined($ENV{TEST_TAP_PLUGINS}))
       }
   }
 
+L4::TapWrapper::fail_test("No tap-wrapper plugins loaded. Test does not provide TEST_TAP_PLUGINS correctly.")
+  unless L4::TapWrapper::has_plugins_loaded();
+
+
 my $hard_timeout = 0+ ($ENV{TEST_HARD_TIMEOUT} || 0);
 if ($hard_timeout)
   {
