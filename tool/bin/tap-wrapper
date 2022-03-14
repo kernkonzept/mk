@@ -72,20 +72,24 @@ $L4::TapWrapper::test_description = $ENV{TEST_DESCRIPTION} || ($testfile ? "run 
 my $LOG_FD;
 my $logfile;
 my $workdir = $ENV{TEST_WORKDIR};
+$L4::TapWrapper::plugintmpdir = $ENV{TEST_PLUGIN_TMPDIR} || undef;
+my ($name, $path, $suffix) = fileparse($testfile || $target || "", ".t");
+$L4::TapWrapper::plugintmpdir .= "/$path$name" if $L4::TapWrapper::plugintmpdir;
 if ($workdir)
   {
-    my ($name, $path, $suffix) = fileparse($testfile || $target || "", ".t");
     my $testworkdir   = "$workdir/$path$name";
     my $logdir        = "$testworkdir/log"; # tap-wrapper logs
     my $rundir        = "$testworkdir/run"; # run_test modules.list, ned files, etc.
     $logfile          = "$logdir/testout.log";
     $ENV{TEST_TMPDIR} = $rundir;
     make_path($logdir, $rundir);
+    $L4::TapWrapper::plugintmpdir = "$testworkdir/plugins" unless $L4::TapWrapper::plugintmpdir;
   }
 else
   {
     $logfile = $ENV{TEST_LOGFILE};
   }
+
 if ($logfile)
   {
     open $LOG_FD, ">>", $logfile or die "Can not open logfile '$logfile'\n";

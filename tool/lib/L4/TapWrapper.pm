@@ -15,6 +15,7 @@ use L4::TapWrapper::Util qw/kill_ps_tree/;
 our @_plugins;
 our $TAP_FD;
 our $print_to_tap_fd = 1;
+our $plugintmpdir = undef;
 our %_have_plugins = ();
 our $timeout;
 our $wait_for_more = 0;

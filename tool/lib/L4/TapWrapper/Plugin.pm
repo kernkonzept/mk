@@ -1,6 +1,8 @@
 package L4::TapWrapper::Plugin;
 
 use 5.010;
+use Scalar::Util 'blessed';
+use File::Path "make_path";
 
 sub new {
   my $type = shift;
@@ -18,6 +20,17 @@ sub add_tap_line {
 sub add_raw_tap_line {
   push @{shift->{tap_lines}}, shift;
 }
+
+sub tmpdir {
+  my $self = shift;
+  return undef unless $L4::TapWrapper::plugintmpdir;
+  my $cls = blessed($self);
+  $cls =~ s/^L4::TapWrapper::Plugin:://;
+  my $dir = "$L4::TapWrapper::plugintmpdir/$cls";
+  make_path($dir);
+  return $dir;
+}
+
 
 # Things to do after test is finished. Usually providing output.
 # Returns list of tap lines
@@ -162,6 +175,12 @@ version just adds the sole argument to the array. The C<add_tap_line>
 instantiation interprets the first argument as a boolean indicating success and
 the second argument as a descriptive string, joining them for a complete TAP
 line.
+
+=item C<tmpdir>
+
+Returns the path to a directory where plugins may put temporary files. Undef if
+neither a work directory (TEST_WORKDIR) or a temporary plugin directory
+(TEST_PLUGIN_TMPDIR) are provided.
 
 =back
 
