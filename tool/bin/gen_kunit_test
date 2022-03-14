@@ -122,8 +122,12 @@ KERNEL="${file}"
 TEST_KERNEL_UNIT=1
 TEST_TESTFILE="\$0"
 TEST_DESCRIPTION="kunit_test \$TEST_TESTFILE"
+TEST_TAP_PLUGINS_CMDLINE="\${TEST_TAP_PLUGINS}"
+TEST_TAP_PLUGINS=
 
 $( [ -f "$conf_file" ] && cat "$conf_file")
+: \${TEST_TAP_PLUGINS:=TAPOutput}
+TEST_TAP_PLUGINS+=" \${TEST_TAP_PLUGINS_CMDLINE}"
 
 : \${TEST_STARTER:=\${L4DIR}/tool/bin/default-test-starter}
 set +a

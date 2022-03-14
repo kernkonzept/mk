@@ -73,7 +73,6 @@ testvars_fix    := MODE ARCH NED_CFG REQUIRED_MODULES KERNEL_CONF L4LINUX_CONF \
                     TEST_PLATFORM_ALLOW TEST_PLATFORM_DENY
 testvars_conf   := TEST_TIMEOUT TEST_EXPECTED_REPEAT
 testvars_append := QEMU_ARGS MOE_ARGS TEST_ROOT_TASK_ARGS BOOTSTRAP_ARGS \
-                   TEST_TAP_PLUGINS
 
 # use either a target-specific value or the general version of a variable
 targetvar = $(or $($(1)_$(2)),$($(1)))
@@ -88,7 +87,9 @@ $(TEST_SCRIPTS):%.t: $(GENERAL_D_LOC)
 	$(VERBOSE)echo 'SEARCHPATH="$(if $(PRIVATE_LIBDIR),$(PRIVATE_LIBDIR):)$(INSTALLDIR_BIN_LOCAL):$(OBJ_BASE)/bin/$(ARCH)_$(CPU):$(OBJ_BASE)/bin/$(ARCH)_$(CPU)/$(BUILD_ABI):$(OBJ_BASE)/lib/$(ARCH)_$(CPU):$(OBJ_BASE)/lib/$(ARCH)_$(CPU)/$(BUILD_ABI):$(SRC_DIR):$(L4DIR)/conf/test"' >> $@
 	$(VERBOSE)$(foreach v,$(testvars_fix), echo '$(v)="$(call targetvar,$(v),$(notdir $*))"' >> $@;)
 	$(VERBOSE)$(foreach v,$(testvars_conf), echo ': $${$(v):=$(call targetvar,$(v),$(notdir $*))}' >> $@;)
-	$(VERBOSE)$(foreach v,$(testvars_append), echo '$(v)="$$$(v) $(call targetvar,$(v),$(notdir $*))"' >> $@;)
+	$(VERBOSE)$(foreach v,$(testvars_append), echo '$(v)="$${$(v):+$${$(v)} }$(call targetvar,$(v),$(notdir $*))"' >> $@;)
+	$(if $(call targetvar,TEST_TAP_PLUGINS,$(*F)),,\
+		$(VERBOSE)echo 'TEST_TAP_PLUGINS="$${TEST_TAP_PLUGINS:+$${TEST_TAP_PLUGINS} }$(if $(call targetvar,TEST_EXPECTED,$(*F)),OutputMatching:file=$(call targetvar,TEST_EXPECTED,$(*F)),BundleMode TAPOutput)"' >> $@)
 	$(VERBOSE)echo ': $${BID_L4_TEST_HARNESS_ACTIVE:=1}' >> $@
 	$(VERBOSE)echo 'TEST_TESTFILE="$$0"' >> $@
 	$(VERBOSE)echo ': $${TEST_STARTER:=$(DEFAULT_TEST_STARTER)}' >> $@

@@ -125,11 +125,11 @@ $L4::TapWrapper::TAP_FD->autoflush(1);
 
 if (defined($ENV{TEST_TAP_PLUGINS}))
   {
-    foreach (split(/ /, $ENV{TEST_TAP_PLUGINS}))
+    foreach (split(' ', $ENV{TEST_TAP_PLUGINS}))
       {
-        next unless $_; #ignore empty items from split
         my ($name, $arg) = split(/:/, $_, 2);
-        my %harg = map { split(/=/, $_, 2) }(split (/,/, $arg));
+        $arg = "" unless defined $arg;
+        my %harg = map { split(/=/, $_, 2) } (split (/,/, $arg));
         L4::TapWrapper::load_plugin($name, \%harg);
       }
   }
@@ -227,20 +227,6 @@ sub readline_timeout
 
 my $test_proc_exit_code = 0;
 
-
-if (!@L4::TapWrapper::_plugins)
-{
-  # Compat for now. Should be specified as required plugin by the test in future
-  if ($ENV{TEST_EXPECTED})
-    {
-      L4::TapWrapper::load_plugin("OutputMatching", { file => $ENV{TEST_EXPECTED} });
-    }
-  else
-    {
-      L4::TapWrapper::load_plugin("BundleMode"); # Should be the default?
-      L4::TapWrapper::load_plugin("TAPOutput"); # Should be the default?
-    }
-}
 
 # look for TAP output
 #$expline = "begin of TAP test output (TAP TEST START)";
@@ -408,6 +394,9 @@ Plugins may have additional arguments. When specified on the commandline the
 syntax is as follows:
 
   --plugin PluginName:arg1=value1,arg2=value2,...
+
+Plugins on the commandline are loaded in addition to the plugins specified by
+the test.
 
 Please see lib/L4/TapWrapper/Plugin.pm for details on the low level interface
 for implementing plugins.
