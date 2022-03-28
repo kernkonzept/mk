@@ -321,9 +321,22 @@ config BID_STATIC_HEAP
 	  This will save the additional MPU region that would otherwise be
 	  necessary due to the dynmamic allocation of a dataspace.
 
+config BID_STATIC_STACK
+	bool "Static stack allocation"
+	depends on BID_CAN_STATIC_STACK
+	help
+	  Statically allocate stack in bss section of executables.
+
+	  This will save the additional MPU region that would otherwise be
+	  necessary. Also relieves the loader from dynamically allocating any
+	  stack memory.
+
 endif # EXPERIMENTAL
 
 config BID_CAN_STATIC_HEAP
+	bool # enabled by l4re-core for configurations that support this
+
+config BID_CAN_STATIC_STACK
 	bool # enabled by l4re-core for configurations that support this
 
 config BID_PIE

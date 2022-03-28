@@ -495,6 +495,12 @@ default_heap_size = $(if $(if $(NO_DEFAULT_RELOC),,$(CONFIG_BID_STATIC_HEAP)),\
                                      $(DEFAULT_HEAP_SIZE) \
                                      0x10000))
 
+default_stack_size = $(if $(if $(NO_DEFAULT_RELOC),,$(CONFIG_BID_STATIC_STACK)),\
+                          $(firstword $(DEFAULT_STACK_SIZE_$(1)) \
+                                      $(DEFAULT_STACK_SIZE_$(ARCH)) \
+                                      $(DEFAULT_STACK_SIZE) \
+                                      0x1000))
+
 CCXX_FLAGS += $(if $(CONFIG_FULL_PATH_NAMES_IN_BINARIES),,$(GCCPREFIXOPT))
 
 # can be overwritten to get the old mode
@@ -734,6 +740,9 @@ ifneq ($(MODE),shared)
     define make_per_target_heap_size
       $$(error DEFAULT_HEAP_SIZE / DEFAULT_HEAP_SIZE_$(1) must not be set if MODE is l4linux or host)
     endef
+    define make_per_target_stack_size
+      $$(error DEFAULT_STACK_SIZE / DEFAULT_STACK_SIZE_$(1) must not be set if MODE is l4linux or host)
+    endef
   else
     define make_per_target_reloc
       $(1): $$(BID_RAM_BASE_DEP)
@@ -744,11 +753,16 @@ ifneq ($(MODE),shared)
     define make_per_target_heap_size
       LDFLAGS_$(1) += --defsym=__heap_size=$$(firstword $$(call default_heap_size,$(1)))
     endef
+    define make_per_target_stack_size
+      LDFLAGS_$(1) += --defsym=__stack_size=$$(firstword $$(call default_stack_size,$(1)))
+    endef
   endif
 else
   define make_per_target_reloc
   endef
   define make_per_target_heap_size
+  endef
+  define make_per_target_stack_size
   endef
 endif
 
@@ -769,6 +783,7 @@ define gen_target_vars_and_deps
                 $(call gen_src_to_dpe_deps,$(src)))          \
   $(if $(call default_reloc,$(1)),$(eval $(call make_per_target_reloc,$(1)))) \
   $(if $(call default_heap_size,$(1)),$(eval $(call make_per_target_heap_size,$(1))))
+  $(if $(call default_stack_size,$(1)),$(eval $(call make_per_target_stack_size,$(1))))
 endef
 
 # Generate dependency rules and target-specific variables for all
