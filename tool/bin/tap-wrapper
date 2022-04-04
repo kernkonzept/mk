@@ -344,7 +344,7 @@ $TEST_SCRIPT [options]
 
   For more options to gtest try running with: --test-args -h
 
- Options for kunit test appications:
+ Options for kunit test applications:
  --verbose, -v     Run test in verbose mode.
  --debug, -d       Enter the kernel debugger, if the test fails. Short for:
                      -W -v -f "-serial_esc"
