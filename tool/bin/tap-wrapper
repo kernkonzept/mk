@@ -22,7 +22,7 @@ my $test_timestamps = !!$ENV{TEST_TIMESTAMPS};
 Getopt::Long::Configure ("bundling");
 GetOptions(
   'help|h'  => \$help,
-  'debug|d' => sub { $ENV{TEST_ARGS} = '-vvv';
+  'debug|d' => sub { $ENV{TEST_ARGS} .= ' -vvv';
                      $ENV{TEST_KUNIT_VERBOSE} = 1;
                      $ENV{TEST_KUNIT_DEBUG} = 1;
                      $ENV{KERNEL_ARGS} = '-serial_esc';
