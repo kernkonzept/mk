@@ -38,17 +38,6 @@ my %converters;
 
     return ($val_hw eq "y" && $val_fiasco eq "y") ? "y" : "n";
   },
-
-  NX => sub {
-    my ($hwconfig, $fiascoconfig) = @_;
-    my $val_hw = $hwconfig ? ($hwconfig->{NX} || "n") : undef;
-    my $val_fiasco = $fiascoconfig ? ($fiascoconfig->{CONFIG_KERNEL_NX} || "n") : undef;
-
-    return $val_hw unless defined $val_fiasco;
-    return $val_fiasco unless defined $val_hw;
-
-    return ($val_hw eq "y" && $val_fiasco eq "y") ? "y" : "n";
-  }
 );
 
 sub readconfig {
