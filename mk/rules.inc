@@ -30,12 +30,17 @@ BID_MAKE_RULE_CREATE_SUBDIR = $(if $(wildcard $(@D)),,$(MKDIR) $(@D);)
 #       $($(BID_<arg3>_COMPILER_INT_NAME)) for gendep, and
 #       $(<arg3>FLAGS) as flags
 # arg4: extra command line flags for the compile
+#
+# The check for BID_OBJ_SRC_$@ ensures that we only compile files within our
+# current set of source files. Due to dependency tracking it might happen
+# that a .d file contains a dependency to a .o file that is not in our
+# current set of files to compile (it might not work due to config changes).
 define BID_MAKE_RULE_template_gendep
 $(1): $(2) $(GENERAL_D_LOC)
 	@$$(COMP_MESSAGE)
 	$$(VERBOSE)$$(BID_MAKE_RULE_CREATE_SUBDIR)
-	$$(VERBOSE)$$(call MAKEDEP,$$($(BID_$(3)_COMPILER_INT_NAME))) $$($(BID_$(3)_COMPILER)) -c $$(DEPEND_FLAG) $$(CPPFLAGS) $$($(3)FLAGS) $(4) $$< -o $$@
-	$$(DEPEND_VERBOSE)$$(call DEPEND_EXTEND_FUNC, $$(*F).d, $$(dir $$@).$$(notdir $$@).d)
+	$$(VERBOSE)$$(if $$(BID_OBJ_SRC_$$@),$$(call MAKEDEP,$$($(BID_$(3)_COMPILER_INT_NAME))) $$($(BID_$(3)_COMPILER)) -c $$(DEPEND_FLAG) $$(CPPFLAGS) $$($(3)FLAGS) $(4) $$< -o $$@)
+	$$(DEPEND_VERBOSE)$$(if $$(BID_OBJ_SRC_$$@),$$(call DEPEND_EXTEND_FUNC, $$(*F).d, $$(dir $$@).$$(notdir $$@).d))
 endef
 
 prereqs_changed = $(filter-out FORCE .general.d,$?)
@@ -64,6 +69,8 @@ endef
 
 BID_call_compiler_F = $(COMP_MESSAGE); $(BID_MAKE_RULE_CREATE_SUBDIR) $1
 
+# Arg and further descriptions: See BID_MAKE_RULE_template_gendep
+#
 # BID_call_compiler_default works only for gcc/clang as gfortran generates
 # different deps file that fixdep cannot process. For this reason we compile
 # Fortran the traditional way of depending on $(GENERAL_D_LOC).
@@ -71,9 +78,9 @@ BID_call_compiler_F = $(COMP_MESSAGE); $(BID_MAKE_RULE_CREATE_SUBDIR) $1
 # Template for our make rules (make rules that do not use gendep)
 define BID_MAKE_RULE_template_nongendep
 $1: $2 $(if $(BID_call_compiler_$3),$(GENERAL_D_LOC),FORCE)
-	$$(VERBOSE)$$(call $(if $(BID_call_compiler_$3),BID_call_compiler_$3,BID_call_compiler_default) \
+	$$(VERBOSE)$$(if $$(BID_OBJ_SRC_$$@),$$(call $(if $(BID_call_compiler_$3),BID_call_compiler_$3,BID_call_compiler_default) \
 	                   ,$$($(BID_$(3)_COMPILER)) -c $$(DEPFLAGS) $$(DEPFLAGS_$(3)) $$(CPPFLAGS) \
-	                                            $$($(3)FLAGS) $(4) $$< -o $$@)
+	                                            $$($(3)FLAGS) $(4) $$< -o $$@))
 endef
 
 # which template rule do we really use
