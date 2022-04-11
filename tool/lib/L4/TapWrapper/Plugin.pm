@@ -52,7 +52,7 @@ sub process_any {
   $self->{raw_line} = shift;
   $self->{clean_line} = $self->{raw_line};
   $self->check_end($self->{raw_line}) if $self->{in_block};
-  $self->process_mine($self->{clean_line})
+  $self->process_mine($self->{clean_line}, $self->{block_info})
     if $self->{in_block} || $self->has_tag($self->{raw_line});
   $self->check_start($self->{raw_line}) unless $self->{in_block};
 }
@@ -96,8 +96,10 @@ output (input to the plugin).
 
 This function is called for every line of the input that is within a block
 belonging to the plugin or tagged with a tag belonging to the plugin. See
-C<check_start>, C<check_end> and C<has_tag>. The only argument passed to the
-function is the raw line that is currently processed.
+C<check_start>, C<check_end> and C<has_tag>. Two arguments are passed to the
+function. The first is the raw line that is currently processed, the second
+is any additional C<block_info> content set by the other functions. If none is
+set, then the second argument is undefined.
 
 The default implementation is empty.
 

@@ -45,7 +45,44 @@ sub check_end {
 
 sub has_tag {
   my $self = shift;
-  return $self->{clean_line} =~ s/^.*@@ $self->{args}{tag}://;
+
+  # The following line contains a regular expression. Regular expressions
+  # are used to match parts of a string based on rules. They also allow
+  # to "capture" part of the matched string into variables. Further regular
+  # expressions know the concept of character classes that describe a set of
+  # characters where any single character from the class is matched. The
+  # expression below uses the following syntax elements of the perl regular
+  # expression syntax:
+  #
+  # Capturing groups put in parentheses '(foobar)'
+  # Non-capturing groups, where the content of the parentheses starts with ?:
+  # Character classes enclosed in square brackets '[abc]'
+  # A negation character '^' inside the character class to invert the set of
+  #   matching characters, effectively matching any except the one specified.
+  # A '*' character matches the preceding expression element an arbitrary
+  #   number of times, including never.
+  # A '?' character matches the preceding syntax element once or not at all.
+  #   If it is the first character of a capture group this does not apply.
+  #
+  # Characters that have a special meaning, such as brackets and parentheses
+  # must be escaped by a preceding '\' character if they are to be matched
+  # literally. An exception used in this expression is that a closing bracket
+  # that is the first character of a character class, or the second of a
+  # class starting with the '^' character, must not be escaped. This is
+  # somewhat obvious since an empty character class (or one matching all
+  # characters in the inverted case) would be redundant and not make a lot of
+  # sense.
+  #
+  # For more details please refer to:
+  #
+  # https://perldoc.perl.org/perlretut
+  # https://perldoc.perl.org/perlrecharclass#Special-Characters-Inside-a-Bracketed-Character-Class
+  if ($self->{clean_line} =~ s/^.*@@ $self->{args}{tag}(?:\[([^]]*)\])?://)
+    {
+      $self->{block_info} = $1;
+      return 1;
+    }
+  return 0
 }
 
 sub start_block {}
@@ -74,7 +111,7 @@ C</^@@ TAG BLOCK E<gt>@/>
 
 =item Single line
 
-C</^@@ TAG:/>
+C</^@@ TAG(?:\[([^]]*)\])?::/>
 
 =back
 
