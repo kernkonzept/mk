@@ -668,8 +668,8 @@ endef
 #
 # Make variables for all source files in $($(2))
 #
-# args: 1 - target
-#       2 - source var name (e.g., SRC_C)
+# args: 1 - source var name (e.g., SRC_C)
+#       2 - target
 #       3 - object name infix 1
 #
 define make_per_source_type_vars
