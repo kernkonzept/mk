@@ -332,7 +332,6 @@ endif
 
 include $(L4DIR)/mk/config.inc
 
-ifneq ($(CONFIG_HAVE_LDSO),)
 # MAKEDEP-call:
 # arg1 - compiler binary name
 # arg2 - [opt] compiler target. Will be written as target within the
@@ -366,7 +365,6 @@ MAKEDEP=$(LD_GENDEP_PREFIX) \
 		GENDEP_TARGET=$(if $(2),$(2),$@) \
 		GENDEP_BINARY=$(firstword $(1)) $(if $(3),GENDEP_DEPFILE=$(3)) \
 		$(if $(4),GENDEP_BINARY_ALT1=$(4))
-endif
 
 # We recognize the following Fortran file extensions.
 FORTRAN_FILE_EXTENSIONS = .f .F .f90 .F90 .f95 .F95

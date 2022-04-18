@@ -99,35 +99,6 @@ endif
 
 include $(L4DIR)/mk/install.inc
 
-#VPATHEX = $(foreach obj, $(OBJS), $(firstword $(foreach dir, \
-#          . $(VPATH),$(wildcard $(dir)/$(obj)))))
-
-# target-rule:
-
-# Make looks for obj-files using VPATH only when looking for dependencies
-# and applying implicit rules. Though make adapts its automatic variables,
-# we cannot use them: The dependencies contain files which have not to be
-# linked to the binary. Therefore the foreach searches the obj-files like
-# make does, using the VPATH variable.
-# Use a surrounding strip call to avoid ugly linebreaks in the commands
-# output.
-
-# Dependencies: When we have ld.so, we use MAKEDEP to build our
-# library dependencies. If not, we fall back to LIBDEPS, an
-# approximation of the correct dependencies for the binary. Note, that
-# MAKEDEP will be empty if we dont have ld.so, LIBDEPS will be empty
-# if we have ld.so.
-
-ifeq ($(CONFIG_HAVE_LDSO),)
-LIBDEPS = $(foreach file, \
-                    $(patsubst -l%,lib%.a,$(filter-out -L%,$(LDFLAGS))) \
-                    $(patsubst -l%,lib%.so,$(filter-out -L%,$(LDFLAGS))),\
-                    $(word 1, $(foreach dir, \
-                           $(patsubst -L%,%,\
-                           $(filter -L%,$(LDFLAGS) $(L4ALL_LIBDIR))),\
-                      $(wildcard $(dir)/$(file)))))
-endif
-
 DEPS	+= $(foreach file,$(TARGET), $(call BID_LINK_DEPS,$(file)))
 
 LINK_PROGRAM-C-host-1   := $(CC)

@@ -121,9 +121,6 @@ config ETAGS
 	default "etags"
 
 
-config HAVE_LDSO
-	def_bool y
-
 config BID_DEBUG_INFO
 	bool "Generate debug information"
 	default y

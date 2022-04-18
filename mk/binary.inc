@@ -778,55 +778,6 @@ ifneq ($(filter relink,$(MAKECMDGOALS)),)
 relink: all
 endif
 
-
-
-###
-#
-# Compilation rules with dependency-generation
-#
-# If we have ld.so, we use it to create our dependencies (see MAKEDEP
-# definition). Otherwise, we fall back to whatever we need. For
-# compilation with gcc, this is using "-MD" and post-processing the
-# generated files.
-
-ifeq ($(CONFIG_HAVE_LDSO),)
-LIBDEPS = $(foreach file, \
-                    $(patsubst -l%,lib%.a,$(filter-out -L%,$(LDFLAGS))) \
-                    $(patsubst -l%,lib%.so,$(filter-out -L%,$(LDFLAGS))),\
-                    $(word 1, $(foreach dir, \
-                           $(patsubst -L%,%,\
-                           $(filter -L%,$(LDFLAGS) $(L4ALL_LIBDIR))),\
-                      $(wildcard $(dir)/$(file)))))
-
-DEPEND_EXTEND_CMD = $(AWKP) '			\
-/^[^:]*: ..*/{					\
-	while(sub("\\\\$$","")){		\
-		getline nextline ;		\
-		$$0=$$0 " " nextline		\
-	}					\
-	split($$0,field,": ");			\
-	sub("^$(*F).o","$*.s $*.i $@",field[1]);	\
-	nr=split(field[2],deps) ;		\
-	for(i=1;i<=nr;){			\
-	  printf("ifeq ($$(shell test y \\\n");	\
-	  for(j=0; j<100 && i+j<=nr; j++){	\
-	    printf("-a -r %s \\\n", deps[i+j]);	\
-	  }					\
-	  printf("&& echo y),)");		\
-	  printf("\n%s: FORCE\nelse\n%s: $(BID_OBJ_Makefile) \\\n",	\
-	  	field[1],field[1]);		\
-	  for(j=0; j<100 && i+j<=nr; j++){	\
-	    printf("%s \\\n",deps[i+j]);	\
-	  }					\
-	  printf("\nendif\n");			\
-	  i+=j;					\
-	}					\
-}'
-DEPEND_EXTEND_FUNC = ( $(DEPEND_EXTEND_CMD) < $(1) > $(2).new && rm -f $(1) && mv $(2).new $(2) ) || ( rm -f $(1) $(2).new $(2) ; $(DEPEND_IGNORE_ERRORS) )
-DEPEND_FLAG = -MD
-
-.PHONY: FORCE
-endif # CONFIG_HAVE_LDSO empty
 DEPFLAGS   = -MD -MP -MF $(@D)/.$(@F).d
 DEPFLAGS_F = -cpp
 
