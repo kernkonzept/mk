@@ -300,8 +300,9 @@ $TEST_SCRIPT [options]
     <STRING>
 
   --image,-i       Create an image of the given type instead of executing
-    <STRING>       the test on the target platform.
-                   For available image types see 'make help'.
+    <STRING>       the test on the target platform, such as 'elfimage'.
+                   For available image types see 'make help' in the
+                   root of the build directory.
 
   --logfile,-l     Append output of test execution to the given file
     <STRING>       unless --workdir is given.
