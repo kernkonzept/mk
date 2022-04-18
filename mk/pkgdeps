@@ -362,7 +362,7 @@ sub generate_single_dep
         {
           print " $provided{$_}->{name}";
         }
-      elsif (not $ignore_missing and not defined $n->{disabled} and not is_alias($a))
+      elsif (not $ignore_missing and not defined $n->{disabled})
         {
           print STDERR "ERROR: Package providing \"$_\" not found as required by \"$a\".\n";
           $$error_count++;
