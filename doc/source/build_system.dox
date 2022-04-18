@@ -377,9 +377,10 @@ The tag `hardware` is set to 1 at runtime when the tests will run on real
 hardware. Tests that must not run on real hardware are marked with
 `!hardware`.
 
-The tag `impl-def` is used by tests that test implementation details.
-They are run by default but can be excluded from execution by settings
-TEST_RUN_TAGS to impl-def=0. These tests are marked using `+impl-def`.
+The tag `+impl-def` is used by tests that test implementation details.
+Due to the nature of this flag we require the "+" prefix to be used, so
+they are run by default but can be excluded from execution by setting
+TEST_RUN_TAGS to impl-def=0 at runtime.
 
 If you want to specify multiple tag conditions they need to be separated
 with a comma.
