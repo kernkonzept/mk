@@ -614,24 +614,26 @@ ifeq ($(CONFIG_BID_COLORED_PHASES),y)
   endif
 endif
 
-AR_MESSAGE                 ?= echo -e "  [$(PKGNAME_DIRNAME)] ==> Archiving into $@"
-BUILD_MESSAGE              ?= echo -e "  [$(PKGNAME_DIRNAME)] ... Building $(if $(filter $(GENERAL_D_LOC),$@),Dependencies,$@)"
-BUILT_MESSAGE              ?= echo -e $(EMPHSTART)'  [$(PKGNAME_DIRNAME)] ==> $@ built'$(EMPHSTOP)
-COMP_MESSAGE               ?= echo -e "  [$(PKGNAME_DIRNAME)] ... Compiling $@$(1)"
-COMP_P_MESSAGE             ?= echo -e "  [$(PKGNAME_DIRNAME)] ... Compiling PIC $@"
-COMP_PR_MESSAGE            ?= echo -e "  [$(PKGNAME_DIRNAME)] ... Compiling PROFILE $@"
-GEN_MESSAGE                ?= echo -e "  [$(PKGNAME_DIRNAME)] ... Generating $(if $(1),$(1),$@)"
-LINK_MESSAGE               ?= echo -e "  [$(PKGNAME_DIRNAME)] ==> Linking $@"
-LINK_SHARED_MESSAGE        ?= echo -e "  [$(PKGNAME_DIRNAME)] ==> Linking to shared $@"
-LINK_PARTIAL_MESSAGE       ?= echo -e "  [$(PKGNAME_DIRNAME)] ==> Partial linking to $@"
-DEP_MESSAGE                ?= echo -e "  [$(PKGNAME_DIRNAME)] ... Building dependencies for $<"
-CLEAN_MESSAGE              ?= echo -e "  [$(PKGNAME_DIRNAME)] ... Removing created files"
-CLEANALL_MESSAGE           ?= echo -e "  [$(PKGNAME_DIRNAME)] ... Removing all created files"
-INSTALL_LINK_MESSAGE       ?= echo -e "  [$(PKGNAME_DIRNAME)] ==> Updating symlinks"
-INSTALL_DOC_MESSAGE        ?= echo -e "  [$(PKGNAME_DIRNAME)] ==> Installing $(if $(1),$(1),$(<)) documentation"
-INSTALL_DOC_LOCAL_MESSAGE  ?= echo -e "  [$(PKGNAME_DIRNAME)] ==> Installing $(if $(1),$(1),$(<)) documentation locally"
-INSTALL_MESSAGE            ?= echo -e "  [$(PKGNAME_DIRNAME)] ==> Installing $(if $(1),$(1),$^)"
-INSTALL_LOCAL_MESSAGE      ?= echo -e "  [$(PKGNAME_DIRNAME)] ==> Installing $(if $(1),$(1),$(<)) to local build-tree"
+BID_MESSAGE_TAG            ?= $(PKGNAME_DIRNAME)
+
+AR_MESSAGE                 ?= echo -e "  [$(BID_MESSAGE_TAG)] ==> Archiving into $@"
+BUILD_MESSAGE              ?= echo -e "  [$(BID_MESSAGE_TAG)] ... Building $(if $(filter $(GENERAL_D_LOC),$@),Dependencies,$@)"
+BUILT_MESSAGE              ?= echo -e $(EMPHSTART)'  [$(BID_MESSAGE_TAG)] ==> $@ built'$(EMPHSTOP)
+COMP_MESSAGE               ?= echo -e "  [$(BID_MESSAGE_TAG)] ... Compiling $@$(1)"
+COMP_P_MESSAGE             ?= echo -e "  [$(BID_MESSAGE_TAG)] ... Compiling PIC $@"
+COMP_PR_MESSAGE            ?= echo -e "  [$(BID_MESSAGE_TAG)] ... Compiling PROFILE $@"
+GEN_MESSAGE                ?= echo -e "  [$(BID_MESSAGE_TAG)] ... Generating $(if $(1),$(1),$@)"
+LINK_MESSAGE               ?= echo -e "  [$(BID_MESSAGE_TAG)] ==> Linking $@"
+LINK_SHARED_MESSAGE        ?= echo -e "  [$(BID_MESSAGE_TAG)] ==> Linking to shared $@"
+LINK_PARTIAL_MESSAGE       ?= echo -e "  [$(BID_MESSAGE_TAG)] ==> Partial linking to $@"
+DEP_MESSAGE                ?= echo -e "  [$(BID_MESSAGE_TAG)] ... Building dependencies for $<"
+CLEAN_MESSAGE              ?= echo -e "  [$(BID_MESSAGE_TAG)] ... Removing created files"
+CLEANALL_MESSAGE           ?= echo -e "  [$(BID_MESSAGE_TAG)] ... Removing all created files"
+INSTALL_LINK_MESSAGE       ?= echo -e "  [$(BID_MESSAGE_TAG)] ==> Updating symlinks"
+INSTALL_DOC_MESSAGE        ?= echo -e "  [$(BID_MESSAGE_TAG)] ==> Installing $(if $(1),$(1),$(<)) documentation"
+INSTALL_DOC_LOCAL_MESSAGE  ?= echo -e "  [$(BID_MESSAGE_TAG)] ==> Installing $(if $(1),$(1),$(<)) documentation locally"
+INSTALL_MESSAGE            ?= echo -e "  [$(BID_MESSAGE_TAG)] ==> Installing $(if $(1),$(1),$^)"
+INSTALL_LOCAL_MESSAGE      ?= echo -e "  [$(BID_MESSAGE_TAG)] ==> Installing $(if $(1),$(1),$(<)) to local build-tree"
 
 # allows an include $(DEPSVAR) at the end of the makefile
 # but prevents rebuilding them on a scrub, clean, cleanall and help
