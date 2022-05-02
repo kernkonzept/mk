@@ -185,7 +185,7 @@ sub read_aliases_dir($$)
               my $s = $2;
               while (1)
                 {
-                  last unless $s =~ s/(\S+\[(.+?)\]|\S+)\s*//;
+                  last unless $s =~ s/(\S+\[.+?\]|\S+)\s*//;
                   push @r, $1;
                 }
 
