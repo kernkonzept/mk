@@ -35,7 +35,8 @@ SYSTEMS_PLAIN  += x86
 GCCNOFPU_x86_f  = $(call checkcc,-mno-mmx) $(call checkcc,-mno-3dnow) \
                   $(call checkcc,-mno-sse) $(call checkcc,-mno-sse2)  \
                   $(call checkcc,-mno-sse3) $(call checkcc,-mno-sse4) \
-                  $(call checkcc,-mno-sse4a)
+                  $(call checkcc,-mno-sse4a) $(call checkcc,-mno-avx) \
+                  $(call checkcc,-mno-avx2)
 
 QEMU_ARCH_MAP_x86     = $(strip $(shell if qemu-system-i386 -version > /dev/null; then echo qemu-system-i386; else echo qemu; fi))
 
