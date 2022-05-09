@@ -7,7 +7,7 @@ sub get {
   my ($objdir, $var) = @_;
   my $l4dir = realpath($ENV{L4DIR});
 
-  my $value = qx(echo 'include mk/Makeconf\nall::\n\t\@echo \$(${var})' | make -C "${l4dir}" -f - --no-print-directory O="${objdir}" L4DIR="${l4dir}");
+  my $value = qx(echo 'include mk/Makeconf\nall::\n\t\@echo \$(${var})' | make -C "${l4dir}" -f - --no-print-directory O="${objdir}" L4DIR="${l4dir}" INCLUDE_BOOT_CONFIG=y);
   chomp $value;
 
   $value = undef if $value eq "";
