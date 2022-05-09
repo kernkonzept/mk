@@ -443,18 +443,10 @@ if ($test_setup)
       }
   }
 
-my @runargs = qw(-serial stdio -nographic -monitor none);
-
-# set default machine type for all test on x86/64 to q35.
-if ($arch =~ /(amd64|x86)/)
-  {
-    push(@runargs, qw(-M q35));
-  }
-
 close($test_modules);
 close($test_env_cfg) if ($test_env_cfg);
 my $module_search_path=join(":", @modulepaths);
-my $qemu_options = join(' ', map { qq{"$_"} } (@qemu_args, @runargs));
+my $qemu_options = join(' ', map { qq{"$_"} } @qemu_args);
 chdir $obj_base;
 $ENV{QEMU_OPTIONS} = $qemu_options;
 $ENV{MODULES_LIST} = $test_modules_name;
