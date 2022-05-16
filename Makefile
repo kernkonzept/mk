@@ -569,7 +569,7 @@ ifneq ($(filter $(ARCH),x86 amd64),)
 qemu:
 	$(VERBOSE)$(entryselection);                                      \
 	 qemu=$(if $(QEMU_PATH),$(QEMU_PATH),$(QEMU_ARCH_MAP_$(ARCH)));   \
-	 $(if $(filter -serial "-serial",$(QEMU_OPTIONS)),,echo "Warning: No -serial in QEMU_OPTIONS." >&2) \
+	 $(if $(filter -serial "-serial",$(QEMU_OPTIONS)),,echo "Warning: No -serial in QEMU_OPTIONS." >&2;) \
 	 QEMU=$$qemu QEMU_OPTIONS="$(QEMU_OPTIONS)"                       \
 	  $(tool_envvars) $(common_envvars)                               \
 	  $(L4DIR)/tool/bin/qemu-x86-launch $$ml "$$e"
@@ -577,7 +577,7 @@ else
 qemu: $(QEMU_KERNEL_TYPE)
 	$(VERBOSE)qemu=$(if $(QEMU_PATH),$(QEMU_PATH),$(QEMU_ARCH_MAP_$(ARCH))); \
 	if [ -z "$$qemu" ]; then echo "Set QEMU_PATH!"; exit 1; fi;              \
-	$(if $(filter -serial "-serial",$(QEMU_OPTIONS)),,echo "Warning: No -serial in QEMU_OPTIONS." >&2) \
+	$(if $(filter -serial "-serial",$(QEMU_OPTIONS)),,echo "Warning: No -serial in QEMU_OPTIONS." >&2;) \
 	echo QEMU-cmd: $$qemu -kernel $(QEMU_KERNEL_FILE) $(QEMU_OPTIONS);    \
 	$$qemu -kernel $(QEMU_KERNEL_FILE) $(QEMU_OPTIONS)
 endif
