@@ -7,16 +7,15 @@ MAN	= man/man7/libgendep.so.7
 MAN_SRC	= manpage.dox Doxyfile
 DDIR	= gendep-$(VERSION)
 
-CC	= $(HOST_CC)
 CFLAGS	= -fPIC -Wall -pedantic -g
 
-USE_M_FLAG := $(if $(call checkcc,-m32),1)
+USE_M_FLAG := $(if $(call check_compiler_opt,-m32,,$(HOST_CC),c),1)
 
 M_FLAG = $(if $(USE_M_FLAG),-m$(1))
 
-checkbuild = $(shell if    $(CC) $(call M_FLAG,$(1)) \
+checkbuild = $(shell if    $(HOST_CC) $(call M_FLAG,$(1)) \
                                  -c -o /dev/null $(SRC_DIR)/syscall.c 2> /dev/null \
-                        && echo 'int main(){}' | $(CC) $(call M_FLAG,$(1)) \
+                        && echo 'int main(){}' | $(HOST_CC) $(call M_FLAG,$(1)) \
 			                               -o /dev/null -x c - \
                         > /dev/null 2>&1 ; then echo 1; fi)
 
@@ -58,15 +57,15 @@ all:: $(LIB)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/Makefile
 	$(VERBOSE)$(call create_dir,$(@D))
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(HOST_CC) $(CFLAGS) -c $< -o $@
 
 $(OBJ_DIR)/%.32.o: $(SRC_DIR)/%.c $(SRC_DIR)/Makefile
 	$(VERBOSE)$(call create_dir,$(@D))
-	$(CC) $(CFLAGS) -m32 -c $< -o $@
+	$(HOST_CC) $(CFLAGS) -m32 -c $< -o $@
 
 $(OBJ_DIR)/%.64.o: $(SRC_DIR)/%.c $(SRC_DIR)/Makefile
 	$(VERBOSE)$(call create_dir,$(@D))
-	$(CC) $(CFLAGS) -m64 -c $< -o $@
+	$(HOST_CC) $(CFLAGS) -m64 -c $< -o $@
 
 $(LIB96): $(OBJS96) $(SRC_DIR)/Makefile
 	$(call cmd_link,$@) $(OBJS96)
