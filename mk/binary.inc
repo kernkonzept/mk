@@ -271,12 +271,11 @@ REQUIRES_LIBS += $(call BID_mode_var,REQUIRES_LIBS)
 
 CARCHFLAGS += $(CARCHFLAGS_$(ARCH)) $(CARCHFLAGS_$(ARCH)_$(CPU))
 
-bid_link_flag_variants = $($(1)-y) $($(1)_$(OSYSTEM)) $($(1)_$(OSYSTEM)-y) \
-                         $($(1)_$@) $($(1)_$@-y) $($(1)_$@_$(OSYSTEM)) $($(1)_$@_$(OSYSTEM)-y) \
-                         $($(1)_$(<F)_$(OSYSTEM)) $($(1)_$(<F)_$(OSYSTEM)-y)
 
-LDFLAGS       += $(call bid_link_flag_variants,LDFLAGS)
-REQUIRES_LIBS += $(call bid_link_flag_variants,REQUIRES_LIBS)
+LDFLAGS       += $(LDFLAGS-y) $(LDFLAGS_$(OSYSTEM)) $(LDFLAGS_$(OSYSTEM)-y) \
+                 $(LDFLAGS_$@) $(LDFLAGS_$@-y) $(LDFLAGS_$@_$(OSYSTEM)) $(LDFLAGS_$@_$(OSYSTEM)-y) \
+                 $(LDFLAGS_$(<F)_$(OSYSTEM)) $(LDFLAGS_$(<F)_$(OSYSTEM)-y)
+REQUIRES_LIBS += $(REQUIRES_LIBS-y) $(REQUIRES_LIBS_$(OSYSTEM)) $(REQUIRES_LIBS_$(OSYSTEM)-y)
 
 # ---------------------------------
 
