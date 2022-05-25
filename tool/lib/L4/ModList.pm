@@ -230,6 +230,17 @@ sub check_env_var
     }
 };
 
+sub module_priority
+{
+  my $m = shift;
+  my $t = $m->{type} || 'bin';
+
+  return 0 if $t eq 'kernel';
+  return 1 if $t eq 'sigma0';
+  return 2 if $t eq 'roottask';
+  return 3;
+}
+
 ## Extract an entry with modules from a modules.list file
 sub get_module_entry($$)
 {
@@ -242,13 +253,14 @@ sub get_module_entry($$)
   check_env_var('ARCH', 'word');
   check_env_var('SRC_BASE_ABS', 'path');
 
-  # preseed first 3 modules
-  $mods[0] = { get_command_and_cmdline("fiasco") };
-  $mods[1] = { get_command_and_cmdline("sigma0") };
-  $mods[2] = {
-    get_command_and_cmdline("moe"),
-    command => 'roottask',
-  };
+  # preseed kernel
+  $mods[0] = { "type" => "kernel", get_command_and_cmdline("fiasco") };
+
+  # sigma0 and roottask are special but is not defined necessarily
+  my %default_sigma0 = ( "type" => "sigma0" );
+  my $found_sigma0 = 0;
+  my %default_roottask = ( "type" => "roottask" );
+  my $found_roottask = 0;
 
   my $process_mode = undef;
   my $found_entry = 0;
@@ -320,12 +332,12 @@ sub get_module_entry($$)
       } elsif ($type eq 'default-sigma0') {
         my $s = (handle_line($remaining, %opts))[0];
         next unless defined $s;
-        $mods[1] = { %{$mods[1]}, get_command_and_cmdline($s, %opts) };
+        %default_sigma0 = ( %default_sigma0, get_command_and_cmdline($s, %opts) );
         next;
       } elsif ($type eq 'default-roottask') {
         my $s = (handle_line($remaining, %opts))[0];
         next unless defined $s;
-        $mods[2] = { %{$mods[2]}, get_command_and_cmdline($s, %opts) };
+        %default_roottask = ( %default_roottask, get_command_and_cmdline($s, %opts) );
         next;
       }
 
@@ -359,10 +371,6 @@ sub get_module_entry($$)
         }
         @params = @m;
         $type = 'bin';
-      } elsif ($type eq 'moe') {
-        my $bn = (reverse split(/\/+/, $params[0]))[0];
-        $mods[2] = { get_command_and_cmdline("moe rom/$bn", %opts) };
-        $type = 'bin';
       }
       next if not defined $params[0] or $params[0] eq '';
 
@@ -375,11 +383,13 @@ sub get_module_entry($$)
           if ($type eq 'bootstrap') {
             %bootstrap = (%bootstrap, %modinfo);
           } elsif ($type =~ /(rmgr|roottask)/i) {
-            $mods[2] = { %{$mods[2] || {}}, %modinfo };
+            push @mods, { %default_roottask, %modinfo };
+            $found_roottask = 1;
           } elsif ($type eq 'kernel') {
             $mods[0] = { %{$mods[0] || {}}, %modinfo };
           } elsif ($type eq 'sigma0') {
-            $mods[1] = { %{$mods[1] || {}}, %modinfo };
+            push @mods, { %default_sigma0, %modinfo };
+            $found_sigma0 = 1;
           } elsif ($type eq 'initrd') {
             $linux_initrd      = $modinfo{file};
             $is_mode_linux     = 1;
@@ -393,6 +403,20 @@ sub get_module_entry($$)
         error "$mod_file_db{id_to_file}{$$fileentry[0]}:$$fileentry[1]: Invalid mode '$process_mode'\n";
       }
     }
+
+  if (not $found_sigma0 and defined $default_sigma0{command})
+    {
+      push @mods, { %default_sigma0 };
+    }
+  if (not $found_roottask and defined $default_roottask{commnd})
+    {
+      push @mods, { %default_roottask };
+    }
+
+  # Kernel, sigma0 and roottask need to come first in multiboot environments.
+  # For image based boots, the order does not really matter but helps freeing
+  # contigous boot module memory of these.
+  @mods = sort { module_priority($a) <=> module_priority($b) } @mods;
 
   error "$mod_file: Unknown entry \"$entry_to_pick\"!\n".
         "Available entries: ".join(' ', sort &get_entries($mod_file))."\n"

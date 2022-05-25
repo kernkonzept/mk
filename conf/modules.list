@@ -52,6 +52,7 @@
 modaddr 0x01100000
 
 default-kernel fiasco -serial_esc
+default-sigma0 sigma0
 default-bootstrap bootstrap
 
 entry hello
