@@ -44,6 +44,7 @@ config BUILD_ABI
 	default "linux" if BUILD_ABI_linux
 
 # PF_INCLUDE
+source "mk/arch/Kconfig.common.inc"
 
 choice
 	prompt "Platform Selection"
