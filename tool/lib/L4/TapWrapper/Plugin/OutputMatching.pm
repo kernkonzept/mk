@@ -115,9 +115,48 @@ sub finalize
   else
     {
       $self->add_tap_line(1, "A total of $self->{num_res} line(s) of output matched.");
+      $self->add_raw_tap_line("#  Test-uuid: $self->{args}{uuid}\n")
+        if defined($self->{args}{uuid});
     }
   $self->add_raw_tap_line("1..1\n");
   $self->SUPER::finalize();
 }
 
 1;
+
+__END__
+
+=head1 Plugin for matching output lines
+
+Match all output lines agains the given output expectation.
+
+=head1 Options
+
+The following options are defined
+
+=over
+
+=item C<file>
+
+The file that contains the expected output lines. Must be found using the
+module search path.
+
+=item C<literal>
+
+The contents of the file that is matched are to be matched literally and not as
+a regular expression.
+
+=item C<uuid>
+
+The globally unique identifier of the test.
+
+=back
+
+=head1 Usage
+
+Specify for a particular testrun using the TEST_TAP_PLUGINS variable.
+Example:
+
+  TEST_TAP_PLUGINS=OutputMatching:file=foo.txt,uuid=<`uuidgen -r`>
+
+=cut
