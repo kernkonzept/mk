@@ -1,4 +1,5 @@
 LD_EMULATION_CHOICE_x86   = elf_i386
+LDFLAGS_x86              += -z noexecstack
 OFORMAT_x86               = elf32-i386
 BFD_ARCH_x86              = i386
 L4_KIP_ADDR_x86          ?= 0xaffff000

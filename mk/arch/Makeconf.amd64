@@ -1,6 +1,7 @@
 CARCHFLAGS_amd64            = -mno-red-zone
 ASFLAGS_amd64               = -m64
-LDFLAGS_amd64              += -m elf_x86_64 -z max-page-size=0x1000 -z common-page-size=0x1000
+LDFLAGS_amd64              += -m elf_x86_64 -z max-page-size=0x1000 -z common-page-size=0x1000 \
+                              -z noexecstack
 LD_EMULATION_CHOICE_amd64   = elf_x86_64
 OFORMAT_amd64               = elf64-x86-64
 BFD_ARCH_amd64              = i386

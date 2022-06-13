@@ -8,7 +8,8 @@ L4_KIP_ADDR_mips         ?= 0x7fff0000
 L4_STACK_ADDR_mips       ?= 0x70000000
 CCXX_FLAGS_mips          += -march=mips$(CPU) -mabi=$(CPU_ABI)
 CCXX_FLAGS_mips          += $(if $(CONFIG_MIPS_LITTLE_ENDIAN),-EL,-EB)
-LDFLAGS_mips             += $(if $(CONFIG_MIPS_LITTLE_ENDIAN),-EL,-EB)
+LDFLAGS_mips             += $(if $(CONFIG_MIPS_LITTLE_ENDIAN),-EL,-EB) \
+                            -z noexecstack
 CC_mips                   = $(CROSS_COMPILE)gcc
 CXX_mips                  = $(CROSS_COMPILE)g++
 FC_mips                   = $(CROSS_COMPILE)gfortran
