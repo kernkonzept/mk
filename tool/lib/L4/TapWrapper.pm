@@ -30,8 +30,15 @@ sub load_plugin
   return if defined $_have_plugins{$name}; # Do not load twice
   print "Loading Plugin '$name' with args: " . Dumper($arg). "\n";
   my $class = "L4::TapWrapper::Plugin::$name";
-  load $class;
-  my $plugin = $class->new( $arg );
+  my $plugin;
+  eval {
+    load $class;
+    $plugin = $class->new( $arg );
+    die unless $plugin;
+    1;
+  } or do {
+    fail_test("Unable to load plugin '$name'");
+  };
   push @_plugins, $plugin;
   $_have_plugins{$name} = $plugin;
 }
