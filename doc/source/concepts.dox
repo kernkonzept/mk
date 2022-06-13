@@ -158,6 +158,37 @@ using the L4::Task::map() method. The sending task specifies a send flexpage and
 the receiving task a receive flexpage. The resources mapped to the send flexpage
 will then be mapped to the receive flexpage by the kernel.
 
+Memory mappings and IO port mappings are hierarchical: If a resource of such a
+type is subject of a map operation, the received mapping is a child mapping of
+the corresponding mapping in the sending task (parent mapping). The kernel
+usually respects the relationship between these two mappings (granting is an
+exception; see below): If rights of a parent mapping are revoked using
+L4::Task::unmap(), these rights are also removed from its child mappings. Also,
+if a mapping is completely removed (via L4::Task::unmap() or by mapping
+something else at its place), then also all child mappings are removed. In
+contrast, revoking rights of a child mapping leaves the rights of its parent
+mapping untouched.
+
+The mapping of a resource can be performed as \em grant operation (see
+#L4_MAP_ITEM_GRANT): Such an operation includes the removal of all involved
+mappings from the send flexpage (basically a move operation). While with a map
+operation without grant the mapping in the send flexpage remains the parent of
+all child mappings (including the new child mapping in the receive flexpage), a
+grant operation moves the mappings covered by the send flexpage to the
+corresponding addresses from the receive flexpage while leaving the
+parent/child relationship of the moved mappings with other mappings untouched.
+
+During a map operation at most the access rights of the source mapping(s) can
+be transferred but no additional rights. So only rights that are present in the
+source mapping and that are specified in the send item/flexpage are
+transferred. This also holds for grant mappings, however, rights revocation is
+*not* guaranteed to be applied to descendant mappings in case of grant.
+
+Object capabilities are not hierarchical -- they have no children. The result
+of the map operation on an object capability is a copy of that capability in
+the object space of the destination task.
+
+
 \page l4re_concepts_env_and_start Initial Environment and Application Bootstrapping
 
 New applications that are started by a loader conforming to L4Re get
