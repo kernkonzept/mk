@@ -19,6 +19,14 @@ sub new {
   return $self;
 }
 
+sub fname {
+  my $self = shift;
+  my $info = shift;
+  my $fname = "$self->{idx}_$self->{args}{tag}";
+  $fname .= "_$info" if defined $info;
+  return $fname;
+}
+
 sub process_mine {
   my $self = shift;
   my $data = shift;
@@ -30,8 +38,7 @@ sub process_mine {
     }
   else
     {
-      my $fname = "$self->{idx}_$self->{args}{tag}";
-      $fname .= "_$info" if defined $info;
+      my $fname = $self->fname($info);
       open(my $fh, '>', $self->tmpdir() . "/$fname.snippet");
       print $fh $self->{clean_line};
       $self->{idx}++;
@@ -43,9 +50,8 @@ sub start_block()
 {
   my $self = shift;
   my $info = shift;
-  my $fname = "$self->{idx}_$self->{args}{tag}";
-  $fname .= "_$info" if defined $info;
-  open($self->{cur_file}, '>', $self->tmpdir() . "/$fname.snippet");
+  $self->{fname} = $self->fname($info);
+  open($self->{cur_file}, '>', $self->tmpdir() . "/$self->{fname}.snippet");
   $self->{idx}++;
 }
 
@@ -59,8 +65,11 @@ sub finalize()
 {
   my $self = shift;
 
-  close($self->{cur_file})
-    || L4::TapWrapper::fail_test("Failed writing snippet $fname.");
+  if ($self->{fname})
+    {
+      close($self->{cur_file})
+        || L4::TapWrapper::fail_test("Failed writing snippet $self->{fname}.");
+    }
 
   my $tool = "$ENV{L4DIR}/$self->{args}{tool}";
   open(my $fh, '-|', "$tool " . $self->tmpdir())
