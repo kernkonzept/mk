@@ -16,15 +16,8 @@ sub new {
     unless defined $self->tmpdir();
   L4::TapWrapper::fail_test("External tool not set. Use tool=path/to/tool.")
     unless defined $self->{args}{tool};
+  $L4::TapWrapper::print_to_tap_fd = 1; # Externals always print
   return $self;
-}
-
-sub fname {
-  my $self = shift;
-  my $info = shift;
-  my $fname = "$self->{idx}_$self->{args}{tag}";
-  $fname .= "_$info" if defined $info;
-  return $fname;
 }
 
 sub process_mine {
@@ -38,7 +31,8 @@ sub process_mine {
     }
   else
     {
-      my $fname = $self->fname($info);
+      my $fname = "$self->{idx}_$self->{args}{tag}";
+      $fname .= "_$info" if $info ne "";
       open(my $fh, '>', $self->tmpdir() . "/$fname.snippet");
       print $fh $self->{clean_line};
       $self->{idx}++;
@@ -50,26 +44,22 @@ sub start_block()
 {
   my $self = shift;
   my $info = shift;
-  $self->{fname} = $self->fname($info);
-  open($self->{cur_file}, '>', $self->tmpdir() . "/$self->{fname}.snippet");
+  my $fname = "$self->{idx}_$self->{args}{tag}";
+  $fname .= "_$info" if $info ne "";
+  open($self->{cur_file}, '>', $self->tmpdir() . "/$fname.snippet");
   $self->{idx}++;
 }
 
 sub end_block()
 {
   my $self = shift;
-  close($self->{cur_file});
+  close($self->{cur_file})
+    || L4::TapWrapper::fail_test("Failed writing snippet $self->{fname}.");
 }
 
 sub finalize()
 {
   my $self = shift;
-
-  if ($self->{fname})
-    {
-      close($self->{cur_file})
-        || L4::TapWrapper::fail_test("Failed writing snippet $self->{fname}.");
-    }
 
   my $tool = "$ENV{L4DIR}/$self->{args}{tool}";
   open(my $fh, '-|', "$tool " . $self->tmpdir())
