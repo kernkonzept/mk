@@ -615,11 +615,13 @@ ux:
 
 GRUB_TIMEOUT ?= 0
 
+ISONAME_SUFFIX ?= .iso
+
 define geniso
 	$(call check_for_arch,x86 amd64)
 	$(VERBOSE)$(entryselection);                                         \
 	 $(MKDIR) $(IMAGES_DIR);                                             \
-	 ISONAME=$(IMAGES_DIR)/$$(echo $$e | tr '[ A-Z]' '[_a-z]').iso;      \
+	 ISONAME=$(IMAGES_DIR)/$$(echo $$e | tr '[ A-Z]' '[_a-z]')$(ISONAME_SUFFIX);      \
 	 $(tool_envvars) $(common_envvars)                                   \
 	  $(L4DIR)/tool/bin/gengrub$(1)iso --timeout=$(GRUB_TIMEOUT) $$ml    \
 	     $$ISONAME "$$e"                                                 \
