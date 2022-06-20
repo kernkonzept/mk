@@ -34,8 +34,8 @@ On the lowest abstraction level, IPC operations need the following arguments:
 As result of an IPC operation the kernel returns a message tag and a label and
 the kernel also changes UTCB content. For the detailed call signature, refer to
 l4_ipc(). Furthermore, depending on the IPC parameters, the kernel might have
-transferred the FPU state and capabilities from the sender to the receiving
-thread.
+transferred the FPU state and capabilities (memory, I/O ports, and/or object
+capabilities) from the sender to the receiving thread.
 
 The transition between the IPC send phase and the IPC receive phase is atomic,
 that is, as soon as the send phase has finished, the thread receive phase
@@ -68,13 +68,13 @@ l4_ipc_api) use the flags
     sender (*closed wait*).
 
 
-\subsection l4re_concepts_descr_capidx Capability selector
-The *capability selector* defines a kernel object as partner of the IPC
+\subsection l4re_concepts_descr_capidx Partner capability selector
+The *partner capability selector* defines a kernel object as partner of the IPC
 operation. Some kernel objects forward IPC to a userland thread.
 
-Basically a capability is represented by #l4_cap_idx_t where the bits starting
-from #L4_CAP_SHIFT are used as index into the local capability table of the
-current address space.
+Basically an object capability is represented by #l4_cap_idx_t where the bits
+starting from #L4_CAP_SHIFT are used as index into the local capability table
+of the current address space.
 
 Specifying #L4_INVALID_CAP as target for an IPC operation is equivalent to
 specifying a thread capability of the current thread with full permissions.
@@ -87,13 +87,13 @@ corresponding timeout has expired, see \ref l4re_concepts_descr_timeouts
 "below".
 
 A special partner is defined by the *reply capability*. Since it would
-be impractical (and a security flaw) to always pass an explicit capability to
-reply to for each IPC, the kernel generates an implicit one that can be used
-for just that purpose if the IPC contains an **open wait** phase. The reply
-capability is valid after a receive phase and points to the kernel object that
-sent the IPC just received. It can be used only once. The reply capability is
-selected by setting the #L4_SYSF_REPLY flag, see
-\ref l4re_concepts_descr_flags "above".
+be impractical (and a security flaw) to always pass an explicit object
+capability to reply to for each IPC, the kernel generates an implicit one that
+can be used for just that purpose if the IPC contains an **open wait** phase.
+The reply capability is valid after a receive phase and points to the kernel
+object that sent the IPC just received. It can be used only once. The reply
+capability is selected by setting the #L4_SYSF_REPLY flag, see \ref
+l4re_concepts_descr_flags "above".
 
 
 \subsection l4re_concepts_descr_label IPC Label
@@ -392,6 +392,17 @@ receive item. Under both conditions, the IPC is aborted with #L4_IPC_SEMSGCUT /
       rights also depend on the sender’s rights on the capability invoked for
       IPC.
 
+The kernel does not unmap capabilities in the receive window when there is no
+capability present at the corresponding index at the sender. Further, the
+receiver cannot reliably detect at which capability indices it received
+capabilities in its receive windows. Therefore, before receiving from an
+untrusted source, all receive windows should be cleared. Otherwise the receiver
+may erroneously associate a capability in one of its receive windows with his
+last IPC partner although it was actually received in an earlier IPC.
+
+However, the kernel indicates if at least one object capability was received or
+not, see #L4::Ipc::Gen_fpage::cap_received().
+
 
 \section l4re_concepts_ipc_examples Examples
 A number of examples show the interplay of the concepts introduced so far.
@@ -408,16 +419,16 @@ which does the following:
   - Fill `MR[1]` and `MR[2]` with the two words making up the CPU set.
   - Set up the message tag with the protocol value (#L4_PROTO_SCHEDULER), the
     number of untyped and typed items (3 and 0), and some flags.
-  - Call l4_ipc() with the capability ID, the tag, the pointer to the filled
-    UTCB, infinite timeouts, and with flags indicating a send and receive
-    phase. (The label does not matter in this case.)
+  - Call l4_ipc() with the partner capability ID, the tag, the pointer to the
+    filled UTCB, infinite timeouts, and with flags indicating a send and
+    receive phase. (The label does not matter in this case.)
 
 This function traps into kernel space using standard platform specific
 mechanisms. The kernel reads the protocol value on the message tag, checks that
-the capability ID refers to a valid object that speaks that protocol, and
-dispatches the message to the appropriate handler. The handler fills the first
-64 bits of the message registers with the computed time value. This will cover
-`MR[0]` on 64-bit architectures and `MR[0]` and `MR[1]` on 32-bit
+the partner capability ID refers to a valid object that speaks that protocol,
+and dispatches the message to the appropriate handler. The handler fills the
+first 64 bits of the message registers with the computed time value. This will
+cover `MR[0]` on 64-bit architectures and `MR[0]` and `MR[1]` on 32-bit
 architectures.
 It then sets up the return message tag:
   - The number of untyped items is 1 or 2.
@@ -502,7 +513,7 @@ result and the example is concluded.
 \subsubsection l4re_concepts_ipc_examples_2_2 Send Items
 
 IPC between userland threads is also used to transfer typed items: Memory, I/O
-ports, and and objects, all represented as flexpages. Typed items and untyped
+ports, and objects, all represented as flexpages. Typed items and untyped
 items can be part of the same IPC. As general rule, the sender specifies what
 he wants to send, the receiver where and how much it wants to receive, and the
 kernel checks the required permissions before doing the actual transfer. As
