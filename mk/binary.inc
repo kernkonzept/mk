@@ -863,10 +863,13 @@ DEPS	+= $(foreach file,$(filter %.dtb, $(INSTALL_TARGET)), $(call BID_dot_fname,
 # Common clean Rules
 
 clean cleanall::
-	$(VERBOSE)$(RM) $(strip $(filter-out $(KEEP_ON_CLEAN),\
+	$(file >$@.in,\
+		$(strip $(filter-out $(KEEP_ON_CLEAN),\
 		$(wildcard *.dpi) $(wildcard *.o) $(wildcard *.i) \
 		$(wildcard *.S) \
-		$(wildcard $(filter-out -%, $(ALLOBJS) $(DEL_ON_CLEAN)))))
+		$(wildcard $(filter-out -%, $(ALLOBJS) $(DEL_ON_CLEAN))))))
+	$(VERBOSE)xargs -a $@.in $(RM)
+	$(VERBOSE)$(RM) $@.in
 
 # clean: delete all temporary editor files, objects, binaries
 #        and most generated files
