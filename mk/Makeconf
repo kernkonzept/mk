@@ -382,6 +382,8 @@ checkdtc  = $(shell if $(DTC) $(1) --version /dev/null > /dev/null 2>&1; \
                     then echo "$(1)"; fi)
 checkcxx_nowarn = $(if $(shell $(CXX) $(CCXX_FLAGS) -W$(1) -S -o /dev/null \
                                       -x c++ /dev/null 2>&1),,-Wno-$(1))
+checkld   = $(shell if $(firstword $(LD)) -v "$1" > /dev/null 2>&1; \
+             then echo "$(1)"; else echo "$(2)"; fi)
 
 callcc    = LC_ALL=C $(CC)  $(CCXX_FLAGS)
 callcxx   = LC_ALL=C $(CXX) $(CCXX_FLAGS)
@@ -423,6 +425,7 @@ GCCPATCHLEVEL_f  =$(GCCPATCHLEVEL_f_$(BID_COMPILER_TYPE_f))
 check_path_absolute = $(if $(patsubst /%,,$(2)),$(error Path $(1)=$(2) is not absolute),$(2))
 
 LDVERSION_f     = $(shell $(firstword $(LD)) -v | sed -e 's/.* \([0-9]\)\.\([^. ]*\).*/\1\2/')
+LDNOWARNRWX_f   = $(call checkld,--no-warn-rwx-segments)
 GCCSYSLIBDIRS_f = $(shell $(callcc) -print-search-dirs | sed '/^libraries:/{s/^libraries: =\?/-L/;s/:/ -L/g;q;};d')
 GCCDIR_f	= $(shell $(callcc) -print-search-dirs | sed -ne 's+^install: \(.*[^/][^/]*\)/+\1+p' )
 GCCLIB_file_f   = $(call check_path_absolute,GCCLIB_file_$(1),$(shell $(callcc) -print-file-name=$(1)))
