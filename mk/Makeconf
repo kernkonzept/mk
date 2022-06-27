@@ -251,13 +251,13 @@ ifeq ($(origin BID_ROOT_CONF),undefined)
 BID_ROOT_CONF := $(call absfilename, $(OBJ_BASE))/.config.all
 endif
 ifeq ($(filter $(IGNORE_OBJDIR_TARGETS),$(MAKECMDGOALS)),)
-ifeq ($(wildcard $(BID_ROOT_CONF)),)
-ifeq ($(BID_IGN_ROOT_CONF),)
+ ifeq ($(wildcard $(BID_ROOT_CONF)),)
+  ifeq ($(BID_IGN_ROOT_CONF),)
 $(error No configuration file found in build directory "$(OBJ_BASE)". Please run "make O=/path/to/objdir config" in "$(L4DIR_ABS)" or specify a valid build directory)
-endif
-else
-include $(BID_ROOT_CONF)
-endif
+  endif
+ else
+  include $(BID_ROOT_CONF)
+ endif
 endif
 
 # if we're working on a program that wants the RAM_BASE be considered in its
