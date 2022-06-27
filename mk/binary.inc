@@ -379,14 +379,6 @@ endif
 
 # -----------------------
 
-# May 2007: force somewhat old hash-style as some(!, independent of the
-#           actual version) ld now use an other format, no uclibc upstream fix
-#           available yet, until available, we need:
-ifeq ($(LD_HAS_HASH_STYLE_OPTION),y)
-ifneq ($(HOST_LINK),1)
-LDFLAGS += --hash-style=sysv
-endif
-endif
 
 bid_flag_variants = $($(1)-y) $($(1)_$(OSYSTEM)) $($(1)_$(OSYSTEM)-y) \
                     $($(1)_$@) $($(1)_$@-y) $($(1)_$@_$(OSYSTEM)) $($(1)_$@_$(OSYSTEM)-y) \

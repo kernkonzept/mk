@@ -348,7 +348,6 @@ Makeconf.bid.local-helper:
 			>>$(DROPSCONF_CONFIG_MK);)
 	$(VERBOSE)$(foreach v, LD_GENDEP_PREFIX, echo $v=$($(v)) >>$(DROPSCONF_CONFIG_MK);)
 	$(VERBOSE)echo "HOST_SYSTEM=$(HOST_SYSTEM)" >>$(DROPSCONF_CONFIG_MK)
-	$(VERBOSE)echo "LD_HAS_HASH_STYLE_OPTION=$(shell if $(LD) --help 2>&1 | grep -q ' --hash-style='; then echo y; else echo n; fi)" >>$(DROPSCONF_CONFIG_MK)
 	$(VERBOSE)# we need to call make again, because HOST_SYSTEM (set above) must be
 	$(VERBOSE)# evaluated for LD_PRELOAD to be set, which we need in the following
 	$(VERBOSE)$(MAKE) Makeconf.bid.local-internal-names
