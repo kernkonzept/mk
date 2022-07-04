@@ -184,8 +184,8 @@ source mapping and that are specified in the send item/flexpage are
 transferred. This also holds for grant mappings, however, rights revocation is
 *not* guaranteed to be applied to descendant mappings in case of grant.
 
-The description of the #L4_MAP_ITEM_GRANT bit also documents when granting is
-not performed depending on the access rights in the receiver mapping.
+There are cases where a grant operation is not or cannot be performed as
+requested; see #L4_MAP_ITEM_GRANT for details.
 
 Object capabilities are not hierarchical -- they have no children. The result
 of the map operation on an object capability is a copy of that capability in
