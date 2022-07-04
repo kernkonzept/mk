@@ -344,6 +344,10 @@ sub op_create
         }
     }
 
+  my %set_attrs = @{$args->{"--set-attr"}};
+  $d->{attrs}{$_} = $set_attrs{$_}
+    foreach (keys %set_attrs);
+
   create_image($d, $modules_list, $entry, $searchpath);
 }
 
@@ -806,6 +810,7 @@ my %args = (
       "--entry" => 1,
       "--modules-list-file" => 1,
       "--search-path" => 1,
+      "--set-attr" => 2,
     },
     gen_new_image => 1,
     func => \&op_create,
@@ -818,6 +823,7 @@ my %args = (
             "                       Defaults to 'modules.list'.\n".
             "  --search-path        Search path, colon or space separated\n".
             "                       Defaults to '.'.\n".
+            "  --set-attr K V       Set a key K to value V for the created image.\n".
             "\n".
             "",
   },
