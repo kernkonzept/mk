@@ -20,7 +20,7 @@ sub new {
     unless defined($self->{args}{file});
 
   # Also forces printing to tap fd!
-  $self->{matcher} = L4::TapWrapper::Plugin::OutputMatching->new({ file => $self->{args}{file}, literal => $self->{args}{literal} });
+  $self->{matcher} = L4::TapWrapper::Plugin::OutputMatching->new($self->{args});
   # We have tags, so we are always "in block"
   $self->{matcher}->check_start("L4 Bootstrapper");
   $self->{inhibit_exit} = $self->{matcher}{inhibit_exit}; # We must wait for the data
@@ -60,7 +60,8 @@ available in principle.
 
 =head1 Options
 
-The following options are defined
+In addition to the options of the OutputMatching plugin, the following options
+are defined
 
 =over
 
@@ -68,16 +69,6 @@ The following options are defined
 
 The tag for which the output should be matched. Only lines matching this tag
 (See TagPluginBase.pm) are matched. Others are silently ignored.
-
-=item C<file>
-
-The file that contains the expected output lines. Must be found using the
-module search path.
-
-=item C<literal>
-
-The contents of the file that is matched are to be matched literally and not as
-a regular expression.
 
 =item C<nounexpected>
 
@@ -99,6 +90,6 @@ generated from a known good run.
 Specify for a particular testrun using the TEST_TAP_PLUGINS variable.
 Example:
 
-  TEST_TAP_PLUGINS=TaggedOutputMatch:tag=mapdb,file=foo.txt,match_with_tag=1
+  TEST_TAP_PLUGINS=TaggedOutputMatch:tag=mapdb,file=foo.txt,match_with_tag=1,uuid=<`uuidgen -r`>
 
 =cut
