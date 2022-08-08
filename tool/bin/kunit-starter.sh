@@ -82,10 +82,12 @@ fi
 
 test_file=${test_binary##*/}
 test_file_path=${test_binary%/${test_file}}
+test_conf_file=${test_binary/test_/config_}
 
 if [[ ${verbose} ]]; then
   echo "test_binary=${test_binary} test_file=${test_file}" \
-    "test_file_path=${test_file_path} obj_base=${obj_base}"
+    "test_file_path=${test_file_path} obj_base=${obj_base}" \
+    "test_conf_file=${test_conf_file}"
 fi
 
 # Prepare environment
@@ -99,7 +101,15 @@ SEARCHPATH="${test_file_path}"${SEARCHPATH:+:${SEARCHPATH}}
 KERNEL="${test_binary}"
 TEST_KERNEL_UNIT=1
 
+TEST_TAP_PLUGINS_CMDLINE="${TEST_TAP_PLUGINS}"
+TEST_TAP_PLUGINS=
+
+[[ -f "$test_conf_file" ]] && source "$test_conf_file"
+: ${TEST_TAP_PLUGINS:=TAPOutput}
+TEST_TAP_PLUGINS+=" ${TEST_TAP_PLUGINS_CMDLINE}"
+
 TEST_TESTFILE="${test_file}"
+TEST_DESCRIPTION="kunit_test ${TEST_TESTFILE}"
 : "${TEST_STARTER:=${L4DIR}/tool/bin/default-test-starter}"
 
 # if not called from the L4Re build dir and if O= is not set, we explicitly
