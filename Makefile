@@ -32,7 +32,7 @@ KCONFIG_FILE            = $(OBJ_BASE)/Kconfig.generated
 KCONFIG_FILE_DEPS       = $(OBJ_BASE)/.Kconfig.generated.d
 KCONFIG_FILE_SRC        = $(L4DIR)/mk/Kconfig
 DROPSCONF_CONFIG	= $(OBJ_BASE)/include/config/auto.conf
-DROPSCONF_CONFIG_H	= $(OBJ_BASE)/include/l4/bid_config.h
+DROPSCONF_CONFIG_H	= $(OBJ_BASE)/include/generated/autoconf.h
 DROPSCONF_CONFIG_MK	= $(OBJ_BASE)/.config.all
 DROPSCONF_DONTINC_MK	= y
 DROPSCONF_HELPFILE	= $(L4DIR)/mk/config.help
@@ -167,16 +167,16 @@ BID_POST_CONT_HOOK := $(MAKE) regen_l4defs
 .PHONY: $(BUILD_DIRS) doc check_build_tools cont cleanfast
 
 cleanfast:
-	$(VERBOSE)if [ -f $(OBJ_BASE)/include/l4/bid_config.h ]; then  \
-	            cp -a $(OBJ_BASE)/include/l4/bid_config.h          \
+	$(VERBOSE)if [ -f $(OBJ_BASE)/include/generated/autoconf.h ]; then  \
+	            cp -a $(OBJ_BASE)/include/generated/autoconf.h          \
 	                  $(OBJ_BASE)/.tmp.bid_config.h;               \
 	          fi
 	$(VERBOSE)$(RM) -r $(addprefix $(OBJ_BASE)/,bin include pkg tests doc ext-pkg pc lib test l4defs.mk.inc l4defs.sh.inc) \
 	                   $(IMAGES_DIR)
 	$(VERBOSE)if [ -f $(OBJ_BASE)/.tmp.bid_config.h ]; then        \
-	            mkdir -p $(OBJ_BASE)/include/l4;                   \
+	            mkdir -p $(OBJ_BASE)/include/generated;            \
 	            mv $(OBJ_BASE)/.tmp.bid_config.h                   \
-	               $(OBJ_BASE)/include/l4/bid_config.h;            \
+	               $(OBJ_BASE)/include/generated/autoconf.h;       \
 	          fi
 
 cleanall::
@@ -343,6 +343,7 @@ Makeconf.bid.local-helper:
 			$(if $(GCCIS_$(ARCH)_leon_f),GCCIS_$(ARCH)_leon),   \
 			echo $(v)=$(call $(v)_f,$(ARCH))                \
 			>>$(DROPSCONF_CONFIG_MK);)
+	$(VERBOSE)echo '#include <generated/autoconf.h>' >$(OBJ_BASE)/include/l4/bid_config.h
 	$(VERBOSE)$(foreach v, crtbegin.o crtbeginS.o crtbeginT.o \
 	                       crtendS.o crtend.o, \
 			echo GCCLIB_FILE_$(v)=$(call GCCLIB_file_f,$(v))   \
