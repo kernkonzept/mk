@@ -62,7 +62,7 @@ end
 -- Check for HWconfig and print default TAP messages if not.
 local function conf_present()
   if conf == nil then
-    print_tap_skip("Hardware configuration unknown")
+    print_tap_skip("Hardware configuration unknown (see TEST_HWCONFIG)")
     return false
   end
 
@@ -79,10 +79,10 @@ local function conf_prop(prop, val)
   prop = string.upper(prop)
 
   if val and conf[prop] ~= "y" then
-    print_tap_skip("Hardware does not support property " .. prop)
+    print_tap_skip("Hardware does not support property " .. prop .. " (see TEST_HWCONFIG)")
     return false
   elseif not val and conf[prop] == "y" then
-    print_tap_skip("Hardware supports property " .. prop)
+    print_tap_skip("Hardware supports property " .. prop .. " (see TEST_HWCONFIG)")
     return false;
   end
 
@@ -149,13 +149,13 @@ local function prop_val_cmp(prop, prop_test_fn)
   prop = string.upper(prop)
 
   if (conf[prop] == nil) then
-    print_tap_skip("Hardware does not feature property " .. prop .. ".")
+    print_tap_skip("Hardware does not feature property " .. prop .. " (see TEST_HWCONFIG)")
     return false
   end
 
   if not prop_test_fn(conf[prop]) then
     print_tap_skip("Hardware provides " .. prop .. " = " .. conf[prop] .. ". "
-                   ..  "This does not satisfy the requested property value.")
+                   ..  "This does not satisfy the requested property value (see TEST_HWCONFIG)")
     return false
   end
 
