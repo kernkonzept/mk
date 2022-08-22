@@ -451,6 +451,40 @@ via the kernel command line option `l4re_testprog`. The `tool/test`
 directory contains an example script `launch-l4linux-test`. which can
 be copied onto the ramdisk and started by the init script.
 
+\par `TEST_HWCONFIG` and `TEST_FIASCOCONFIG`
+\parblock
+Some userland tests rely on external information about the underlying platform
+and the configuration of the L4Re Microkernel to decide whether or not to test
+specific features or to determine which and how much resources are available.
+Some examples for this are whether or not virtualization is supported by the
+platform, how many cores the platform has, how many cores the kernel supports or
+how much memory the platform provides. To convey this information to these tests
+you can set the two environment variables `TEST_HWCONFIG` and
+`TEST_FIASCOCONFIG`.
+
+Using `TEST_HWCONFIG` requires a plain text document containing key-value
+pairs separated by a `=` symbol. On top of that comment lines starting with `#`
+are supported. Simply create a plain text file such as the following and set
+`TEST_HWCONFIG` to its absolute path.
+
+    VIRTUALIZATION=y
+    MP=y
+    NUM_CORES=4
+    MEMORY=2048
+
+Using `TEST_FIASCOCONFIG` is easier since it only needs to contain the absolute
+path of the globalconfig.out file in the L4Re Microkernel's build directory. The
+build system will then extract the information when a test is started.
+
+When starting a test the build system will read both files and provide their
+content as a lua table to the test. A ned script can then make decisions based
+on them. To simplify some decisions the build system merges some information by
+itself, e.g. virtualization is only available if both the platform and the L4Re
+Microkernel support this feature. More details can be obtain from the perl
+module in `tool/lib/L4/TestEnvLua.pm`.
+
+\endparblock
+
 In addition to these variables, the following BID variables can be
 overwritten at runtime: `PT` (for the plaform type) and `TEST_TIMEOUT`.
 You may also supply `QEMU_ARGS` and `MOE_ARGS` which will be appended
