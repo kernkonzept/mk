@@ -398,11 +398,11 @@ See mk/platforms/ for the various identifiers.
 
 _Example usage:_
 
-# Do not run this test on the Raspberry Pi platform
-TEST_PLATFORM_DENY_test_xyz := rpi
+    # Do not run this test on the Raspberry Pi platform
+    TEST_PLATFORM_DENY_test_xyz := rpi
 
-# Only run this test on this test on the RCar3 platform.
-TEST_PLATFORM_ALLOW_test_abc := rcar3
+    # Only run this test on this test on the RCar3 platform.
+    TEST_PLATFORM_ALLOW_test_abc := rcar3
 
 \endparblock
 
