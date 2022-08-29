@@ -3,6 +3,8 @@ use strict;
 use warnings;
 use IO::Select;
 use IO::Handle;
+use FileHandle;
+use IPC::Open2;
 use Getopt::Long;
 use Pod::Usage;
 use File::Basename;
@@ -19,13 +21,17 @@ my $help = 0;
 my $nowrapper = 0;
 my $max_lines_read = $ENV{MAX_LINES_READ} || 100000;
 my $test_timestamps = !!$ENV{TEST_TIMESTAMPS};
+my $jdb_system_report_on_timeout = !!$ENV{TEST_JDB_SYSTEM_REPORT_ON_TIMEOUT};
 Getopt::Long::Configure ("bundling");
 GetOptions(
   'help|h'  => \$help,
   'debug|d' => sub { $ENV{TEST_ARGS} .= ' -vvv';
                      $ENV{TEST_KUNIT_VERBOSE} = 1;
                      $ENV{TEST_KUNIT_DEBUG} = 1;
-                     $ENV{KERNEL_ARGS} = '-serial_esc';
+
+                     # Ensure serial_esc present in Kernel args, but don't overwrite others
+                     $ENV{KERNEL_ARGS} //= '';
+                     $ENV{KERNEL_ARGS} .= ' -serial_esc' if $ENV{KERNEL_ARGS} !~ /-serial_esc/;
                      $nowrapper = 1;
                    },
   'verbose|v'       => sub { $ENV{TEST_ARGS} .= ' -v';
@@ -48,6 +54,7 @@ GetOptions(
   'hard-timeout=i'  => sub { $ENV{TEST_HARD_TIMEOUT} = $_[1]; },
   'max-lines-read=i'=> sub { $max_lines_read = 0+ $_[1]; },
   'timestamps'      => sub { $test_timestamps = 1; },
+  'jdb-system-report-on-timeout' => \$jdb_system_report_on_timeout,
 ) or pod2usage(-verbose => 99, -sections => "OPTIONS");
 
 pod2usage(-verbose => 99,
@@ -59,6 +66,13 @@ if ($nowrapper)
     print("WARNING: output capturing disabled, the test will not terminate automatically.\n");
     system(@ARGV);
     exit($? == 69 ? 0 : $?);
+  }
+
+if ($jdb_system_report_on_timeout)
+  {
+    # Ensure serial_esc present in Kernel args, but don't overwrite others
+    $ENV{KERNEL_ARGS} //= "";
+    $ENV{KERNEL_ARGS} .= ' -serial_esc' if $ENV{KERNEL_ARGS} !~ /-serial_esc/;
   }
 
 my $timeout = $ENV{TEST_TIMEOUT};
@@ -160,12 +174,48 @@ if (looks_like_number($repeat) and $repeat == 0 and $ENV{HARNESS_ACTIVE})
     L4::TapWrapper::exit_test(69);
   }
 
-$L4::TapWrapper::pid = open(my $test_proc, "-|", @ARGV) or die "Failed to execute $ARGV[0].\n";
+$L4::TapWrapper::pid = open2(my $test_proc, my $test_proc_input, @ARGV)
+  or die "Failed to execute $ARGV[0].\n";
 
 my $readbuffer = '';
 my $lines_read = 0;
 
 my $buffer_is_at_newline = 1;
+
+sub trigger_jdb_system_report {
+  # Disable line limit for this
+  $max_lines_read = 0;
+
+  # Wait for at most 5 seconds for JDB prompt.
+  # After that we can safely assume there's no jdb.
+  my $jdb_wait_timeout = time() + 5;
+
+  # Trigger Jdb by sending ASCII code for Escape (33 oct = 27 dec)
+  print $test_proc_input "\033";
+  select(undef,undef,undef,0.2); # sleep(0.2) without Time::HiRes
+  # Since readline_timeout only returns completed lines we have to send
+  # an empty command so jdb shows a second prompt and we can read the first one.
+  print $test_proc_input "\n";
+
+  my $line;
+  # Wait for prompt
+  while($line = readline_timeout($test_proc, $jdb_wait_timeout - time()))
+    {
+      last if $line =~ /jdb:/;
+    }
+
+  # abort here if no jdb found
+  return unless $line;
+
+  # Trigger system report
+  print $test_proc_input "Y\n";
+
+  # Wait for "Done" with 5 seconds as between-lines-timeout in case jdb itself misbehaves.
+  while($line = readline_timeout($test_proc, 5))
+    {
+      last if $line =~ /^Done/;
+    }
+}
 
 # Returns read line or undef in case of a timeout
 sub readline_timeout
@@ -226,8 +276,15 @@ sub readline_timeout
     }
   $lines_read++;
 
-  L4::TapWrapper::fail_test("Stopping test prematurely after $lines_read lines read.")
-    if $lines_read >= $max_lines_read;
+  if ($max_lines_read != 0 && $lines_read >= $max_lines_read) {
+    # trigger_jdb_system_report increases lines_read more, but we only want to
+    # display the lines received from the test later.
+    my $test_lines_read = $lines_read;
+
+    trigger_jdb_system_report() if $jdb_system_report_on_timeout;
+
+    L4::TapWrapper::fail_test("Stopping test prematurely after $test_lines_read lines read.")
+  }
 
   return $outline;
 }
@@ -255,6 +312,9 @@ if (!$test_eof)
         my $exp = $L4::TapWrapper::expline;
         my $msg = "Test timed out after $timeout seconds.";
         $msg .= defined($exp) ? " Was expecting: $exp" : "";
+
+        trigger_jdb_system_report() if $jdb_system_report_on_timeout;
+
         L4::TapWrapper::fail_test($msg)
       }
 
