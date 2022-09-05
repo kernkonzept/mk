@@ -160,6 +160,8 @@ my $hard_timeout = 0+ ($ENV{TEST_HARD_TIMEOUT} || 0);
 if ($hard_timeout)
   {
     $SIG{ALRM} = sub {
+      trigger_jdb_system_report() if $jdb_system_report_on_timeout;
+
       L4::TapWrapper::fail_test("Test did not finish within the hard timeout of $hard_timeout seconds");
     };
     alarm $hard_timeout;
@@ -183,6 +185,8 @@ my $lines_read = 0;
 my $buffer_is_at_newline = 1;
 
 sub trigger_jdb_system_report {
+  # Disable any running ALRM signal
+  alarm 0;
   # Disable line limit for this
   $max_lines_read = 0;
 
