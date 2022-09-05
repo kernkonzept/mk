@@ -173,12 +173,8 @@ ifeq ($(CALLED_FOR),sharedlib)
 ifneq ($(SYSTEM),)
 
 NOTARGETSTOINSTALL = y
-L4_CRT0_SO = $(CRT0)
-L4_CRTN_SO = $(CRTN)
 
 all::
-	@$(call do_output_all,L4_CRT0_SO)
-	@$(call do_output_all,L4_CRTN_SO)
 else
 all::
 endif
