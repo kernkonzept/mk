@@ -171,13 +171,10 @@ endif # called for shared
 ifeq ($(CALLED_FOR),sharedlib)
 
 ifneq ($(SYSTEM),)
-
 NOTARGETSTOINSTALL = y
+endif
 
 all::
-else
-all::
-endif
 
 include $(L4DIR)/mk/lib.mk
 
