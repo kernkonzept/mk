@@ -339,7 +339,7 @@ Makeconf.bid.local-helper:
 	$(VERBOSE)$(foreach v, BID_COMPILER_TYPE BID_LD_TYPE \
 	              CONDITIONAL_WARNINGS_FULL CONDITIONAL_WARNINGS_MEDIUM \
 	              GCCDIR GCCFORTRANAVAIL GCC_HAS_ATOMICS GCCINCFIXEDPATH \
-	              GCCLIBCAVAIL GCCLIB_EH GCCLIB_HOST GCCLIB_S_SO \
+	              GCCLIBCAVAIL GCCLIB_EH_HOST GCCLIB_HOST \
 	              GCCMAJORVERSION GCCMINORVERSION GCCNOSTACKPROTOPT \
 	              GCCPATCHLEVEL GCCPREFIXOPT GCCSTACKPROTALLOPT \
 	              GCCSTACKPROTOPT GCCSYSLIBDIRS GCCVERSION \
@@ -358,10 +358,6 @@ Makeconf.bid.local-helper:
 	            echo $(v)=$(call $(v)_f,$(ARCH)) \
 	            >>$(DROPSCONF_CONFIG_MK);)
 	$(VERBOSE)echo '#include <generated/autoconf.h>' >$(OBJ_BASE)/include/l4/bid_config.h
-	$(VERBOSE)$(foreach v, crtbegin.o crtbeginS.o crtbeginT.o \
-	                       crtendS.o crtend.o, \
-	              echo GCCLIB_FILE_$(v)=$(call GCCLIB_file_f,$(v))   \
-	                >>$(DROPSCONF_CONFIG_MK);)
 	$(VERBOSE)$(foreach v, LD_GENDEP_PREFIX, echo $v=$($(v)) >>$(DROPSCONF_CONFIG_MK);)
 	$(VERBOSE)echo "HOST_SYSTEM=$(HOST_SYSTEM)" >>$(DROPSCONF_CONFIG_MK)
 	$(VERBOSE)# we need to call make again, because HOST_SYSTEM (set above) must be

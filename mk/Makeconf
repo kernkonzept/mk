@@ -452,8 +452,7 @@ LDNOWARNRWX_f   = $(call checkld,--no-warn-rwx-segments)
 GCCSYSLIBDIRS_f = $(shell $(callcc) -print-search-dirs | sed '/^libraries:/{s/^libraries: =\?/-L/;s/:/ -L/g;q;};d')
 GCCLIB_file_f   = $(call check_path_absolute,GCCLIB_file_$(1),$(shell $(callcc) -print-file-name=$(1)))
 GCCLIB_HOST_f   = $(call check_path_absolute,GCCLIB_HOST,$(shell $(callcc) -print-libgcc-file-name))
-GCCLIB_S_SO_f	= $(filter /%,$(shell $(callcc) -print-file-name=libgcc_s.so))
-GCCLIB_EH_f	= $(filter /%,$(shell $(callcc) -print-file-name=libgcc_eh.a))
+GCCLIB_EH_HOST_f   = $(call check_path_absolute,GCCLIB_EH_HOST,$(shell $(callcc) -print-file-name=libgcc_eh.a))
 GCCNOSTACKPROTOPT_f= $(call checkcc,-fno-stack-protector)
 GCCSTACKPROTOPT_f = $(call checkcc,-fstack-protector)
 GCCSTACKPROTALLOPT_f = $(call checkcc,-fstack-protector-all)
@@ -502,9 +501,6 @@ ifneq ($(strip $(GCCDIR)),)
 GCCINCDIR	= $(GCCDIR)/include $(GCCINCFIXEDPATH)
 I_GCCINCDIR	= $(addprefix -isystem ,$(GCCINCDIR))
 endif
-
-GCCLIB          = $(OBJ_BASE)/lib/$(subst -,/,$(SYSTEM))/libgcc.a
-GCCLIB_SO       = $(OBJ_BASE)/lib/$(subst -,/,$(SYSTEM))/libgcc.$(if $(filter %l4f,$(SYSTEM)),so,a)
 
 PKGNAME_DIRNAME := $(notdir $(abspath $(if $(PKGDIR),$(PKGDIR),.)))
 ifneq ($(PKGDIR),)

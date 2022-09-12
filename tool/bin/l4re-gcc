@@ -211,7 +211,7 @@ else
          -Wl,--defsym=__executable_start=$L4RE_LINK_ADDR $LIB_LIST \
 	 $L4_LDFLAGS_GCC_STATIC \
 	 $L4_CRTN_STATIC  \
-	 $L4RE_LINK_OPTS $L4_GCCLIB $L4_GCCLIB_EH
+	 $L4RE_LINK_OPTS
 
   else
     # shared
@@ -241,7 +241,7 @@ else
       $LD $L4_CRT0_SO \
          $filtered_args -T$L4_LDS_so $LIB_LIST \
          $L4_LDFLAGS_DYNAMIC_LINKER_LD \
-         $L4RE_LINK_OPTS $L4_GCCLIB $L4_GCCLIB_EH \
+         $L4RE_LINK_OPTS \
          $L4_CRTN_SO -l4re
 
     else
@@ -263,14 +263,14 @@ else
          $args \
          -Wl,-T$L4_LDS_dyn_bin $LIB_LIST \
          $L4_LDFLAGS_DYNAMIC_LINKER_GCC \
-         $L4RE_LINK_OPTS $L4_GCCLIB $L4_GCCLIB_EH \
+         $L4RE_LINK_OPTS \
          $CRTN_SO -l4re
       
       #$GCC -nostdlib $CRT0_all_shared \
       #   $args \
       #   -Wl,-T$L4_LDS_dyn_bin $LIB_LIST \
       #   $L4_LDFLAGS_DYNAMIC_LINKER_GCC \
-      #   $L4RE_LINK_OPTS $L4_GCCLIB $L4_GCCLIB_EH \
+      #   $L4RE_LINK_OPTS \
       #   $CRTN_all_shared -l4re
     fi
   fi

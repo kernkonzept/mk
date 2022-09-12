@@ -23,11 +23,6 @@ l4libdir_x = %:set-var(l4libdir
 # compile a list of dirs from -L options
 libdir    = %:set-var(libdir %{L*:%*} %(l4libdir))
 
-# search for libgcc files in the L4-libs and then in the GCC dirs
-libgcc    = %:search(libgcc.a %(libdir) %(gcclibdir))
-libgcc_eh = %:search(libgcc_eh.a %(libdir) %(gcclibdir))
-libgcc_s  = %:search(libgcc.so %(libdir) %(gcclibdir))
-
 # get dependency file name from -MF or from -o options
 deps_file = %:strip(%{MF*:%*;:%{o*:.%*.d;:.pcs-deps}})
 
@@ -93,8 +88,6 @@ link_args_ld_part3 =
   %{-dynamic-linker*}
   %(Link_Start) %o %{OBJ*:%*} %{pie:%(Libs_pic);:%(Libs)}
   %{static|static-pie:--start-group} %{pie:%(Link_Libs_pic);:%(Link_Libs)}
-  %{!shared:%(libgcc);:%(libgcc_s)}
-  %(libgcc_eh) %{!shared:%(libgcc);:%(libgcc_s)}
   %{static|static-pie:--end-group} %(Link_End)
   %{EL&EB}
   %{MD:%(generate_deps)} %:error-unused-options()
@@ -140,11 +133,10 @@ link_args_gcc =
     %(Link_DynLinker:;:
       %:error(Link_DynLinker not specified, cannot link with shared libs.))}
   %{r|nostartfiles|nostdlib:;:%(Link_Start)} %o %(Libs)
-  %{r|nodefaultlibs|nostdlib:;:%{static|static-pie:-Wl,--start-group} %(Link_Libs)
-    %{!r:%{!shared:%(libgcc);:%(libgcc_s)} %(libgcc_eh)
-      %{static|static-pie:-Wl,--end-group}}}
+  %{r|nodefaultlibs|nostdlib:;:%{static|static-pie:-Wl,--start-group}
+                               %(Link_Libs)
+                               %{static|static-pie:-Wl,--end-group}}
   %{r|nostartfiles|nostdlib:;:%(Link_End)}
-  %{!shared:%(libgcc);:%(libgcc_s)}
   %{EL&EB}
   %{MD:%(generate_deps)} %:error-unused-options()
 

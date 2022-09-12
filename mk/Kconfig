@@ -214,6 +214,20 @@ config BID_GCC_STACK_PROTECTOR
 
 endchoice
 
+config BID_LIBGCC_SHARED
+	bool "Use shared libgcc"
+	depends on !BID_USE_TOOLCHAIN_LIBGCC
+	default n
+	help
+	  Say Y if you want to use shared libgcc (libgcc_s.so).
+
+config BID_USE_TOOLCHAIN_LIBGCC
+	bool "Use libgcc from toolchain"
+	default n
+	help
+	  Say Y if you want to use the libgcc shipped with your toolchain
+	  instead of the one built specifically for L4Re.
+
 config BID_GENERATE_MAPFILE
 	bool "Generate Map-files for binaries"
 	help

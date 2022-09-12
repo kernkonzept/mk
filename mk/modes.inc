@@ -13,6 +13,10 @@ LIBCXX_INCLUDE = -I$(OBJ_BASE)/include/contrib/libstdc++-v3        \
                  $(if $(CONFIG_USE_DROPS_STDDIR),                  \
                    -I$(DROPS_STDDIR)/include/contrib/libstdc++-v3)
 
+# Select default compiler runtime libraries based on whether targeting system
+# with L4 API. The pure compiler runtime libraries do not use L4 specific APIs.
+COMPILER_RT   ?= $(if $(L4API),compiler-rt,compiler-rt-pure)
+
 #############################################################################
 
 STATIC_PIE_LDFLAGS = $(if $(or $(CONFIG_BID_PIE_ALL), \
@@ -25,6 +29,7 @@ STATIC_PIE_LDFLAGS = $(if $(or $(CONFIG_BID_PIE_ALL), \
 
 BID_SUPPORTED_all_sigma0        = y
 LIBCINCDIR_all_sigma0           = $(LIBC_INCLUDE)
+REQUIRES_LIBS_all_sigma0        = $(COMPILER_RT)
 LDFLAGS_all_sigma0              = $(STATIC_PIE_LDFLAGS) -gc-sections
 
 
@@ -34,7 +39,7 @@ LDFLAGS_all_sigma0              = $(STATIC_PIE_LDFLAGS) -gc-sections
 
 BID_SUPPORTED_all_static        = y
 LIBCINCDIR_all_static           = $(LIBCXX_INCLUDE) $(LIBC_INCLUDE)
-REQUIRES_LIBS_all_static        = stdlibs
+REQUIRES_LIBS_all_static        = stdlibs $(COMPILER_RT)
 LDFLAGS_all_static              = $(STATIC_PIE_LDFLAGS) -gc-sections
 
 #####################################
@@ -42,7 +47,7 @@ LDFLAGS_all_static              = $(STATIC_PIE_LDFLAGS) -gc-sections
 #####################################
 BID_SUPPORTED_all_shared        = y
 LIBCINCDIR_all_shared           = $(LIBCXX_INCLUDE) $(LIBC_INCLUDE)
-REQUIRES_LIBS_all_shared        = stdlibs-sh
+REQUIRES_LIBS_all_shared        = stdlibs-sh $(COMPILER_RT)
 LDFLAGS_all_shared              = -gc-sections
 
 ################################
@@ -65,9 +70,14 @@ LDFLAGS_all_targetsys           = -gc-sections
 # lib mode -- options when building libs
 #####################################
 
-BID_SUPPORTED_all_lib = y
-LIBCINCDIR_all_lib    = $(LIBCXX_INCLUDE) $(LIBC_INCLUDE)
-LDFLAGS_all_lib       =
+BID_SUPPORTED_all_lib            = y
+LIBCINCDIR_all_lib               = $(LIBCXX_INCLUDE) $(LIBC_INCLUDE)
+# Libraries need include directories of compiler runtime. Cannot use
+# REQUIRES_LIBS here, because a library that links against compiler-rt-pure can
+# still be used by a program that links against compiler-rt. With REQUIRES_LIBS
+# the program would be linked against both compiler-rt-pure and compiler-rt.
+REQUIRES_CFLAGS_all_lib          = $(COMPILER_RT)
+LDFLAGS_all_lib                  = $(addprefix -PC,$(COMPILER_RT))
 
 
 #####################################
