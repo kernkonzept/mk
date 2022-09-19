@@ -176,8 +176,21 @@ if (looks_like_number($repeat) and $repeat == 0 and $ENV{HARNESS_ACTIVE})
     L4::TapWrapper::exit_test(69);
   }
 
-$L4::TapWrapper::pid = open2(my $test_proc, my $test_proc_input, @ARGV)
-  or die "Failed to execute $ARGV[0].\n";
+my $test_proc;
+my $test_proc_input;
+if ($jdb_system_report_on_timeout)
+  {
+    # If we're supposed to dump the system report we need
+    # a dedicated pipe to the child processes stdin...
+    $L4::TapWrapper::pid = open2($test_proc, $test_proc_input, @ARGV)
+      or die "Failed to execute $ARGV[0].\n";
+  }
+else
+  {
+    # ... otherwise reuse our stdin for the child processes stdin.
+    $L4::TapWrapper::pid = open2($test_proc, '<&STDIN', @ARGV)
+      or die "Failed to execute $ARGV[0].\n";
+  }
 
 my $readbuffer = '';
 my $lines_read = 0;
