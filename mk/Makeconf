@@ -572,7 +572,7 @@ endif
 $(GENERAL_D_LOC): $(L4DIR)/mk/Makeconf $(EXTRA_GENERAL_D_DEP)
 	@$(BUILD_MESSAGE)
 	@install -d $(dir $@)
-	$(DEPEND_VERBOSE)$(RM) $(DEPS)
+	$(DEPEND_VERBOSE)$(RM) $(filter-out %.cmd,$(DEPS))
 	$(DEPEND_VERBOSE)echo '$@: $(SRC_DIR)/Makefile ' > $@
 	$(DEPEND_VERBOSE)$(call BID_DEPEND_GENERAL_D_COND,\
 		$(OBJ_BASE)/.config.all)
