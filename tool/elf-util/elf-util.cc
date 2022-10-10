@@ -168,6 +168,9 @@ public:
 
   void print_state()
   {
+    if (_regions.empty())
+      return;
+
     std::sort(_regions.begin(), _regions.end(), region_cmp);
 
     Region_list::const_iterator i = _regions.begin();
