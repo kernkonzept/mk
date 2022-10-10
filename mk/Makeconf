@@ -398,13 +398,13 @@ BID_ASM_CPP_FILE_EXTENSIONS ?= .S
 # 2: return if argument does not work with compiler
 # 3: compiler name
 # 4: compiler type
-check_compiler_opt = $(if $(shell $(3) $(CCXX_FLAGS) $(1) -S -o /dev/null -x $(4) \
+check_compiler_opt = $(if $(shell $(3) $(CCXX_FLAGS) $(1) -c -o /dev/null -x $(4) \
                                 /dev/null 2>&1),$(2),$(1))
 checkcc   = $(call check_compiler_opt,$(1),$(2),$(CC),c)
 checkcxx  = $(call check_compiler_opt,$(1),$(2),$(CXX),c++)
 checkdtc  = $(shell if $(DTC) $(1) --version /dev/null > /dev/null 2>&1; \
                     then echo "$(1)"; fi)
-checkcxx_nowarn = $(if $(shell $(CXX) $(CCXX_FLAGS) -W$(1) -S -o /dev/null \
+checkcxx_nowarn = $(if $(shell $(CXX) $(CCXX_FLAGS) -W$(1) -c -o /dev/null \
                                       -x c++ /dev/null 2>&1),,-Wno-$(1))
 checkld   = $(shell if $(callld) -v "$1" > /dev/null 2>&1; \
              then echo "$(1)"; else echo "$(2)"; fi)
