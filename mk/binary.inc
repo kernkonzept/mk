@@ -518,6 +518,10 @@ endif
 endif
 DEFINES += $(call bid_flag_variants,DEFINES)
 
+ifneq ($(MODE),host)
+CPPFLAGS_L4_GENERIC += $(CARCHFLAGS)
+endif
+
 CPPFLAGS-DEBUG_MODE = \
     $(if $(filter l4f,$(L4API)), \
       $(addprefix -include ,$(OBJ_BASE)/include/l4/sys/kdebug.h \
@@ -526,6 +530,7 @@ CPPFLAGS-DEBUG_MODE = \
                             $(OBJ_BASE)/include/l4/sys/debugger.h))
 
 CPPFLAGS+= $(DEFINES)
+CPPFLAGS+= $(CPPFLAGS_L4_GENERIC)
 CPPFLAGS+= $(addprefix -I,  $(PRIVATE_INCDIR) $(call bid_flag_variants,PRIVATE_INCDIR))
 CPPFLAGS+= $(if $(CONTRIB_INCDIR),$(addprefix -I$(OBJ_BASE)/include/contrib/,$(CONTRIB_INCDIR)))
 CPPFLAGS+= $(BID_PKG_CONFIG_CFLAGS)
