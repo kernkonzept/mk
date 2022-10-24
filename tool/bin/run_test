@@ -163,12 +163,13 @@ sub generate_gtest_shuffle_seed
 
 sub check_add_gtest_shuffle()
 {
+  return unless $ENV{TEST_GTEST_SHUFFLE};
   # Shuffling test will disrupt the expected output.
-  if ($ENV{TEST_EXPECTED} and ($ENV{TEST_GTEST_SHUFFLE}))
+  if ($ENV{TEST_TAP_PLUGINS} =~ m/(OutputMatching|TaggedOutputMatch)/)
     {
       print "Warning: Expected output configured. Ignoring gtest shuffle.\n";
     }
-  elsif ($ENV{TEST_GTEST_SHUFFLE})
+  else
     {
       generate_gtest_shuffle_seed();
       $test_args.=
