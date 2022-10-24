@@ -9,6 +9,7 @@ sub new {
   my $self = {};
   $self->{inhibit_exit} = 0;
   $self->{tap_lines} = [];
+  $self->{features} = { 'shuffling_support' => 1 };
   return bless $self, $type;
 }
 
@@ -85,6 +86,11 @@ I<stolen> plugins is the duty of the stealer!
 Plugins may have arguments that are passed to the C<new> function upon
 construction of the plugin in the form of a hash. Arguments and values must
 contain neither spaces, equal signs, commas or colons.
+
+Plugins have a C<features> member hash that indicates if the plugin supports
+the mentioned feature. Currently only the feature C<shuffling_support> is
+defined to indicate if the plugin can deal with the result if the tests are
+executed in a randomized fashion.
 
 =head2 Interface
 

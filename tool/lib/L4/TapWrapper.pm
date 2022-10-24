@@ -68,6 +68,12 @@ sub has_plugins_loaded
   return !!@_plugins;
 }
 
+sub plugin_features
+{
+  my $feature = shift;
+  map { $_->{features}{$feature} } @_plugins;
+}
+
 # Removes named plugin and returns reference (if it existed, undef otherwise)
 sub steal_plugin
 {
@@ -190,6 +196,12 @@ plugin will no longer be passed new input.
 B<Important:> When a new plugin with the same name will be laded later on, a new
 instance will be constructed! There will be no duplicate checking for stolen
 plugins.
+
+=item1 C<plugin_features>
+
+Returns a list that for each plugin contains an entry indicating if that plugin
+supports the feature. Can be used to control the test execution depending on
+the loaded plugins. See Plugin.pm for defined features.
 
 =item C<process_input>
 

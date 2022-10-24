@@ -23,6 +23,7 @@ sub new {
   $self->{matcher} = L4::TapWrapper::Plugin::OutputMatching->new($self->{args});
   # We have tags, so we are always "in block"
   $self->{matcher}->check_start("L4 Bootstrapper");
+  $self->{features}{shuffling_support} = 0;
   $self->{inhibit_exit} = $self->{matcher}{inhibit_exit}; # We must wait for the data
 
   return bless $self, $type;

@@ -174,16 +174,9 @@ sub check_add_gtest_shuffle()
 {
   return unless $ENV{TEST_GTEST_SHUFFLE};
   # Shuffling test will disrupt the expected output.
-  if ($ENV{TEST_TAP_PLUGINS} =~ m/(OutputMatching|TaggedOutputMatch)/)
-    {
-      print "Warning: Expected output configured. Ignoring gtest shuffle.\n";
-    }
-  else
-    {
-      generate_gtest_shuffle_seed();
-      $test_args.=
-        " --gtest_shuffle --gtest_random_seed=$ENV{TEST_GTEST_SHUFFLE_SEED}";
-    }
+  generate_gtest_shuffle_seed();
+  $test_args.=
+    " --gtest_shuffle --gtest_random_seed=$ENV{TEST_GTEST_SHUFFLE_SEED}";
 }
 
 # Check that a kernel has mandatory features enabled.

@@ -34,6 +34,7 @@ sub new {
   $self->inhibit_exit();
   $self->{num_res} = 0;
   $self->{had_block} = 0;
+  $self->{features}{shuffling_support} = 0;
   $self->{wait_until} = time + 2 * $L4::TapWrapper::timeout;
   $self->{number_of_runs} = $ENV{TEST_EXPECTED_REPEAT};
   $self->{number_of_runs} = 1 unless looks_like_number($self->{number_of_runs});

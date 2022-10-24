@@ -10,6 +10,7 @@ use Pod::Usage;
 use File::Basename;
 use File::Temp "tempdir";
 use File::Path "make_path";
+use List::Util qw(all);
 use Scalar::Util qw(looks_like_number);
 use Time::HiRes "time";
 
@@ -187,6 +188,14 @@ if (looks_like_number($repeat) and $repeat == 0 and $ENV{HARNESS_ACTIVE})
 
 my $test_proc;
 my $test_proc_input;
+
+# Disable shuffling if we have a plugin that does not support it
+if ($ENV{TEST_GTEST_SHUFFLE} && not all { $_ } L4::TapWrapper::plugin_features('shuffling_support'))
+  {
+     print "Warning: Not all plugins support test shuffling. Ignoring gtest shuffle.\n";
+     $ENV{TEST_GTEST_SHUFFLE} = 0;
+  }
+
 if ($jdb_system_report_on_timeout)
   {
     # If we're supposed to dump the system report we need
