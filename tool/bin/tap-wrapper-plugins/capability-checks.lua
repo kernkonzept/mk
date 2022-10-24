@@ -7,7 +7,7 @@
 --[[
 The plugin handles four cases of labelled input and produces valid TAP output.
   1. Scope declarations:
-       @@ ObjectSpaceDump[SCOPE]:<identifier>
+       @@ ObjectSpaceDump[RESETSCOPE]:<identifier>
      This opens a new scope/sandbox in which object dumps are available under
      their given tag for checks and in which execution statements take effect.
   2. Fiasco object/capability dumps:
@@ -74,12 +74,36 @@ function Dump:filter(func)
   return filtered
 end
 
+function Dump:union(dump)
+  local union = Dump.new()
+
+  for key, object in pairs(self) do
+    union[key] = object
+  end
+
+  for key, object in pairs(dump) do
+    union[key] = object
+  end
+
+  return union
+end
+
+function Dump:intersect(dump)
+  return self:filter(function(obj) return dump[obj.addr] end)
+end
+
+function Dump:diff(dump)
+  local diff_l = self:filter(function(obj) return not dump[obj.addr] end)
+  local diff_r = dump:filter(function(obj) return not self[obj.addr] end)
+  return diff_l:union(diff_r)
+end
+
 function Dump:by(name, value)
-  return self:filter(function(object) return object[name] == value end)
+  return self:filter(function(obj) return obj[name] == value end)
 end
 
 function Dump:by_attr(name, value)
-  return self:filter(function(object) return object.attrs[name] == value end)
+  return self:filter(function(obj) return obj.attrs[name] == value end)
 end
 
 ----------------------
@@ -342,7 +366,7 @@ function process_input(id, input)
     fail_input()
     return
   end
-  if input.info == 'SCOPE' then
+  if input.info == 'RESETSCOPE' then
     sandbox = Sandbox.new(input.text)
   elseif input.info == 'EXEC' then
     if not sandbox:exec(input.text) then
