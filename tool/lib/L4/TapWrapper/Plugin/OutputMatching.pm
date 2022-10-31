@@ -56,7 +56,7 @@ sub get_next_line {
       seek($fd, 0, 0); # Rewind
       $L4::TapWrapper::expline = <$fd>;
     }
-  chomp $L4::TapWrapper::expline;
+  $L4::TapWrapper::expline =~ s/\r*\n$//g; # simplify line endings
   return $L4::TapWrapper::expline if $self->{args}{literal};
   return extract_expected($L4::TapWrapper::expline);
 }
@@ -77,6 +77,8 @@ sub check_start {
 sub process_mine {
   my $self = shift;
   (my $data = shift) =~ s/\e\[[\d,;\s]+[A-Za-z]//gi; #Strip color escapes
+  $data =~ s/\r+$//g; # lines from tap-wrapper do not contain final newline
+
   if ((!$self->{args}{literal} && $data =~ m/$self->{next_line}/) ||
       ($data =~ m/^\Q$self->{next_line}\E$/))
     {
@@ -129,6 +131,10 @@ __END__
 =head1 Plugin for matching output lines
 
 Match all output lines agains the given output expectation.
+As a simplification carriage returns are removed from line endings, both in the
+test output and in the file containing the expected lines. Further, escape
+sequences are automatically removed from the test output but not from the
+expected output.
 
 =head1 Options
 

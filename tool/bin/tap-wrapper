@@ -286,11 +286,7 @@ sub readline_timeout
     }
 
   my $outline = '';
-  if ($readbuffer)
-    {
-      $outline = substr($readbuffer, 0, $idx + 1, '');
-      $outline =~ s/\r+\n/\n/g;
-    }
+  $outline = substr($readbuffer, 0, $idx + 1, '') if $readbuffer;
   $lines_read++;
 
   if ($max_lines_read != 0 && $lines_read >= $max_lines_read) {
