@@ -13,6 +13,7 @@ $Data::Dumper::Indent = 0;
 use L4::TapWrapper::Util qw/kill_ps_tree/;
 
 our @_plugins;
+our @_filters;
 our $TAP_FD;
 our $print_to_tap_fd = 1;
 our $plugintmpdir = undef;
@@ -23,6 +24,22 @@ our $test_description;
 our $expline;
 our $pid = -1;
 
+sub __load_module
+{
+  my $class = shift;
+  my $arg = shift;
+  my $c;
+  eval {
+    load $class;
+    $c = $class->new( $arg );
+    die unless $c;
+    1;
+  } or do {
+    fail_test("Unable to load '$class'");
+  };
+  return $c;
+}
+
 sub load_plugin
 {
   my $name = shift;
@@ -30,17 +47,20 @@ sub load_plugin
   return if defined $_have_plugins{$name}; # Do not load twice
   print "Loading Plugin '$name' with args: " . Dumper($arg). "\n";
   my $class = "L4::TapWrapper::Plugin::$name";
-  my $plugin;
-  eval {
-    load $class;
-    $plugin = $class->new( $arg );
-    die unless $plugin;
-    1;
-  } or do {
-    fail_test("Unable to load plugin '$name'");
-  };
+  my $plugin = __load_module($class, $arg);
   push @_plugins, $plugin;
   $_have_plugins{$name} = $plugin;
+}
+
+sub load_filter
+{
+  my $name = shift;
+  my $arg = shift;
+
+  print "Loading Filter '$name' with args: " . Dumper($arg). "\n";
+  my $class = "L4::TapWrapper::Filter::$name";
+  my $filter = __load_module($class, $arg);
+  push @_filters, $filter;
 }
 
 sub has_plugins_loaded
@@ -60,20 +80,29 @@ sub steal_plugin
 
 sub process_input
 {
-  my $data = shift;
-  my $no_exit = 0;
+  my @data = ( shift );
 
-  for (@_plugins)
+  for my $filter (@_filters)
     {
-      $_->process_any($data);
-      $no_exit ||= $_->{inhibit_exit};
+      @data = map { $filter->process_any($_) } @data;
     }
-  return !$no_exit;
+
+  for my $line ( @data )
+    {
+      my $no_exit = 0;
+      for (@_plugins)
+        {
+          $_->process_any($line);
+          $no_exit ||= $_->{inhibit_exit};
+        }
+      return 1 unless $no_exit;
+    }
+  return 0;
 }
 
 sub finalize {
   my $taplines = 0;
-  foreach (@_plugins)
+  foreach (@_plugins, @_filters)
     {
       foreach ($_->finalize())
         {

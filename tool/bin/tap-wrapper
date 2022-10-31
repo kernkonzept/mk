@@ -49,6 +49,7 @@ GetOptions(
   'run-tags|T=s'    => sub { $ENV{TEST_RUN_TAGS} = $_[1]; },
   'logfile|l=s'     => sub { $ENV{TEST_LOGFILE} = $_[1]; },
   'plugin|p=s'      => sub { $ENV{TEST_TAP_PLUGINS} .= " $_[1]"; },
+  'filter|F=s'      => sub { $ENV{TAP_FILTERS} .= " $_[1]"; },
   'workdir=s'       => sub { $ENV{TEST_WORKDIR} = $_[1]; },
   'image|i=s'       => sub { $ENV{IMAGE_TYPE} = $_[1]; },
   'hard-timeout=i'  => sub { $ENV{TEST_HARD_TIMEOUT} = $_[1]; },
@@ -141,7 +142,18 @@ else
 
 $L4::TapWrapper::TAP_FD->autoflush(1);
 
-if (defined($ENV{TEST_TAP_PLUGINS}))
+if ($ENV{TAP_FILTERS})
+  {
+    foreach (split(' ', $ENV{TAP_FILTERS}))
+      {
+        my ($name, $arg) = split(/:/, $_, 2);
+        $arg = "" unless defined $arg;
+        my %harg = map { split(/=/, $_, 2) } (split (/,/, $arg));
+        L4::TapWrapper::load_filter($name, \%harg);
+      }
+  }
+
+if ($ENV{TEST_TAP_PLUGINS})
   {
     foreach (split(' ', $ENV{TEST_TAP_PLUGINS}))
       {
@@ -399,6 +411,14 @@ $TEST_SCRIPT [options]
                    plugin name, separated by a colon. The TAPOutput and
                    BundleMode plugins are automatically loaded for backwards
                    compatibility. This option may be specified multiple times.
+
+  --filter,-F      Add a filter for transforming the output of the test.
+                   Valid filters can be found in lib/L4/TapWrapper/Filter/.
+                   An optional filter specific argument can be appended to the
+                   filter name, separated by a colon. This option may be
+                   specified multiple times and filters are run in the order
+                   specified with output of earlier filters being fed into later
+                   ones.
 
   --timestamps     Prefix output sent to logfiles with time in seconds
                    since test was started. Alternatively the environment
