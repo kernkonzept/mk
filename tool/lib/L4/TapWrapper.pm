@@ -112,6 +112,9 @@ sub finalize {
             }
           else
             {
+              # carriage returns in TAP lead to problems down the line
+              s/\r+\n/\n/g;
+
               print $TAP_FD $_ if $print_to_tap_fd;
             }
         }
