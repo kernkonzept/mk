@@ -44,7 +44,7 @@ contain neither spaces, equal signs, commas or colons.
 =head2 Interface
 
 Filters operate line based. Any state keeping is the task of the individual
-filter implementation. The filter shold implement the following functions
+filter implementation. The filter should implement the following functions
 to transform the input before it is passed to later filters or, finally to
 the plugins. Filters also can perform checks on the input data during or
 before transformation which will be output as TAP data once processing has
