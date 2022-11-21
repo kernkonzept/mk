@@ -676,6 +676,7 @@ endef
 # 4: libs
 # 5: requires_libs
 # 6: PC_CFLAGS
+# 7: extras
 generate_pcfile =                                                            \
 	[ -d $(dir $(2)) ] || mkdir -p $(dir $(2))                           \
 	;echo -n                                                    > $(2)   \
