@@ -78,6 +78,8 @@ foreach my $entryname (@ARGV)
 
 L4::ModList::merge_entries($module_path, $unzip_tmp, @entries);
 
+my %files_created;
+
 foreach my $e (@entries)
   {
     my $entryname = $e->{entry};
@@ -121,11 +123,12 @@ foreach my $e (@entries)
     foreach (@{$e->{mods}}, \%bootstrap_entry)
       {
         my $usf = $_->{unique_short_filepath};
-        if (! -e $targetdir."/".$usf)
+        if (!$files_created{$targetdir."/".$usf})
           {
             my $subpath = $targetdir."/".dirname($usf);
             mkdir $subpath || die "Could not mkdir $subpath: $!";
             copy($_->{file}, $targetdir."/".$usf);
+            $files_created{$targetdir."/".$usf} = 1;
           }
       }
   }
