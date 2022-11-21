@@ -73,8 +73,9 @@ link_args =
     %(Link_DynLinker:;:
       %:error(Link_DynLinker not specified, cannot link with shared libs.))}
   %{-dynamic-linker*}
-  %(Link_Start) %o %{OBJ*:%*} %(Libs)
-  %{static:--start-group} %(Link_Libs) %{!shared:%(libgcc);:%(libgcc_s)}
+  %(Link_Start) %o %{OBJ*:%*} %{!pie:%(Libs)} %{pie:%(Libs_pic)}
+  %{static:--start-group} %{!pie:%(Link_Libs)} %{pie:%(Link_Libs_pic)}
+  %{!shared:%(libgcc);:%(libgcc_s)}
   %(libgcc_eh) %{static:--end-group} %(Link_End)
   %{EL&EB}
   %{MD:%(generate_deps)} %:error-unused-options()
