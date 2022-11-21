@@ -333,6 +333,7 @@ if ($ned_cfg and $roottask eq 'moe')
 
     $testenv->{TEST_PROG} = $test_prog;
     $testenv->{REQUIRED_MODULES} = \@mod_list;
+    $testenv->{FULLCONFIG}{PLATFORM} = $platform;
 
     # Some more assembly required for L4Linux tests.
     if ($mode eq 'l4linux')
