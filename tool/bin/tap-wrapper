@@ -199,9 +199,14 @@ if ($jdb_system_report_on_timeout)
   }
 else
   {
-    # ... otherwise reuse our stdin for the child processes stdin.
+    # ... otherwise pass our stdin to the child process.
     $L4::TapWrapper::pid = open2($test_proc, '<&STDIN', @ARGV)
       or die "Failed to execute $ARGV[0].\n";
+    # The previous command closes stdin (fd 0). This leads to warnings when
+    # opening other files for writing, as open will reuse fd 0 and warn that
+    # STDIN is now write-only. To prevent these warnings we open /dev/null
+    # read-only as STDIN so that open will not use it.
+    open(STDIN, '<', '/dev/null');
   }
 
 my $readbuffer = '';
