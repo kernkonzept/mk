@@ -39,7 +39,6 @@ strip_quotes = $(patsubst "%,%,$(patsubst %",%,$(1)))#"
 
 CROSS_COMPILE    ?= $(CROSS_COMPILE_$(ARCH))
 
-
 OFORMAT           = $(OFORMAT_$(ARCH))
 BFD_ARCH          = $(BFD_ARCH_$(ARCH))
 L4_KIP_ADDR         ?= $(L4_KIP_ADDR_$(ARCH))
@@ -50,7 +49,7 @@ L4_STACK_ADDR           ?= $(L4_STACK_ADDR_$(ARCH))
 L4_STACK_SIZE           ?= $(if $(L4_STACK_SIZE_MAIN_THREAD),$(L4_STACK_SIZE_MAIN_THREAD),0x8000)
 
 CC_WHITELIST-gcc     := 6 7 8 9 10 11 12
-CC_WHITELIST-clang   := 3.5 3.6 3.7 3.8 3.9
+CC_WHITELIST-clang   := 15 16
 
 VERBOSE          = $(if $(CONFIG_VERBOSE),,@)
 DEPEND_VERBOSE   = $(if $(CONFIG_DEPEND_VERBOSE),,@)
@@ -64,18 +63,34 @@ BUILD_ABI        = $(patsubst "%",%,$(CONFIG_BUILD_ABI))
 BUILD_ARCH       = $(patsubst "%",%,$(CONFIG_BUILD_ARCH))
 MAKECONFS_ADD    = $(call strip_quotes,$(CONFIG_MAKECONFS_ADD))
 
-CCXX_FLAGS        = $(CCXX_FLAGS_$(BUILD_ARCH))
+CCXX_FLAGS       = $(CCXX_FLAGS_$(BUILD_ARCH))
 
 dv               = $(if $(filter-out default undefined,$(origin $(1))),$(1)-default,$(1))
 
 $(call dv,AR)	 = $(CROSS_COMPILE)ar
 $(call dv,AS)	 = $(CROSS_COMPILE)as
-$(call dv,CPP)	 = $(CROSS_COMPILE)cpp
 AWKP		?= gawk --posix
 CCACHE          ?= ccache
-$(call dv,CC)    = $(if $(USE_CCACHE),$(CCACHE) )$(CC_$(BUILD_ARCH))
-$(call dv,CXX)   = $(if $(USE_CCACHE),$(CCACHE) )$(CXX_$(BUILD_ARCH))
 $(call dv,FC)    = $(if $(USE_CCACHE),$(CCACHE) )$(FC_$(BUILD_ARCH))
+
+# Args: 1=$(CLANG); 2=clang/clang++/clang-cpp
+# Rules:
+#  If      $(CLANG) contains '-', use $(CLANG) as clang-version
+#  else if $(CLANG) contains '/', use $(CLANG) as clang-path
+#  otherwise clang-version/clang-path are both empty.
+# The $\ is required to suppress a newline in the command for $(CLANG) without
+# '-', see the comparison in BID_call_compiler_default.
+clang-bin        = $(if $(filter -%,$(1)),$(2)$(1),$\
+		     $(if $(filter %/,$(1)),$(1)$(2),$(2))) \
+		   $(addprefix --target=,$(notdir $(CROSS_COMPILE:%-=%)))
+
+$(call dv,CC)    = $(if $(USE_CCACHE),$(CCACHE) )$(if $(CLANG),$(call \
+                     clang-bin,$(CLANG),clang),$(CC_$(BUILD_ARCH)))
+$(call dv,CXX)   = $(if $(USE_CCACHE),$(CCACHE) )$(if $(CLANG),$(call \
+                     clang-bin,$(CLANG),clang++),$(CXX_$(BUILD_ARCH)))
+$(call dv,CPP)   = $(if $(CLANG),$(call \
+                     clang-bin,$(CLANG),clang-cpp),$(CROSS_COMPILE)cpp)
+
 CP		?= cp
 DICE_SRCDIR	?= $(L4DIR)/../dice
 DICE_OBJDIR	?= $(DICE_SRCDIR)
@@ -394,45 +409,53 @@ callcc    = LC_ALL=C $(CC)  $(CCXX_FLAGS)
 callcxx   = LC_ALL=C $(CXX) $(CCXX_FLAGS)
 callfc    = LC_ALL=C $(FC)  $(CCXX_FLAGS)
 
-define get_gccversion
-  v=$$($(callcc) -dumpversion); \
-  first=$${v%%.*}; \
-  if [ $$first -ge 5 ]; then \
-    echo $$first; \
-  else \
-    echo $$v | sed -e 's/\([^.]\+\.[^.]\+\).*/\1/'; \
-  fi
-endef
-
 get_cc_version_part = $(shell echo $(1) | $(callcc) -E -x c - | tail -1)
 
-# the gcc specific variables: version, base dir, include dir, gcc lib, ...
+# compiler variables: version, base dir, include dir, gcc lib, ...
+# despite having GCC in their name, they are generic and also used with and
+# derived for clang
 # note: determining these variables is slow, and the values should
 #       be set in .config.all. However, this is the place were
 #       they are determined on a 'make config' in $(L4DIR)
 BID_COMPILER_TYPE_f = $(if $(findstring clang, $(shell $(callcc) --version)),clang,gcc)
 
-GCCVERSION_f_clang = 4.9
-GCCMAJORVERSION_f_clang = 4
-GCCMINORVERSION_f_clang = 9
-GCCPATCHLEVEL_f_clang   = 0
+ifeq ($(BID_COMPILER_TYPE),gcc)
+ BID_COMPILER_IS_GCC = 1
+endif
+ifeq ($(BID_COMPILER_TYPE),clang)
+ BID_COMPILER_IS_CLANG = 1
+endif
 
-GCCVERSION_f_gcc      =$(shell $(get_gccversion))
-GCCMAJORVERSION_f_gcc =$(call get_cc_version_part, __GNUC__)
-GCCMINORVERSION_f_gcc =$(call get_cc_version_part, __GNUC_MINOR__)
-GCCPATCHLEVEL_f_gcc   =$(call get_cc_version_part, __GNUC_PATCHLEVEL__)
+GCCMAJORVERSION_ID_gcc   = __GNUC__
+GCCMINORVERSION_ID_gcc   = __GNUC_MINOR__
+GCCPATCHLEVEL_ID_gcc     = __GNUC_PATCHLEVEL__
+GCCMAJORVERSION_ID_clang = __clang_major__
+GCCMINORVERSION_ID_clang = __clang_minor__
+GCCPATCHLEVEL_ID_clang   = __clang_patchlevel__
 
-GCCVERSION_f     =$(GCCVERSION_f_$(BID_COMPILER_TYPE_f))
-GCCMAJORVERSION_f=$(GCCMAJORVERSION_f_$(BID_COMPILER_TYPE_f))
-GCCMINORVERSION_f=$(GCCMINORVERSION_f_$(BID_COMPILER_TYPE_f))
-GCCPATCHLEVEL_f  =$(GCCPATCHLEVEL_f_$(BID_COMPILER_TYPE_f))
+GCCMAJORVERSION_ID_f = $(GCCMAJORVERSION_ID_$(BID_COMPILER_TYPE_f))
+GCCMINORVERSION_ID_f = $(GCCMINORVERSION_ID_$(BID_COMPILER_TYPE_f))
+GCCPATCHLEVEL_ID_f   = $(GCCPATCHLEVEL_ID_$(BID_COMPILER_TYPE_f))
+
+GCCMAJORVERSION_f  = $(call get_cc_version_part, $(GCCMAJORVERSION_ID_f))
+GCCMINORVERSION_f  = $(call get_cc_version_part, $(GCCMINORVERSION_ID_f))
+GCCPATCHLEVEL_f    = $(call get_cc_version_part, $(GCCPATCHLEVEL_ID_f))
+
+# the version is just the major version except for GCC 1-4 where it is
+# major.minor
+GCCVERSION_f_gcc   = $(GCCMAJORVERSION_f)$(if $(filter $(GCCMAJORVERSION_f),1 2 3 4),.$(GCCMINORVERSION_f))
+GCCVERSION_f_clang = $(GCCMAJORVERSION_f)
+GCCVERSION_f       = $(GCCVERSION_f_$(BID_COMPILER_TYPE_f))
+
+GCCDIR_f_clang = $(shell $(callcc) -print-resource-dir)
+GCCDIR_f_gcc = $(shell $(callcc) -print-search-dirs | sed -ne 's+^install: \(.*[^/][^/]*\)/+\1+p' )
+GCCDIR_f = $(GCCDIR_f_$(BID_COMPILER_TYPE_f))
 
 check_path_absolute = $(if $(patsubst /%,,$(2)),$(error Path $(1)=$(2) is not absolute),$(2))
 
 LDVERSION_f     = $(shell $(firstword $(LD)) -v | sed -e 's/.* \([0-9]\)\.\([^. ]*\).*/\1\2/')
 LDNOWARNRWX_f   = $(call checkld,--no-warn-rwx-segments)
 GCCSYSLIBDIRS_f = $(shell $(callcc) -print-search-dirs | sed '/^libraries:/{s/^libraries: =\?/-L/;s/:/ -L/g;q;};d')
-GCCDIR_f	= $(shell $(callcc) -print-search-dirs | sed -ne 's+^install: \(.*[^/][^/]*\)/+\1+p' )
 GCCLIB_file_f   = $(call check_path_absolute,GCCLIB_file_$(1),$(shell $(callcc) -print-file-name=$(1)))
 GCCLIB_HOST_f   = $(call check_path_absolute,GCCLIB_HOST,$(shell $(callcc) -print-libgcc-file-name))
 GCCLIB_S_SO_f	= $(filter /%,$(shell $(callcc) -print-file-name=libgcc_s.so))
@@ -470,7 +493,7 @@ CONDITIONAL_WARNINGS_FULL_f   = $(call checkcc,-Wfloat-conversion) \
 GCCPREFIXOPT_f  = $(call checkcc,-fmacro-prefix-map=$(L4DIR_ABS)/= \
                                  -fmacro-prefix-map=$(OBJ_BASE)/=)
 
-BID_NOSTDINC_clang ?= #-nostdlibinc
+BID_NOSTDINC_clang ?= -nostdinc
 BID_NOSTDINC_gcc   ?= -nostdinc
 BID_NOSTDINC       ?= $(BID_NOSTDINC_$(BID_COMPILER_TYPE))
 
