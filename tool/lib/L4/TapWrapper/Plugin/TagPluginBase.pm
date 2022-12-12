@@ -23,7 +23,7 @@ sub new {
 
 sub check_start {
   my $self = shift;
-  return unless shift =~ m/^(.*)@@ $self->{args}{tag} @< BLOCK *(.*)/;
+  return unless shift =~ m/^(.*)@@ $self->{args}{tag} @< BLOCK *([^\v]*)/;
   $self->{in_block} = 1;
   $self->{block_prefix} = $1;
   $self->{block_info} = $2;
