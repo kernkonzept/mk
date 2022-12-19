@@ -26,10 +26,11 @@ On the lowest abstraction level, IPC operations need the following arguments:
   - the \ref l4re_concepts_descr_capidx "capability selector" of the
     communication partner,
   - a \ref l4re_concepts_descr_label "label",
-  - a \ref l4re_concepts_descr_msgtag "message tag",
-  - a pair of \ref l4re_concepts_descr_timeouts "timeout" values, and
-  - a pointer to the \ref l4re_concepts_descr_utcb
-    "user-level thread control block" (UTCB).
+  - a \ref l4re_concepts_descr_msgtag "message tag", and
+  - a pair of \ref l4re_concepts_descr_timeouts "timeout" values.
+
+During an IPC operation the kernel accesses the UTCB of the current thread to
+read parameters which are not passed as direct arguments.
 
 As result of an IPC operation the kernel returns a message tag and a label and
 the kernel also changes UTCB content. For the detailed call signature, refer to
