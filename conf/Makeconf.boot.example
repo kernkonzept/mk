@@ -75,6 +75,7 @@ QEMU_OPTIONS-arm64 += $(QEMU_OPTIONS-arm64-$(PLATFORM_TYPE))
 QEMU_OPTIONS-mips  += $(QEMU_OPTIONS-mips-$(PLATFORM_TYPE))
 QEMU_OPTIONS-x86   += -m 512 -M q35
 QEMU_OPTIONS-amd64 += -m 512 -M q35
+#QEMU_OPTIONS-amd64 += -m 1024 -M q35 -enable-kvm -cpu host
 QEMU_OPTIONS       += $(QEMU_OPTIONS-$(ARCH))
 
 # The path to the QEMU binary - optional
