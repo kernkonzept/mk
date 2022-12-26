@@ -27,7 +27,7 @@ all::
 # config-tool
 
 DROPSCONF 		= y
-DROPSCONF_DEFCONFIG	?= $(L4DIR)/mk/defconfig/config.x86
+DROPSCONF_DEFCONFIG	?= $(L4DIR)/mk/defconfig/config.amd64
 KCONFIG_FILE            = $(OBJ_BASE)/Kconfig.generated
 KCONFIG_FILE_DEPS       = $(OBJ_BASE)/.Kconfig.generated.d
 KCONFIG_FILE_SRC        = $(L4DIR)/mk/Kconfig
