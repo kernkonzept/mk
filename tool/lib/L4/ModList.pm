@@ -351,15 +351,7 @@ sub get_module_entry($$)
         $is_mode_linux = 1 if $varname eq 'mode' and lc($value) eq 'linux';
       }
 
-      if ($type eq 'module-group') {
-        my @m = ();
-        foreach (split /\s+/, join(' ', @params)) {
-          error "$mod_file_db{id_to_file}{$$fileentry[0]}:$$fileentry[1]: Unknown group '$_'\n" unless defined $groups{$_};
-          push @m, @{$groups{$_}};
-        }
-        @params = @m;
-        $type = 'bin';
-      } elsif ($type eq 'moe') {
+      if ($type eq 'moe') {
         my $bn = (reverse split(/\/+/, $params[0]))[0];
         $mods[2] = { get_command_and_cmdline("moe rom/$bn", %opts) };
         $type = 'bin';
@@ -383,12 +375,20 @@ sub get_module_entry($$)
           } elsif ($type eq 'initrd') {
             $linux_initrd      = $modinfo{file};
             $is_mode_linux     = 1;
+          } elsif ($type eq 'module-group') {
+            foreach (split /\s+/, join(' ', @params)) {
+              error "$mod_file_db{id_to_file}{$$fileentry[0]}:$$fileentry[1]: Unknown group '$_'\n" unless defined $groups{$_};
+              push @mods, @{$groups{$_}};
+            }
           } else {
             push @mods, { %modinfo };
           }
         }
       } elsif ($process_mode eq 'group') {
-        push @{$groups{$current_group_name}}, @params;
+        foreach my $m (@params) {
+          my %modinfo = get_command_and_cmdline($m, %opts);
+          push @{$groups{$current_group_name}}, { %modinfo };
+        }
       } else {
         error "$mod_file_db{id_to_file}{$$fileentry[0]}:$$fileentry[1]: Invalid mode '$process_mode'\n";
       }
