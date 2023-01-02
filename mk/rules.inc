@@ -88,8 +88,8 @@ $1: $2 $(if $(BID_call_compiler_$3),$(GENERAL_D_LOC),FORCE)
 		        BID_call_compiler_$3,\
 	                BID_call_compiler_default),$\
 	              $$($(BID_$(3)_COMPILER)) \
-	              -c $$(DEPFLAGS) $$(DEPFLAGS_$(3)) $$(CPPFLAGS) \
-	              $$($(3)FLAGS) $(4) $$< -o $$@))
+	              $$(strip -c $$(DEPFLAGS) $$(DEPFLAGS_$(3)) $$(CPPFLAGS) \
+	              $$($(3)FLAGS) $(4) $$< -o $$@)))
 endef
 
 # which template rule do we really use
