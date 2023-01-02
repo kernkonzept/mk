@@ -39,8 +39,11 @@ define BID_MAKE_RULE_template_gendep
 $(1): $(2) $(GENERAL_D_LOC)
 	@$$(COMP_MESSAGE)
 	$$(VERBOSE)$$(BID_MAKE_RULE_CREATE_SUBDIR)
-	$$(VERBOSE)$$(if $$(BID_OBJ_SRC_$$@),$$(call MAKEDEP,$$($(BID_$(3)_COMPILER_INT_NAME))) $$($(BID_$(3)_COMPILER)) -c $$(DEPEND_FLAG) $$(CPPFLAGS) $$($(3)FLAGS) $(4) $$< -o $$@)
-	$$(DEPEND_VERBOSE)$$(if $$(BID_OBJ_SRC_$$@),$$(call DEPEND_EXTEND_FUNC, $$(*F).d, $$(dir $$@).$$(notdir $$@).d))
+	$$(VERBOSE)$$(if $$(BID_OBJ_SRC_$$@),$$(call \
+	  MAKEDEP,$$($(BID_$(3)_COMPILER_INT_NAME))) $$($(BID_$(3)_COMPILER)) \
+	  -c $$(DEPEND_FLAG) $$(CPPFLAGS) $$($(3)FLAGS) $(4) $$< -o $$@)
+	$$(DEPEND_VERBOSE)$$(if $$(BID_OBJ_SRC_$$@),$$(call \
+	  DEPEND_EXTEND_FUNC, $$(*F).d, $$(dir $$@).$$(notdir $$@).d))
 endef
 
 prereqs_changed = $(filter-out FORCE .general.d,$?)
@@ -76,11 +79,17 @@ BID_call_compiler_F = $(call COMP_MESSAGE); $(BID_MAKE_RULE_CREATE_SUBDIR) $1
 # Fortran the traditional way of depending on $(GENERAL_D_LOC).
 # The comma placement is on purpose to avoid a leading space in the command.
 # Template for our make rules (make rules that do not use gendep)
+# The $\ statement after the $(if ...) statement must be kept to omit a space
+# prior to the BID_$(3)_COMPILER statement.
 define BID_MAKE_RULE_template_nongendep
 $1: $2 $(if $(BID_call_compiler_$3),$(GENERAL_D_LOC),FORCE)
-	$$(VERBOSE)$$(if $$(BID_OBJ_SRC_$$@),$$(call $(if $(BID_call_compiler_$3),BID_call_compiler_$3,BID_call_compiler_default) \
-	                   ,$$($(BID_$(3)_COMPILER)) -c $$(DEPFLAGS) $$(DEPFLAGS_$(3)) $$(CPPFLAGS) \
-	                                            $$($(3)FLAGS) $(4) $$< -o $$@))
+	$$(VERBOSE)$$(if $$(BID_OBJ_SRC_$$@),$$(call \
+	              $(if $(BID_call_compiler_$3),\
+		        BID_call_compiler_$3,\
+	                BID_call_compiler_default),$\
+	              $$($(BID_$(3)_COMPILER)) \
+	              -c $$(DEPFLAGS) $$(DEPFLAGS_$(3)) $$(CPPFLAGS) \
+	              $$($(3)FLAGS) $(4) $$< -o $$@))
 endef
 
 # which template rule do we really use
@@ -132,7 +141,8 @@ endef
 # targets: %.o, %.s.o, %.pr.o, and %.pr.s.o
 #
 define BID_GENERATE_ASM_MAKE_RULES
-  $(call BID_GENERATE_DEFAULT_MAKE_RULES,%$(BID_S_INFIX),%.$(1),AS,$(if $(filter .$(1),$(BID_ASM_CPP_FILE_EXTENSIONS)),-x assembler-with-cpp,))
+  $(call BID_GENERATE_DEFAULT_MAKE_RULES,%$(BID_S_INFIX),%.$(1),AS,$(if \
+    $(filter .$(1),$(BID_ASM_CPP_FILE_EXTENSIONS)),-x assembler-with-cpp,))
 endef
 
 #
