@@ -30,5 +30,5 @@ GCCNOFPU_amd64_f = $(call checkcc,-mno-mmx) $(call checkcc,-mno-3dnow) \
                    $(call checkcc,-mno-sse4a) $(call checkcc,-mno-avx) \
                    $(call checkcc,-mno-avx2)
 
-QEMU_ARCH_MAP_amd64   = qemu-system-x86_64
-
+QEMU_ARCH_MAP_amd64 = qemu-system-x86_64
+QEMU_OPTIONS_amd64  = -m 512 -M q35
