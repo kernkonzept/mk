@@ -307,6 +307,9 @@ LUA configuration file for startup to give to Ned
 \par `REQUIRED_MODULES`
 Additional modules needed to run the test.
 
+\par `BOOTSTRAP_ARGS`
+Additional parameters to supply to bootstrap.
+
 \par `QEMU_ARGS`
 Additional parameters to supply to QEMU.
 
