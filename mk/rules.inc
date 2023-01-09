@@ -67,7 +67,7 @@ define BID_call_compiler_default
       $(RM) $(call BID_dot_fname,$@).d)
 endef
 
-BID_call_compiler_F = $(COMP_MESSAGE); $(BID_MAKE_RULE_CREATE_SUBDIR) $1
+BID_call_compiler_F = $(call COMP_MESSAGE); $(BID_MAKE_RULE_CREATE_SUBDIR) $1
 
 # Arg and further descriptions: See BID_MAKE_RULE_template_gendep
 #
