@@ -11,7 +11,7 @@ The plugin handles four cases of labelled input and produces valid TAP output.
      This opens a new scope/sandbox in which object dumps are available under
      their given tag for checks and in which execution statements take effect.
   2. Fiasco object/capability dumps:
-       @@ ObjectSpaceDump @< BLOCK
+       @@ ObjectSpaceDump @< BLOCK DUMP
        dump format version number: <version>
        user space tag: <tag>
        <uuencoded gzipped object dump>
@@ -24,6 +24,9 @@ The plugin handles four cases of labelled input and produces valid TAP output.
   4. Lua code to evaluate without a check (e.g. to set variables for checks):
        @@ ObjectSpaceDump[EXEC]:<lua code>
      The EXEC line is emitted as comments to the TAP output for documentation.
+  5. Debug output:
+       @@ ObjectSpaceDump[DEBUGPRINT]:<lua code>
+     The result is emitted as comments to the TAP output.
 --]]
 
 inspect = require('inspect') -- luarocks install inspect
@@ -42,7 +45,7 @@ function Dump.new()
   return o;
 end
 
-function Dump:caps_of(space_name)
+function Dump:caps_to(space_name)
   local spaces = self:filter(function(object)
     return object['name'] == space_name and
            (object['proto'] == 'Task' or object['proto'] == 'Vm')
@@ -135,6 +138,19 @@ function table_len(tab)
   return cnt
 end
 
+function table_merge(a, b)
+  if type(a) == 'table' and type(b) == 'table' then
+    for k,v in pairs(b) do
+      if type(v)=='table' and type(a[k] or false)=='table' then
+        merge(a[k],v)
+      else
+        a[k]=v
+      end
+    end
+  end
+  return a
+end
+
 function eq(a, b)
   if a == b                       then return true  end
   if type(a) ~= 'table'           then return false end
@@ -224,6 +240,25 @@ end
 -- PARSE INPUT --
 -----------------
 
+function parse_rights(rights)
+  local r = tonumber(rights, 16)
+  local parsed = {}
+  if r & 0x4 ~= 0 then parsed["R"] = true end
+  if r & 0x1 ~= 0 then parsed["W"] = true end
+  if r & 0x2 ~= 0 then parsed["S"] = true end
+  if r & 0x8 ~= 0 then parsed["D"] = true end
+  return parsed
+end
+
+function parse_flags(flags)
+  local f = tonumber(flags, 16)
+  local parsed = {}
+  if f & 0x08 ~= 0 then parsed["delete"] = true end
+  if f & 0x10 ~= 0 then parsed["weakref"] = true end
+  if f & 0x20 ~= 0 then parsed["server"] = true end
+  return parsed
+end
+
 function parse_dump(dump)
   local objects = Dump.new()
   local lines = split(dump, '[^\n]+')
@@ -257,8 +292,8 @@ function parse_dump(dump)
         cap_id = cap_id,
         space_id = space_id,
         space_name = space_name,
-        rights = rights,
-        flags = flags,
+        rights = parse_rights(rights),
+        flags = parse_flags(flags),
         obj_addr = obj_addr,
       }
     else -- this is an object line
@@ -305,8 +340,8 @@ function Sandbox.new(scope)
   return sandbox
 end
 
-function Sandbox:safe_load(snip)
-  local fun, res = load(snip, snip, 't', self.env)
+function Sandbox:safe_load(snip, env_ext)
+  local fun, res = load(snip, snip, 't', table_merge(self.env, env_ext or {}))
   if not fun then
     return fun, res
   end
@@ -321,21 +356,24 @@ function Sandbox:exec(snip)
     tap_comment(s .. ' failed')
     tap_comment(snip, '   ')
     tap_comment('error: ' .. inspect(res))
-    return false
+    return
   end
   tap_comment(s)
   tap_comment(snip, '   ')
-  return true
+  return
 end
 
 function Sandbox:check(snip)
+  if not snip:find("^return ") then
+    snip = "return " .. snip
+  end
   local status, res = self:safe_load(snip)
   local s = 'ObjectSpaceDump[CHECK] in ' .. self.scope
   if not status or type(res) ~= 'boolean' then
     tap_not_ok(s)
     tap_comment(snip, '   ')
-    tap_comment('result/error: ' .. inspect(res))
-    return false
+    tap_comment('result/error: ' .. inspect(res), '   ')
+    return
   elseif res then
     tap_ok(s)
     tap_comment(snip, '   ')
@@ -343,16 +381,24 @@ function Sandbox:check(snip)
   else
     tap_not_ok(s)
     tap_comment(snip, '   ')
-    return false
+    return
   end
+end
+
+function Sandbox:debug_print(snip)
+  snip_ext = "return inspect(" .. snip .. ")"
+  local status, res = self:safe_load(snip_ext, {inspect = inspect})
+  tap_comment('ObjectSpaceDump[DEBUGPRINT] in ' .. self.scope)
+  if not status then
+    tap_comment('error: ' .. inspect(res), '   ')
+    return
+  end
+  tap_comment(snip .. ': ' .. res, '   ')
+  return
 end
 
 sandbox = Sandbox.new('')
 function process_input(id, input)
-  local function fail_status()
-    tap_comment('emitting current dumps for debugging:')
-    tap_comment(inspect(sandbox.env.d))
-  end
   local function fail_input()
     tap_not_ok('valid input')
     s = 'id: ' .. id .. ', tag: ' .. input.tag
@@ -369,14 +415,12 @@ function process_input(id, input)
   if input.info == 'RESETSCOPE' then
     sandbox = Sandbox.new(input.text)
   elseif input.info == 'EXEC' then
-    if not sandbox:exec(input.text) then
-      fail_status()
-    end
+    sandbox:exec(input.text)
   elseif input.info == 'CHECK' then
-    if not sandbox:check(input.text) then
-      fail_status()
-    end
-  elseif input.info == nil then
+    sandbox:check(input.text)
+  elseif input.info == 'DEBUGPRINT' then
+    sandbox:debug_print(input.text)
+  elseif input.info == "DUMP" then
     local two_lines = '^[^\n]+\n[^\n]+\n'
     local headers = input.text:match(two_lines)
     if not headers then abort('extract object dump headers') end
@@ -409,17 +453,11 @@ local input = {}
 local ids = {}
 for file in lfs.dir(dir) do
   if file ~= '.' and file ~= '..' then
-    local patterns = { '^(%d+)_(%w+).snippet$'
-                     , '^(%d+)_(%w+)_(%w+).snippet$' }
-    local i, tag, info
-    for _, pattern in pairs(patterns) do
-      i, tag, info = file:match(pattern)
-      if i then break end
-    end
+    local i, tag, info = file:match('^(%d+)_(%w+)_(%w+).snippet$')
 
-    if not i then
-      abort('input filename "' .. file ..
-        '" does not adhere the plugin interface')
+    if not i or not tag or not info then
+      abort('input filename "' .. tostring(file) ..
+            '" does not adhere to the plugin interface')
     end
 
     local f = io.open(dir .. '/' .. file, 'r')
