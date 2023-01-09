@@ -1,6 +1,7 @@
 # vim:se ft=make:
 
 CROSS_COMPILE_arm64       = aarch64-linux-gnu-
+ASFLAGS_arm64             = -Wa,--noexecstack
 LD_EMULATION_CHOICE_arm64 = aarch64linux aarch64elf
 LDFLAGS_arm64            += -z max-page-size=0x1000 -z common-page-size=0x1000 \
                             -z noexecstack

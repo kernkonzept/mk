@@ -1,6 +1,7 @@
 # vim:se ft=make:
 
 CROSS_COMPILE_mips        = mips-linux-
+ASFLAGS_mips              = -Wa,--noexecstack
 ELF_BINARY_TYPE_mips_bl   = $(if $(CONFIG_MIPS_LITTLE_ENDIAN),l,b)
 OFORMAT_mips_bl           = $(if $(CONFIG_MIPS_LITTLE_ENDIAN),little,big)
 LD_EMULATION_CHOICE_mips  = elf$(CPU_ABI)$(ELF_BINARY_TYPE_mips_bl)tsmip

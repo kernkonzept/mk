@@ -2,6 +2,7 @@
 
 CROSS_COMPILE_x86         = x86_64-linux-gnu-
 LD_EMULATION_CHOICE_x86   = elf_i386
+ASFLAGS_x86               = -Wa,--noexecstack
 LDFLAGS_x86              += -z noexecstack
 OFORMAT_x86               = elf32-i386
 BFD_ARCH_x86              = i386
