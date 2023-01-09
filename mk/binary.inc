@@ -513,7 +513,7 @@ CXXFLAGS+= $(CXXFLAGS_L4_GENERIC)
 
 FFLAGS  += $(OPTS)
 FFLAGS  += $(call bid_flag_variants,FFLAGS)
-FFLAGS  += $(CFLAGS_L4_GENERIC)
+FFLAGS  += $(filter-out $(GCCPREFIXOPT),$(CFLAGS_L4_GENERIC))
 
 PICFLAGS += -fPIC -U__PIC__ -D__PIC__=1
 
