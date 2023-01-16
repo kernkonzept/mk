@@ -187,14 +187,18 @@ sub check_config
   my $copts = shift;
   return if (!$copts);
 
-  my $binary = shift;
-  my $cfgfile = shift;
+  my $cfgfile;
 
-  my $kpath = qx/dirname `perl -e 'print \$ARGV[0]' $binary`/;
-  chomp($kpath);
-  $cfgfile = "${kpath}/$cfgfile";
+  for my $_cfgfile (@_)
+    {
+      if ($_cfgfile && -e $_cfgfile)
+        {
+          $cfgfile = $_cfgfile;
+          last;
+        }
+    }
 
-  if (-e $cfgfile)
+  if (defined($cfgfile))
     {
       foreach my $copt (split(' ', $copts))
         {
@@ -204,7 +208,7 @@ sub check_config
     }
   else
     {
-      print "WARNING: $binname config not found at $cfgfile\n";
+      print "WARNING: $binname config not found\n";
     }
 }
 
@@ -289,7 +293,9 @@ if ($test_required_tags)
   }
 
 # Any L4Re kernel features as requirements?
-check_config('L4Re kernel', $ENV{"KERNEL_CONF"}, $kernel, 'globalconfig.out');
+check_config('L4Re kernel', $ENV{"KERNEL_CONF"},
+             $fiascoconfig_file,
+             dirname($kernel) . '/globalconfig.out');
 
 # check add gtest_shuffle unless specific output is expected.
 check_add_gtest_shuffle();
@@ -352,7 +358,7 @@ if ($ned_cfg and $roottask eq 'moe')
         exit_skip("No L4Linux binary provided.") if (!$l4linux);
         exit_skip("No ramdisk for L4Linux provided.") if (!$ramdisk);
         check_config('L4Linux kernel', $ENV{"L4LINUX_CONF"}.' CONFIG_L4_CHR_DS_DRV',
-          $l4linux, '.config');
+          dirname($l4linux) . '/.config');
 
         push (@module_list, $l4linux);
         push (@module_list, $ramdisk);
