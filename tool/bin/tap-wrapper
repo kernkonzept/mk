@@ -56,6 +56,7 @@ GetOptions(
   'max-lines-read=i'=> sub { $max_lines_read = 0+ $_[1]; },
   'timestamps'      => sub { $test_timestamps = 1; },
   'jdb-system-report-on-timeout' => \$jdb_system_report_on_timeout,
+  'introspection-tests' => sub { $ENV{INTROSPECTION_TESTS} = 1; },
 ) or pod2usage(-verbose => 99, -sections => "OPTIONS");
 
 pod2usage(-verbose => 99,
@@ -139,6 +140,14 @@ if ($ENV{TAP_FILTERS})
         my %harg = map { split(/=/, $_, 2) } (split (/,/, $arg));
         L4::TapWrapper::load_filter($name, \%harg);
       }
+  }
+
+if ($ENV{INTROSPECTION_TESTS})
+  {
+    L4::TapWrapper::load_plugin("External", {
+      tag => "IntrospectionTesting",
+      tool => "tool/bin/tap-wrapper-plugins/introspection-testing.lua",
+    });
   }
 
 if ($ENV{TEST_TAP_PLUGINS})

@@ -294,6 +294,12 @@ check_config('L4Re kernel', $ENV{"KERNEL_CONF"}, $kernel, 'globalconfig.out');
 # check add gtest_shuffle unless specific output is expected.
 check_add_gtest_shuffle();
 
+# Introspection testing
+if ($ENV{INTROSPECTION_TESTS})
+  {
+    $test_args .= " -l";
+  }
+
 # Create the initial module list
 my @module_list = ();
 my $test_env_cfg;

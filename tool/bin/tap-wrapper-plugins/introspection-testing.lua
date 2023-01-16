@@ -7,25 +7,25 @@
 --[[
 The plugin handles four cases of labelled input and produces valid TAP output.
   1. Scope declarations:
-       @@ ObjectSpaceDump[RESETSCOPE]:<identifier>
+       @@ IntrospectionTesting[RESETSCOPE]:<identifier>
      This opens a new scope/sandbox in which object dumps are available under
      their given tag for checks and in which execution statements take effect.
   2. Fiasco object/capability dumps:
-       @@ ObjectSpaceDump @< BLOCK DUMP
+       @@ IntrospectionTesting @< BLOCK DUMP
        dump format version number: <version>
        user space tag: <tag>
        <uuencoded gzipped object dump>
-       @@ ObjectSpaceDump BLOCK >@
+       @@ IntrospectionTesting BLOCK >@
      Parses the dump into a lua object and makes it available in the current
      scope under `d[<tag>]`.
   3. Lua checks on the dumps:
-       @@ ObjectSpaceDump[CHECK]:<lua code that returns true/false>
+       @@ IntrospectionTesting[CHECK]:<lua code that returns true/false>
      The CHECK line is translated by the plugin to a TAP ok/not ok line.
   4. Lua code to evaluate without a check (e.g. to set variables for checks):
-       @@ ObjectSpaceDump[EXEC]:<lua code>
+       @@ IntrospectionTesting[EXEC]:<lua code>
      The EXEC line is emitted as comments to the TAP output for documentation.
   5. Debug output:
-       @@ ObjectSpaceDump[DEBUGPRINT]:<lua code>
+       @@ IntrospectionTesting[DEBUGPRINT]:<lua code>
      The result is emitted as comments to the TAP output.
 --]]
 
@@ -350,7 +350,7 @@ end
 
 function Sandbox:exec(snip)
   local status, res = self:safe_load(snip)
-  local s = 'ObjectSpaceDump[EXEC] in ' .. self.scope
+  local s = 'IntrospectionTesting[EXEC] in ' .. self.scope
   snip = snip:gsub('\n', '\n#  ')
   if not status then
     tap_comment(s .. ' failed')
@@ -368,7 +368,7 @@ function Sandbox:check(snip)
     snip = "return " .. snip
   end
   local status, res = self:safe_load(snip)
-  local s = 'ObjectSpaceDump[CHECK] in ' .. self.scope
+  local s = 'IntrospectionTesting[CHECK] in ' .. self.scope
   if not status or type(res) ~= 'boolean' then
     tap_not_ok(s)
     tap_comment(snip, '   ')
@@ -388,7 +388,7 @@ end
 function Sandbox:debug_print(snip)
   snip_ext = "return inspect(" .. snip .. ")"
   local status, res = self:safe_load(snip_ext, {inspect = inspect})
-  tap_comment('ObjectSpaceDump[DEBUGPRINT] in ' .. self.scope)
+  tap_comment('IntrospectionTesting[DEBUGPRINT] in ' .. self.scope)
   if not status then
     tap_comment('error: ' .. inspect(res), '   ')
     return
@@ -408,7 +408,7 @@ function process_input(id, input)
     tap_comment(s)
   end
 
-  if input.tag ~= 'ObjectSpaceDump' then
+  if input.tag ~= 'IntrospectionTesting' then
     fail_input()
     return
   end
