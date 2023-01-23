@@ -344,7 +344,7 @@ sub op_create
         }
     }
 
-  my %set_attrs = @{$args->{"--set-attr"}};
+  my %set_attrs = @{$args->{"--set-attr"} || []};
   $d->{attrs}{$_} = $set_attrs{$_}
     foreach (keys %set_attrs);
 
