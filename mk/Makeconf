@@ -111,8 +111,8 @@ GOSH		= $(firstword $(wildcard $(L4DIR)/../tools/gosh/gosh \
 				$(DROPS_STDDIR)/tool/bin/gosh \
 				 $(shell which gosh 2>/dev/null) ) \
 				 did_not_find_gosh___please_install_gosh )
-HOST_CC		?= gcc
-HOST_CXX	?= g++
+HOST_CC		?= $(if $(CLANG),$(call clang-bin,$(CLANG),clang),gcc)
+HOST_CXX	?= $(if $(CLANG),$(call clang-bin,$(CLANG),clang++),g++)
 HOST_LD		?= ld
 INSTALL		= install
 $(call dv,LD)   = $(CROSS_COMPILE)ld -m $(LD_EMULATION) --oformat $(OFORMAT)
