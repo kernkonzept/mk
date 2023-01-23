@@ -84,31 +84,19 @@ my $target = $ENV{TEST_TARGET};
 my $expline;
 $L4::TapWrapper::test_description = $ENV{TEST_DESCRIPTION} || ($testfile ? "run $testfile" : '') || join(" ", map { $_ ? basename($_) : () } @ARGV, $target);
 
-my $LOG_FD;
-my $logfile;
-my $workdir = $ENV{TEST_WORKDIR};
-$L4::TapWrapper::plugintmpdir = $ENV{TEST_PLUGIN_TMPDIR} || undef;
+my $workdir = $ENV{TEST_WORKDIR} || tempdir("/tmp/tap-wrapper-workdir-XXXXXXXX", CLEANUP => 1);
 my ($name, $path, $suffix) = fileparse($testfile || $target || "", ".t");
-$L4::TapWrapper::plugintmpdir .= "/$path$name" if $L4::TapWrapper::plugintmpdir;
-if ($workdir)
-  {
-    my $testworkdir   = "$workdir/$path$name";
-    my $logdir        = "$testworkdir/log"; # tap-wrapper logs
-    my $rundir        = "$testworkdir/run"; # run_test modules.list, ned files, etc.
-    $logfile          = "$logdir/testout.log";
-    $ENV{TEST_TMPDIR} = $rundir;
-    make_path($logdir, $rundir);
-    $L4::TapWrapper::plugintmpdir = "$testworkdir/plugins" unless $L4::TapWrapper::plugintmpdir;
-  }
-else
-  {
-    $logfile = $ENV{TEST_LOGFILE};
-  }
+my $testworkdir   = "$workdir/$path$name";
+my $logdir        = "$testworkdir/log"; # tap-wrapper logs
+my $rundir        = "$testworkdir/run"; # run_test modules.list, ned files, etc.
+$ENV{TEST_TMPDIR} = $rundir;
+make_path($logdir, $rundir);
+$L4::TapWrapper::plugintmpdir = "$ENV{TEST_PLUGIN_TMPDIR}/$path$name" if $ENV{TEST_PLUGIN_TMPDIR};
+$L4::TapWrapper::plugintmpdir ||= "$testworkdir/plugins";
 
-if ($logfile)
-  {
-    open $LOG_FD, ">>", $logfile or die "Can not open logfile '$logfile'\n";
-  }
+my $logfile       = $ENV{TEST_LOGFILE} || "$logdir/testout.log";
+my $LOG_FD;
+open $LOG_FD, ">>", $logfile or die "Can not open logfile '$logfile'\n";
 
 sub get_timestamp {
   return sprintf("[%8.3fs] ", (time() - $^T));
