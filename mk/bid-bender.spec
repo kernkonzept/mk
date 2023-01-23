@@ -76,7 +76,8 @@ link_args =
   %(Link_Start) %o %{OBJ*:%*} %{pie:%(Libs_pic);:%(Libs)}
   %{static:--start-group} %{pie:%(Link_Libs_pic);:%(Link_Libs)}
   %{!shared:%(libgcc);:%(libgcc_s)}
-  %(libgcc_eh) %{static:--end-group} %(Link_End)
+  %(libgcc_eh) %{!shared:%(libgcc);:%(libgcc_s)}
+  %{static:--end-group} %(Link_End)
   %{EL&EB}
   %{MD:%(generate_deps)} %:error-unused-options()
 
