@@ -81,15 +81,16 @@ $(call dv,FC)    = $(if $(USE_CCACHE),$(CCACHE) )$(FC_$(BUILD_ARCH))
 # The $\ is required to suppress a newline in the command for $(CLANG) without
 # '-', see the comparison in BID_call_compiler_default.
 clang-bin        = $(if $(filter -%,$(1)),$(2)$(1),$\
-		     $(if $(filter %/,$(1)),$(1)$(2),$(2))) \
+		     $(if $(filter %/,$(1)),$(1)$(2),$(2)))
+clang-bin-tgt    = $(call clang-bin,$(1),$(2)) \
 		   $(addprefix --target=,$(notdir $(CROSS_COMPILE:%-=%)))
 
 $(call dv,CC)    = $(if $(USE_CCACHE),$(CCACHE) )$(if $(CLANG),$(call \
-                     clang-bin,$(CLANG),clang),$(CC_$(BUILD_ARCH)))
+                     clang-bin-tgt,$(CLANG),clang),$(CC_$(BUILD_ARCH)))
 $(call dv,CXX)   = $(if $(USE_CCACHE),$(CCACHE) )$(if $(CLANG),$(call \
-                     clang-bin,$(CLANG),clang++),$(CXX_$(BUILD_ARCH)))
+                     clang-bin-tgt,$(CLANG),clang++),$(CXX_$(BUILD_ARCH)))
 $(call dv,CPP)   = $(if $(CLANG),$(call \
-                     clang-bin,$(CLANG),clang-cpp),$(CROSS_COMPILE)cpp)
+                     clang-bin-tgt,$(CLANG),clang-cpp),$(CROSS_COMPILE)cpp)
 
 CP		?= cp
 DICE_SRCDIR	?= $(L4DIR)/../dice
