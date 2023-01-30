@@ -4,7 +4,7 @@ include $(L4DIR)/mk/Makeconf
 CFLAGS	= -O3 $(HOST_CPPFLAGS)
 TARGET  = elf-patcher
 
-CXX	= $(HOST_CXX)
+override CXX = $(HOST_CXX)
 
 all:: $(OBJ_DIR)/$(TARGET)
 

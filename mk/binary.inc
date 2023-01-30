@@ -399,9 +399,9 @@ WARNINGS         ?= $(WARNINGS_FULL)
 
 ifeq ($(MODE),host)
 # never cross compile in host mode
-override CROSS_COMPILE = 
-CC            = $(HOST_CC)
-CXX           = $(HOST_CXX)
+override CROSS_COMPILE =
+override CC            = $(HOST_CC)
+override CXX           = $(HOST_CXX)
 else
 # no architecture specific flags in host mode
 LDFLAGS      += $(LDFLAGS_$(ARCH))
