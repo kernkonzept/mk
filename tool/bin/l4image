@@ -312,6 +312,7 @@ sub create_image
     }
 
   ${$d}{num_mods} = scalar @{${$d}{mods}};
+  ${$d}{mbi_cmdline} = $entry{bootstrap}{cmdline};
 }
 
 sub op_create
