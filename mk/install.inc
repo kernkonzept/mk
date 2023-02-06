@@ -27,8 +27,8 @@ endif
 endif
 INSTALL_TARGET += $(INSTALL_TARGET_$(OSYSTEM))
 
-all::	$(addprefix $(INSTALLDIR_LOCAL)/,$(INSTALL_TARGET))
-install:: $(addprefix $(INSTALLDIR)/,$(INSTALL_TARGET))
+all::	$(addprefix $(INSTALLDIR_LOCAL)/,$(INSTALL_TARGET)) $(EXTRA_INSTALL_GOALS)
+install:: $(addprefix $(INSTALLDIR)/,$(INSTALL_TARGET)) $(EXTRA_INSTALL_GOALS)
 
 # with prog.mk, we copy
 ifeq ($(ROLE),prog.mk)

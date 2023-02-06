@@ -97,6 +97,20 @@ else
   endif
 endif
 
+# This registers directories with RELOC_PHYS enabled in a central file in the
+# build directory. It allows us to specifically call make on these again when
+# the RAM_BASE changes.
+ifeq ($(RELOC_PHYS),y)
+EXTRA_INSTALL_GOALS += register_phys_reloc
+.PHONY: register_phys_reloc
+
+register_phys_reloc:
+	@line="PHYS_RELOC_DIR_LIST += $(OBJ_DIR)"; \
+	depfile="$(OBJ_BASE)/.Makeconf.phys_reloc"; \
+	grep -q -F "$$line" "$$depfile" || ( echo "$$line" >> "$$depfile" )
+
+endif
+
 include $(L4DIR)/mk/install.inc
 
 DEPS	+= $(foreach file,$(TARGET), $(call BID_LINK_DEPS,$(file)))
