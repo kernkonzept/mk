@@ -1,0 +1,7 @@
+These are the imagebuilder script which are bound to replace make goals that
+build images in an effort to remove any calls to the build system when creating
+images. As of now we still have to call the build system in corresponding cases
+in order to create proper bootstrap images for the selected platforms which
+however only has to done once. Subsequent calls to these imagebuilder scripts
+will rely on the l4image tool to build the final image including the selected
+modules.

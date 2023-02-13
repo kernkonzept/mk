@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+BASE_IMAGE_FILENAME="bootstrap.raw"
+TARGET_IMAGE_FILENAME="bootstrap_entry.raw"
+
+source "$(dirname $0)/_l4image_build.sh.inc"

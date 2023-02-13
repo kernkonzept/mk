@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+
+BASE_IMAGE_FILENAME="bootstrap.efi"
+TARGET_IMAGE_FILENAME="bootstrap_entry.efi"
+export BOOTSTRAP_DO_UEFI=y
+
+source "$(dirname $0)/_l4image_build.sh.inc"

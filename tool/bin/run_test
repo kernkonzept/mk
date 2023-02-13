@@ -450,9 +450,11 @@ $ENV{MODULE_SEARCH_PATH} = $module_search_path;
 
 print "$_='$ENV{$_}' " foreach qw(QEMU_OPTIONS MODULES_LIST MODULE_SEARCH_PATH);
 
+$ENV{ENTRY} = "maketest";
+
 if ($ENV{IMAGE_TYPE})
   {
-    my $cmd = "make $ENV{IMAGE_TYPE} E=maketest";
+    my $cmd = "$obj_base/source/tool/imagebuilder/$ENV{IMAGE_TYPE}";
     print $cmd."\n";
     my $retval = system($cmd);
     if ($retval == 0)
@@ -479,6 +481,6 @@ if (my $test_starter = $ENV{EXTERNAL_TEST_STARTER})
   }
 
 
-my @cmd = (qw(make qemu E=maketest));
+my @cmd = ( "$obj_base/source/tool/imagebuilder/qemu" );
 print join(' ', @cmd)."\n";
 exec @cmd;

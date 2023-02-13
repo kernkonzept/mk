@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+
+L4IMAGE="${OBJ_BASE}/source/tool/bin/l4image"
+MAKECONF="${OBJ_BASE}/source/tool/bin/makeconf"
+
+# Sets MAKECONF_ARCH
+if [[ -z "${ARCH}" ]]; then
+    . <("$MAKECONF" "$OBJ_BASE" ARCH)
+    ARCH=${MAKECONF_ARCH}
+fi
+
+if [[ "${ARCH}" == "amd64" || "${ARCH}" == "x86" ]] ; then
+    source <("$MAKECONF" "$OBJ_BASE" QEMU_PATH QEMU_OPTIONS MODULE_SEARCH_PATH BUILDDIR_SEARCHPATH)
+    export QEMU="$MAKECONF_QEMU_PATH"
+    export QEMU_OPTIONS="$MAKECONF_QEMU_OPTIONS"
+    export SEARCHPATH="${MODULE_SEARCH_PATH}:${SEARCHPATH}:${MAKECONF_MODULE_SEARCH_PATH}:${MAKECONF_BUILDDIR_SEARCHPATH}"
+    export L4DIR="$(realpath "${OBJ_BASE}/source")"
+
+    exec "${L4DIR}/tool/bin/qemu-x86-launch" "${MODULES_LIST}" "${ENTRY:-${E}}"
+fi
+
+if [[ -z "$TARGET_IMAGE" ]]; then
+    export TARGET_IMAGE="$(mktemp --tmpdir "bootstrap-qemu-XXXXXXXXXX.elf")"
+    trap 'rm $TARGET_IMAGE' EXIT
+fi
+
+"$(dirname $0)"/"${QEMU_IMAGE_TYPE:-elfimage}" || exit $?
+
+$L4IMAGE --verbose -i "$TARGET_IMAGE" launch; exit $?
