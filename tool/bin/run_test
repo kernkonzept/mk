@@ -332,6 +332,8 @@ if ($ned_cfg and $roottask eq 'moe')
     my $testenv = L4::TestEnvLua::generate_test_env($hwconfig_file, $fiascoconfig_file);
 
     $testenv->{TEST_PROG} = $test_prog;
+    $testenv->{TEST_TARGET} = $test_target;
+    $testenv->{TEST_ARGS} = $test_args;
     $testenv->{REQUIRED_MODULES} = \@mod_list;
     $testenv->{FULLCONFIG}{PLATFORM} = $platform;
 
