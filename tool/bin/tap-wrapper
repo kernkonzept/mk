@@ -236,7 +236,12 @@ sub trigger_jdb_system_report {
     }
 
   # abort here if no jdb found
-  return unless $line;
+  unless ($line)
+    {
+      print $LOG_FD "Warning: jdb did not react to trigger. Maybe missing?\n";
+      print STDERR "Warning: jdb did not react to trigger. Maybe missing?\n";
+      return;
+    }
 
   # Trigger system report
   print $test_proc_input "Y\n";
