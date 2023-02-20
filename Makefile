@@ -326,7 +326,6 @@ checkconf:
 # The contents of the variables to cache is already defined in mk/Makeconf.
 .PHONY: Makeconf.bid.local-helper Makeconf.bid.local-internal-names \
         libgendep checkconf
-ARCH = $(BUILD_ARCH)
 CC := $(if $(filter sparc,$(ARCH)),$(if $(call GCCIS_sparc_leon_f),sparc-elf-gcc,$(CC)),$(CC))
 LD := $(if $(filter sparc,$(ARCH)),$(if $(call GCCIS_sparc_leon_f),sparc-elf-ld,$(LD)),$(LD))
 Makeconf.bid.local-helper:
@@ -507,10 +506,6 @@ define switch_ram_base_func
 	echo "RAM_BASE_SWITCH_OK := yes"                                    >> $(OBJ_BASE)/Makeconf.ram_base
 endef
 
-BUILDDIR_SEARCHPATH = $(OBJ_BASE)/bin/$(ARCH)_$(CPU):$(OBJ_BASE)/bin/$(ARCH)_$(CPU)/$(BUILD_ABI):$(OBJ_BASE)/lib/$(ARCH)_$(CPU):$(OBJ_BASE)/lib/$(ARCH)_$(CPU)/$(BUILD_ABI)
-
-QEMU_ARCH_MAP_$(ARCH) ?= qemu-system-$(ARCH)
-
 QEMU_KERNEL_TYPE          ?= elfimage
 QEMU_KERNEL_FILE-elfimage  = $(IMAGES_DIR)/bootstrap.elf
 QEMU_KERNEL_FILE-uimage    = $(IMAGES_DIR)/bootstrap.uimage
@@ -577,7 +572,7 @@ efiimage: check_and_adjust_ram_base
 ifneq ($(filter $(ARCH),x86 amd64),)
 qemu:
 	$(VERBOSE)$(entryselection);                                      \
-	 qemu=$(if $(QEMU_PATH),$(QEMU_PATH),$(QEMU_ARCH_MAP_$(ARCH)));   \
+	 qemu=$(QEMU_PATH);   \
 	 $(if $(filter -serial "-serial",$(QEMU_OPTIONS)),,echo "Warning: No -serial in QEMU_OPTIONS." >&2;) \
 	 QEMU=$$qemu QEMU_OPTIONS="$(QEMU_OPTIONS)"                       \
 	  $(tool_envvars) $(common_envvars)                               \

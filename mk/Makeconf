@@ -24,6 +24,10 @@ $(if $(ROLE),$(OBJ_DIR)/.general.d: $(L4DIR)/mk/$(ROLE))
 
 strip_quotes = $(patsubst "%,%,$(patsubst %",%,$(1)))#"
 
+ARCH = $(BUILD_ARCH)
+
+BUILDDIR_SEARCHPATH = $(OBJ_BASE)/bin/$(ARCH)_$(CPU):$(OBJ_BASE)/bin/$(ARCH)_$(CPU)/$(BUILD_ABI):$(OBJ_BASE)/lib/$(ARCH)_$(CPU):$(OBJ_BASE)/lib/$(ARCH)_$(CPU)/$(BUILD_ABI)
+
 CROSS_COMPILE    ?= $(CROSS_COMPILE_$(ARCH))
 
 OFORMAT           = $(OFORMAT_$(ARCH))
@@ -127,6 +131,10 @@ IMAGES_DIR      ?= $(OBJ_BASE)/images
 # Tools to find packages in projects
 BID_PRJ_DIR_MAX_DEPTH ?= 4
 find_prj_dirs = $(shell $(L4DIR)/mk/pkgfind $(1) $(BID_PRJ_DIR_MAX_DEPTH))
+
+# QEMU defaults
+QEMU_ARCH_MAP_$(ARCH) ?= qemu-system-$(ARCH)
+QEMU_PATH             ?= $(QEMU_ARCH_MAP_$(ARCH))
 
 # functions that are handy
 absfilename_target_dir_needs_to_exist = $(foreach w,$(1),$(addsuffix /$(notdir $(w)),$(shell cd $(dir $(w)) 2>/dev/null&&$(PWDCMD))))
