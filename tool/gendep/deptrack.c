@@ -25,8 +25,6 @@
 #define min(a,b) ((a)<(b)?(a):(b))
 #endif
 
-extern int errno;
-
 static FILE * output;
 static struct
 {
