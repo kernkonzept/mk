@@ -109,18 +109,41 @@ sub extract_expected
 sub finalize
 {
   my $self = shift;
+  my $expect_message;
+  my $ok;
+
+  # Ok or not ok?
   if (defined($self->{next_line}))
     {
       $self->{num_res}++;
-      $self->add_tap_line(0, "expected output not found in line $self->{num_res} : $self->{next_line}");
+      $ok = 0;
+      $expect_message = "expected output not found in line $self->{num_res} : $self->{next_line}";
     }
   else
     {
-      $self->add_tap_line(1, "A total of $self->{num_res} line(s) of output matched.");
-      $self->add_raw_tap_line("#  Test-uuid: $self->{args}{uuid}\n")
-        if defined($self->{args}{uuid});
+      $ok = 1;
+      $expect_message =  "A total of $self->{num_res} line(s) of output matched.";
     }
+
+  # Have extra tap description or not ?
+  my $tap_description = $self->{args}{tap_description};
+  if ($tap_description)
+    {
+      $self->add_tap_line($ok, $tap_description);
+      $self->add_raw_tap_line("# ${expect_message}\n");
+    }
+  else
+    {
+      $self->add_tap_line($ok, $expect_message);
+    }
+
+  # UUID if present
+  $self->add_raw_tap_line("#  Test-uuid: $self->{args}{uuid}\n")
+    if defined($self->{args}{uuid});
+
+  # TAP plan
   $self->add_raw_tap_line("1..1\n");
+
   $self->SUPER::finalize();
 }
 
