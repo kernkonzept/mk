@@ -890,6 +890,7 @@ help::
 	@echo "  help             - Print this help text."
 	@echo "  test             - Run kernel and user-land tests. If 'TEST_KUNIT_DIR' is"
 	@echo "                     not provided, only user-land tests run."
+	@echo "                     Set N= to amount of tests to be run in parallel."
 	@echo "  listplatforms    - List available platforms."
 
 
@@ -914,6 +915,7 @@ test:
 	\
 	(cd $${test_tmp_dir} && \
 	 prove $(if $(TAPARCHIVE),-a $(TAPARCHIVE)) $(if $(VERBOSE),,-v) \
+	       $(if $(N),-j $(N)) \
 	       -m -r $(if $(TEST_KUNIT_DIR),kunit-tests) \
 	       "bid-tests/$${TESTS#bid-tests/}"); \
 	rm -fr "$${test_tmp_dir}"
