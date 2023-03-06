@@ -35,7 +35,7 @@ sub __load_module
     die unless $c;
     1;
   } or do {
-    fail_test("Unable to load '$class'");
+    fail_test("Unable to load '$class': $@");
   };
   return $c;
 }
