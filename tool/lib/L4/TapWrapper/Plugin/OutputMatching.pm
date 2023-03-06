@@ -110,19 +110,17 @@ sub finalize
 {
   my $self = shift;
   my $expect_message;
-  my $ok;
+  my $ok = not defined($self->{next_line});
 
   # Ok or not ok?
-  if (defined($self->{next_line}))
+  if ($ok)
     {
-      $self->{num_res}++;
-      $ok = 0;
-      $expect_message = "expected output not found in line $self->{num_res} : $self->{next_line}";
+      $expect_message =  "A total of $self->{num_res} line(s) of output matched.";
     }
   else
     {
-      $ok = 1;
-      $expect_message =  "A total of $self->{num_res} line(s) of output matched.";
+      $self->{num_res}++;
+      $expect_message = "expected output not found in line $self->{num_res} : $self->{next_line}";
     }
 
   # Have extra tap description or not ?
