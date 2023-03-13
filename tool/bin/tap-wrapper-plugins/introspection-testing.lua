@@ -37,6 +37,29 @@ zlib    = require('zlib')    -- luarocks install lua-zlib
 -- DATA STRUCTURES --
 ---------------------
 
+-- helper function called by Dump:filter() and Caps:filter()
+function filter(dict, func, res)
+  for key, object in pairs(dict) do
+    if func(object) then
+      res[key] = object
+    end
+  end
+  return res
+end
+
+-- helper function called by Dump:union() and Caps:union()
+function union(dict1, dict2, res)
+  for key, object in pairs(a) do
+    res[key] = object
+  end
+
+  for key, object in pairs(b) do
+    res[key] = object
+  end
+
+  return res
+end
+
 Dump = {}
 
 function Dump.new()
@@ -45,7 +68,58 @@ function Dump.new()
   return o;
 end
 
-function Dump:caps_to(space_name)
+function Dump:filter(func)
+  return filter(self, func, Dump.new())
+end
+
+function Dump:union(dump)
+  return union(self, dump, Dump.new())
+end
+
+function Dump:intersect(dump)
+  return self:filter(function(obj) return dump[obj.obj_id] end)
+end
+
+function Dump:diff(dump)
+  local diff_l = self:filter(function(obj) return not dump[obj.obj_id] end)
+  local diff_r = dump:filter(function(obj) return not self[obj.obj_id] end)
+  return diff_l:union(diff_r)
+end
+
+function Dump:by(key, value)
+  return self:filter(function(obj) return obj[key] == value end)
+end
+
+function Dump:by_attr(key, value)
+  return self:filter(function(obj) return obj.attrs[key] == value end)
+end
+
+function Dump:test_task()
+  return unpack(self:by("proto", "Task")
+                :filter(function(obj) return obj.name:find('^test_') end))
+end
+
+function Dump:test_thread()
+  return unpack(self:by("proto", "Thread"):by("name", "gtest_main"))
+end
+
+function Dump:caps_to(space_id)
+  if not self[space_id] then
+    error(space_id .. ' is not an existing space', 2)
+  end
+
+  local caps = {}
+  for _, object in pairs(self) do
+    for _, cap in pairs(object.caps) do
+      if cap.space_id == space_id then
+        caps[cap.cap_id] = cap
+      end
+    end
+  end
+  return caps
+end
+
+function Dump:caps_to_name(space_name)
   local spaces = self:filter(function(object)
     return object['name'] == space_name and
            (object['proto'] == 'Task' or object['proto'] == 'Vm')
@@ -60,53 +134,50 @@ function Dump:caps_to(space_name)
   for _, object in pairs(self) do
     for _, cap in pairs(object.caps) do
       if cap.space_name == space_name then
-        caps[cap.cap_addr] = cap
+        caps[cap.cap_id] = cap
       end
     end
   end
   return caps
 end
 
-function Dump:filter(func)
-  local filtered = Dump.new()
-  for key, object in pairs(self) do
-    if func(object) then
-      filtered[key] = object
-    end
-  end
-  return filtered
-end
-
-function Dump:union(dump)
-  local union = Dump.new()
-
-  for key, object in pairs(self) do
-    union[key] = object
+function Dump:cap(cap_id, task)
+  if type(cap_id) ~= "string" then
+    error('cap_id provided to cap(<cap_id>) must be a string', 2)
   end
 
-  for key, object in pairs(dump) do
-    union[key] = object
-  end
-
-  return union
+  task = task or self:test_task()
+  return self:caps_to(task.obj_id)[cap_id]
 end
 
-function Dump:intersect(dump)
-  return self:filter(function(obj) return dump[obj.addr] end)
+Caps = {}
+
+function Caps.new()
+  local o = {}
+  setmetatable(o, {__index = Caps});
+  return o;
 end
 
-function Dump:diff(dump)
-  local diff_l = self:filter(function(obj) return not dump[obj.addr] end)
-  local diff_r = dump:filter(function(obj) return not self[obj.addr] end)
+function Caps:filter(func)
+  return filter(self, func, Caps.new())
+end
+
+function Caps:union(caps)
+  return union(self, caps, Caps.new())
+end
+
+function Caps:intersect(caps)
+  return self:filter(function(cap) return caps[cap.cap_id] end)
+end
+
+function Caps:diff(caps)
+  local diff_l = self:filter(function(cap) return not dump[cap.cap_id] end)
+  local diff_r = caps:filter(function(cap) return not self[cap.cap_id] end)
   return diff_l:union(diff_r)
 end
 
-function Dump:by(name, value)
-  return self:filter(function(obj) return obj[name] == value end)
-end
-
-function Dump:by_attr(name, value)
-  return self:filter(function(obj) return obj.attrs[name] == value end)
+function Caps:by(key, value)
+  return self:filter(function(cap) return cap[key] == value end)
 end
 
 ----------------------
@@ -142,7 +213,7 @@ function table_merge(a, b)
   if type(a) == 'table' and type(b) == 'table' then
     for k,v in pairs(b) do
       if type(v)=='table' and type(a[k] or false)=='table' then
-        merge(a[k],v)
+        table_merge(a[k],v)
       else
         a[k]=v
       end
@@ -151,14 +222,24 @@ function table_merge(a, b)
   return a
 end
 
-function eq(a, b)
-  if a == b                       then return true  end
-  if type(a) ~= 'table'           then return false end
-  if type(b) ~= 'table'           then return false end
-  if table_len(a) ~= table_len(b) then return false end
+function eq(a, b, quiet)
+  function comment_not_equal()
+    if not quiet then
+      return "first: " .. inspect(a) .. "\n" .. "second: " .. inspect(b)
+    end
+    return nil
+  end
+
+  if a == b then return true end
+  if type(a) ~= 'table' or type(b) ~= 'table' or
+     table_len(a) ~= table_len(b) then
+    return false, comment_not_equal()
+  end
 
   for k, v in pairs(a) do
-    if not eq(v, b[k]) then return false end
+    if not eq(v, b[k], true) then
+      return false, comment_not_equal()
+    end
   end
   return true
 end
@@ -262,7 +343,7 @@ end
 function parse_dump(dump)
   local objects = Dump.new()
   local lines = split(dump, '[^\n]+')
-  local cur_obj_addr
+  local cur_obj_id
 
   local function parse(line, pat)
     local res = {}
@@ -287,14 +368,14 @@ function parse_dump(dump)
       local cap_addr, cap_id, space_id, space_name, rights, flags, obj_addr =
         parse(line, '^\t(%x+)%[C:(%x+)%]: ' .. attrs_regex .. '$')
 
-      objects[cur_obj_addr].caps[cap_addr] = {
+      objects[cur_obj_id].caps[cap_id] = {
         cap_addr = cap_addr,
         cap_id = cap_id,
         space_id = space_id,
         space_name = space_name,
         rights = parse_rights(rights),
         flags = parse_flags(flags),
-        obj_addr = obj_addr,
+        obj_addr = obj_addr
       }
     else -- this is an object line
       local obj_id, obj_addr, proto, attrstrs =
@@ -311,9 +392,9 @@ function parse_dump(dump)
         attrs[attr[1]] = attr[2] or true
       end
 
-      cur_obj_addr = obj_addr
-      objects[obj_addr] = {
-        addr = obj_addr,
+      cur_obj_id = obj_id
+      objects[obj_id] = {
+        obj_addr = obj_addr,
         obj_id = obj_id,
         proto = proto,
         name = name,
@@ -367,7 +448,7 @@ function Sandbox:check(snip)
   if not snip:find("^return ") then
     snip = "return " .. snip
   end
-  local status, res = self:safe_load(snip)
+  local status, res, errstr = self:safe_load(snip)
   local s = 'IntrospectionTesting[CHECK] in ' .. self.scope
   if not status or type(res) ~= 'boolean' then
     tap_not_ok(s)
@@ -381,6 +462,7 @@ function Sandbox:check(snip)
   else
     tap_not_ok(s)
     tap_comment(snip, '   ')
+    if errstr then tap_comment(errstr, '   ') end
     return
   end
 end
