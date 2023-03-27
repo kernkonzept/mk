@@ -66,7 +66,7 @@ PRJ_DIRS := \
 # given order matters
 ALIASES_DIRS = $(wildcard $(L4DIR)/mk/aliases.d) \
                $(wildcard $(OBJ_BASE)/aliases.d) \
-               $(wildcard $(addsuffix /aliases.d,$(shell find $(SRC_DIR) -maxdepth $(BID_PRJ_DIR_MAX_DEPTH) -type d -name prj-config)))
+               $(wildcard $(addsuffix /aliases.d,$(shell find -L $(SRC_DIR) -maxdepth $(BID_PRJ_DIR_MAX_DEPTH) -type d -name prj-config)))
 
 # all package config files go here
 PKGCONF_DIR  = $(OBJ_BASE)/pc
