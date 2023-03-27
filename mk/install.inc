@@ -40,14 +40,13 @@ $(foreach f,$(INSTALL_TARGET),$(INSTALLDIR_LOCAL)/$(f)):$(INSTALLDIR_LOCAL)/%:%
 	$(VERBOSE)$(call INSTALLFILE_LOCAL,$<,$@)
 else
 # with others, we symlink
-# we check for each locally installed lib if the symlink is correct or if
-# it's a shared lib since we need to always call the local install rule as
-# we need to load shared libs to the target
+# we check for each locally installed lib if either the symlink is correct or
+# if we really need to update the target by executing INSTALLFILE_LOCAL.
 .PHONY: $(addprefix $(INSTALLDIR_LOCAL)/,$(INSTALL_TARGET))
 $(foreach f,$(INSTALL_TARGET),$(INSTALLDIR_LOCAL)/$(f)):$(INSTALLDIR_LOCAL)/%:%
 	@$(if $(INSTALLFILE_LOCAL), \
 		f="$@"; \
-		if [ ! $< -ef $@ -o "$${f%%.so}" != "$$f" ] ; then \
+		if [ ! $< -ef $@ -a $< -nt $@ ]; then \
 		  $(if $(INSTALL_LOCAL_MESSAGE),$(INSTALL_LOCAL_MESSAGE);) \
 		  $(INSTALL) -d $(dir $@); \
 		  $(call INSTALLFILE_LOCAL,$<,$@); \
