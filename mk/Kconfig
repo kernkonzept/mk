@@ -296,3 +296,5 @@ config BID_PIE
 	depends on BID_PIE_VOLUNTARY || BID_PIE_ALL
 
 endmenu
+
+# PKG_KCONFIG

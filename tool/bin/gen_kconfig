@@ -2,9 +2,7 @@
 
 use strict;
 use warnings;
-
-my $kconfig_src_file = shift;
-my $kconfig_obj_file = shift;
+use Getopt::Long;
 
 my %pfs;
 my %archs;
@@ -12,7 +10,34 @@ my %files;
 
 my $tag = qr {^\s*\#\s*};
 
-foreach my $f (@ARGV) {
+sub usage
+{
+  my $exitvalue = shift;
+  my $errortext = shift;
+  print "Error: $errortext\n\n" if defined $errortext;
+  print STDERR <<EOH;
+Usage: $0 options... command
+TODO: write this usage
+EOH
+  exit $exitvalue;
+}
+
+my $kconfig_src_file;
+my $kconfig_obj_file;
+my @kconfig_arch_files;
+my @kconfig_pkg_files;
+
+GetOptions("kconfig-src-file=s" => \$kconfig_src_file,
+           "kconfig-obj-file=s" => \$kconfig_obj_file,
+           "kconfig-arch-file=s" => sub { push @kconfig_arch_files, $_[1]; },
+           "kconfig-pkg-file=s" => sub { push @kconfig_pkg_files, $_[1]; }
+         ) or usage(1);
+
+usage(1, "--kconfig-src-file not specified.") unless defined $kconfig_src_file;
+usage(1, "'$kconfig_src_file' does not exist.") unless -e $kconfig_src_file;
+usage(1, "--kconfig-obj-file not specified.") unless defined $kconfig_obj_file;
+
+foreach my $f (@kconfig_arch_files) {
   my $bsp_name;
   $bsp_name = $1 if $f =~ /\/bsp\/([^\/]+)\//;
   open(X, $f) || die "Cannot open $f: $!";
@@ -58,7 +83,8 @@ foreach my $f (@ARGV) {
 
   close X;
 }
-open(IN, "$kconfig_src_file") || die "Cannot open $kconfig_src_file: $!";
+
+open(IN, $kconfig_src_file) || die "Cannot open $kconfig_src_file: $!";
 open(OUT, ">$kconfig_obj_file") || die "Cannot open $kconfig_obj_file: $!";
 print OUT "# vi:set ft=kconfig:\n# This Kconfig is auto-generated.\n";
 while ($_=<IN>) {
@@ -151,6 +177,21 @@ while ($_=<IN>) {
       print OUT "	depends on $_\n" foreach (@{$pfs{$i}{dep}});
       print OUT "	select $_\n" foreach (@{$pfs{$i}{select}});
       print OUT "\n";
+    }
+  }
+
+  if (/$tag PKG_KCONFIG\W/x) {
+    foreach my $kconfig_file (@kconfig_pkg_files) {
+      (my $rel_path = $kconfig_file) =~ s/Kconfig.L4$//;
+
+      open(my $in, $kconfig_file) || die "Cannot open '$kconfig_file': $!";
+      while (my $l = <$in>) {
+        if ($l =~ /^(\s*source\s+")(.+".*)/) {
+          $l = $1.$rel_path.$2;
+        }
+        print OUT $l;
+      }
+      close $in;
     }
   }
 }
