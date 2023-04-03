@@ -135,10 +135,6 @@ will be built for all possible platforms.
 Name or names of the binaries to compile. This variable may also be
 postfixed with a specific architecture.
 
-\par `SRC_CC_IS_CXX11`
-
-C++ standard to use. Default is `c++0x`.
-
 Target-specific Configuration Variables
 ---------------------------------------
 
