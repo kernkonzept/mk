@@ -5,8 +5,6 @@
 #
 # Makefile-Include for install-rules
 #
-# This file is useful only when actually building files, thus if
-# BUILD_ONE_ARCHITECTURE (see Makeconf) is defined.
 # INSTALL_TARGET and INSTALL_TARGET_$(ARCH) contain the targets to be
 # installed. If they are both empty, and NOTARGETSTOINSTALL is not set,
 # they are set to TARGET and TARGET_$(ARCH).

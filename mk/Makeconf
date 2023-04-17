@@ -8,19 +8,6 @@
 # dependencies from the various Makeconf.locals, defines the messages for
 # div actions, and permits the dependency-creation on clean-rules.
 #
-# The macros BUILD_MULTIPLE_ARCHITECTURES and BUILD_ONE_ARCHITECTURE are
-# defined here.
-#
-# BUILD_MULTIPLE_ARCHITECTURES is set if ARCHS is set to multiple
-# architectures in the Makefile. If ARCHS is not set, the default value
-# l4_i386 will be assumed, not defining BUILD_MULTIPLE_ARCHITECTURES.
-# In the muli-arch case, binary.inc triggers build the files into subdirs,
-# dir-name is the architecture. Then, make is called recursively with ARCH
-# set to one architecture.
-#
-# BUILD_ONE_ARCHITECTURE is set if ARCH contains one architecture, and we
-# actually build files (in subdirs for multi-arch case, in the same dir in
-# the single-arch case).
 
 ifeq ($(origin _L4DIR_MK_MAKECONF),undefined)
 _L4DIR_MK_MAKECONF=y
