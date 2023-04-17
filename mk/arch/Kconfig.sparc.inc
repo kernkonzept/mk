@@ -1,6 +1,5 @@
 # ARCH:      BUILD_ARCH_sparc sparc
 # ARCHDESCR: Sparc architecture (EXPERIMENTAL)
-# ARCHSELECT: BID_USE_TOOLCHAIN_LIBGCC
 
 choice
 	prompt "CPU"
