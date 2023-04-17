@@ -182,20 +182,18 @@ endif
 -include $(L4DIR)/Makeconf.local
 -include $(L4DIR)/conf/Makeconf.local
 
-ifeq ($(filter $(IGNORE_OBJDIR_TARGETS),$(MAKECMDGOALS)),)
 # output directory
- ifeq ($(O)$(OBJ_BASE),)
-  $(error need to give builddir with O=.../builddir)
- else
-  ifneq ($(O),)
-   ifeq ($(filter-out undefined environment,$(origin OBJ_BASE)),)
-    OBJ_BASE := $(call absfilename, $(O))
-    export OBJ_BASE
-    # prevent passing O to sub-makes, because it may be a relative path
-    # not valid there
-    override O =
-    MAKEOVERRIDES := $(filter-out O=%,$(MAKEOVERRIDES))
-   endif
+ifeq ($(O)$(OBJ_BASE),)
+ $(error need to give builddir with O=.../builddir)
+else
+ ifneq ($(O),)
+  ifeq ($(filter-out undefined environment,$(origin OBJ_BASE)),)
+   OBJ_BASE := $(call absfilename, $(O))
+   export OBJ_BASE
+   # prevent passing O to sub-makes, because it may be a relative path
+   # not valid there
+   override O =
+   MAKEOVERRIDES := $(filter-out O=%,$(MAKEOVERRIDES))
   endif
  endif
 endif
@@ -257,14 +255,12 @@ VPATH_SRC_BASE ?= $(SRC_DIR)
 ifeq ($(origin BID_ROOT_CONF),undefined)
 BID_ROOT_CONF := $(call absfilename, $(OBJ_BASE))/.config.all
 endif
-ifeq ($(filter $(IGNORE_OBJDIR_TARGETS),$(MAKECMDGOALS)),)
- ifeq ($(wildcard $(BID_ROOT_CONF)),)
-  ifeq ($(BID_IGN_ROOT_CONF),)
-$(error No configuration file found in build directory "$(OBJ_BASE)". Please run "make O=/path/to/objdir config" in "$(L4DIR_ABS)" or specify a valid build directory)
-  endif
- else
-  include $(BID_ROOT_CONF)
+ifeq ($(wildcard $(BID_ROOT_CONF)),)
+ ifeq ($(BID_IGN_ROOT_CONF),)
+(error No configuration file found in build directory "$(OBJ_BASE)". Please run "make O=/path/to/objdir config" in "$(L4DIR_ABS)" or specify a valid build directory)
  endif
+else
+ include $(BID_ROOT_CONF)
 endif
 
 # if we're working on a program that wants the RAM_BASE be considered in its

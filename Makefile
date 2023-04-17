@@ -16,7 +16,7 @@ BUILD_TOOLS    = bash bison flex gawk perl tput \
 			                         $(if $(findstring =,$(x)),,$(x)))))
 BUILD_TOOLS_pkg/uvmm  := dtc
 
-CMDS_WITHOUT_OBJDIR := help checkbuild checkbuild.% up update check_build_tools
+CMDS_WITHOUT_OBJDIR := help checkbuild checkbuild.% check_build_tools
 CMDS_PROJECT_MK     := all clean cleanall install scrub cont doc help \
                        $(wildcard $(MAKECMDGOALS))
 
@@ -150,11 +150,6 @@ install-dirs += doc
 all:: doc
 endif
 
-up update:
-	$(VERBOSE)svn up -N
-	$(VERBOSE)svn up mk tool/gendep tool/kconfig tool/elf-patcher doc/source conf tool/lib tool/vim tool/bin
-	$(VERBOSE)$(MAKE) -C pkg up
-
 tool:
 	$(VERBOSE)if [ -r $@/Makefile ]; then PWD=$(PWD)/$@ $(MAKE) -C $@; fi
 
@@ -163,7 +158,7 @@ doc:
 
 BID_POST_CONT_HOOK := $(MAKE) regen_l4defs
 
-.PHONY: all clean cleanall clean-test-scripts install up update doc
+.PHONY: all clean cleanall clean-test-scripts install doc
 .PHONY: $(BUILD_DIRS) doc check_build_tools cont cleanfast
 
 cleanfast:
