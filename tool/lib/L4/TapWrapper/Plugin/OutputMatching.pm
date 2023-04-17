@@ -14,6 +14,7 @@ sub new {
   my $self = L4::TapWrapper::Plugin->new( () );
   $self->{args} = shift;
   $self->{args}{literal} = 0 unless defined $self->{args}{literal};
+  $self->{args}{raw} = 0 unless defined $self->{args}{raw};
   my $file = $self->{args}{file};
   if (! -e $file or -d $file)
     {
@@ -77,7 +78,7 @@ sub check_start {
 sub process_mine {
   my $self = shift;
   (my $data = shift) =~ s/\e\[[\d,;\s]+[A-Za-z]//gi; #Strip color escapes
-  $data =~ s/\r+$//g; # lines from tap-wrapper do not contain final newline
+  $data =~ s/\r+$//g unless $self->{args}{raw}; # lines from tap-wrapper do not contain final newline
 
   if ((!$self->{args}{literal} && $data =~ m/$self->{next_line}/) ||
       ($data =~ m/^\Q$self->{next_line}\E$/))
@@ -172,6 +173,10 @@ module search path.
 
 The contents of the file that is matched are to be matched literally and not as
 a regular expression.
+
+=item C<raw>
+
+The contents of the file are matched without stripping carriage returns.
 
 =item C<uuid>
 
