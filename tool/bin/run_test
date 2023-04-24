@@ -312,25 +312,6 @@ my $test_env_cfg;
 my $test_env_cfg_name = "$tmpdir/test_env.lua";
 my $convert = "$FindBin::Bin/key-value-convert.pl"; # hwconfig converter in same path
 
-sub read_file {
-  my $file = shift;
-  open(my $fh, "<", $file)
-    or confess "Could not read file $file";
-  my $contents = (do {local $/; <$fh>});
-  close($fh);
-  return $contents;
-}
-
-sub write_file {
-  my $file = shift;
-  my $contents = shift;
-
-  open(my $fh, ">", $file)
-    or confess "Could not write file $file";
-  print $fh $contents;
-  close($fh);
-}
-
 if ($ned_cfg and $roottask eq 'moe')
   {
     # Create an additional LUA config file where environment variables can
