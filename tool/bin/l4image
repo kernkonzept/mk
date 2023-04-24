@@ -303,22 +303,17 @@ sub create_image
   my $tmpdir;
 
   undef ${$d}{mods};
-  for (my $i = 0; $i < @{$entry{mods}}; ++$i)
+  foreach $mod (@{$entry{mods}})
     {
-      my $flags = 0;
-      $flags = 1 if $i == 0; # kernel
-      $flags = 2 if $i == 1; # sigma0
-      $flags = 3 if $i == 2; # roottask
-
-      L4::ModList::fetch_remote_file($entry{mods}[$i]{file});
+      L4::ModList::fetch_remote_file($mod->{file});
 
       my $f;
-      if (exists($entry{mods}[$i]{opts}{uncompress}))
+      if (exists($mod->{opts}{uncompress}))
         {
           $tmpdir = tempdir('XXXXXXXX', CLEANUP => 1, TMPDIR => 1)
             unless defined $tmpdir;
           $f = L4::ModList::get_file_uncompressed_or_die(
-            $entry{mods}[$i]{file},
+            $mod->{file},
             $search_path,
             $tmpdir
           );
@@ -326,17 +321,16 @@ sub create_image
       else
         {
           $f = L4::ModList::search_file_or_die(
-            $entry{mods}[$i]{file},
+            $mod->{file},
             $search_path
           );
         }
 
-      ${$d}{mods}[$i]
-       = { L4::Image::fill_module($f,
-                                  $entry{mods}[$i]{command}, $flags,
-                                  $entry{mods}[$i]{cmdline_quoted}) };
+      $filled_mod = L4::Image::fill_module($f, $mod->{command}, $mod->{type},
+                                           $mod->{cmdline_quoted}) };
 
-      error(${$d}{mods}[$i]{error}) if ${$d}{mods}[$i]{error};
+      error($filled_mod->{error}) if $filled_mod->{error};
+      push ${$d}{mods}, $filled_mod;
     }
 
   ${$d}{num_mods} = scalar @{${$d}{mods}};

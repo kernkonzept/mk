@@ -43,6 +43,7 @@ sub get_command_and_cmdline
     cmdline_quoted => quoted($cmdline),
     # $args but " replaced with \"
     args_quoted => quoted($args),
+    # Module type. Default: 0 (generic). 1: kernel, 2: root pager, 3: root task
     opts => { %opts },
   );
 }
@@ -243,11 +244,11 @@ sub get_module_entry($$)
   check_env_var('SRC_BASE_ABS', 'path');
 
   # preseed first 3 modules
-  $mods[0] = { get_command_and_cmdline("fiasco") };
-  $mods[1] = { get_command_and_cmdline("sigma0") };
-  $mods[2] = {
-    get_command_and_cmdline("moe"),
+  $mods[0] = { get_command_and_cmdline("fiasco"), type => 1 };
+  $mods[1] = { get_command_and_cmdline("sigma0"), type => 2 };
+  $mods[2] = { get_command_and_cmdline("moe"),
     command => 'roottask',
+    type => 3,
   };
 
   my $process_mode = undef;
@@ -316,17 +317,17 @@ sub get_module_entry($$)
       } elsif ($type eq 'default-kernel') {
         my $s = (handle_line($remaining, %opts))[0];
         next unless defined $s;
-        $mods[0] = { %{$mods[0]}, get_command_and_cmdline($s, %opts) };
+        $mods[0] = { %{$mods[0]}, get_command_and_cmdline($s, %opts), type => 1 };
         next;
       } elsif ($type eq 'default-sigma0') {
         my $s = (handle_line($remaining, %opts))[0];
         next unless defined $s;
-        $mods[1] = { %{$mods[1]}, get_command_and_cmdline($s, %opts) };
+        $mods[1] = { %{$mods[1]}, get_command_and_cmdline($s, %opts), type => 2 };
         next;
       } elsif ($type eq 'default-roottask') {
         my $s = (handle_line($remaining, %opts))[0];
         next unless defined $s;
-        $mods[2] = { %{$mods[2]}, get_command_and_cmdline($s, %opts) };
+        $mods[2] = { %{$mods[2]}, get_command_and_cmdline($s, %opts), type => 3 };
         next;
       }
 
@@ -354,7 +355,7 @@ sub get_module_entry($$)
 
       if ($type eq 'moe') {
         my $bn = (reverse split(/\/+/, $params[0]))[0];
-        $mods[2] = { get_command_and_cmdline("moe rom/$bn", %opts) };
+        $mods[2] = { get_command_and_cmdline("moe rom/$bn", %opts), type => 3 };
         $type = 'bin';
       }
       next if not defined $params[0] or $params[0] eq '';
@@ -368,11 +369,11 @@ sub get_module_entry($$)
           if ($type eq 'bootstrap') {
             %bootstrap = (%bootstrap, %modinfo);
           } elsif ($type =~ /(rmgr|roottask)/i) {
-            $mods[2] = { %{$mods[2] || {}}, %modinfo };
+            $mods[2] = { %{$mods[2] || {}}, %modinfo, type => 3 };
           } elsif ($type eq 'kernel') {
-            $mods[0] = { %{$mods[0] || {}}, %modinfo };
+            $mods[0] = { %{$mods[0] || {}}, %modinfo, type => 1 };
           } elsif ($type eq 'sigma0') {
-            $mods[1] = { %{$mods[1] || {}}, %modinfo };
+            $mods[1] = { %{$mods[1] || {}}, %modinfo, type => 2 };
           } elsif ($type eq 'initrd') {
             $linux_initrd      = $modinfo{file};
             $is_mode_linux     = 1;
