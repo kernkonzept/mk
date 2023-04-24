@@ -333,6 +333,12 @@ in the same directory as the kernel and checks that all
 options are enabled. If not, the test is skipped.
 Has only an effect if the `globalconfig.out` file is present.
 
+\par `L4RE_CONF`
+Features the L4Re userland must have been compiled with. A
+space-separated list of config options as used by Kconfig. `run_test`
+will look for these in the `.kconfig` file in the L4Re build
+directory.
+
 \par `L4LINUX_CONF`
 Features the L4Linux kernel must have been compiled with.
 Similar to `KERNEL_CONF` but checks for a `.config` file
