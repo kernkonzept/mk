@@ -10,6 +10,7 @@ use File::Path "make_path";
 use File::Basename;
 use FindBin;
 use Carp;
+use Template;
 use strict;
 use warnings;
 
@@ -21,16 +22,34 @@ BEGIN {
 use L4::Makeconf;
 use L4::TestEnvLua;
 
-# Environment settings used below
-my $mode        = $ENV{MODE};
 my $arch        = $ENV{ARCH} or die "No architecture specified";
+
+# Hash that defines information used for modules list template instantiation
+my $modlist_info = {
+  entryname => "maketest",
+  kernel => {
+    name => $ENV{"KERNEL_${arch}"} || $ENV{KERNEL} || 'fiasco',
+    args => $ENV{KERNEL_ARGS} || '',
+  },
+  rootpager => { name => $ENV{SIGMA0} || "sigma0" },
+  bootstrap => {
+    name => $ENV{BOOTSTRAP} || 'bootstrap',
+    args => $ENV{BOOTSTRAP_ARGS} || '',
+  },
+  roottask => {
+    name => $ENV{TEST_ROOT_TASK} || 'moe',
+    args => $ENV{TEST_ROOT_TASK_ARGS} || '',
+  },
+  extra_modules => []
+};
+sub add_mods { push @{$modlist_info->{extra_modules}}, @_; }
+
+# Environment settings used below
+my $modlist_template = "default.tpl";
+my $mode        = $ENV{MODE};
 my $obj_base    = $ENV{OBJ_BASE};
-my $kernel      = $ENV{"KERNEL_${arch}"} || $ENV{KERNEL} || 'fiasco';
-my $kernel_args = $ENV{KERNEL_ARGS} || '';
-my $sigma0      = $ENV{SIGMA0} || "sigma0";
 my $l4linux     = $ENV{"L4LX_KERNEL_${arch}"} || $ENV{L4LX_KERNEL};
 my $ramdisk     = $ENV{"LINUX_RAMDISK_${arch}"} || $ENV{LINUX_RAMDISK};
-my $bootstrap   = $ENV{BOOTSTRAP} || 'bootstrap';
 my @modulepaths = split(/[:\s]+/, $ENV{SEARCHPATH});
 unshift @modulepaths, split(/:[\s]+/, $ENV{MODULE_SEARCH_PATH})
   if defined($ENV{MODULE_SEARCH_PATH}) && $ENV{MODULE_SEARCH_PATH} ne "";
@@ -47,9 +66,6 @@ my $hwconfig_file = $ENV{TEST_HWCONFIG} || '';
 my $fiascoconfig_file = $ENV{TEST_FIASCOCONFIG} || '';
 my $test_run_tags = $ENV{TEST_RUN_TAGS} || '';
 my $test_required_tags = $ENV{TEST_TAGS};
-my $roottask    = $ENV{TEST_ROOT_TASK} || 'moe';
-my $roottask_args  = $ENV{TEST_ROOT_TASK_ARGS} || '';
-my $bootstrap_args = $ENV{BOOTSTRAP_ARGS} || '';
 my $is_kunit_test  = $ENV{TEST_KERNEL_UNIT} || 0;
 my $kunit_verbose = $ENV{TEST_KUNIT_VERBOSE} || 0;
 my $kunit_restart = $ENV{TEST_KUNIT_RESTART} || 0;
@@ -65,7 +81,7 @@ print STDERR "Warning: Unable to determine platform type.\n"
   unless defined $platform;
 
 # kernel arguments required by test
-$kernel_args .= " " . $test_kernel_args if $test_kernel_args;
+$modlist_info->{kernel}{args} .= " " . $test_kernel_args if $test_kernel_args;
 
 my $tmpdir      = $ENV{TEST_TMPDIR};
 make_path($tmpdir);
@@ -304,7 +320,7 @@ check_config('L4Re userland', $ENV{"L4RE_CONF"},
 # Any L4Re kernel features as requirements?
 check_config('L4Re kernel', $ENV{"KERNEL_CONF"},
              $fiascoconfig_file,
-             dirname($kernel) . '/globalconfig.out');
+             dirname($modlist_info->{kernel}{name}) . '/globalconfig.out');
 
 # check add gtest_shuffle unless specific output is expected.
 check_add_gtest_shuffle();
@@ -321,7 +337,7 @@ my $test_env_cfg;
 my $test_env_cfg_name = "$tmpdir/test_env.lua";
 my $convert = "$FindBin::Bin/key-value-convert.pl"; # hwconfig converter in same path
 
-if ($ned_cfg and $roottask eq 'moe')
+if ($ned_cfg and $modlist_info->{roottask}{name} eq 'moe')
   {
     # Create an additional LUA config file where environment variables can
     # be exported to.
@@ -350,8 +366,7 @@ if ($ned_cfg and $roottask eq 'moe')
         check_config('L4Linux kernel', $ENV{"L4LINUX_CONF"}.' CONFIG_L4_CHR_DS_DRV',
           dirname($l4linux) . '/.config');
 
-        push (@module_list, $l4linux);
-        push (@module_list, $ramdisk);
+        add_mods($l4linux, $ramdisk);
 
         my $l4linux_bin = basename($l4linux);
         my $ramdisk_bin = basename($ramdisk);
@@ -365,25 +380,18 @@ if ($ned_cfg and $roottask eq 'moe')
 
     # Now set up boot for use with ned.
     (my $ned_cfg_name = $ned_cfg) =~ s/.*\///;
-    $roottask .= " $moe_args rom/$ned_cfg_name";
-    push(@module_list, "ned");
-    push(@module_list, "test_env.lua");
-    push(@module_list, "lib_test.lua");
-    push(@module_list, $ned_cfg);
+    $modlist_info->{roottask}{args} = " $moe_args rom/$ned_cfg_name";
+    add_mods( "ned", "test_env.lua", "lib_test.lua", $ned_cfg)
   }
-elsif ($roottask eq 'moe')
+elsif ($modlist_info->{roottask}{name} eq 'moe')
   {
     # Run the test program directly as the init process.
-    $roottask .= " --init=rom/$test_target $moe_args";
-    $roottask .= " -- ".$test_args if $test_args;
+    $modlist_info->{roottask}{args}  = " --init=rom/$test_target $moe_args";
+    $modlist_info->{roottask}{args} .= " -- ".$test_args if $test_args;
   }
-else
-  {
-    $roottask .= " -- ".$roottask_args if $roottask_args;
-  }
-push(@module_list, "l4re") unless $is_kunit_test;
-push(@module_list, map { s/:rw$/ :rw/; $_ } map { $_ } @more_mods);
-push(@module_list, $test_target) unless $is_kunit_test;
+
+add_mods(map { s/:rw$/ :rw/; $_ } @more_mods);
+add_mods($test_target) unless $is_kunit_test;
 
 if ($is_kunit_test)
   {
@@ -403,11 +411,11 @@ if ($is_kunit_test)
     # format the number of cores as fixed-length string.
     $opts_string .= sprintf("%04d", $hw_cores);
 
-    $kernel_args .= " -utest_opts=" . $opts_string;
+    $modlist_info->{kernel}{args} .= " -utest_opts=" . $opts_string;
   }
 
 # If any binary was linked dynamically, we need to add the necessary .so files.
-my @inmods = map { get_module($_) } @module_list;
+my @inmods = map { get_module($_) } @{$modlist_info->{extra_modules}};
 my %shared_libs = ();
 foreach my $mod (@inmods)
   {
@@ -420,24 +428,15 @@ foreach my $mod (@inmods)
       }
   }
 
-push(@module_list, keys %shared_libs);
+add_mods(keys %shared_libs);
 
-
-my $test_modules;
+my $tt = Template->new({ TRIM => 1, STRICT => 1, ABSOLUTE => 1})
+  || die "Module list template error: $Template::ERROR\n";
 my $test_modules_name = "$tmpdir/__test_modules.list";
-open($test_modules, '>', $test_modules_name)
-  or confess "Cannot create configuration file $test_modules_name.";
 
-print $test_modules <<EOHEADER;
-
-entry maketest
-kernel $kernel $kernel_args
-bootstrap $bootstrap $bootstrap_args
-sigma0 $sigma0
-roottask $roottask
-EOHEADER
-
-print $test_modules "module $_\n" foreach @module_list;
+my $template_path = "$ENV{L4DIR}/tool/templates/runtest/$modlist_template";
+$tt->process($template_path, $modlist_info, $test_modules_name)
+  || die "Error parsing template ($template_path): \n\t" . $tt->error() . "\n";
 
 # run any potential pre-test setup scripts
 if ($test_setup)
@@ -449,7 +448,6 @@ if ($test_setup)
       }
   }
 
-close($test_modules);
 close($test_env_cfg) if ($test_env_cfg);
 my $module_search_path=join(":", @modulepaths);
 my $qemu_options = join(' ', map { qq{"$_"} } @qemu_args);
