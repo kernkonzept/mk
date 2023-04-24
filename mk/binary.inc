@@ -258,6 +258,7 @@ LIBCLIBDIR    ?= $(call BID_mode_var,LIBCLIBDIR)
 LDSCRIPT      ?= $(call BID_mode_var,LDSCRIPT)
 LDFLAGS       += $(call BID_mode_var,LDFLAGS)
 REQUIRES_LIBS += $(call BID_mode_var,REQUIRES_LIBS)
+REQUIRES_CFLAGS += $(call BID_mode_var,REQUIRES_CFLAGS)
 
 CARCHFLAGS += $(CARCHFLAGS_$(ARCH)) $(CARCHFLAGS_$(ARCH)_$(CPU))
 
