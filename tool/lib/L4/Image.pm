@@ -254,11 +254,9 @@ sub check_modules
     }
 
   return "No kernel found" if not defined $saw[1];
-  return "No sigma0 found" if not defined $saw[2];
-  return "No roottask found" if not defined $saw[3];
   return "Only one kernel allowed" if $saw[1] > 1;
-  return "Only one sigma0 allowed" if $saw[2] > 1;
-  return "Only one roottask allowed" if $saw[3] > 1;
+  return "Only one sigma0 allowed" if defined $saw[2] && $saw[2] > 1;
+  return "Only one roottask allowed" if defined $saw[3] && $saw[3] > 1;
 
   return undef;
 }
