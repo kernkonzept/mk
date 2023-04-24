@@ -272,6 +272,16 @@ sub op_edit
   error($r) if $r;
 }
 
+sub op_cat
+{
+  my $d = shift;
+  my $args = shift;
+  my %found = find_modules($d, $args, 0);
+  my $pos = (keys %found)[0];
+  system("cat ${$d}{mods}[$pos]{filepath}");
+  error("Error doing 'cat' call") if $?;
+}
+
 sub create_image
 {
   my $d = shift;
@@ -724,6 +734,19 @@ my %args = (
             $help_module_find_one.
             "\n".
             "Uses EDITOR from environment variables, or vi or notepad.".
+            "",
+  },
+  cat => {
+    args => {
+      "--num" => 1,
+      "--with-name" => 1,
+      "--regex" => 1,
+    },
+    mods_to_disk => 1,
+    func => \&op_cat,
+    help => "Plainly output a module.\n".
+            $help_module_find_one.
+            "\n".
             "",
   },
   remove => {
