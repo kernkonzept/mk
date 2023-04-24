@@ -177,6 +177,7 @@ else
 config txtconfig oldconfig olddefconfig syncconfig::
 endif
 
-.PHONY: config oldconfig olddefconfig syncconfig txtconfig menuconfig \
-        xconfig gconfig nconfig randconfig allyesconfig allnoconfig \
-	savedefconfig
+DROPSCONF_TARGETS = config oldconfig olddefconfig syncconfig txtconfig menuconfig \
+                    xconfig gconfig nconfig randconfig allyesconfig allnoconfig \
+                    savedefconfig
+.PHONY: $(DROPSCONF_TARGETS)

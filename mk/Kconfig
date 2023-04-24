@@ -1,5 +1,7 @@
 mainmenu "L4Re Configuration"
 
+source "Kconfig.generated.defines"
+
 config ARCH_ENABLE_STACK_PROTECTOR
 	bool
 

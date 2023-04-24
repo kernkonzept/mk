@@ -263,6 +263,13 @@ DROPSCONF_CONFIG_MK_POST_HOOK:: check_build_tools $(OBJ_DIR)/Makefile
 	$(VEROBSE)$(LN) -snf $(L4DIR_ABS) $(OBJ_BASE)/source
 	$(VERBOSE)$(MAKE) checkconf
 
+$(KCONFIG_FILE).defines: FORCE
+	$(VERBOSE)echo "# Automatically generated. Don't edit" >$@
+	$(VERBOSE)echo "BID_COMPILER_TYPE := $(call BID_COMPILER_TYPE_f)" >>$@
+
+# Regenerate defines only if a config target is executed.
+$(DROPSCONF_TARGETS): $(KCONFIG_FILE).defines
+
 KCONFIGS_ARCH     := $(wildcard $(L4DIR)/mk/arch/Kconfig.*.inc)
 KCONFIG_PLATFORMS := $(wildcard $(L4DIR)/mk/platforms/*.conf $(L4DIR)/conf/platforms/*.conf)
 
