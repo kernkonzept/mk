@@ -292,6 +292,10 @@ if ($test_required_tags)
       }
   }
 
+# Any L4Re options as requirements?
+check_config('L4Re userland', $ENV{"L4RE_CONF"},
+             $ENV{OBJ_BASE} . "/.kconfig");
+
 # Any L4Re kernel features as requirements?
 check_config('L4Re kernel', $ENV{"KERNEL_CONF"},
              $fiascoconfig_file,
