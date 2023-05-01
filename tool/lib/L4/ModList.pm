@@ -289,6 +289,7 @@ sub get_module_entry($$)
       $type = 'bin'   if $type eq 'module';
 
       if ($type =~ /^(entry|title)$/) {
+        last if $found_entry; # If we already have an entry do not process more
         ($remaining) = handle_line($remaining, %opts);
         if (defined $remaining && lc($entry_to_pick) eq lc($remaining)) {
           $process_mode = 'entry';
