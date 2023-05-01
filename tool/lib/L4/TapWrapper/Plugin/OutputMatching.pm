@@ -57,7 +57,7 @@ sub get_next_line {
       seek($fd, 0, 0); # Rewind
       $L4::TapWrapper::expline = <$fd>;
     }
-  $L4::TapWrapper::expline =~ s/\r*\n$//g; # simplify line endings
+  $L4::TapWrapper::expline =~ s/\r*\n$//g unless $self->{args}{raw}; # simplify line endings
   return $L4::TapWrapper::expline if $self->{args}{literal};
   return extract_expected($L4::TapWrapper::expline);
 }
