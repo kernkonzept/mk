@@ -107,7 +107,7 @@ EXTRA_INSTALL_GOALS += register_phys_reloc
 register_phys_reloc:
 	@line="PHYS_RELOC_DIR_LIST += $(OBJ_DIR)"; \
 	depfile="$(OBJ_BASE)/.Makeconf.phys_reloc"; \
-	grep -q -F "$$line" "$$depfile" || ( echo "$$line" >> "$$depfile" )
+	grep -s -q -F "$$line" "$$depfile" || ( echo "$$line" >> "$$depfile" )
 
 endif
 
