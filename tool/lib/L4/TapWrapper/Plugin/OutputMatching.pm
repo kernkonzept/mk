@@ -32,7 +32,7 @@ sub new {
     or L4::TapWrapper::fail_test("Can't open expected output ('$file')");
 
   $self->inhibit_exit();
-  $self->{num_res} = 1;
+  $self->{num_res} = 0;
   $self->{had_block} = 0;
   $self->{wait_until} = time + 2 * $L4::TapWrapper::timeout;
   $self->{number_of_runs} = $ENV{TEST_EXPECTED_REPEAT};
