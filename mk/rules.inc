@@ -56,12 +56,12 @@ ifneq ($(BID_TRACE),)
   bid_trace = $(if $(wildcard $@), \
                 $(if $(prereqs_changed), because prerequisites '$(prereqs_changed)' changed, \
                   $(if $(buildinfo_missing), because build info missing, \
-                    $(if $(call BID_cmp_str_ne,$1,$(cmd_$@)), because command changed))), \
+                    $(if $(call BID_cmp_str_ne,$1,$(savedcmd_$@)), because command changed))), \
                 because target missing)
 endif
 
 define BID_call_compiler_default
-  $(if $(buildinfo_missing)$(prereqs_changed)$(call BID_cmp_str_ne,$1,$(cmd_$@)), \
+  $(if $(buildinfo_missing)$(prereqs_changed)$(call BID_cmp_str_ne,$1,$(savedcmd_$@)), \
       $(call COMP_MESSAGE,$(bid_trace));                                      \
       $(BID_MAKE_RULE_CREATE_SUBDIR)                                          \
       $1 || exit 1;                                                           \
