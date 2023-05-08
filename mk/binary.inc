@@ -803,7 +803,9 @@ clean cleanall::
 # clean: delete all temporary editor files, objects, binaries
 #        and most generated files
 cleanall::
-	$(VERBOSE)$(RM) $(TARGET) $(addsuffix .*.d,$(sort $(dir $(ALLOBJS)))) \
+	$(VERBOSE)$(RM) $(TARGET) \
+		$(addsuffix .*.d,$(sort $(dir $(ALLOBJS)))) \
+		$(addsuffix .*.cmd,$(sort $(dir $(ALLOBJS)))) \
 		$(wildcard $(BID_OBJ_Makefile).inc)
 
 .PHONY: scrub clean cleanall disasm
