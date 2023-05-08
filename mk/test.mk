@@ -118,6 +118,6 @@ include $(L4DIR)/mk/prog.mk
 ROLE = test.mk
 
 clean cleanall::
-	$(RM) $(TEST_SCRIPTS)
+	$(VERBOSE)$(RM) $(TEST_SCRIPTS)
 
 endif	# _L4DIR_MK_TEST_MK undefined
