@@ -326,7 +326,7 @@ Alternative root task to be used during a test instead of moe.
 Arguments passed to `TEST_ROOT_TASK` if `TEST_ROOT_TASK` is different from moe.
 
 \par `KERNEL_CONF`
-Features the Fiasco kernel must have been compiled with.
+Features the L4Re Microkernel must have been compiled with.
 A space-separated list of config options as used by
 Kconfig. `run_test` looks for a `globalconfig.out` file
 in the same directory as the kernel and checks that all
@@ -435,7 +435,7 @@ To be able to execute the test, a minimal test environment needs
 to be set up by exporting the following environment variables:
 
 \par `KERNEL_<arch>`, `KERNEL`
-Fiasco kernel binary to use. The test runner is able to check if the
+L4Re Microkernel binary to use. The test runner is able to check if the
 kernel has all features necessary for the test and skip tests accordingly.
 In order for this to work, the `globalconfig.out` config file from the
 build directory needs to be available in the same directory as the

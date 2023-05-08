@@ -292,8 +292,8 @@ input/output stream. Output is usually connected to the parent of the
 program and displayed as debugging output. The standard output is also used
 as a back end to the C-style printf functions and the C++ streams.
 
-Vcon services are implemented in Moe and the loader as well as by the Fiasco
-kernel and connected either to the serial line or to the screen if
+Vcon services are implemented in Moe and the loader as well as by the L4Re
+Microkernel and connected either to the serial line or to the screen if
 available.
 
 \see \ref l4_vcon_api
@@ -378,7 +378,7 @@ api_l4re_rm Region Map\endlink are explained in more detail in the following
 section.
 
 
-In Fiasco.OC capabilities are addressed in two different
+In the L4Re Microkernel capabilities are addressed in two different
 ways.
 
 A capability can be addressed with the help of a capability

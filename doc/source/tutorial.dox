@@ -8,7 +8,7 @@ a working knowledge of C++.
 
 Here you can find the first steps to boot a very simple setup.  The setup
 consists of the following components:
-\li Fiasco.OC --- Microkernel
+\li L4Re Microkernel
 \li Sigma0 --- Root Pager
 \li Moe --- Root Task
 \li Ned --- Init Process
@@ -35,7 +35,7 @@ entry hello
 This file describes all the binaries and scripts to put into the ISO image,
 and also describes the GRUB \c menu.lst contents.  What you need to do is to
 set the \c make variable \c MODULE_SEARCH_PATH to contain the path to your
-Fiasco.OC build directory and the directory containing your \c hello.cfg
+L4Re Microkernel's build directory and the directory containing your \c hello.cfg
 script.
 
 The \c hello.cfg script should look like the following. A ready to use
@@ -77,7 +77,7 @@ qemu-system-i386 -cdrom images/hello.iso -serial stdio
 \endcode
 
 If you press `<ESC>` in the terminal that shows you the serial output you
-enter the Fiasco.OC kernel debugger... Have fun.
+enter the microkernel's debugger... Have fun.
 
 
 \section customizations Customizations

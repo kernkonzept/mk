@@ -34,19 +34,19 @@ L4Re environment. The general structure of a microkernel-based system will
 be introduced and the principal functionality of the servers in the basic
 environment outlined.
 
-\section fiasco_intro Fiasco.OC
+\section fiasco_intro L4Re Microkernel
 
-The Fiasco.OC microkernel is the lowest-level piece of software running in an
+The L4Re Microkernel is the lowest-level piece of software running in an
 L4-based system. The microkernel is the only program that runs in privileged
 processor mode. It does not include complex services such as program loading,
 device drivers, or file systems; those are implemented in user-level programs on
 top of it (a basic set of these services and abstractions is provided by the L4
 Runtime Environment).
 
-Fiasco.OC kernel services are implemented in kernel objects. Tasks hold
+Microkernel services are implemented in kernel objects. Tasks hold
 references to kernel objects in their respective \em "object space", which is a
 kernel-protected table.
-These references are called \em capabilities. Fiasco system calls are function
+These references are called \em capabilities. System calls to the microkernel are function
 invocations on kernel objects through the corresponding capabilities. These
 can be thought of as function invocations on object references in an
 object-oriented programming environment.  Furthermore, if a task owns a
@@ -70,13 +70,13 @@ hardware exceptions, faults and for virtual memory management.
 \subsection l4re_concepts_fiasco_kobjects Kernel Objects
 
 The following list gives a short overview of the kernel objects provided by
-the Fiasco.OC microkernel:
+the L4Re Microkernel:
 
 \li <b>Task</b> A task comprises a memory address space (represented by the
 task's page table), an object space (holding the kernel protected
 capabilities), and on x86 an IO-port address space.
 \li <b>Thread</b> A thread is bound to a task and executes code. Multiple
-threads can coexist in one task and are scheduled by the Fiasco scheduler.
+threads can coexist in one task and are scheduled by the microkernel's scheduler.
 \li <b>Factory</b> A factory is used by applications to create new kernel
 objects.  Access to a factory is required to create any new kernel object.
 Factories can control and restrict object creation.
@@ -148,14 +148,14 @@ may also act as a client of a hard disk driver.
 
 The L4 Runtime Environment (L4Re) provides a basic set of services and
 abstractions, which are useful to implement and run user-level applications on
-top of the Fiasco.OC microkernel.
+top of the L4Re Microkernel.
 
 L4Re consists of a set of libraries and servers. Libraries as well as server
 interfaces are completely object oriented. They implement prototype
 implementations for the classes defined by the L4Re specification.
 
 A minimal L4Re-based application needs 3 components to be booted beforehand:
-the Fiasco microkernel, the root pager (Sigma0), and the root task (Moe). The
+the L4Re Microkernel, the root pager (Sigma0), and the root task (Moe). The
 Sigma0 root pager initially owns all system resources, but is usually used
 only to resolve page faults for the Moe root task. Moe provides the essential
 services to normal user applications such as an initial program loader, a

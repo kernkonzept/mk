@@ -2,7 +2,7 @@
 \page l4re_concepts_ipc %L4 Inter-Process Communication (IPC)
 
 Inter-process communication (IPC) is the fundamental communication mechanism in
-the Fiasco.OC microkernel.
+the L4Re Microkernel.
 
 Basically IPC invokes a subroutine in a different context using input and
 output parameters. It is used to communicate between userland threads and, as a
@@ -376,7 +376,7 @@ flexpage in the *receiver space*. If the sender flexpage is bigger than the
 receive window, a flexpage of the size of the receive window starting at the
 send base in the *sender space* is transferred to the receiver.
 \internal
-See Fiasco: map_util.cpp / free_constraint().
+See Fiasco's source code: map_util.cpp / free_constraint().
 \endinternal
 
 The kernel will stop transmission of typed items before l4_msgtag_t::items() is

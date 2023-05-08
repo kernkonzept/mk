@@ -3,7 +3,7 @@
 
 \page l4re_servers L4Re Servers
 \brief Here you shall find a quick overview over the standard services
-       running on Fiasco.OC and L4Re.
+       running on the L4Re Microkernel.
 
 Sigma0, the Root Pager
 ======================
@@ -11,9 +11,9 @@ Sigma0, the Root Pager
 Sigma0 is a special server running on L4 because it is responsible
 of resolving page faults for the root task, the first useful task on
 L4Re.  Sigma0 can be seen as part of the kernel, however it runs in
-unprivileged mode.  To run something useful on Fiasco.OC you usually
-need to run Sigma0, nevertheless it is possible to replace Sigma0
-by a different implementation.
+unprivileged mode.  To run something useful on the L4Re Microkernel you
+usually need to run Sigma0, nevertheless it is possible to replace Sigma0 by
+a different implementation.
 
 For more details see \subpage l4re_servers_sigma0
 
@@ -60,7 +60,7 @@ For more information see \subpage l4re_servers_ned "Ned".
 Io, the Platform and Device Resource Manager
 ============================================
 
-Because all peripheral management of Fiasco.OC is done in user-level
+Because all peripheral management in L4Re is done in user-level
 applications, there is the need to have a centralized management of
 the resources belonging to the platform and to peripheral devices.
 
