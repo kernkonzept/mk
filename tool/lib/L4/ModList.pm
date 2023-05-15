@@ -236,6 +236,12 @@ sub get_module_entry($$)
 {
   my ($mod_file, $entry_to_pick) = @_;
   my @mods;
+  my %type_num = ( kernel => 1, sigma0 => 2, roottask => 3 );
+  my %base_mods = (
+    kernel   => { get_command_and_cmdline("fiasco"), default => 1 },
+    sigma0   => { get_command_and_cmdline("sigma0"), default => 1 },
+    roottask => { get_command_and_cmdline("moe"), default => 1 },
+  );
   my %groups;
 
   check_env_var('L4DIR', 'path');
@@ -243,16 +249,9 @@ sub get_module_entry($$)
   check_env_var('ARCH', 'word');
   check_env_var('SRC_BASE_ABS', 'path');
 
-  # preseed first 3 modules
-  $mods[0] = { get_command_and_cmdline("fiasco"), type => 1 };
-  $mods[1] = { get_command_and_cmdline("sigma0"), type => 2 };
-  $mods[2] = { get_command_and_cmdline("moe"),
-    command => 'roottask',
-    type => 3,
-  };
-
   my $process_mode = undef;
   my $found_entry = 0;
+  my %entry_opts;
   my $global = 1;
   my $modaddr_title;
   my $modaddr_global;
@@ -295,6 +294,7 @@ sub get_module_entry($$)
         if (defined $remaining && lc($entry_to_pick) eq lc($remaining)) {
           $process_mode = 'entry';
           $found_entry = 1;
+          %entry_opts = %opts;
         } else {
           $process_mode = undef;
         }
@@ -314,20 +314,10 @@ sub get_module_entry($$)
         next unless defined $s;
         %bootstrap = (%bootstrap, get_command_and_cmdline($s, %opts) );
         next;
-      } elsif ($type eq 'default-kernel') {
+      } elsif ($type =~ /default-(kernel|sigma0|roottask)/) {
         my $s = (handle_line($remaining, %opts))[0];
-        next unless defined $s;
-        $mods[0] = { %{$mods[0]}, get_command_and_cmdline($s, %opts), type => 1 };
-        next;
-      } elsif ($type eq 'default-sigma0') {
-        my $s = (handle_line($remaining, %opts))[0];
-        next unless defined $s;
-        $mods[1] = { %{$mods[1]}, get_command_and_cmdline($s, %opts), type => 2 };
-        next;
-      } elsif ($type eq 'default-roottask') {
-        my $s = (handle_line($remaining, %opts))[0];
-        next unless defined $s;
-        $mods[2] = { %{$mods[2]}, get_command_and_cmdline($s, %opts), type => 3 };
+        $base_mods{$1} = { get_command_and_cmdline($s, %opts), default => 1 }
+          if defined $s;
         next;
       }
 
@@ -355,8 +345,7 @@ sub get_module_entry($$)
 
       if ($type eq 'moe') {
         my $bn = (reverse split(/\/+/, $params[0]))[0];
-        $mods[2] = { get_command_and_cmdline("moe rom/$bn", %opts), type => 3 };
-        $type = 'bin';
+        $base_mods{roottask} = { get_command_and_cmdline("moe rom/$bn", %opts) };
       }
       next if not defined $params[0] or $params[0] eq '';
 
@@ -368,12 +357,8 @@ sub get_module_entry($$)
           # special cases
           if ($type eq 'bootstrap') {
             %bootstrap = (%bootstrap, %modinfo);
-          } elsif ($type =~ /(rmgr|roottask)/i) {
-            $mods[2] = { %{$mods[2] || {}}, %modinfo, type => 3 };
-          } elsif ($type eq 'kernel') {
-            $mods[0] = { %{$mods[0] || {}}, %modinfo, type => 1 };
-          } elsif ($type eq 'sigma0') {
-            $mods[1] = { %{$mods[1] || {}}, %modinfo, type => 2 };
+          } elsif ($type =~ /(roottask|kernel|sigma0)/) {
+            $base_mods{$1} = { %modinfo };
           } elsif ($type eq 'initrd') {
             $linux_initrd      = $modinfo{file};
             $is_mode_linux     = 1;
@@ -383,13 +368,13 @@ sub get_module_entry($$)
               push @mods, @{$groups{$_}};
             }
           } else {
-            push @mods, { %modinfo };
+            push @mods, { %modinfo, type => 0 };
           }
         }
       } elsif ($process_mode eq 'group') {
         foreach my $m (@params) {
           my %modinfo = get_command_and_cmdline($m, %opts);
-          push @{$groups{$current_group_name}}, { %modinfo };
+          push @{$groups{$current_group_name}}, { %modinfo, type => 0 };
         }
       } else {
         error "$mod_file_db{id_to_file}{$$fileentry[0]}:$$fileentry[1]: Invalid mode '$process_mode'\n";
@@ -400,17 +385,30 @@ sub get_module_entry($$)
         "Available entries: ".join(' ', sort &get_entries($mod_file))."\n"
     unless $found_entry;
 
+  # For backwards compatibility add these modules in the classic order:
+  # first the kernel, then sigma0, then roottask. At some point in the future
+  # this will change when all users have been adapted to respect the type
+  foreach ( qw( roottask sigma0 kernel ) )
+    {
+      my $mod = $base_mods{$_};
+      unless (defined $mod->{default} and exists $entry_opts{"no-defaults"})
+        {
+          unshift @mods, { %{$mod}, type => $type_num{$_} };
+        }
+    }
+
+
   if (defined $is_mode_linux)
     {
-      error "No Linux kernel image defined\n" unless defined $mods[0]{cmdline};
+      error "No Linux kernel image defined\n" unless defined $base_mods{kernel}{cmdline};
       print STDERR "Entry '$entry_to_pick' is a Linux type entry\n";
       my %r;
       %r = (
              # actually bootstrap is always the kernel in this
-             # environment, for convenience we use $mods[0] because that
-             # are the contents of 'kernel xxx' which sounds more
+             # environment, for convenience we use $base_mods{kernel}
+             # because that are the contents of 'kernel xxx' which sounds more
              # reasonable
-             bootstrap => { %{$mods[0]} },
+             bootstrap => { %{$base_mods{kernel}} },
              type      => 'Linux',
            );
       $r{initrd} = { cmdline => $linux_initrd } if defined $linux_initrd;
