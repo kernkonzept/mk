@@ -412,6 +412,7 @@ if ($is_kunit_test)
     $opts_string .= sprintf("%04d", $hw_cores);
 
     $modlist_info->{kernel}{args} .= " -utest_opts=" . $opts_string;
+    $modlist_template = "kunit_test.tpl";
   }
 
 # If any binary was linked dynamically, we need to add the necessary .so files.
