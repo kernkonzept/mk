@@ -200,10 +200,15 @@ sub check_config
 
   if (defined($cfgfile))
     {
-      foreach my $copt (split(' ', $copts))
+      # Split by whitespace while honoring double-quoted elements with whitespace characters inside
+      my @opts;
+      push @opts, ($2 // $4) while $copts =~ s/^(([^"\s]+)|("([^"]*)"))(\s+|$)//;
+
+      foreach my $copt (@opts)
         {
-          my $o = qx:grep ^$copt $cfgfile:;
-          exit_skip("$binname not configured for $copt.\n") if (!$o);
+          my $o = qx:grep "^$copt" $cfgfile:;
+
+          exit_skip("$binname not configured for '$copt'.\n") if (!$o);
         }
     }
   else

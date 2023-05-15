@@ -86,9 +86,9 @@ $(TEST_SCRIPTS):%.t: $(GENERAL_D_LOC)
 	$(VERBOSE)echo -e "#!/bin/bash\n\nset -a" > $@
 	$(VERBOSE)echo 'L4DIR="$(L4DIR)"' >> $@
 	$(VERBOSE)echo 'SEARCHPATH="$(if $(PRIVATE_LIBDIR),$(PRIVATE_LIBDIR):)$(INSTALLDIR_BIN_LOCAL):$(OBJ_BASE)/bin/$(ARCH)_$(CPU):$(OBJ_BASE)/bin/$(ARCH)_$(CPU)/$(BUILD_ABI):$(OBJ_BASE)/lib/$(ARCH)_$(CPU):$(OBJ_BASE)/lib/$(ARCH)_$(CPU)/$(BUILD_ABI):$(SRC_DIR):$(L4DIR)/conf/test"' >> $@
-	$(VERBOSE)$(foreach v,$(testvars_fix), echo '$(v)="$(call targetvar,$(v),$(notdir $*))"' >> $@;)
+	$(VERBOSE)$(foreach v,$(testvars_fix), echo '$(v)="$(subst ",\",$(call targetvar,$(v),$(notdir $*)))"' >> $@;)
 	$(VERBOSE)$(foreach v,$(testvars_conf), echo ': $${$(v):=$(call targetvar,$(v),$(notdir $*))}' >> $@;)
-	$(VERBOSE)$(foreach v,$(testvars_append), echo '$(v)="$${$(v):+$${$(v)} }$(call targetvar,$(v),$(notdir $*))"' >> $@;)
+	$(VERBOSE)$(foreach v,$(testvars_append), echo '$(v)="$${$(v):+$${$(v)} }$(subst ",\",$(call targetvar,$(v),$(notdir $*)))"' >> $@;)
 	$(if $(call targetvar,TEST_TAP_PLUGINS,$(*F)),\
 		$(VERBOSE)echo 'TEST_TAP_PLUGINS="$(call targetvar,TEST_TAP_PLUGINS,$(*F))"' >> $@,\
 		$(VERBOSE)echo 'TEST_TAP_PLUGINS="$${TEST_TAP_PLUGINS:+$${TEST_TAP_PLUGINS} }$(if $(call targetvar,TEST_EXPECTED,$(*F)),OutputMatching:file=$(call targetvar,TEST_EXPECTED,$(*F)),BundleMode TAPOutput)"' >> $@)
