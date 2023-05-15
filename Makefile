@@ -770,6 +770,9 @@ report:
 	@echo "git --version: "
 	@git --version || true
 	@echo
+	@echo "doxygen --version: "
+	@doxygen --version || true
+	@echo
 	@echo "Shell is:"
 	@ls -la /bin/sh || true
 	@echo
