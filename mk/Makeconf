@@ -88,6 +88,7 @@ CP		?= cp
 DOXYGEN		?= doxygen
 ECHO		?= echo
 ELF_PATCHER     = $(OBJ_BASE)/tool/elf-patcher/elf-patcher
+FIXDEP          = $(OBJ_BASE)/scripts/basic/fixdep
 
 GENOFFSETS	= $(L4DIR)/tool/bin/genoffsets.pl
 GOSH		= $(firstword $(wildcard $(L4DIR)/../tools/gosh/gosh \
@@ -590,7 +591,11 @@ else
 GENERAL_D_LOC := .general.d
 endif
 
-$(GENERAL_D_LOC): $(L4DIR)/mk/Makeconf $(EXTRA_GENERAL_D_DEP)
+$(FIXDEP): $(L4DIR)/tool/kconfig/scripts/basic/fixdep.c
+	@echo \'fixdep\' outdated or unavailable, please call \'make oldconfig\' in the root of your build directory.
+	@exit 1
+
+$(GENERAL_D_LOC): $(L4DIR)/mk/Makeconf $(FIXDEP) $(EXTRA_GENERAL_D_DEP)
 	@$(BUILD_MESSAGE)
 	@install -d $(dir $@)
 	$(DEPEND_VERBOSE)$(RM) $(filter-out %.cmd,$(DEPS))

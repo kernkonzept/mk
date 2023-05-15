@@ -65,7 +65,7 @@ define BID_call_compiler_default
       $(call COMP_MESSAGE,$(bid_trace));                                      \
       $(BID_MAKE_RULE_CREATE_SUBDIR)                                          \
       $1 || exit 1;                                                           \
-      $(OBJ_BASE)/scripts/basic/fixdep $(call BID_dot_fname,$@).d             \
+      $(FIXDEP) $(call BID_dot_fname,$@).d                                    \
                    $@ '$(call escape_cmd,$1)' > $(call BID_dot_fname,$@).cmd; \
       $(RM) $(call BID_dot_fname,$@).d)
 endef
