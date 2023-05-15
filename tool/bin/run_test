@@ -29,7 +29,7 @@ my $modlist_info = {
   entryname => "maketest",
   kernel => {
     name => $ENV{"KERNEL_${arch}"} || $ENV{KERNEL} || 'fiasco',
-    args => $ENV{KERNEL_ARGS} || '',
+    args => join ' ', grep { defined } $ENV{KERNEL_ARGS}, $ENV{TEST_KERNEL_ARGS}
   },
   rootpager => { name => $ENV{SIGMA0} || "sigma0" },
   bootstrap => {
@@ -58,7 +58,6 @@ my @qemu_args   = split("\0", qx:perl -e 'foreach (\@ARGV) { print "\$_\\0";}' -
 my $test_setup  = $ENV{TEST_SETUP} || '';
 my $test_target = $ENV{TEST_TARGET} || '';
 my $test_args   = $ENV{TEST_ARGS} || '';
-my $test_kernel_args = $ENV{TEST_KERNEL_ARGS} || '';
 my $ned_cfg     = $ENV{NED_CFG} || '';
 my $moe_args    = $ENV{MOE_ARGS} || '';
 my @more_mods   = split(' ', $ENV{REQUIRED_MODULES} || '');
@@ -80,28 +79,9 @@ $platform = L4::Makeconf::get($obj_base,"PLATFORM_TYPE") unless defined $platfor
 print STDERR "Warning: Unable to determine platform type.\n"
   unless defined $platform;
 
-# kernel arguments required by test
-$modlist_info->{kernel}{args} .= " " . $test_kernel_args if $test_kernel_args;
-
 my $tmpdir      = $ENV{TEST_TMPDIR};
 make_path($tmpdir);
 push(@modulepaths, $tmpdir);
-
-# array_minus removes all entries from the first array which exist in
-# the second array. If the result is empty then the first is a subset
-# of the second.
-sub array_minus
-{
-  my %e = map{ $_ => undef } @{$_[1]};
-  return grep( ! exists( $e{$_} ), @{$_[0]} );
-}
-
-# array_intersect keeps only those entries from the first array which
-# exist in the second array.
-sub array_intersect {
-  my %e = map { $_ => undef } @{$_[0]};
-  return grep { exists( $e{$_} ) } @{$_[1]};
-}
 
 sub get_module
 {
@@ -332,7 +312,6 @@ if ($ENV{INTROSPECTION_TESTS})
   }
 
 # Create the initial module list
-my @module_list = ();
 my $test_env_cfg;
 my $test_env_cfg_name = "$tmpdir/test_env.lua";
 my $convert = "$FindBin::Bin/key-value-convert.pl"; # hwconfig converter in same path
@@ -358,7 +337,6 @@ if ($ned_cfg and $modlist_info->{roottask}{name} eq 'moe')
     # Some more assembly required for L4Linux tests.
     if ($mode eq 'l4linux')
       {
-        $test_env_cfg or confess "L4Linux tests needs to be run with moe config.";
         # Check that the right version is available.
         # This is optional, missing parts lead to a simple skip of the test.
         exit_skip("No L4Linux binary provided.") if (!$l4linux);
