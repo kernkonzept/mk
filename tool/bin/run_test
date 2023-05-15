@@ -45,7 +45,7 @@ my $modlist_info = {
 sub add_mods { push @{$modlist_info->{extra_modules}}, @_; }
 
 # Environment settings used below
-my $modlist_template = "default.tpl";
+my $modlist_template = $ENV{BASE_MODLIST_TEMPLATE} || 'default.tpl';
 my $mode        = $ENV{MODE};
 my $obj_base    = $ENV{OBJ_BASE};
 my $l4linux     = $ENV{"L4LX_KERNEL_${arch}"} || $ENV{L4LX_KERNEL};
@@ -431,13 +431,13 @@ foreach my $mod (@inmods)
 
 add_mods(keys %shared_libs);
 
-my $tt = Template->new({ TRIM => 1, STRICT => 1, ABSOLUTE => 1})
+my $tt = Template->new({ TRIM => 1, STRICT => 1, ABSOLUTE => 1,
+                         INCLUDE_PATH => "$ENV{L4DIR}/tool/templates/runtest/"})
   || die "Module list template error: $Template::ERROR\n";
 my $test_modules_name = "$tmpdir/__test_modules.list";
 
-my $template_path = "$ENV{L4DIR}/tool/templates/runtest/$modlist_template";
-$tt->process($template_path, $modlist_info, $test_modules_name)
-  || die "Error parsing template ($template_path): \n\t" . $tt->error() . "\n";
+$tt->process($modlist_template, $modlist_info, $test_modules_name)
+  || die "Error parsing template ($modlist_template): \n\t" . $tt->error() . "\n";
 
 # run any potential pre-test setup scripts
 if ($test_setup)
