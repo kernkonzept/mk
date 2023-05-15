@@ -31,9 +31,9 @@ sub add_cmd
   while (<$fh_cmd>)
     {
       chomp;
-      $cmd    = $1 if /^cmd_\S+\s+:=\s+(.+)/;
+      $cmd    = $1 if /^savedcmd_\S+\s+:=\s+(.+)/;
       $source = $1 if /^source_\S+\s+:=\s+(.+)/;
-      $obj    = $1 if /^cmd_(\S+)\s+:=\s+.+/;
+      $obj    = $1 if /^savedcmd_(\S+)\s+:=\s+.+/;
     }
 
   return unless defined $cmd and defined $source and defined $obj;
