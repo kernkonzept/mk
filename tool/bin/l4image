@@ -326,15 +326,15 @@ sub create_image
           );
         }
 
-      my $filled_mod = L4::Image::fill_module(
+      my %filled_mod = L4::Image::fill_module(
         $f,
         $mod->{command},
         $mod->{type},
         $mod->{cmdline_quoted}
       );
 
-      error($filled_mod->{error}) if $filled_mod->{error};
-      push @{${$d}{mods}}, $filled_mod;
+      error($filled_mod{error}) if $filled_mod{error};
+      push @{${$d}{mods}}, \%filled_mod;
     }
 
   ${$d}{num_mods} = scalar @{${$d}{mods}};
