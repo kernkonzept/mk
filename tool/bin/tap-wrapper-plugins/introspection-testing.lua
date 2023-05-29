@@ -306,21 +306,17 @@ end
 -- TAP OUTPUT --
 ----------------
 
-num_checks = 0
-
 function tap_ok(str)
-  print('ok ' .. str)
-  num_checks = num_checks + 1
+ return 'ok ' .. str
 end
 
 function tap_not_ok(str)
-  print('not ok ' .. str)
-  num_checks = num_checks + 1
+  return 'not ok ' .. str
 end
 
 function tap_comment(comment, indent)
   indent = indent or ' '
-  print('#' .. indent .. comment:gsub('\n', '\n#' .. indent))
+  return '#' .. indent .. comment:gsub('\n', '\n#' .. indent)
 end
 
 -----------------
@@ -435,65 +431,97 @@ function Sandbox:safe_load(snip, env_ext)
   return pcall(fun)
 end
 
-function Sandbox:exec(snip)
+function Sandbox:exec(snip, out)
   local status, res = self:safe_load(snip)
   local s = 'IntrospectionTesting[EXEC] in ' .. self.scope
   snip = snip:gsub('\n', '\n#  ')
   if not status then
-    tap_comment(s .. ' failed')
-    tap_comment(snip, '   ')
-    tap_comment('error: ' .. inspect(res))
+    table.insert(out, tap_comment(s .. ' failed'))
+    table.insert(out, tap_comment(snip, '    '))
+    table.insert(out, tap_comment('error: ' .. inspect(res)))
     return
   end
-  tap_comment(s)
-  tap_comment(snip, '   ')
+  table.insert(out, tap_comment(s))
+  table.insert(out, tap_comment(snip, '    '))
   return
 end
 
-function Sandbox:check(snip)
+function Sandbox:check(snip, out)
   if not snip:find("^return ") then
     snip = "return " .. snip
   end
   local status, res, errstr = self:safe_load(snip)
   local s = 'IntrospectionTesting[CHECK] in ' .. self.scope
   if not status or type(res) ~= 'boolean' then
-    tap_not_ok(s)
-    tap_comment(snip, '   ')
-    tap_comment('result/error: ' .. inspect(res), '   ')
-    return
+    table.insert(out, tap_comment(s .. "\n" .. snip, '    '))
+    table.insert(out, tap_comment('result/error: ' .. inspect(res), '  '))
+    return false
   elseif res then
-    tap_ok(s)
-    tap_comment(snip, '   ')
+    table.insert(out, tap_comment(s))
+    table.insert(out, tap_comment(snip, '    '))
     return true
   else
-    tap_not_ok(s)
-    tap_comment(snip, '   ')
-    if errstr then tap_comment(errstr, '   ') end
-    return
+    table.insert(out, tap_comment(s .. ' failed'))
+    table.insert(out, tap_comment(snip, '    '))
+    if errstr then table.insert(out, tap_comment(errstr, '      ')) end
+    return false
   end
 end
 
-function Sandbox:debug_print(snip)
+function Sandbox:debug_print(snip, out)
   snip_ext = "return inspect(" .. snip .. ")"
   local status, res = self:safe_load(snip_ext, {inspect = inspect})
   tap_comment('IntrospectionTesting[DEBUGPRINT] in ' .. self.scope)
   if not status then
-    tap_comment('error: ' .. inspect(res), '   ')
+    table.insert(out, tap_comment('error: ' .. inspect(res), '    '))
     return
   end
-  tap_comment(snip .. ': ' .. res, '   ')
+  table.insert(out, tap_comment(snip .. ': ' .. res, '    '))
   return
 end
 
+function print_test_result(name, uuid, test_number, succeeded, out)
+  -- exit if nothing was recorded yet
+  if uuid == nil and name == nil and succeeded and #out == 0 then return end
+  -- if NAME or UUID tag of the last test was not set, print out a warning
+  if uuid == nil then
+    table.insert(out, tap_comment('WARNING: UUID was not set!'));
+  end
+  if name == nil then
+    -- The test name is required by the QA tooling. If we have collected results
+    -- but no test name, fail with a fatal error
+    print(table.concat(out, "\n"))
+    abort('FATAL: NAME was not set while analyzing the test state')
+  else
+    -- only create a result line if the test was named
+    local result = ""
+    if (succeeded) then
+       result = tap_ok(name .. ':Introspection')
+    else
+       result = tap_not_ok(name .. ':Introspection')
+    end
+    -- whether a test succeeds is supposed to be the first line of the output
+    table.insert(out, 1, result)
+  end
+  print(table.concat(out, "\n"))
+end
+
 sandbox = Sandbox.new('')
+-- store whether all introspection tests for a test succeed
+succeeded = true
+-- table for collecting output of a single test
+test_output = {}
+name = nil
+uuid = nil
+num_checks = 0
 function process_input(id, input)
   local function fail_input()
-    tap_not_ok('valid input')
+    table.insert(test_output, tap_comment('WARNING: invalid input!'))
     s = 'id: ' .. id .. ', tag: ' .. input.tag
     if input.info then
       s = s .. ', info: ' .. input.info
     end
-    tap_comment(s)
+    table.insert(test_output, tap_comment(s))
   end
 
   if input.tag ~= 'IntrospectionTesting' then
@@ -501,13 +529,21 @@ function process_input(id, input)
     return
   end
   if input.info == 'RESETSCOPE' then
+    -- print current test output
+    print_test_result(name, uuid, num_checks, succeeded, test_output)
+    -- reset Lua sandbox and status of test output for next test
     sandbox = Sandbox.new(input.text)
+    succeeded = true
+    test_output = {};
+    name = nil
+    uuid = nil
+    num_checks = num_checks + 1
   elseif input.info == 'EXEC' then
-    sandbox:exec(input.text)
+    sandbox:exec(input.text, test_output)
   elseif input.info == 'CHECK' then
-    sandbox:check(input.text)
+    succeeded = succeeded and sandbox:check(input.text, test_output)
   elseif input.info == 'DEBUGPRINT' then
-    sandbox:debug_print(input.text)
+    sandbox:debug_print(input.text, test_output)
   elseif input.info == "DUMP" then
     local two_lines = '^[^\n]+\n[^\n]+\n'
     local headers = input.text:match(two_lines)
@@ -521,6 +557,20 @@ function process_input(id, input)
     if version then
       sandbox.env.d[tag] = dump
     end
+  elseif input.info == "UUID" then
+    if uuid ~= nil then
+      table.insert(test_output, tap_comment(
+                      'WARNING: Overwriting already set UUID; was ' .. uuid));
+    end
+    table.insert(test_output, 1, "#    Test-uuid: " .. input.text)
+    uuid = input.text
+  elseif input.info == "NAME" then
+    -- IntrospectionTesting[NAME] is expected as the end of a block of tags
+    if name ~= nil then
+      table.insert(test_output, tap_comment(
+                      'WARNING: Overwriting already set NAME; was ' .. name));
+    end
+    name = input.text
   else
     fail_input()
   end
@@ -566,4 +616,8 @@ table.sort(ids, function(a, b) return tonumber(a) < tonumber(b) end)
 for _, id in ipairs(ids) do
   process_input(id, input[id])
 end
+
+-- print output of last test
+print_test_result(name, uuid, num_checks, succeeded, test_output)
+
 print('1..' .. num_checks)
