@@ -26,8 +26,8 @@ sub check_start {
   return unless shift =~ m/^(.*)@@ $self->{args}{tag} @< BLOCK *([^\v]*)/;
   $self->{in_block} = 1;
   $self->{block_prefix} = $1;
-  $self->{block_info} = $2;
-  $self->start_block($2);
+  $self->{block_info} = ($2 =~ s/\e\[[\d,;\s]+[A-Za-z]//gir); # strip color escapes
+  $self->start_block($self->{block_info});
 
   # Inhibit unless we already do because we require more blocks
   $self->inhibit_exit() unless $self->{args}{require_blocks};
@@ -77,9 +77,10 @@ sub has_tag {
   #
   # https://perldoc.perl.org/perlretut
   # https://perldoc.perl.org/perlrecharclass#Special-Characters-Inside-a-Bracketed-Character-Class
+  $self->{clean_line} =~ s/\e\[[\d,;\s]+[A-Za-z]//gi;
   if ($self->{clean_line} =~ s/^.*@@ $self->{args}{tag}(?:\[([^]]*)\])?://)
     {
-      $self->{block_info} = $1;
+      $self->{block_info} = $1; # strip color escapes
       return 1;
     }
   return 0

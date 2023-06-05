@@ -49,11 +49,11 @@ end
 
 -- helper function called by Dump:union() and Caps:union()
 function union(dict1, dict2, res)
-  for key, object in pairs(a) do
+  for key, object in pairs(dict1) do
     res[key] = object
   end
 
-  for key, object in pairs(b) do
+  for key, object in pairs(dict2) do
     res[key] = object
   end
 
@@ -103,7 +103,7 @@ function Dump:test_thread()
   return unpack(self:by("proto", "Thread"):by("name", "gtest_main"))
 end
 
-function Dump:caps_to(space_id)
+function Dump:caps_of(space_id)
   if not self[space_id] then
     error(space_id .. ' is not an existing space', 2)
   end
@@ -119,7 +119,7 @@ function Dump:caps_to(space_id)
   return caps
 end
 
-function Dump:caps_to_name(space_name)
+function Dump:caps_of_name(space_name)
   local spaces = self:filter(function(object)
     return object['name'] == space_name and
            (object['proto'] == 'Task' or object['proto'] == 'Vm')
@@ -147,7 +147,7 @@ function Dump:cap(cap_id, task)
   end
 
   task = task or self:test_task()
-  return self:caps_to(task.obj_id)[cap_id]
+  return self:caps_of(task.obj_id)[cap_id]
 end
 
 Caps = {}
@@ -222,23 +222,29 @@ function table_merge(a, b)
   return a
 end
 
-function eq(a, b, quiet)
+function eq(a, b, path)
   function comment_not_equal()
-    if not quiet then
-      return "first: " .. inspect(a) .. "\n" .. "second: " .. inspect(b)
-    end
-    return nil
+    path = path and "difference in " .. path .. ":\n" or ""
+    return path .. "first: " .. inspect(a) .. "\n" .. "second: " .. inspect(b)
+  end
+
+  if not a or not b then
+    return false, comment_not_equal()
   end
 
   if a == b then return true end
-  if type(a) ~= 'table' or type(b) ~= 'table' or
-     table_len(a) ~= table_len(b) then
+  if type(a) ~= 'table' or type(b) ~= 'table' then
     return false, comment_not_equal()
   end
 
   for k, v in pairs(a) do
-    if not eq(v, b[k], true) then
-      return false, comment_not_equal()
+    -- non-deterministic thread ready entry is ignored
+    if k ~= "rdy" then
+      res, err = eq(v, b[k], (path or "") .. "/" .. k) 
+
+      if not res then
+        return false, err
+      end
     end
   end
   return true
@@ -375,7 +381,7 @@ function parse_dump(dump)
         space_name = space_name,
         rights = parse_rights(rights),
         flags = parse_flags(flags),
-        obj_addr = obj_addr
+        obj_id = cur_obj_id
       }
     else -- this is an object line
       local obj_id, obj_addr, proto, attrstrs =
