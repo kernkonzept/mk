@@ -365,10 +365,21 @@ function parse_dump(dump)
 
   for _, line in ipairs(lines) do
     if line:sub(1, 1) == '\t' then -- this is a capability line
-      local attrs_regex =
-        'space=D:(%x+)%(([^)]+)%) rights=(%x+) flags=(%x+) obj=0x(%x+)'
-      local cap_addr, cap_id, space_id, space_name, rights, flags, obj_addr =
-        parse(line, '^\t(%x+)%[C:(%x+)%]: ' .. attrs_regex .. '$')
+      local cap_addr, cap_id, space_id, space_name, rights, flags, obj_addr
+      -- a space name is optionally given within parentheses, so we need to use
+      -- slightly different patterns to parse this line
+      if line:match("%b()") ~= nil then
+        local attrs_regex =
+           'space=D:(%x+)%(([^)]+)%) rights=(%x+) flags=(%x+) obj=0x(%x+)'
+        cap_addr, cap_id, space_id, space_name, rights, flags, obj_addr =
+          parse(line, '^\t(%x+)%[C:(%x+)%]: ' .. attrs_regex .. '$')
+      else
+        space_name = nil
+        local attrs_regex =
+          'space=D:(%x+) rights=(%x+) flags=(%x+) obj=0x(%x+)'
+        cap_addr, cap_id, space_id, rights, flags, obj_addr =
+          parse(line, '^\t(%x+)%[C:(%x+)%]: ' .. attrs_regex .. '$')
+      end
 
       objects[cur_obj_id].caps[cap_id] = {
         cap_addr = cap_addr,
