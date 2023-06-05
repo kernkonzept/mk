@@ -31,6 +31,7 @@ endif
 
 SYSTEMS ?= arm-l4f arm64-l4f mips-l4f x86-l4f amd64-l4f
 MODE ?= shared
+TEST_MODE ?= default
 ROLE = test.mk
 
 include $(L4DIR)/mk/Makeconf
@@ -68,10 +69,10 @@ endif
 CPPFLAGS += -DL4RE_ABS_SOURCE_DIR_PATH='"$(L4DIR_ABS)"'
 
 # variables that are forwarded to the test runner environment
-testvars_fix    := MODE ARCH NED_CFG REQUIRED_MODULES KERNEL_CONF L4LINUX_CONF \
+testvars_fix    :=  ARCH NED_CFG REQUIRED_MODULES KERNEL_CONF L4LINUX_CONF \
                     TEST_TARGET TEST_SETUP TEST_EXPECTED TEST_TAGS OBJ_BASE \
                     TEST_ROOT_TASK TEST_DESCRIPTION TEST_KERNEL_ARGS SIGMA0 \
-                    TEST_PLATFORM_ALLOW TEST_PLATFORM_DENY L4RE_CONF
+                    TEST_PLATFORM_ALLOW TEST_PLATFORM_DENY TEST_MODE L4RE_CONF
 testvars_conf   := TEST_TIMEOUT TEST_EXPECTED_REPEAT
 testvars_append := QEMU_ARGS MOE_ARGS TEST_ROOT_TASK_ARGS BOOTSTRAP_ARGS \
 
