@@ -7,8 +7,8 @@ L4DIR         ?= .
 PRJ_SUBDIRS   := pkg tests $(wildcard l4linux)
 BUILD_DIRS    := tool
 install-dirs  := tool pkg
-clean-dirs    := tool pkg tests doc
-cleanall-dirs := tool pkg tests doc
+clean-dirs    := tool pkg tests doc sysroot
+cleanall-dirs := tool pkg tests doc sysroot
 
 BUILD_TOOLS    = bash bison flex gawk perl tput \
                  $(foreach v,CC CXX LD HOST_CC HOST_CXX HOST_LD, \
@@ -17,7 +17,7 @@ BUILD_TOOLS    = bash bison flex gawk perl tput \
 BUILD_TOOLS_pkg/uvmm  := dtc
 
 CMDS_WITHOUT_OBJDIR := help checkbuild checkbuild.% check_build_tools
-CMDS_PROJECT_MK     := all clean cleanall install scrub cont doc help \
+CMDS_PROJECT_MK     := all clean cleanall install scrub cont doc help sysroot \
                        $(wildcard $(MAKECMDGOALS))
 
 # our default target is all::
@@ -167,7 +167,8 @@ cleanfast:
 	          fi
 	$(VERBOSE)$(RM) -r $(addprefix $(OBJ_BASE)/,bin include pkg tests    \
 	                               doc ext-pkg pc lib test l4defs.mk.inc \
-	                               l4defs.sh.inc .Makeconf.phys_reloc)   \
+	                               l4defs.sh.inc .Makeconf.phys_reloc    \
+	                               sysroot )                             \
 	                               $(IMAGES_DIR)
 	$(VERBOSE)if [ -f $(OBJ_BASE)/.tmp.bid_config.h ]; then  \
 	            mkdir -p $(OBJ_BASE)/include/generated;      \
@@ -239,6 +240,31 @@ regen_compile_commands_json:
 	    $(L4DIR)/tool/bin/gen_ccj $(OBJ_DIR) $(COMPILE_COMMANDS_JSON); \
 	  fi;                                                              \
 	fi
+
+# Build a typical sysroot for use with external tooling such as a
+# L4Re-specific cross-compiler
+SYSROOT_LIBS = libgcc_s lib4re lib4re-c lib4re-c-util lib4re-util-nortti lib4re-util libc libc_be_l4re libc_be_l4refile libc_be_socket_noop libc_be_sig libc_be_sig_noop libc_support_misc libdl libl4re-vfs.o libl4sys libl4util libld-l4 libm_support libpthread libuc_c_nonshared.p
+sysroot: $(foreach p,l4re l4re_c l4re_vfs l4sys l4util ldso libc_backends uclibc,pkg/l4re-core/$(p))
+	$(GEN_MESSAGE)
+	$(VERBOSE)$(RM) -r $(OBJ_DIR)/sysroot
+	$(VERBOSE)$(MKDIR) $(OBJ_DIR)/sysroot
+	$(VERBOSE)$(MKDIR) $(OBJ_DIR)/sysroot/usr/include/l4
+	$(VERBOSE)$(MKDIR) $(OBJ_DIR)/sysroot/usr/include/l4-arch/l4
+	$(VERBOSE)$(MKDIR) $(OBJ_DIR)/sysroot/usr/lib
+	$(VERBOSE)$(CP) -Lr $(OBJ_DIR)/include/$(BUILD_ARCH)/l4/sys \
+	                    $(OBJ_DIR)/include/$(BUILD_ARCH)/l4/util \
+	                    $(OBJ_DIR)/sysroot/usr/include/l4-arch/l4
+	$(VERBOSE)$(CP) -Lr $(OBJ_DIR)/include/$(BUILD_ARCH)/l4f/l4 \
+	          $(OBJ_DIR)/sysroot/usr/include/l4-arch/
+	$(VERBOSE)$(CP) -Lr $(OBJ_DIR)/include/l4/{crtn,cxx,l4re_vfs,libc_backends,re,sys,util,bid_config.h} \
+	                    $(OBJ_DIR)/sysroot/usr/include/l4/
+	$(VERBOSE)$(CP) -Lr $(OBJ_DIR)/include/uclibc/* $(OBJ_DIR)/sysroot/usr/include/
+	$(VERBOSE)$(CP) -Lr $(OBJ_DIR)/lib/$(BUILD_ARCH)_$(CPU)/std/plain/crt* $(OBJ_DIR)/sysroot/usr/lib
+	$(VERBOSE)$(CP) -Lr $(wildcard $(foreach l,$(SYSROOT_LIBS),$(OBJ_DIR)/lib/$(BUILD_ARCH)_$(CPU)/std/l4f/$(l).a $(OBJ_DIR)/lib/$(BUILD_ARCH)_$(CPU)/std/l4f/$(l).so)) \
+	                    $(OBJ_DIR)/sysroot/usr/lib
+	$(VERBOSE)mv $(OBJ_DIR)/sysroot/usr/lib/libm_support.a  $(OBJ_DIR)/sysroot/usr/lib/libm.a
+	$(VERBOSE)mv $(OBJ_DIR)/sysroot/usr/lib/libm_support.so $(OBJ_DIR)/sysroot/usr/lib/libm.so
+
 
 .PHONY: l4defs regen_l4defs compile_commands.json regen_compile_commands_json
 endif # empty $(S)
