@@ -44,6 +44,19 @@ my $modlist_info = {
 };
 sub add_mods { push @{$modlist_info->{extra_modules}}, @_; }
 
+sub parse_mod {
+  my $moddef = shift;
+
+  $moddef =~ /^([^\[:]*)(:rw)?(\[([^\]]+)\])?$/;
+
+  return {
+    name => $1,
+    opts => $4,
+    is_rw => $2 ? 1 : 0,
+  };
+}
+
+
 # Environment settings used below
 my $modlist_template = $ENV{BASE_MODLIST_TEMPLATE} || 'default.tpl';
 my $test_mode   = $ENV{TEST_MODE};
@@ -60,7 +73,7 @@ my $test_target = $ENV{TEST_TARGET} || '';
 my $test_args   = $ENV{TEST_ARGS} || '';
 my $ned_cfg     = $ENV{NED_CFG} || '';
 my $moe_args    = $ENV{MOE_ARGS} || '';
-my @more_mods   = split(' ', $ENV{REQUIRED_MODULES} || '');
+my @more_mods   = map { parse_mod $_ } split(' ', $ENV{REQUIRED_MODULES} || '');
 my $hwconfig_file = $ENV{TEST_HWCONFIG} || '';
 my $fiascoconfig_file = $ENV{TEST_FIASCOCONFIG} || '';
 my $test_run_tags = $ENV{TEST_RUN_TAGS} || '';
@@ -320,7 +333,7 @@ if ($ned_cfg and $modlist_info->{roottask}{name} eq 'moe')
   {
     # Create an additional LUA config file where environment variables can
     # be exported to.
-    my @mod_list = map { s/:rw$//; $_ } map { $_ } @more_mods;
+    my @mod_list = map { $_->{name} } @more_mods;
     my $test_prog = $test_target;
     $test_prog .= ' '.$test_args if $test_args;
     open($test_env_cfg, '>', $test_env_cfg_name)
@@ -344,7 +357,7 @@ if ($ned_cfg and $modlist_info->{roottask}{name} eq 'moe')
         check_config('L4Linux kernel', $ENV{"L4LINUX_CONF"}.' CONFIG_L4_CHR_DS_DRV',
           dirname($l4linux) . '/.config');
 
-        add_mods($l4linux, $ramdisk);
+        add_mods(parse_mod($l4linux), parse_mod($ramdisk));
 
         my $l4linux_bin = basename($l4linux);
         my $ramdisk_bin = basename($ramdisk);
@@ -359,7 +372,7 @@ if ($ned_cfg and $modlist_info->{roottask}{name} eq 'moe')
     # Now set up boot for use with ned.
     (my $ned_cfg_name = $ned_cfg) =~ s/.*\///;
     $modlist_info->{roottask}{args} = " $moe_args rom/$ned_cfg_name";
-    add_mods( "ned", "test_env.lua", "lib_test.lua", $ned_cfg)
+    add_mods( map { parse_mod $_ } ("ned", "test_env.lua", "lib_test.lua", $ned_cfg) );
   }
 elsif ($modlist_info->{roottask}{name} eq 'moe')
   {
@@ -368,8 +381,8 @@ elsif ($modlist_info->{roottask}{name} eq 'moe')
     $modlist_info->{roottask}{args} .= " -- ".$test_args if $test_args;
   }
 
-add_mods(map { s/:rw$/ :rw/; $_ } @more_mods);
-add_mods($test_target) unless $is_kunit_test;
+add_mods(@more_mods);
+add_mods(parse_mod($test_target)) unless $is_kunit_test;
 
 if ($is_kunit_test)
   {
@@ -394,7 +407,7 @@ if ($is_kunit_test)
   }
 
 # If any binary was linked dynamically, we need to add the necessary .so files.
-my @inmods = map { get_module($_) } @{$modlist_info->{extra_modules}};
+my @inmods = map { get_module($_->{name}.($_->{is_rw} ? " :rw" : "")) } @{$modlist_info->{extra_modules}};
 my %shared_libs = ();
 foreach my $mod (@inmods)
   {
@@ -407,7 +420,7 @@ foreach my $mod (@inmods)
       }
   }
 
-add_mods(keys %shared_libs);
+add_mods(map { parse_mod $_ } keys %shared_libs);
 
 my $tt = Template->new({ TRIM => 1, STRICT => 1, ABSOLUTE => 1,
                          INCLUDE_PATH => "$ENV{L4DIR}/tool/templates/runtest/"})

@@ -301,7 +301,9 @@ Non-standard timeout after which the test run is aborted
 LUA configuration file for startup to give to Ned
 
 \par `REQUIRED_MODULES`
-Additional modules needed to run the test.
+Additional modules needed to run the test. By adding `[opts]` to the name of a
+module you can add module options that are reflected in the generated
+modules.list.
 
 \par `BOOTSTRAP_ARGS`
 Additional parameters to supply to bootstrap.
