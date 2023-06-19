@@ -257,7 +257,7 @@ BID_ROOT_CONF := $(call absfilename, $(OBJ_BASE))/.config.all
 endif
 ifeq ($(wildcard $(BID_ROOT_CONF)),)
  ifeq ($(BID_IGN_ROOT_CONF),)
-(error No configuration file found in build directory "$(OBJ_BASE)". Please run "make O=/path/to/objdir config" in "$(L4DIR_ABS)" or specify a valid build directory)
+$(error No configuration file found in build directory "$(OBJ_BASE)". Please run "make O=/path/to/objdir config" in "$(L4DIR_ABS)" or specify a valid build directory)
  endif
 else
  include $(BID_ROOT_CONF)
