@@ -83,6 +83,7 @@ endmenu # Custom platform
 endif
 
 source "Kconfig.generated.platform_types"
+source "Kconfig.generated.pkgs"
 
 config USE_DROPS_STDDIR
 	def_bool n

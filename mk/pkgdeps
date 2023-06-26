@@ -6,6 +6,7 @@ use warnings;
 my $do_cluster_subgraphs = 0;
 my $collapse_clusters = 0;
 my $ignore_missing = 0;
+my $kconfig_pkgs = undef;
 
 my $controlfile       = 'Control';
 my $controlfile_local = 'Control.local';
@@ -129,6 +130,26 @@ sub write_alias_pcfile($@)
 
   close U;
 }
+
+sub write_kconfig_file()
+{
+  open(my $f, ">$kconfig_pkgs") || die "Cannot create '$kconfig_pkgs': $!";
+
+  print $f "# Automatically Kconfig for provided packages\n";
+  print $f "#\n";
+  print $f "# ", `date`;
+  print $f "#\n";
+
+
+  foreach my $p (keys %provided)
+    {
+      $p =~ s/[^A-Za-z0-9]/_/g;
+      print $f "config HAVE_BIDPC_" . uc($p) . "\n";
+      print $f "\tbool\n";
+      print $f "\tdefault y\n\n";
+    }
+}
+
 
 sub add_alias($$@)
 {
@@ -1056,6 +1077,11 @@ while (1)
         shift;
         read_config(shift);
       }
+    elsif ($ARGV[0] eq '-K')
+      {
+        shift;
+        $kconfig_pkgs = shift;
+      }
     else
       {
         last;
@@ -1072,6 +1098,9 @@ read_aliases_dir($_, undef) foreach @aliases_dirs;
 
 if ($cmd eq 'generate') {
   generate_dep_makefile($base_path, @ARGV);
+} elsif ($cmd eq 'genkconfig') {
+  scan_files_dirs($base_path, 1, @ARGV);
+  write_kconfig_file() if $kconfig_pkgs;
 } elsif ($cmd eq 'dot') {
   generate_dot_file_all($base_path, '>-');
 } elsif ($cmd eq 'overviewset') {
