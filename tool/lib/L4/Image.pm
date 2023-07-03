@@ -39,6 +39,7 @@ use L4::Image::Utils qw/error check_sysread check_syswrite
                         filepos_get filepos_set/;
 use L4::Image::Elf;
 use L4::Image::Raw;
+use L4::Image::EFI;
 use L4::Image::UImage;
 
 BEGIN { unshift @INC, dirname($0).'../lib'; }
@@ -117,9 +118,10 @@ use constant {
   FILE_TYPE_UNKNOWN => 1,
   FILE_TYPE_ELF     => 2,
   FILE_TYPE_UIMAGE  => 3,
+  FILE_TYPE_EFI     => 4,
 };
 
-use constant FILE_TYPES => qw(ERROR Unknown/Raw ELF uImage);
+use constant FILE_TYPES => qw(ERROR Unknown/Raw ELF uImage EFI);
 
 sub map_type_name_to_flag
 {
@@ -165,6 +167,8 @@ sub get_file_type
     $type = FILE_TYPE_ELF;
   } elsif ($n[0] == 0x27 and $n[1] == 5 and $n[2] == 0x19 and $n[3] == 0x56) {
     $type = FILE_TYPE_UIMAGE;
+  } elsif($n[0] == 0x4d and $n[1] == 0x5a) { # ASCII 'MZ' (PE magic)
+    $type = FILE_TYPE_EFI;
   }
 
   close $fd;
@@ -483,6 +487,8 @@ sub process_image
     $img = L4::Image::UImage->new($fn, $_start);
   } elsif ($file_type == FILE_TYPE_ELF) {
     # Already parsed above due to unwrapping ...
+  } elsif ($file_type == FILE_TYPE_EFI) {
+    $img = L4::Image::EFI->new($fn, $_start);
   } else {
     $img = L4::Image::Raw->new($fn, $_start);
   }
