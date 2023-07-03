@@ -118,7 +118,17 @@ $(OBJ_DIR)/.Package.deps: $(L4DIR)/mk/pkgdeps $(OBJ_DIR)/.Package.deps.pkgs \
 	$(VERBOSE)$(PKGDEPS_CMD) generate $(SRC_DIR) $(ALL_SUBDIRS) > $@.tmp
 	$(VERBOSE)$(call move_if_changed,$@,$@.tmp)
 
+define variant_package_deps_rule
+$(OBJ_DIR)/.Packages.variant.$(1): FORCE
+	$(VERBOSE)echo -n "BUILD_VARIANT_$(1) := " > $$@.tmp
+	$(VERBOSE)$(PKGDEPS_CMD) pkgdeps $(SRC_DIR) $(VARIANT_DIRS-variant-$(1)) >> $$@.tmp
+	$(VERBOSE)$(call move_if_changed,$$@,$$@.tmp)
+endef
+
+$(foreach v,$(VARIANTS_AVAILABLE),$(eval $(call variant_package_deps_rule,$(v))))
+
 include $(OBJ_DIR)/.Package.deps
+include $(foreach v,$(VARIANTS_AVAILABLE),$(OBJ_BASE)/.Packages.variant.$(v))
 
 $(ALL_SUBDIRS):%:%/Makefile BID_cont_reset
 	@$(PKG_MESSAGE)

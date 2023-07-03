@@ -42,8 +42,12 @@ ifeq ($(MODE),host)
 INSTALLDIR_BIN_LOCAL    = $(OBJ_BASE)/test/bin/host/$(TEST_GROUP)
 INSTALLDIR_TEST_LOCAL   = $(OBJ_BASE)/test/t/host/$(TEST_GROUP)
 else
-INSTALLDIR_BIN_LOCAL    = $(OBJ_BASE)/test/bin/$(subst -,/,$(SYSTEM))/$(TEST_GROUP)
-INSTALLDIR_TEST_LOCAL   = $(OBJ_BASE)/test/t/$(subst -,/,$(SYSTEM))/$(TEST_GROUP)
+  ifeq ($(words $(VARIANTS)),1)
+    INSTALLDIR_BIN_LOCAL    = $(OBJ_BASE)/test/bin/$(BID_install_subdir_base)/$(TEST_GROUP)
+  else
+    INSTALLDIR_BIN_LOCAL    = $(OBJ_BASE)/test/bin/$(BID_install_subdir_var)/$(TEST_GROUP)
+  endif
+  INSTALLDIR_TEST_LOCAL   = $(OBJ_BASE)/test/t/$(BID_install_subdir_base)/$(TEST_GROUP)
 endif
 
 $(GENERAL_D_LOC): $(L4DIR)/mk/test.mk $(SRC_DIR)/Makefile

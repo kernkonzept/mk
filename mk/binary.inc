@@ -32,6 +32,38 @@ $(GENERAL_D_LOC): $(L4DIR)/mk/binary.inc $(L4DIR)/mk/modes.inc $(L4DIR)/mk/rules
 # our default Makefile-name in the OBJ-Subdirs
 BID_OBJ_Makefile ?= Makefile
 
+# Check that the variant deps files are there
+$(foreach v,$(VARIANTS_AVAILABLE),$(if $(wildcard $(OBJ_BASE)/.Packages.variant.$(v)),,$(error .Packages.variant.$(v) not available, please call 'make' in the top-level build directory)))
+
+include $(foreach v,$(VARIANTS_AVAILABLE),$(OBJ_BASE)/.Packages.variant.$(v))
+
+# Building variants:
+# progs build 'std', except the prog tells us otherwise
+ifeq ($(ROLE),prog.mk)
+  VARIANTS ?= std
+endif
+# tests build 'std', except the test tells us otherwise
+ifeq ($(ROLE),test.mk)
+  VARIANTS ?= std
+endif
+ifeq ($(ROLE),assets.mk)
+  VARIANTS ?= std
+endif
+# libs build 'std' and variants if current directory is within the ones
+# listed in BUILD_VARIANT_$(VARIANT)
+# package may also tell otherwise by setting VARIANTS
+ifeq ($(ROLE),lib.mk)
+  VARIANTS ?= std \
+              $(foreach va, $(VARIANTS_AVAILABLE), \
+                        $(if $(filter $(PKGDIR_ABS), \
+                                      $(addprefix $(L4DIR_ABS)/,$(BUILD_VARIANT_$(va)))), \
+                             $(va) \
+                         ) \
+               )
+endif
+
+$(if $(VARIANTS),,$(error No variants defined))
+
 ifeq ($(SYSTEM),) # if we have no system yet, build the subdirs
 #################################################################
 #
@@ -98,7 +130,7 @@ FILTER_SYSTEM = $(shell echo $(2)|$(AWKP) '\
 #   the resulting system matches $(1). If so, print the according pattern from
 #   SYSTEMS and exit
 BID_ORIG_SYSTEM = $(shell echo $(2)|$(AWKP) '\
-		    BEGIN{m=s="$(1)";sub("_[^-]*","",m)}\
+		    BEGIN{s="$(1)";sub("-[^-]*","",s);m=s;sub("_[^-]*","",m)}\
 		    {for(i=1;i<=NF;i++){\
 		 	if(m==$$i||s==$$i){print $$i;exit};\
 		 	if(index(m,$$i)==1||index(s,$$i)==1)\
@@ -108,10 +140,22 @@ BID_ORIG_SYSTEM = $(shell echo $(2)|$(AWKP) '\
 TARGET_SYSTEMS := $(sort $(foreach sys,$(BUILD_SYSTEMS),\
 			$(call FILTER_SYSTEM,$(sys),$(SYSTEMS))))
 
+# Add Variant infix -- helper
+TARGET_SYSTEMS_ADD_VARIANT = $(firstword $(1))-$(2)-$(word 2,$(1))
+# Add Variant infix to TARGET_SYSTEMS
+TARGET_SYSTEMS := $(strip \
+                    $(foreach ts,$(TARGET_SYSTEMS), \
+                      $(foreach v,$(VARIANTS), \
+                        $(call TARGET_SYSTEMS_ADD_VARIANT,$(subst -,$(BID_SPACE),$(ts)),$(v)) \
+                       ) \
+                     ) \
+                   )
+
 DIR_FROM_SUB = $(firstword $(addprefix ../,$(patsubst /%,,$(1))) $(1))
 SYSTEM_TO_ARCH = $(shell echo $(1)|$(SED) -e 's/[_-].*//')
 SYSTEM_TO_CPU = $(shell echo $(1)|$(SED) -ne 's/[^-_]*_\([^-]*\).*/\1/p')
-SYSTEM_TO_L4API = $(shell echo $(1)|$(SED) -ne 's/.*-\(.*\)/\1/p')
+SYSTEM_TO_L4API = $(word 3,$(subst -,$(BID_SPACE),$(1)))
+SYSTEM_TO_VARIANT = $(word 2,$(subst -,$(BID_SPACE),$(1)))
 
 $(foreach sys,$(TARGET_SYSTEMS),$(OBJ_DIR)/OBJ-$(sys)/$(BID_OBJ_Makefile)):$(OBJ_DIR)/OBJ-%/$(BID_OBJ_Makefile):$(OBJ_DIR)/.general.d $(L4DIR_ABS)/mk/binary.inc
 	@install -d $(dir $@)
@@ -128,6 +172,7 @@ $(foreach sys,$(TARGET_SYSTEMS),$(OBJ_DIR)/OBJ-$(sys)/$(BID_OBJ_Makefile)):$(OBJ
 	@echo 'ARCH=$(call SYSTEM_TO_ARCH,$*)'>>$@
 	@echo 'CPU=$(call SYSTEM_TO_CPU,$*)'>>$@
 	@echo 'L4API=$(call SYSTEM_TO_L4API,$*)'>>$@
+	@echo 'VARIANT=$(call SYSTEM_TO_VARIANT,$*)'>>$@
 	@for ext in .c .cc .cpp $(FORTRAN_FILE_EXTENSIONS) $(BID_ASM_FILE_EXTENSIONS) .y .l .ld .dpe .dts; \
 	  do echo "vpath %$$ext $(VPATH_SRC_BASE)">>$@ ; done
 	@echo '.general.d: $(SRC_DIR)/$(if $(wildcard Make.rules),Make.rules,Makefile)'>>$@
@@ -191,12 +236,12 @@ L4INCDIR ?=	$(addprefix $(OBJ_BASE)/include/$(ARCH)/,$(L4API)) \
                 $(DROPS_STDDIR)/include/$(ARCH) \
                 $(DROPS_STDDIR)/include
 
-L4LIBDIR ?=	$(addprefix $(OBJ_BASE)/lib/$(ARCH)_$(CPU)/,$(L4API)) \
-                $(OBJ_BASE)/lib/$(ARCH)_$(CPU)/plain \
-                $(OBJ_BASE)/lib \
-                $(addprefix $(DROPS_STDDIR)/lib/$(ARCH)_$(CPU)/,$(L4API)) \
-                $(DROPS_STDDIR)/lib/$(ARCH)_$(CPU)/plain \
-                $(DROPS_STDDIR)/lib
+L4LIBDIR ?=	$(addprefix $(OBJ_BASE)/lib/$(ARCH)_$(CPU)/$(VARIANT)/,$(L4API)) \
+                $(OBJ_BASE)/lib/$(ARCH)_$(CPU)/$(VARIANT)/plain \
+                $(OBJ_BASE)/lib/$(VARIANT) \
+                $(addprefix $(DROPS_STDDIR)/lib/$(ARCH)_$(CPU)/$(VARIANT)/,$(L4API)) \
+                $(DROPS_STDDIR)/lib/$(ARCH)_$(CPU)/$(VARIANT)/plain \
+                $(DROPS_STDDIR)/lib/$(VARIANT)
 
 else
 
@@ -205,9 +250,9 @@ L4INCDIR ?=	$(addprefix $(OBJ_BASE)/include/$(ARCH)/,$(L4API)) \
                 $(OBJ_BASE)/include/$(ARCH) \
                 $(OBJ_BASE)/include
 
-L4LIBDIR ?=     $(addprefix $(OBJ_BASE)/lib/$(ARCH)_$(CPU)/,$(L4API)) \
-                $(OBJ_BASE)/lib/$(ARCH)_$(CPU)/plain \
-                $(OBJ_BASE)/lib
+L4LIBDIR ?=     $(addprefix $(OBJ_BASE)/lib/$(ARCH)_$(CPU)/$(VARIANT)/,$(L4API)) \
+                $(OBJ_BASE)/lib/$(ARCH)_$(CPU)/$(VARIANT)/plain \
+                $(OBJ_BASE)/lib/$(VARIANT)
 endif
 
 #
@@ -261,7 +306,7 @@ REQUIRES_LIBS += $(call BID_mode_var,REQUIRES_LIBS)
 REQUIRES_CFLAGS += $(call BID_mode_var,REQUIRES_CFLAGS)
 
 CARCHFLAGS += $(CARCHFLAGS_$(ARCH)) $(CARCHFLAGS_$(ARCH)_$(CPU))
-
+CARCHFLAGS += $(CARCHFLAGS-variant-$(VARIANT))
 
 LDFLAGS       += $(LDFLAGS-y) $(LDFLAGS_$(ARCH)) $(LDFLAGS_$(ARCH)-y) \
                  $(LDFLAGS_$(OSYSTEM)) $(LDFLAGS_$(OSYSTEM)-y) \
@@ -455,7 +500,6 @@ CFLAGS_L4_NOPIC   += $(call BID_mode_var,NOPICFLAGS)
 CFLAGS_L4_PIC     += $(PICFLAGS)
 endif
 
-
 CFLAGS  += $(if $(CONFIG_BID_GCC_OMIT_FP),-fomit-frame-pointer,-fno-omit-frame-pointer)
 CFLAGS	+= $(OPTS) $(WARNINGS)
 CFLAGS  += -fno-common
@@ -466,6 +510,7 @@ DEFINES += -DSYSTEM_$(subst -,_,$(SYSTEM)) -DARCH_$(ARCH) -DCPUTYPE_$(CPU) -DL4A
 DEFINES += -D_GNU_SOURCE
 DEFINES-l4api-plain := -DL4_MINIMAL_LIBC
 DEFINES += $(DEFINES-l4api-$(L4API))
+DEFINES += $(DEFINES-variant-$(VARIANT))
 ifdef DEBUG
 ifneq (,$(filter 0 n N, $(DEBUG)))
 DEFINES	+= -DNDEBUG

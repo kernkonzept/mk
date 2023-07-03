@@ -186,44 +186,42 @@ clean cleanall install::
 	            if [ -r $$i/Makefile -o -r $$i/GNUmakefile ]; then \
 	              PWD=$(PWD)/$$i $(MAKE) -C $$i $@; fi; done
 
-L4DEF_FILE_MK ?= $(OBJ_BASE)/l4defs.mk.inc
-L4DEF_FILE_SH ?= $(OBJ_BASE)/l4defs.sh.inc
-L4DEF_FILE_PL ?= $(OBJ_BASE)/l4defs.pl.inc
+l4defs_file  = $(OBJ_BASE)/l4defs$(if $(filter std,$(1)),,-$(1)).$(2).inc
 
-l4defs: $(L4DEF_FILE_MK) $(L4DEF_FILE_SH) $(L4DEF_FILE_PL)
+L4DEFS_FILES = $(foreach v,std $(VARIANTS_AVAILABLE),$(call l4defs_file,$(v),mk) $(call l4defs_file,$(v),sh) $(call l4defs_file,$(v),pl))
 
-generate_l4defs_files = \
-	$(VERBOSE)tmpdir=$(OBJ_BASE)/l4defs.gen.dir &&                 \
+l4defs: $(L4DEFS_FILES)
+
+generate_l4defs_files_step = \
+	tmpdir=$(OBJ_BASE)/l4defs.gen.dir &&                 \
 	mkdir -p $$tmpdir &&                                           \
 	echo "L4DIR = $(L4DIR_ABS)"                      > $$tmpdir/Makefile && \
 	echo "OBJ_BASE = $(OBJ_BASE)"                   >> $$tmpdir/Makefile && \
 	echo "L4_BUILDDIR = $(OBJ_BASE)"                >> $$tmpdir/Makefile && \
 	echo "SRC_DIR = $$tmpdir"                       >> $$tmpdir/Makefile && \
 	echo "PKGDIR_ABS = $(L4DIR_ABS)/l4defs.gen.dir" >> $$tmpdir/Makefile && \
+	echo "VARIANT = $(2)"                           >> $$tmpdir/Makefile && \
 	echo "BUILD_MESSAGE ="                          >> $$tmpdir/Makefile && \
 	cat $(L4DIR)/mk/export_defs.inc                 >> $$tmpdir/Makefile && \
 	PWD=$$tmpdir $(MAKE) -C $$tmpdir -f $$tmpdir/Makefile          \
-	  CALLED_FOR=$(1) L4DEF_FILE_MK=$(L4DEF_FILE_MK) L4DEF_FILE_SH=$(L4DEF_FILE_SH) L4DEF_FILE_PL=$(L4DEF_FILE_PL) && \
+	  CALLED_FOR=$(1) L4DEF_FILE_MK=$(call l4defs_file,$(2),mk) L4DEF_FILE_SH=$(call l4defs_file,$(2),sh) L4DEF_FILE_PL=$(call l4defs_file,$(2),pl) && \
 	$(RM) -r $$tmpdir
 
-$(L4DEF_FILE_MK): $(OBJ_DIR)/.Package.deps pkg/l4re-core \
-                  $(DROPSCONF_CONFIG_MK) $(L4DIR)/mk/export_defs.inc
-	+$(call generate_l4defs_files,static)
-	+$(call generate_l4defs_files,minimal)
-	+$(call generate_l4defs_files,shared)
-	+$(call generate_l4defs_files,sharedlib)
-	+$(call generate_l4defs_files,finalize)
+generate_l4defs_files = \
+	$(call generate_l4defs_files_step,static,$(1)); \
+	$(call generate_l4defs_files_step,minimal,$(1)); \
+	$(call generate_l4defs_files_step,shared,$(1)); \
+	$(call generate_l4defs_files_step,sharedlib,$(1)); \
+	$(call generate_l4defs_files_step,finalize,$(1))
 
-$(L4DEF_FILE_SH): $(L4DEF_FILE_MK)
+$(firstword $(L4DEFS_FILES)): $(OBJ_DIR)/.Package.deps pkg/l4re-core \
+                 $(DROPSCONF_CONFIG_MK) $(L4DIR)/mk/export_defs.inc
+	+$(VERBOSE)$(foreach v,std $(VARIANTS_AVAILABLE),$(call generate_l4defs_files,$(v));)
 
-$(L4DEF_FILE_PL): $(L4DEF_FILE_MK)
+$(wordlist 2,$(words $(L4DEFS_FILES)),$(L4DEFS_FILES)): $(firstword $(L4DEFS_FILES))
 
 regen_l4defs:
-	+$(call generate_l4defs_files,static)
-	+$(call generate_l4defs_files,minimal)
-	+$(call generate_l4defs_files,shared)
-	+$(call generate_l4defs_files,sharedlib)
-	+$(call generate_l4defs_files,finalize)
+	+$(VERBOSE)$(foreach v,std $(VARIANTS_AVAILABLE),$(call generate_l4defs_files,$(v));)
 
 COMPILE_COMMANDS_JSON = compile_commands.json
 

@@ -16,14 +16,25 @@ ROLE = prog.mk
 include $(L4DIR)/mk/Makeconf
 $(GENERAL_D_LOC): $(L4DIR)/mk/prog.mk
 
+# our mode
+MODE 			?= static
+
+# include all Makeconf.locals, define common rules/variables
+include $(L4DIR)/mk/binary.inc
+
 # define INSTALLDIRs prior to including install.inc, where the install-
 # rules are defined.
 ifneq ($(filter host targetsys,$(MODE)),)
 INSTALLDIR_BIN		?= $(DROPS_STDDIR)/bin/$(MODE)
 INSTALLDIR_BIN_LOCAL	?= $(OBJ_BASE)/bin/$(MODE)
 else
-INSTALLDIR_BIN		?= $(DROPS_STDDIR)/bin/$(subst -,/,$(SYSTEM))
-INSTALLDIR_BIN_LOCAL	?= $(OBJ_BASE)/bin/$(subst -,/,$(SYSTEM))
+  ifeq ($(words $(VARIANTS)),1)
+    INSTALLDIR_BIN		?= $(DROPS_STDDIR)/bin/$(BID_install_subdir_base)
+    INSTALLDIR_BIN_LOCAL	?= $(OBJ_BASE)/bin/$(BID_install_subdir_base)
+  else
+    INSTALLDIR_BIN		?= $(DROPS_STDDIR)/bin/$(BID_install_subdir_var)
+    INSTALLDIR_BIN_LOCAL	?= $(OBJ_BASE)/bin/$(BID_install_subdir_var)
+  endif
 endif
 ifeq ($(CONFIG_BID_STRIP_BINARIES),y)
 INSTALLFILE_BIN 	?= $(call copy_stripped_binary,$(1),$(2),755)
@@ -37,12 +48,6 @@ INSTALLFILE		= $(INSTALLFILE_BIN)
 INSTALLDIR		= $(INSTALLDIR_BIN)
 INSTALLFILE_LOCAL	= $(INSTALLFILE_BIN_LOCAL)
 INSTALLDIR_LOCAL	= $(INSTALLDIR_BIN_LOCAL)
-
-# our mode
-MODE 			?= static
-
-# include all Makeconf.locals, define common rules/variables
-include $(L4DIR)/mk/binary.inc
 
 ifneq ($(SYSTEM),) # if we have a system, really build
 
