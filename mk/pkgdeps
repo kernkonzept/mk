@@ -426,17 +426,18 @@ sub get_src_pkg($$)
   return $spkg;
 }
 
+# Get required and optional dependencies
 sub get_deps_recursive(@)
 {
-  my %required;
+  my %deps;
   my $done = 0;
 
-  $required{$_->{name}} = $_ foreach @_;
+  $deps{$_->{name}} = $_ foreach @_;
 
   while (not $done)
     {
       $done = 1;
-      foreach my $pkg (values %required)
+      foreach my $pkg (values %deps)
         {
           foreach my $spkg (@{$pkg->{'source-pkg'}})
             {
@@ -447,21 +448,21 @@ sub get_deps_recursive(@)
                                "of package '$pkg->{name}' not found\n";
                   next;
                 }
-              $done = 0 unless defined $required{$s->{name}};
-              $required{$s->{name}} = $s;
+              $done = 0 unless defined $deps{$s->{name}};
+              $deps{$s->{name}} = $s;
             }
 
-          foreach my $rpkg (@{$pkg->{requires}})
+          foreach my $rpkg (@{$pkg->{requires}}, @{$pkg->{optional}})
             {
               my $r = get_providing_pkg($rpkg, $pkg->{name});
               next unless defined $r;
-              $done = 0 unless defined $required{$r->{name}};
-              $required{$r->{name}} = $r;
+              $done = 0 unless defined $deps{$r->{name}};
+              $deps{$r->{name}} = $r;
             }
         }
     }
 
-  return values %required;
+  return values %deps;
 }
 
 sub figure_out_pkg_dependecies(@)
