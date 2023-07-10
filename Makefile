@@ -725,6 +725,27 @@ checkbuild.%: $(CHECK_BASE_DIR)/config.%/.config.all $(CHECK_BASE_DIR)/config.%/
 
 checkbuild: $(if $(USE_CONFIGS),$(addprefix checkbuild.,$(USE_CONFIGS)),$(patsubst mk/defconfig/config.%, checkbuild.%, $(wildcard mk/defconfig/config.*)))
 
+# Print version info for a command
+#  $1: command
+#  $2: (optional, default = -v) argument to get version
+#  $3: (optional, default = none) redirects
+define _ver_fun
+	 @echo "$1 $(or $2,-v):"
+	 @$1 $(or $2,-v) $3 || true
+	 @echo
+
+endef
+
+# Print version info for command contained in variable, incl. variable name
+#  Arguments: see _ver_fun
+define _ver_fun_var
+	@echo -n "$1: "
+	$(call _ver_fun,$($1),$2,$3)
+endef
+
+# Variants of the above two to print multiple
+_ver_fun_vars=$(foreach v,$1,$(call _ver_fun_var,$v,$2,$3))
+_ver_funs=$(foreach v,$1,$(call _ver_fun,$v,$2,$3))
 
 report:
 	@echo -e $(EMPHSTART)"============================================================="$(EMPHSTOP)
@@ -732,45 +753,12 @@ report:
 	@echo -e $(EMPHSTART)" Please review (and edit) before making it public"$(EMPHSTOP)
 	@echo -e $(EMPHSTART)"============================================================="$(EMPHSTOP)
 	@echo
-	@echo "make -v:"
-	@make -v || true
-	@echo
-	@echo "CC: $(CC) -v:"
-	@$(CC) -v 2>&1 || true
-	@echo
-	@echo "CXX: $(CXX) -v:"
-	@$(CXX) -v 2>&1 || true
-	@echo
-	@echo "HOST_CC: $(HOST_CC) -v:"
-	@$(HOST_CC) -v 2>&1 || true
-	@echo
-	@echo "HOST_CXX: $(HOST_CXX) -v:"
-	@$(HOST_CXX) -v 2>&1 || true
-	@echo
-	@echo -n "ld: $(LD) -v: "
-	@$(LD) -v || true
-	@echo
-	@echo -n "perl -v:"
-	@perl -v || true
-	@echo
-	@echo -n "python -V: "
-	@python -V || true
-	@echo
-	@echo -n "python2 -V: "
-	@python2 -V || true
-	@echo
-	@echo -n "python3 -V: "
-	@python3 -V || true
-	@echo
-	@echo "svn --version: "
-	@svn --version || true
-	@echo
-	@echo "git --version: "
-	@git --version || true
-	@echo
-	@echo "doxygen --version: "
-	@doxygen --version || true
-	@echo
+	$(call _ver_fun,make)
+	$(call _ver_fun_vars,CC CXX HOST_CC HOST_CXX,-v, 2>&1)
+	$(call _ver_fun_var,LD)
+	$(call _ver_funs,perl)
+	$(call _ver_funs,python python2 python3,-V)
+	$(call _ver_funs,svn git doxygen,--version)
 	@echo "Shell is:"
 	@ls -la /bin/sh || true
 	@echo
