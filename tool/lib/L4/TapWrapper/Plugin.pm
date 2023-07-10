@@ -143,7 +143,7 @@ output.
 
 The default implementations returns all lines that have been added to the
 C<$self-E<gt>{tap_lines}> array using the C<add_tap_line> and
-C<add_tap_line_raw> functions (see below).
+C<add_raw_tap_line> functions (see below).
 
 =back
 
@@ -169,10 +169,10 @@ input.
 The result of calling C<permit_exit> or C<inhibit_exit> repeatedly
 (non-alternating) is undefined.
 
-=item C<add_tap_line>, C<add_tap_line_raw>
+=item C<add_tap_line>, C<add_raw_tap_line>
 
 Adds a line to the C<$self-E<gt>{tap_lines}> array, used for convenience such
-that the default finalize implementation can be used. The C<add_tap_line_raw>
+that the default finalize implementation can be used. The C<add_raw_tap_line>
 version just adds the sole argument to the array. The C<add_tap_line>
 instantiation interprets the first argument as a boolean indicating success and
 the second argument as a descriptive string, joining them for a complete TAP
