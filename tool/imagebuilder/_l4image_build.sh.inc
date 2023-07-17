@@ -50,13 +50,7 @@ $L4IMAGE -i "$BASE_IMAGE" -o "$TARGET_IMAGE" create \
 ret=$?
 
 if [[ $ret -eq 0 && -n "$POST_IMAGE_CMD" ]]; then
-    {
-        make -f - -C "${OBJ_BASE}" TARGET_IMAGE=$TARGET_IMAGE <<EOF
-POST_IMAGE_CMD = $POST_IMAGE_CMD
-all:
-    \$(call POST_IMAGE_CMD, \$(TARGET_IMAGE))
-EOF
-    }; ret=$?
+    make -f <(echo -e '.PHONY: p\np:\n\t$(call POST_IMAGE_CMD,$(TARGET_IMAGE))') -C "${OBJ_BASE}" TARGET_IMAGE=$TARGET_IMAGE; ret=$?
 fi
 
 exit $ret
