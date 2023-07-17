@@ -45,13 +45,14 @@ if (-f $image)
       {
         my $_platform_type_built = $image_attrs->{"l4i:PT"};
         my $_ram_base_built = $image_attrs->{"l4i:rambase"};
-        my $_uefi_built = $image_attrs->{"l4i:uefi"} eq "y";
+        my $_uefi_built = ($image_attrs->{"l4i:uefi"} eq "y") ? "y" : "n";
 
         if (0)
           {
             print STDERR "$_platform_type_selected <> $_platform_type_built\n";
             print STDERR "$_ram_base_selected <> $_ram_base_built\n";
             print STDERR hex($_ram_base_selected)." <> ".hex($_ram_base_built)."\n";
+            print STDERR "$_uefi_selected <> $_uefi_built\n";
           }
 
         $rebuild = 0 unless
