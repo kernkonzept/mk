@@ -893,7 +893,7 @@ help::
 	@echo "                     Use make's -jX parameter to run tests in parallel."
 	@echo "  listplatforms    - List available platforms."
 
-MAKE_J := $(patsubst -j%,%,$(filter -j%,$(MAKEFLAGS)))
+MAKE_J = $(patsubst -j%,%,$(filter -j%,$(MAKEFLAGS)))
 
 .PHONY: test
 test:
