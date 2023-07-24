@@ -64,11 +64,8 @@ sub finalize()
   my $tool = "$ENV{L4DIR}/$self->{args}{tool}";
   open(my $fh, '-|', "$tool " . $self->tmpdir())
     or L4::TapWrapper::fail_test("Could not start external tool '$tool'");
-  my @lines;
-  while (<$fh>)
-    {
-      push @lines, $_;
-    }
+
+  my @lines = <$fh>;
   close($fh);
   if ($! != 0)
     {
@@ -80,7 +77,7 @@ sub finalize()
     }
   else
     {
-      $self->add_raw_tap_line($_) foreach @lines;
+      $self->add_raw_tap_line(@lines);
     }
   $self->SUPER::finalize();
 }

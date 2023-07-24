@@ -18,7 +18,8 @@ sub add_tap_line {
 }
 
 sub add_raw_tap_line {
-  push @{shift->{tap_lines}}, shift;
+  my $self = shift;
+  push @{$self->{tap_lines}}, @_;
 }
 
 sub tmpdir {
