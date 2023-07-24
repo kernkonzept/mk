@@ -269,7 +269,7 @@ KCONFIG_PLATFORMS := $(wildcard $(L4DIR)/mk/platforms/*.conf $(L4DIR)/conf/platf
 
 $(KCONFIG_FILE)%platform_types $(KCONFIG_FILE)%platforms $(KCONFIG_FILE)%platforms.list: Makefile $(L4DIR)/tool/bin/gen_kconfig_includes \
                                                           $(KCONFIG_PLATFORMS)
-	$(file >$(KCONFIG_FILE_DEPS).platforms,$(KCONFIG_FILE): $^)
+	$(file >$(KCONFIG_FILE_DEPS).platforms,$@: $(KCONFIG_PLATFORMS) Makefile $(L4DIR)/tool/bin/gen_kconfig_includes)
 	$(foreach f,$^,$(file >>$(KCONFIG_FILE_DEPS).platforms,$(f):))
 	$(VERBOSE)MAKE="$(MAKE)"; $(L4DIR)/tool/bin/gen_kconfig_includes $(KCONFIG_FILE) $(KCONFIG_PLATFORMS)
 
