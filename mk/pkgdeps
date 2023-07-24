@@ -402,6 +402,12 @@ sub generate_dep_makefile
     {
       next unless $_;
       my $nodes = $clusters{$_}->{nodes};
+      my $clustername = $_;
+      while ($clustername =~ /(.*)\/([^\/]*)/)
+        {
+          print "$1: $clustername\n";
+          $clustername = $2;
+        }
       print "$_:";
       foreach (values %$nodes)
         {
