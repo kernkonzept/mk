@@ -107,6 +107,11 @@ sub process_input
 }
 
 sub finalize {
+  # tell test runner to finish up
+  # signals aren't passed to whole children tree - kill explicit
+  kill_ps_tree($pid);
+  $pid = -1; # clean behaviour on multiple calling
+
   my $taplines = 0;
   foreach (@_plugins, @_filters)
     {
@@ -156,10 +161,6 @@ sub exit_test
       or $exit_code == 69        # SKIP tests
       or $ENV{HARNESS_ACTIVE});  # run under 'prove'
 
-  # tell test runner to finish up
-  # signals aren't passed to whole children tree - kill explicit
-  kill_ps_tree($pid);
-  $pid = -1; # clean behaviour on multiple calling
 
   close($TAP_FD);
   exit($exit_code);
