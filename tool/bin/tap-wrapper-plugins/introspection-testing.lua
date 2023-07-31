@@ -547,7 +547,11 @@ Sandbox = {}
 function Sandbox.new(scope)
   local self =
     { scope = scope
-    , _ignored_kernel_object_attrs = { ['Thread']  = {'rdy'} }
+    , _ignored_kernel_object_attrs =
+        { ['Factory'] = {'c'}    -- remaining quota
+        , ['IRQ ipc'] = {'F'}    -- flags
+        , ['Thread']  = {'rdy'}  -- ignore scheduling decisions
+        }
     , _ignored_kernel_object_ids = {}
     }
   self._env =
