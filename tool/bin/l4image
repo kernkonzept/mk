@@ -279,7 +279,7 @@ sub op_cat
   my %found = find_modules($d, $args, 0);
   my $pos = (keys %found)[0];
   system("cat ${$d}{mods}[$pos]{filepath}");
-  error("Error doing 'cat' call") if $?;
+  error("Unable to run 'cat' command on file") if $?;
 }
 
 sub create_image
