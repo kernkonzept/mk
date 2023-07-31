@@ -108,7 +108,7 @@ function Dump:caps_of(space_id)
     error(space_id .. ' is not an existing space', 2)
   end
 
-  local caps = {}
+  local caps = Caps.new()
   for _, object in pairs(self) do
     for _, cap in pairs(object.caps) do
       if cap.space_id == space_id then
@@ -130,7 +130,7 @@ function Dump:caps_of_name(space_name)
     error('name "' .. space_name .. '" does not name a unique space:\n' ..
           inspect(spaces), 2)
   end
-  local caps = {}
+  local caps = Caps.new()
   for _, object in pairs(self) do
     for _, cap in pairs(object.caps) do
       if cap.space_name == space_name then
