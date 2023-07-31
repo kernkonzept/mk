@@ -233,7 +233,8 @@ function eq(a, b, path)
   end
 
   if a == b then return true end
-  if type(a) ~= 'table' or type(b) ~= 'table' then
+  if type(a) ~= 'table' or type(b) ~= 'table' or
+     table_len(a) ~= table_len(b) then
     return false, comment_not_equal()
   end
 
