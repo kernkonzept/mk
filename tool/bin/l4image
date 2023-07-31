@@ -430,7 +430,8 @@ sub do_attr_single_arg_check
   ++$x if defined $args->{"--unset"};
   ++$x if defined $args->{"--get"};
   ++$x if defined $args->{"--list"};
-  my $s = "--set, --set-zero, --set-file, --unset, --get, and --list";
+  ++$x if defined $args->{"--edit"};
+  my $s = "--set, --set-zero, --set-file, --unset, --get, --list and --edit";
   error("One of $s needs to be given")
     if $x == 0;
   error("Only one of $s may be given")
@@ -490,6 +491,42 @@ sub do_attr
             .($verbose ? " [".length($_).":".length($attrs->{$_})."]" : "")
             ."\n"
         foreach sort keys %{$attrs};
+    }
+  elsif (defined $args->{"--edit"})
+    {
+      my $editor = $ENV{EDITOR} || default_editor();
+      my ($fh, $filepath) = tempfile(TMPDIR => 1, UNLINK => 1);
+
+      printf $fh "# Edit attributes, then save and exit.\n";
+      printf $fh "# Add new attributes by adding new lines.\n";
+      printf $fh "# Delete attributes by removing lines.\n";
+
+      foreach my $key (sort keys %$attrs)
+        {
+          printf $fh $key . '=' . $attrs->{$key} . "\n";
+          delete $attrs->{$key};
+        }
+      close($fh);
+
+      system("$editor $filepath");
+      error("Failed to start editor") if $?;
+
+      open($fh, "<", $filepath);
+      my @lines = <$fh>;
+      close($fh);
+
+      foreach (@lines)
+        {
+          chomp;
+          next if m/^#/;
+          next if m/^\s*$/;
+
+          # If there's any parsing error, we do not modify the image.
+          error("Unable to interpret line '$_'")
+            unless m/^([^=]+)=(.*)$/;
+
+          $attrs->{$1} = $2;
+        }
     }
 
   # TODO: add --get-file to save to file
@@ -661,7 +698,8 @@ my $help_attrs =
   "  --set-zero key size   Make space of 'size' byte for key.\n".
   "  --unset key           Delete key.\n".
   "  --get key             Get value of key.\n".
-  "  --list                List all attributes.\n";
+  "  --list                List all attributes.\n".
+  "  --edit                Edit all attributes in an editor.\n";
 
 
 my %args = (
@@ -819,6 +857,7 @@ my %args = (
       "--unset"    => 1,
       "--get"      => 1,
       "--list"     => 0,
+      "--edit"     => 0,
     },
     # this is still heavy, actually we would only need to rewrite if our
     # storage goes beyond the next page
@@ -839,6 +878,7 @@ my %args = (
       "--unset"     => 1,
       "--get"       => 1,
       "--list"      => 0,
+      "--edit"      => 0,
     },
     # this is still heavy, actually we would only need to rewrite if our
     # storage goes beyond the next page
