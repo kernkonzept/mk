@@ -609,10 +609,11 @@ function Sandbox:exec(snip)
     tap:comment(s .. ' failed')
     tap:comment(snip, 4)
     tap:comment('error: ' .. inspect(res), 2)
-    return
+    return false
   end
   tap:comment(s)
   tap:comment(snip, 4)
+  return true
 end
 
 function Sandbox:check(snip)
@@ -714,7 +715,7 @@ function process_input(id, input)
     succeeded = true
     uuid = nil
   elseif input.info == 'EXEC' then
-    sandbox:exec(input.text)
+    succeeded = succeeded and sandbox:exec(input.text)
   elseif input.info == 'CHECK' then
     succeeded = succeeded and sandbox:check(input.text)
   elseif input.info == 'DEBUGPRINT' then
