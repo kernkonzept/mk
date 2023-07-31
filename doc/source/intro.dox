@@ -2,7 +2,7 @@
 /**
 \mainpage Overview
 
-Welcome to the documentation of the %L4 Runtime Environment, or %L4Re
+Welcome to the documentation of the %L4Re Operating System Framework, or %L4Re
 for short. There are two parts to this documentation: a user manual, which
 provides a birds eye view of %L4Re and its environment, and a reference
 section which documents the complete programming API.
@@ -22,7 +22,7 @@ section which documents the complete programming API.
 ### Reference #####
 
 The second part provides the complete reference of all classes and functions
-of the %L4Re environment as well as a list of example code.
+of the %L4Re Operating System Framework as well as a list of example code.
 
 */
 
@@ -30,14 +30,14 @@ of the %L4Re environment as well as a list of example code.
 \page l4re_intro Introduction
 
 The intention of this section is to provide a short overview about the
-L4Re environment. The general structure of a microkernel-based system will
-be introduced and the principal functionality of the servers in the basic
-environment outlined.
+L4Re Operating System Framework. The general structure of a
+microkernel-based system will be introduced and the principal functionality
+of the servers in the basic environment outlined.
 
 \section fiasco_intro L4Re Microkernel
 
-The L4Re Microkernel is the lowest-level piece of software running in an
-L4-based system. The microkernel is the only program that runs in privileged
+The L4Re Microkernel is the lowest-level component of software running in an
+L4Re-based system. The microkernel is the only component that runs in privileged
 processor mode. It does not include complex services such as program loading,
 device drivers, or file systems; those are implemented in user-level programs on
 top of it (a basic set of these services and abstractions is provided by the L4
@@ -125,14 +125,14 @@ mechanisms that are necessary to support applications.
 
 \li <b>Runtime Environment</b> The small kernel offers a concise set of interfaces,
 but these are not necessarily suited for building applications directly on top of
-it. The L4 Runtime Environment aims at providing more convenient abstractions for
+it. The L4Re Runtime Environment aims at providing more convenient abstractions for
 application development. It comprises low-level software components that interface
 directly with the microkernel. The root pager \em sigma0 and the root task \em Moe
-are the most basic components of the runtime environment. Other services (e.g., for
-device enumeration) use interfaces provided by them.
+are the most basic components of the L4Re Runtime Environment. Other
+services (e.g., for device enumeration) use interfaces provided by them.
 
 \li \b Applications Applications run on top of the system and use services
-provided by the Runtime Environment -- or by other applications. There may be
+provided by the runtime environment -- or by other applications. There may be
 several types of applications in the system and even virtual machine monitors
 and device drivers are considered applications in the terminology used in this
 document. They are running alongside other applications on the system.
@@ -144,15 +144,15 @@ roles is also common, for instance, a file system server may be viewed as a
 server with respect to clients using the file system, while the server itself
 may also act as a client of a hard disk driver.
 
-\section main_l4re_sec L4 Runtime Environment (L4Re)
+\section main_l4re_sec L4Re Runtime Environment
 
-The L4 Runtime Environment (L4Re) provides a basic set of services and
+The L4Re Runtime Environment provides a basic set of services and
 abstractions, which are useful to implement and run user-level applications on
-top of the L4Re Microkernel.
+top of the L4Re Microkernel. They form the L4Re Operating System Framework.
 
-L4Re consists of a set of libraries and servers. Libraries as well as server
-interfaces are completely object oriented. They implement prototype
-implementations for the classes defined by the L4Re specification.
+The L4Re Operating System Framework consists of a set of libraries and
+servers. L4Re follows an object-oriented design. Server interfaces are
+object-oriented, and the implementation is also object-oriented.
 
 A minimal L4Re-based application needs 3 components to be booted beforehand:
 the L4Re Microkernel, the root pager (Sigma0), and the root task (Moe). The
@@ -161,8 +161,5 @@ only to resolve page faults for the Moe root task. Moe provides the essential
 services to normal user applications such as an initial program loader, a
 region-map service for virtual memory management, and a memory (data space)
 allocator.
-
-
-
 
 */
