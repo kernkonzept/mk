@@ -479,6 +479,10 @@ function parse_dump(dump)
 
   local version =
     parse(table.remove(lines, 1), '^dump format version number: (%d+)$')
+  if version ~= '0' then
+    abort('Expected kernel object dump version 0 but got ' .. version .. '.')
+  end
+
   local tag = parse(table.remove(lines, 1), '^user space tag: (%w+)$')
 
   for _, line in ipairs(lines) do
@@ -535,7 +539,7 @@ function parse_dump(dump)
     end
   end
 
-  return version, tag, objects
+  return tag, objects
 end
 
 -----------------
@@ -724,10 +728,8 @@ function process_input(id, input)
     if not body then abort('decode object dump body') end
     body = sanitize(body):gsub('\27%[[^m]*m', '') -- escape color codes
 
-    local version, tag, dump = parse_dump(headers .. body)
-    if version then
-      sandbox:insert_dump(tag, dump)
-    end
+    local tag, dump = parse_dump(headers .. body)
+    sandbox:insert_dump(tag, dump)
   elseif input.info == "UUID" then
     if uuid ~= nil then
       tap:comment('WARNING: Overwriting already set UUID; was ' .. uuid)
