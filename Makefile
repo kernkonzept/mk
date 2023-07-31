@@ -895,6 +895,8 @@ help::
 
 MAKE_J = $(patsubst -j%,%,$(filter -j%,$(MAKEFLAGS)))
 
+TESTS := bid-tests/ $(if $(TEST_KUNIT_DIR),kunit-tests/)
+
 .PHONY: test
 test:
 	$(VERBOSE)taparchive="$(TAPARCHIVE)"; \
@@ -917,6 +919,8 @@ test:
 	(cd $${test_tmp_dir} && \
 	 prove $(if $(TAPARCHIVE),-a $(TAPARCHIVE)) $(if $(VERBOSE),,-v) \
 	       $(if $(MAKE_J),-j $(MAKE_J)) \
-	       -m -r $(if $(TEST_KUNIT_DIR),kunit-tests) \
-	       "bid-tests/$${TESTS#bid-tests/}"); \
+	       -m -r \
+	       $(filter bid-tests/% kunit-tests/%,$(TESTS)) \
+	       $(addprefix bid-tests/,$(filter-out bid-tests/% kunit-tests/%,$(TESTS))) \
+	       ); \
 	rm -fr "$${test_tmp_dir}"
