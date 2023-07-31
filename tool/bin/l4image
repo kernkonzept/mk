@@ -5,7 +5,7 @@
 use strict;
 use warnings;
 use File::Basename;
-use File::Temp qw/tempdir/;
+use File::Temp qw/tempdir tempfile/;
 use Cwd qw/cwd/;
 use Digest::MD5;
 use POSIX;
@@ -532,10 +532,32 @@ sub op_launch
   my $d = shift;
   my $args = shift;
 
-  my $cmd = ${$d}{attrs}{"l4i:QEMUcmd"};
+  my $cmdkey = $args->{"--cmd-key"} // "l4i:QEMUcmd";
 
-  $cmd = ${$d}{attrs}{$args->{"--cmd-key"}} if $args->{"--cmd-key"};
+  my $cmd = ${$d}{attrs}{$cmdkey};
   $cmd = $args->{"--cmd"} if $args->{"--cmd"};
+
+  if ($args->{"--edit"})
+    {
+      my $editor = $ENV{EDITOR} || default_editor();
+      my ($fh, $filepath) = tempfile(TMPDIR => 1, UNLINK => 1);
+      printf $fh $cmd;
+      close($fh);
+
+      system("$editor $filepath");
+      error("Unable to start editor '$editor'") if $?;
+
+      open($fh, "<", $filepath);
+      my @lines = <$fh>;
+      close($fh);
+      $cmd = join " " => map { chomp; $_ } @lines;
+
+      printf "Set command in attribute '$cmdkey' to: $cmd\n";
+
+      $d->{attrs}{$cmdkey} = $cmd;
+
+      return;
+    }
 
   if ($args->{"--cmd-mod"})
     {
@@ -873,11 +895,14 @@ my %args = (
       "--cmd-key" => 1,
       "--cmd-mod" => 1,
       "--show-cmd" => 0,
+      "--edit" => 0,
       "--output-processing-perl-line" => 1,
       "--output-processing-perl" => 1,
       "--output-processing" => 1,
     },
     func => \&op_launch,
+    mods_to_disk  => sub { !!shift->{"--edit"} },
+    gen_new_image => sub { !!shift->{"--edit"} },
     help => "Launch a command to run the image, e.g. using QEMU.\n".
             "  --cmd                         Specify command to execute\n".
             "  --cmd-key                     Specify the attribute's key to get the\n".
@@ -892,6 +917,7 @@ my %args = (
             "                                launched command with\n".
             "  --output-processing-perl-line Perl code to process output of\n".
             "                                each line of launched command\n".
+            "  --edit                        Edit launch command\n".
             "\n".
             "In the command, \$L4IMAGE_FILE is the variable that is replaced\n".
             "with the image file.\n".
