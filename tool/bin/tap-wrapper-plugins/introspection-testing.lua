@@ -184,12 +184,6 @@ end
 -- HELPER FUNCTIONS --
 ----------------------
 
-function abort(str)
-  print('not ok ' .. str)
-  print('1..1')
-  os.exit(0)
-end
-
 function sanitize(str)
   return str:gsub('%s+$', '')
             :gsub('\r\n', '\n')
@@ -303,21 +297,88 @@ function uudecode(str)
   return decoded
 end
 
+-- Prepend each line of `str` by `prefix. If `prefix` is a number, then each
+-- line is prefixed by this number of spaces.
+function indent(prefix, str)
+  if prefix == nil or prefix == 0 or prefix == '' then
+    return str
+  end
+  if type(prefix) == 'number' then
+    prefix = string.rep(' ', prefix)
+  end
+  return prefix .. str:gsub('\n', '\n' .. prefix)
+end
+
 ----------------
 -- TAP OUTPUT --
 ----------------
 
-function tap_ok(str)
- return 'ok ' .. str
+-- The singleton tap object buffers comments and only outputs them when a (not)
+-- ok line is printed via flush_test(), ok(), etc. The comments are printed
+-- after that (not) ok line. Besides the tap object counts how many (not) ok
+-- lines were written. For valid test output, this count must finally be written
+-- via flush_plan(); the comment buffer must be empty then.
+
+tap = { _comments = {}, _plan_number = 0 }
+
+function tap:_flush_comments(ok, description)
+  for _, c in ipairs(self._comments) do
+    io.write('# ', c:gsub('\n', '\n# '), '\n')
+  end
+  self._comments = {}
 end
 
-function tap_not_ok(str)
-  return 'not ok ' .. str
+function tap:flush_plan()
+  io.write('1..', self._plan_number, '\n')
+  io.flush()
+  self._plan_number = 0
+  if next(self._comments) ~= nil then
+    self:_flush_comments()
+    error('Non-empty comment buffer while flushing plan. Did you forget \z
+           outputting a (not) ok line?', 2)
+  end
 end
 
-function tap_comment(comment, indent)
-  indent = indent or ' '
-  return '#' .. indent .. comment:gsub('\n', '\n#' .. indent)
+-- Output a (not) ok line followed by the buffered comments.
+function tap:flush_test(ok, description)
+  self._plan_number = self._plan_number + 1
+  if not ok then
+    io.write('not ')
+  end
+  io.write('ok ', description:gsub('\n', '\n# '), '\n')
+  self:_flush_comments()
+  io.flush()
+end
+
+-- Output an ok line followed by the buffered comments.
+function tap:ok(description)
+  self:flush_test(true, description)
+end
+
+-- Output a not ok line followed by the buffered comments.
+function tap:not_ok(description)
+  self:flush_test(false, description)
+end
+
+-- Append a comment to the comment buffer.
+function tap:comment(c, prefix)
+  table.insert(self._comments, indent(prefix, c))
+end
+
+-- Prepend a comment to the comment buffer.
+function tap:prepend_comment(c, prefix)
+  table.insert(self._comments, 1, indent(prefix, c))
+end
+
+-- Abort script with some “not ok” TAP output but with zero exit code. This is
+-- intended for expected fatal errors. Errors that abort the script with
+-- non-zero exit code are considered a bug in the script.
+function abort(comment)
+  tap:comment('FATAL ERROR:')
+  tap:comment(comment, 2)
+  tap:not_ok('Introspection::FatalError')
+  tap:flush_plan()
+  os.exit(0)
 end
 
 -----------------
@@ -443,39 +504,38 @@ function Sandbox:safe_load(snip, env_ext)
   return pcall(fun)
 end
 
-function Sandbox:exec(snip, out)
+function Sandbox:exec(snip)
   local status, res = self:safe_load(snip)
   local s = 'IntrospectionTesting[EXEC] in ' .. self.scope
-  snip = snip:gsub('\n', '\n#  ')
   if not status then
-    table.insert(out, tap_comment(s .. ' failed'))
-    table.insert(out, tap_comment(snip, '    '))
-    table.insert(out, tap_comment('error: ' .. inspect(res)))
+    tap:comment(s .. ' failed')
+    tap:comment(snip, 4)
+    tap:comment('error: ' .. inspect(res), 2)
     return
   end
-  table.insert(out, tap_comment(s))
-  table.insert(out, tap_comment(snip, '    '))
-  return
+  tap:comment(s)
+  tap:comment(snip, 4)
 end
 
-function Sandbox:check(snip, out)
+function Sandbox:check(snip)
   if not snip:find("^return ") then
     snip = "return " .. snip
   end
   local status, res, errstr = self:safe_load(snip)
   local s = 'IntrospectionTesting[CHECK] in ' .. self.scope
   if not status or type(res) ~= 'boolean' then
-    table.insert(out, tap_comment(s .. "\n" .. snip, '    '))
-    table.insert(out, tap_comment('result/error: ' .. inspect(res), '  '))
+    tap:comment(s)
+    tap:comment(snip, 4)
+    tap:comment('result/error: ' .. inspect(res), 2)
     return false
   elseif res then
-    table.insert(out, tap_comment(s))
-    table.insert(out, tap_comment(snip, '    '))
+    tap:comment(s)
+    tap:comment(snip, 4)
     return true
   else
-    table.insert(out, tap_comment(s .. ' failed'))
-    table.insert(out, tap_comment(snip, '    '))
-    if errstr then table.insert(out, tap_comment(errstr, '      ')) end
+    tap:comment(s .. ' failed')
+    tap:comment(snip, 4)
+    if errstr then tap:comment(errstr, 2) end
     return false
   end
 end
@@ -483,29 +543,22 @@ end
 function Sandbox:debug_print(snip, out)
   snip_ext = "return inspect(" .. snip .. ")"
   local status, res = self:safe_load(snip_ext, {inspect = inspect})
-  tap_comment('IntrospectionTesting[DEBUGPRINT] in ' .. self.scope)
-  if not status then
-    table.insert(out, tap_comment('error: ' .. inspect(res), '    '))
+  tap:comment('IntrospectionTesting[DEBUGPRINT] in ' .. self.scope)
+  tap:comment(snip, 4)
+  if status then
+    tap:comment(res, 2)
+  else
+    tap:comment('error: ' .. inspect(res), 2)
     return
   end
-  table.insert(out, tap_comment(snip .. ': ' .. res, '    '))
-  return
 end
 
-function print_test_result(name, uuid, test_number, succeeded, out)
+function print_test_result(name, uuid, succeeded)
   -- if UUID of the last test was not set, print out a warning
   if uuid == nil then
-    table.insert(out, tap_comment('WARNING: UUID was not set!'));
+    tap:prepend_comment('WARNING: UUID was not set!')
   end
-  local result = ""
-  if (succeeded) then
-      result = tap_ok(name .. ':Introspection')
-  else
-      result = tap_not_ok(name .. ':Introspection')
-  end
-  -- whether a test succeeds is supposed to be the first line of the output
-  table.insert(out, 1, result)
-  print(table.concat(out, "\n"))
+  tap:flush_test(succeeded, name .. ':Introspection')
 end
 
 -- The invalid sandbox is no actual sandbox. It is unuseable; indexing it aborts
@@ -521,17 +574,15 @@ sandbox = invalid_sandbox
 -- store whether all introspection tests for a test succeed
 succeeded = true
 -- table for collecting output of a single test
-test_output = {}
 uuid = nil
-num_checks = 0
 function process_input(id, input)
   local function fail_input()
-    table.insert(test_output, tap_comment('WARNING: invalid input!'))
+    tap:comment('WARNING: invalid input!')
     s = 'id: ' .. id .. ', tag: ' .. input.tag
     if input.info then
       s = s .. ', info: ' .. input.info
     end
-    table.insert(test_output, tap_comment(s))
+    tap:comment(s, 2)
   end
 
   if input.tag ~= 'IntrospectionTesting' then
@@ -541,20 +592,18 @@ function process_input(id, input)
   if input.info == 'RESETSCOPE' then
     if sandbox ~= invalid_sandbox then
       -- print current test output
-      print_test_result(sandbox.scope, uuid, num_checks, succeeded, test_output)
+      print_test_result(sandbox.scope, uuid, succeeded)
     end
     -- reset Lua sandbox and status of test output for next test
     sandbox = Sandbox.new(input.text)
     succeeded = true
-    test_output = {};
     uuid = nil
-    num_checks = num_checks + 1
   elseif input.info == 'EXEC' then
-    sandbox:exec(input.text, test_output)
+    sandbox:exec(input.text)
   elseif input.info == 'CHECK' then
-    succeeded = succeeded and sandbox:check(input.text, test_output)
+    succeeded = succeeded and sandbox:check(input.text)
   elseif input.info == 'DEBUGPRINT' then
-    sandbox:debug_print(input.text, test_output)
+    sandbox:debug_print(input.text)
   elseif input.info == "DUMP" then
     local two_lines = '^[^\n]+\n[^\n]+\n'
     local headers = input.text:match(two_lines)
@@ -570,10 +619,9 @@ function process_input(id, input)
     end
   elseif input.info == "UUID" then
     if uuid ~= nil then
-      table.insert(test_output, tap_comment(
-                      'WARNING: Overwriting already set UUID; was ' .. uuid));
+      tap:comment('WARNING: Overwriting already set UUID; was ' .. uuid)
     end
-    table.insert(test_output, 1, "#    Test-uuid: " .. input.text)
+    tap:prepend_comment('Test-uuid: ' .. input.text, 3)
     uuid = input.text
   else
     fail_input()
@@ -623,7 +671,7 @@ end
 
 -- print output of last test
 if sandbox ~= invalid_sandbox then
-  print_test_result(sandbox.scope, uuid, num_checks, succeeded, test_output)
+  print_test_result(sandbox.scope, uuid, succeeded)
 end
 
-print('1..' .. num_checks)
+tap:flush_plan()
