@@ -203,6 +203,26 @@ function table_len(tab)
   return cnt
 end
 
+-- Get all keys of a table.
+function table_keys(t)
+  local keys = {}
+  for k in pairs(t) do
+    table.insert(keys, k)
+  end
+  return keys
+end
+
+-- Get a copy of `a` where all keys that are in `b` are removed.
+function table_minus(a, b)
+  local diff = {}
+  for k, v in pairs(a) do
+    if b[k] == nil then
+      diff[k] = v
+    end
+  end
+  return diff
+end
+
 function table_merge(a, b)
   if type(a) == 'table' and type(b) == 'table' then
     for k,v in pairs(b) do
@@ -216,34 +236,70 @@ function table_merge(a, b)
   return a
 end
 
-function eq(a, b, path)
-  function comment_not_equal()
-    path = path and "difference in " .. path .. ":\n" or ""
-    return path .. "first: " .. inspect(a) .. "\n" .. "second: " .. inspect(b)
-  end
 
-  if not a or not b then
-    return false, comment_not_equal()
+-- Helper for eq(). Same as inspect() but truncates long results.
+local function eq_inspect(x)
+  local maxlen = 20000
+  local ret = inspect(x)
+  if ret:len() > maxlen then
+    return ret:sub(1, maxlen) .. '...<truncated>'
   end
+  return ret
+end
 
+local function eq_helper(a, b, path)
+  -- fast return if equal values or identical table
   if a == b then return true end
-  if type(a) ~= 'table' or type(b) ~= 'table' or
-     table_len(a) ~= table_len(b) then
-    return false, comment_not_equal()
+
+  -- if type(a) ~= 'table' or type(b) ~= 'table' then
+  --   return false, 'difference in ' .. path:sub(1, -2) .. ':'
+  --     .. '\nfirst: ' .. inspect(a)
+  --     .. '\nsecond: ' .. inspect(b)
+  -- end
+  if type(a) ~= 'table' or type(b) ~= 'table' then
+    return false, 'Different values at ' .. path .. '.'
+      .. '\n  first:  ' .. eq_inspect(a):gsub('\n', '\n  ')
+      .. '\n  second: ' .. eq_inspect(b):gsub('\n', '\n  ')
   end
 
-  for k, v in pairs(a) do
-    -- non-deterministic thread ready entry is ignored
-    if k ~= "rdy" then
-      res, err = eq(v, b[k], (path or "") .. "/" .. k) 
+  -- from here on it is clear that both values are tables
 
-      if not res then
-        return false, err
-      end
+  -- compare the key sets of both tables
+  do  -- Scoped so table diffs vanish before recursive descent.
+    local diff1 = table_minus(a, b)
+    local diff2 = table_minus(b, a)
+    if next(diff1) ~= nil or next(diff2) ~= nil then
+      return false, 'Differing key sets at ' .. path .. '.'
+        .. '\nKeys appearing only on one side:'
+        .. '\n  first:  ' .. eq_inspect(table_keys(diff1))
+        .. '\n  second: ' .. eq_inspect(table_keys(diff2))
+        .. '\nValues of offending keys:'
+        .. '\n  first:  ' .. eq_inspect(diff1):gsub('\n', '\n  ')
+        .. '\n  second: ' .. eq_inspect(diff2):gsub('\n', '\n  ')
+    end
+  end
+
+  -- compare corresponding values of both tables recursively
+  for k, v in pairs(a) do
+    res, err = eq_helper(v, b[k], path .. k .. '/')
+    if not res then
+      return res, err
     end
   end
   return true
 end
+
+-- Compare two values and, in case of tables, compare their entries recursively.
+-- Two `nil` values are considered unequal.
+-- When the values are unequal, the second return value provides a rationale.
+function eq(a, b)
+  if a == nil and b == nil then
+    return false, 'Both values are nil. This is considered not equal because \z
+                   this often signals a problem.'
+  end
+  return eq_helper(a, b, '/')
+end
+
 
 function unpack(o)
   if type(o) ~= 'table' then
@@ -489,15 +545,49 @@ end
 Sandbox = {}
 
 function Sandbox.new(scope)
-  local env =
-    {d = {}, eq = eq, unpack = unpack}
-  local sandbox = {env = env, scope = scope}
-  setmetatable(sandbox, {__index = Sandbox})
-  return sandbox
+  local self =
+    { scope = scope
+    , _ignored_kernel_object_attrs = { ['Thread']  = {'rdy'} }
+    , _ignored_kernel_object_ids = {}
+    }
+  self._env =
+    { d = {}
+    , eq = eq
+    , ignore_kernel_object_attr = function (proto, attr)
+        if self._ignored_kernel_object_attrs[proto] == nil then
+          self._ignored_kernel_object_attrs[proto] = {attr}
+        else
+          table.insert(self._ignored_kernel_object_attrs[proto], attr)
+        end
+        for _, dump in pairs(self._env.d) do
+          for _, obj in pairs(dump) do
+            if obj.proto == proto then
+              obj.attrs[attr] = nil
+            end
+          end
+        end
+      end
+    , ignore_kernel_object_id = function (id)
+        if type(id) == 'number' then
+          id = string.format('%x', id)
+        end
+        if type(id) ~= 'string' then
+          error('ignore_kernel_object_id(): Argument must be number or string.',
+                2)
+        end
+        table.insert(self._ignored_kernel_object_ids, id)
+        for _, dump in pairs(self._env.d) do
+          dump[id] = nil
+        end
+      end
+    , unpack = unpack
+    }
+  setmetatable(self, {__index = Sandbox})
+  return self
 end
 
 function Sandbox:safe_load(snip, env_ext)
-  local fun, res = load(snip, snip, 't', table_merge(self.env, env_ext or {}))
+  local fun, res = load(snip, snip, 't', table_merge(self._env, env_ext or {}))
   if not fun then
     return fun, res
   end
@@ -551,6 +641,23 @@ function Sandbox:debug_print(snip, out)
     tap:comment('error: ' .. inspect(res), 2)
     return
   end
+end
+
+-- Add dump under given tag to `d` in the sandbox environment.
+-- The current ignore rules are applied to the dump in-place.
+function Sandbox:insert_dump(tag, dump)
+  for _, id in pairs(self._ignored_kernel_object_ids) do
+    dump[id] = nil
+  end
+  for _, obj in pairs(dump) do
+    local attrs = self._ignored_kernel_object_attrs[obj.proto]
+    if attrs ~= nil then
+      for _, a in pairs(attrs) do
+        obj.attrs[a] = nil
+      end
+    end
+  end
+  self._env.d[tag] = dump
 end
 
 function print_test_result(name, uuid, succeeded)
@@ -615,7 +722,7 @@ function process_input(id, input)
 
     local version, tag, dump = parse_dump(headers .. body)
     if version then
-      sandbox.env.d[tag] = dump
+      sandbox:insert_dump(tag, dump)
     end
   elseif input.info == "UUID" then
     if uuid ~= nil then
