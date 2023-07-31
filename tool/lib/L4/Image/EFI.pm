@@ -385,8 +385,8 @@ sub objcpy_finalize
         {
           $section->{raw_addr} += $addr_delta;
         }
-      die "Internal error" unless $section->{raw_addr} < $end_of_image;
-      die "Internal error" unless $section->{raw_addr} + $section->{raw_size} < $end_of_image;
+      die "Internal error" unless $section->{raw_addr} <= $end_of_image;
+      die "Internal error" unless $section->{raw_addr} + $section->{raw_size} <= $end_of_image;
     }
 
   ## Write PE header
