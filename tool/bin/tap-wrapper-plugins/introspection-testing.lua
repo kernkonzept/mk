@@ -171,7 +171,7 @@ function Caps:intersect(caps)
 end
 
 function Caps:diff(caps)
-  local diff_l = self:filter(function(cap) return not dump[cap.cap_id] end)
+  local diff_l = self:filter(function(cap) return not caps[cap.cap_id] end)
   local diff_r = caps:filter(function(cap) return not self[cap.cap_id] end)
   return diff_l:union(diff_r)
 end
