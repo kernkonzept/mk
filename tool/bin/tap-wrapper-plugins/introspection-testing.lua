@@ -375,21 +375,26 @@ end
 -- lines were written. For valid test output, this count must finally be written
 -- via flush_plan(); the comment buffer must be empty then.
 
-tap = { _comments = {}, _plan_number = 0 }
+tap = { _comment_header = nil, _comments = {}, _plan_number = 0 }
 
+-- Write and reset current comment buffer.
+-- Returns true if the comment buffer was not empty and false otherwise.
 function tap:_flush_comments(ok, description)
+  local res = next(self._comments) ~= nil
   for _, c in ipairs(self._comments) do
     io.write('# ', c:gsub('\n', '\n# '), '\n')
   end
   self._comments = {}
+  self._comment_header = nil
+  return res
 end
 
 function tap:flush_plan()
   io.write('1..', self._plan_number, '\n')
   io.flush()
   self._plan_number = 0
-  if next(self._comments) ~= nil then
-    self:_flush_comments()
+  if self:_flush_comments() then
+    io.flush()
     error('Non-empty comment buffer while flushing plan. Did you forget \z
            outputting a (not) ok line?', 2)
   end
@@ -416,8 +421,27 @@ function tap:not_ok(description)
   self:flush_test(false, description)
 end
 
+-- Prepare a comment that is is only written to the comment buffer before the
+-- comment of the next comment() call. If no comment() call follows before the
+-- next flush, the header is dropped.
+--
+-- There can only be one pending header at a time. Subsequent calls to this
+-- funtion overwrite the current pending header. A call without arguments drops
+-- a pending header.
+function tap:comment_header(c, prefix)
+  if c ~= nil then
+    self._comment_header = indent(prefix, c)
+  else
+    self._comment_header = nil
+  end
+end
+
 -- Append a comment to the comment buffer.
 function tap:comment(c, prefix)
+  if self._comment_header ~= nil then
+    table.insert(self._comments, self._comment_header)
+    self._comment_header = nil
+  end
   table.insert(self._comments, indent(prefix, c))
 end
 
@@ -588,6 +612,14 @@ function Sandbox.new(scope)
           dump[id] = nil
         end
       end
+    , inspect = inspect
+    , print = function (...)
+        local args = table.pack(...)
+        for i = 1, args.n do
+          args[i] = tostring(args[i])
+        end
+        tap:comment(table.concat(args, '\t'), '  Lua output: ')
+      end
     , unpack = unpack
     }
   setmetatable(self, {__index = Sandbox})
@@ -604,15 +636,12 @@ end
 
 function Sandbox:exec(snip)
   local status, res = self:safe_load(snip)
-  local s = 'IntrospectionTesting[EXEC] in ' .. self.scope
   if not status then
-    tap:comment(s .. ' failed')
-    tap:comment(snip, 4)
-    tap:comment('error: ' .. inspect(res), 2)
+    tap:comment('EXEC not ok.', 2)
+    tap:comment(snip, '  Lua source: ')
+    tap:comment(tostring(res), '  Lua error: ')
     return false
   end
-  tap:comment(s)
-  tap:comment(snip, 4)
   return true
 end
 
@@ -621,35 +650,24 @@ function Sandbox:check(snip)
     snip = "return " .. snip
   end
   local status, res, errstr = self:safe_load(snip)
-  local s = 'IntrospectionTesting[CHECK] in ' .. self.scope
-  if not status or type(res) ~= 'boolean' then
-    tap:comment(s)
-    tap:comment(snip, 4)
-    tap:comment('result/error: ' .. inspect(res), 2)
+  if not status then
+    tap:comment('CHECK not ok.', 2)
+    tap:comment(snip, '  Lua source: ')
+    tap:comment(tostring(res), '  Lua error: ')
     return false
-  elseif res then
-    tap:comment(s)
-    tap:comment(snip, 4)
-    return true
-  else
-    tap:comment(s .. ' failed')
-    tap:comment(snip, 4)
+  elseif type(res) ~= 'boolean' then
+    tap:comment('CHECK not ok.', 2)
+    tap:comment(snip, '  Lua source: ')
+    tap:comment('Result has type ' .. type(res) .. '. Expected boolean.', 2)
+    return false
+  elseif not res then
+    tap:comment('CHECK not ok.', 2)
+    tap:comment(snip, '  Lua source: ')
+    tap:comment('Result is ' .. tostring(res) .. '.', 2)
     if errstr then tap:comment(errstr, 2) end
     return false
   end
-end
-
-function Sandbox:debug_print(snip, out)
-  snip_ext = "return inspect(" .. snip .. ")"
-  local status, res = self:safe_load(snip_ext, {inspect = inspect})
-  tap:comment('IntrospectionTesting[DEBUGPRINT] in ' .. self.scope)
-  tap:comment(snip, 4)
-  if status then
-    tap:comment(res, 2)
-  else
-    tap:comment('error: ' .. inspect(res), 2)
-    return
-  end
+  return true
 end
 
 -- Add dump under given tag to `d` in the sandbox environment.
@@ -692,19 +710,13 @@ succeeded = true
 -- table for collecting output of a single test
 uuid = nil
 function process_input(id, input)
-  local function fail_input()
-    tap:comment('WARNING: invalid input!')
-    s = 'id: ' .. id .. ', tag: ' .. input.tag
-    if input.info then
-      s = s .. ', info: ' .. input.info
-    end
-    tap:comment(s, 2)
-  end
+  tap:comment_header(input.filename)
 
   if input.tag ~= 'IntrospectionTesting' then
-    fail_input()
+    tap:comment('WARNING: Unsupported type of input: ' .. input.tag, 2)
     return
   end
+
   if input.info == 'RESETSCOPE' then
     if sandbox ~= invalid_sandbox then
       -- print current test output
@@ -718,8 +730,6 @@ function process_input(id, input)
     succeeded = succeeded and sandbox:exec(input.text)
   elseif input.info == 'CHECK' then
     succeeded = succeeded and sandbox:check(input.text)
-  elseif input.info == 'DEBUGPRINT' then
-    sandbox:debug_print(input.text)
   elseif input.info == "DUMP" then
     local two_lines = '^[^\n]+\n[^\n]+\n'
     local headers = input.text:match(two_lines)
@@ -733,13 +743,15 @@ function process_input(id, input)
     sandbox:insert_dump(tag, dump)
   elseif input.info == "UUID" then
     if uuid ~= nil then
-      tap:comment('WARNING: Overwriting already set UUID; was ' .. uuid)
+      tap:comment('WARNING: Overwriting already set UUID; was ' .. uuid, 2)
     end
     tap:prepend_comment('Test-uuid: ' .. input.text, 3)
     uuid = input.text
   else
-    fail_input()
+    tap:comment('WARNING: Unsupported type of input: ' .. input.info, 2)
   end
+
+  tap:comment_header()
 end
 
 ----------
@@ -773,7 +785,7 @@ for file in lfs.dir(dir) do
       abort('duplicate file id '.. i)
     end
 
-    input[i] = {tag = tag, info = info, text = text}
+    input[i] = {filename = file, tag = tag, info = info, text = text}
     ids[#ids+1] = i
   end
 end
