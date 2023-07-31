@@ -493,37 +493,35 @@ function Sandbox:debug_print(snip, out)
 end
 
 function print_test_result(name, uuid, test_number, succeeded, out)
-  -- exit if nothing was recorded yet
-  if uuid == nil and name == nil and succeeded and #out == 0 then return end
-  -- if NAME or UUID tag of the last test was not set, print out a warning
+  -- if UUID of the last test was not set, print out a warning
   if uuid == nil then
     table.insert(out, tap_comment('WARNING: UUID was not set!'));
   end
-  if name == nil then
-    -- The test name is required by the QA tooling. If we have collected results
-    -- but no test name, fail with a fatal error
-    print(table.concat(out, "\n"))
-    abort('FATAL: NAME was not set while analyzing the test state')
+  local result = ""
+  if (succeeded) then
+      result = tap_ok(name .. ':Introspection')
   else
-    -- only create a result line if the test was named
-    local result = ""
-    if (succeeded) then
-       result = tap_ok(name .. ':Introspection')
-    else
-       result = tap_not_ok(name .. ':Introspection')
-    end
-    -- whether a test succeeds is supposed to be the first line of the output
-    table.insert(out, 1, result)
+      result = tap_not_ok(name .. ':Introspection')
   end
+  -- whether a test succeeds is supposed to be the first line of the output
+  table.insert(out, 1, result)
   print(table.concat(out, "\n"))
 end
 
-sandbox = Sandbox.new('')
+-- The invalid sandbox is no actual sandbox. It is unuseable; indexing it aborts
+-- the script. It is used instead of nil to get a clean error message in case it
+-- is used.
+invalid_sandbox = setmetatable({},
+                    { __index = function ()
+                                  abort('First action must be RESETSCOPE.')
+                                end })
+-- Start with invalid sandbox. The first actual sandox must be initialized with
+-- RESETSCOPE because a sandbox needs a scope name.
+sandbox = invalid_sandbox
 -- store whether all introspection tests for a test succeed
 succeeded = true
 -- table for collecting output of a single test
 test_output = {}
-name = nil
 uuid = nil
 num_checks = 0
 function process_input(id, input)
@@ -541,13 +539,14 @@ function process_input(id, input)
     return
   end
   if input.info == 'RESETSCOPE' then
-    -- print current test output
-    print_test_result(name, uuid, num_checks, succeeded, test_output)
+    if sandbox ~= invalid_sandbox then
+      -- print current test output
+      print_test_result(sandbox.scope, uuid, num_checks, succeeded, test_output)
+    end
     -- reset Lua sandbox and status of test output for next test
     sandbox = Sandbox.new(input.text)
     succeeded = true
     test_output = {};
-    name = nil
     uuid = nil
     num_checks = num_checks + 1
   elseif input.info == 'EXEC' then
@@ -576,13 +575,6 @@ function process_input(id, input)
     end
     table.insert(test_output, 1, "#    Test-uuid: " .. input.text)
     uuid = input.text
-  elseif input.info == "NAME" then
-    -- IntrospectionTesting[NAME] is expected as the end of a block of tags
-    if name ~= nil then
-      table.insert(test_output, tap_comment(
-                      'WARNING: Overwriting already set NAME; was ' .. name));
-    end
-    name = input.text
   else
     fail_input()
   end
@@ -630,6 +622,8 @@ for _, id in ipairs(ids) do
 end
 
 -- print output of last test
-print_test_result(name, uuid, num_checks, succeeded, test_output)
+if sandbox ~= invalid_sandbox then
+  print_test_result(sandbox.scope, uuid, num_checks, succeeded, test_output)
+end
 
 print('1..' .. num_checks)
