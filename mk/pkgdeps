@@ -27,6 +27,7 @@ sub new_node
   $n->{requires} = [] unless defined $n->{requires};
   $n->{optional} = [] unless defined $n->{optional};
   $n->{provides} = [] unless defined $n->{provides};
+  $n->{variants} = [] unless defined $n->{variants};
   $n->{'source-pkg'} = [] unless defined $n->{'source-pkg'};
   $n->{maintainer} = [] unless defined $n->{maintainer};
   return $n
@@ -276,6 +277,7 @@ sub scan_for_provided_pkg_configs
               last unless    $control_entry->('optional')
                           || $control_entry->('requires')
                           || $control_entry->('provides')
+                          || $control_entry->('variants')
                           || $control_entry->('source-pkg')
                           || $control_entry->('maintainer');
             }
@@ -389,10 +391,16 @@ sub generate_dep_makefile
   print "#\n";
 
   my %p = %pkgs;
+  my %variants;
 
   foreach my $a (sort keys %nodes)
     {
       my $n = $nodes{$a};
+      # Generate variant overview
+      foreach my $variant (@{$n->{variants}})
+        {
+          push(@{$variants{$variant}}, $n->{name});
+        }
       my $d = generate_single_dep('requires', $n, $ignore_missing, \$error_count);
       $d |=  generate_single_dep('optional', $n, 1, \$error_count);
       delete $p{$a} if $d;
@@ -422,6 +430,14 @@ sub generate_dep_makefile
   foreach (keys %p)
     {
       delete $p{$_} if $_ eq $p{$_};
+    }
+
+  print "\n# variant configurations\n";
+  foreach my $variant (keys %variants)
+    {
+      my @p = figure_out_pkg_dependencies(@{$variants{$variant}});
+      print "# Derived from: " . join(' ', sort @{$variants{$variant}}) . "\n";
+      print "VARIANTS_$_+=$variant\n" foreach @p;
     }
 
   print "\n# pakages w/o deps\n.PHONY: ".join(' ', sort keys %p)."\n" if %p;

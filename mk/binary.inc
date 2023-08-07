@@ -32,10 +32,7 @@ $(GENERAL_D_LOC): $(L4DIR)/mk/binary.inc $(L4DIR)/mk/modes.inc $(L4DIR)/mk/rules
 # our default Makefile-name in the OBJ-Subdirs
 BID_OBJ_Makefile ?= Makefile
 
-# Check that the variant deps files are there
-$(foreach v,$(VARIANTS_AVAILABLE),$(if $(wildcard $(OBJ_BASE)/.Packages.variant.$(v)),,$(error .Packages.variant.$(v) not available, please call 'make' in the top-level build directory)))
-
-include $(foreach v,$(VARIANTS_AVAILABLE),$(OBJ_BASE)/.Packages.variant.$(v))
+include $(OBJ_BASE)/.Package.deps
 
 # Building variants:
 # progs build 'std', except the prog tells us otherwise
@@ -49,17 +46,11 @@ endif
 ifeq ($(ROLE),assets.mk)
   VARIANTS ?= std
 endif
-# libs build 'std' and variants if current directory is within the ones
-# listed in BUILD_VARIANT_$(VARIANT)
-# package may also tell otherwise by setting VARIANTS
+# libs build std (default) and variants required by other packages
+# package may override default by setting VARIANTS
 ifeq ($(ROLE),lib.mk)
-  VARIANTS ?= std \
-              $(foreach va, $(VARIANTS_AVAILABLE), \
-                        $(if $(filter $(PKGDIR_ABS), \
-                                      $(addprefix $(L4DIR_ABS)/,$(BUILD_VARIANT_$(va)))), \
-                             $(va) \
-                         ) \
-               )
+  VARIANTS ?= std
+  VARIANTS += $(VARIANTS_$(PKGDIR_ABS:$(L4DIR_ABS)/%=%))
 endif
 
 $(if $(VARIANTS),,$(error No variants defined))
