@@ -283,11 +283,20 @@ sub op_edit
   my %found = find_modules($d, $args, 0);
   my $pos = (keys %found)[0];
   my $editor = $ENV{EDITOR} || default_editor();
-  system("$editor ${$d}{mods}[$pos]{filepath}");
+  my $mod = $d->{mods}[$pos];
 
-  my $r = L4::Image::update_module($d->{mods}[$pos],
-                                   ${$d}{mods}[$pos]{filepath});
-  error($r) if $r;
+  if ($args->{"--cmdline"})
+    {
+      my @lines = edit_lines_in_editor($mod->{cmdline});
+      $mod->{cmdline} = join " ", @lines;
+    }
+  else
+    {
+      system("$editor $mod->{filepath}");
+      my $r = L4::Image::update_module($mod, $mod->{filepath});
+      error($r) if $r;
+    }
+
 }
 
 sub op_cat
@@ -774,12 +783,14 @@ my %args = (
       "--num" => 1,
       "--with-name" => 1,
       "--regex" => 1,
+      "--cmdline" => 0,
     },
     mods_to_disk => 1,
     gen_new_image => 1,
     func => \&op_edit,
     help => "Edit a module.\n".
             $help_module_find_one.
+            "  --cmdline             Edit cmdline instead of contents\n".
             "\n".
             "Uses EDITOR from environment variables, or vi or notepad.".
             "",
