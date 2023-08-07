@@ -785,7 +785,6 @@ $(addsuffix .bin.S,$(SRC_DATA)): %.bin.S: % $(GENERAL_D_LOC)
 DEPS	+= $(foreach file,$(ALLOBJS), $(call BID_dot_fname,$(file)).d)
 DEPS	+= $(foreach file,$(ALLOBJS) $(INSTALL_TARGET), $(call BID_dot_fname,$(file)).cmd)
 DEPS	+= $(foreach file,$(ALLDPI), $(call BID_dot_fname,$(file)).d)
-DEPS	+= $(foreach file,$(filter %.dtb, $(INSTALL_TARGET)), $(call BID_dot_fname,$(file)).d)
 
 # Common clean Rules
 

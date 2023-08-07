@@ -80,3 +80,10 @@ REQUIRES_LIBS_all_host =
 LDFLAGS_all_host       =
 NOPICFLAGS_all_host   ?=
 NOPIEFLAGS_all_host   ?=
+
+
+#####################################
+# assets building mode
+#####################################
+
+BID_SUPPORTED_all_assets = y
