@@ -28,6 +28,24 @@ sub verbose
   print @_;
 }
 
+sub edit_lines_in_editor
+{
+  my @lines = @_;
+  my $editor = $ENV{EDITOR} || default_editor();
+  my ($fh, $filepath) = tempfile(TMPDIR => 1, UNLINK => 1);
+  print $fh map { $_."\n" } @lines;
+  close($fh);
+
+  system("$editor $filepath");
+  error("Failed to start editor") if $?;
+
+  open($fh, "<", $filepath);
+  @lines = map { chomp; $_ } <$fh>;
+  close($fh);
+
+  return @lines;
+}
+
 my $imagefile;
 my $outimagefile;
 my $verbose = 0;
@@ -494,30 +512,22 @@ sub do_attr
     }
   elsif (defined $args->{"--edit"})
     {
-      my $editor = $ENV{EDITOR} || default_editor();
-      my ($fh, $filepath) = tempfile(TMPDIR => 1, UNLINK => 1);
-
-      printf $fh "# Edit attributes, then save and exit.\n";
-      printf $fh "# Add new attributes by adding new lines.\n";
-      printf $fh "# Delete attributes by removing lines.\n";
+      my @lines = (
+        "# Edit attributes, then save and exit.",
+        "# Add new attributes by adding new lines.",
+        "# Delete attributes by removing lines.",
+      );
 
       foreach my $key (sort keys %$attrs)
         {
-          printf $fh $key . '=' . $attrs->{$key} . "\n";
+          push @lines, $key . '=' . $attrs->{$key};
           delete $attrs->{$key};
         }
-      close($fh);
 
-      system("$editor $filepath");
-      error("Failed to start editor") if $?;
-
-      open($fh, "<", $filepath);
-      my @lines = <$fh>;
-      close($fh);
+      @lines = edit_lines_in_editor(@lines);
 
       foreach (@lines)
         {
-          chomp;
           next if m/^#/;
           next if m/^\s*$/;
 
@@ -576,18 +586,8 @@ sub op_launch
 
   if ($args->{"--edit"})
     {
-      my $editor = $ENV{EDITOR} || default_editor();
-      my ($fh, $filepath) = tempfile(TMPDIR => 1, UNLINK => 1);
-      printf $fh $cmd;
-      close($fh);
-
-      system("$editor $filepath");
-      error("Unable to start editor '$editor'") if $?;
-
-      open($fh, "<", $filepath);
-      my @lines = <$fh>;
-      close($fh);
-      $cmd = join " " => map { chomp; $_ } @lines;
+      my @lines = edit_lines_in_editor($cmd);
+      $cmd = join " ", @lines;
 
       printf "Set command in attribute '$cmdkey' to: $cmd\n";
 
