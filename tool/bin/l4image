@@ -424,17 +424,7 @@ sub op_cmdline
 
   if ($args->{"--edit"})
     {
-      my $editor = $ENV{EDITOR} || default_editor();
-      my $tmpdir = tempdir('XXXXXXXX', CLEANUP => 1, TMPDIR => 1);
-      my $f = "$tmpdir/cmdline.txt";
-      open(my $x, ">$f") || die "Cannot write to '$f': $!";
-      print $x ${$d}{mbi_cmdline};
-      close $x;
-      system("$editor $f");
-      open($x, $f) || die "Cannot read from '$f': $!";
-      ${$d}{mbi_cmdline} = <$x>;
-      chomp ${$d}{mbi_cmdline};
-      close $x;
+      $d->{mbi_cmdline} = join " ", edit_lines_in_editor($d->{mbi_cmdline});
     }
 }
 
