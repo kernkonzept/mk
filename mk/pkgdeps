@@ -44,6 +44,7 @@ sub filter_requires
           my $p = $1;
           my @tokens = split /;+/, $2;
 
+          my $enabled = 1;
           foreach my $t (@tokens)
             {
               # 'build-only'  is only useful for alias definitions
@@ -64,9 +65,12 @@ sub filter_requires
                   $expr =~ s/\barch\((\w+)\)/
                              defined $config{"CONFIG_BUILD_ARCH_$1"} ? 1 : 0/eg;
 
-                  push @r, $p if eval $expr;
+                  $enabled &= eval $expr;
                 }
             }
+
+          # retain dependency if all conditions evaluated to true
+          push @r, $p if $enabled;
         }
       else
         {
