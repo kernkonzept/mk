@@ -292,13 +292,17 @@ $(KCONFIG_FILE): $(KCONFIG_FILE_SRC) $(PKG_KCONFIG_L4_FILES) Makefile \
 
 -include $(KCONFIG_FILE_DEPS) $(KCONFIG_FILE_DEPS).platforms
 
+ifeq ($(filter y 1,$(DISABLE_CC_CHECK)),)
+override DISABLE_CC_CHECK :=
+endif
+
 checkconf:
 	$(VERBOSE)if [ -n "$(GCCDIR)" -a ! -e $(GCCDIR)/include/stddef.h ]; then \
 	  $(ECHO); \
 	  $(ECHO) "$(GCCDIR) seems wrong (stddef.h not found)."; \
 	  $(ECHO) "Does it exist?"; \
 	  $(ECHO); \
-	  exit 1; \
+	  $(if $(DISABLE_CC_CHECK),,exit 1;) \
 	fi
 	$(VERBOSE)if [ -z "$(filter $(CC_WHITELIST-$(BID_COMPILER_TYPE)), \
 	                            $(GCCVERSION))" ]; then \
@@ -307,7 +311,7 @@ checkconf:
 	  $(ECHO) "Please use a $(BID_COMPILER_TYPE) of the following" \
 	          "versions: $(CC_WHITELIST-$(BID_COMPILER_TYPE))"; \
 	  $(ECHO); \
-	  exit 1; \
+	  $(if $(DISABLE_CC_CHECK),,exit 1;) \
 	fi
 	$(VERBOSE)if [ -n "$(filter $(CC_BLACKLIST-$(BUILD_ARCH)-gcc), \
 	                            $(GCCVERSION).$(GCCPATCHLEVEL))" ]; then \
@@ -316,7 +320,7 @@ checkconf:
 	          "because it showed to produce wrong results."; \
 	  $(ECHO) "Please upgrade to a more recent version."; \
 	  $(ECHO); \
-	  exit 1; \
+	  $(if $(DISABLE_CC_CHECK),,exit 1;) \
 	fi
 
 
