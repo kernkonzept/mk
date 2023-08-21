@@ -112,7 +112,14 @@ function Dump:caps_of(space_id)
   for _, object in pairs(self) do
     for _, cap in pairs(object.caps) do
       if cap.space_id == space_id then
-        caps[cap.cap_id] = cap
+        if caps[cap.cap_idx] ~= nil then
+          error('caps_of(): capability index '
+                .. inspect(cap.cap_idx)
+                .. ' is not unique in space '
+                .. inspect(space_id)
+                .. '.')
+        end
+        caps[cap.cap_idx] = cap
       end
     end
   end
@@ -134,20 +141,27 @@ function Dump:caps_of_name(space_name)
   for _, object in pairs(self) do
     for _, cap in pairs(object.caps) do
       if cap.space_name == space_name then
-        caps[cap.cap_id] = cap
+        if caps[cap.cap_idx] ~= nil then
+          error('caps_of(): capability index '
+                .. inspect(cap.cap_idx)
+                .. ' is not unique in space '
+                .. inspect(space_name)
+                .. '.')
+        end
+        caps[cap.cap_idx] = cap
       end
     end
   end
   return caps
 end
 
-function Dump:cap(cap_id, task)
-  if type(cap_id) ~= "string" then
-    error('cap_id provided to cap(<cap_id>) must be a string', 2)
+function Dump:cap(cap_idx, task)
+  if type(cap_idx) ~= "string" then
+    error('cap_idx provided to cap(<cap_idx>) must be a string', 2)
   end
 
   task = task or self:test_task()
-  return self:caps_of(task.obj_id)[cap_id]
+  return self:caps_of(task.obj_id)[cap_idx]
 end
 
 Caps = {}
@@ -167,12 +181,12 @@ function Caps:union(caps)
 end
 
 function Caps:intersect(caps)
-  return self:filter(function(cap) return caps[cap.cap_id] end)
+  return self:filter(function(cap) return caps[cap.cap_idx] end)
 end
 
 function Caps:diff(caps)
-  local diff_l = self:filter(function(cap) return not caps[cap.cap_id] end)
-  local diff_r = caps:filter(function(cap) return not self[cap.cap_id] end)
+  local diff_l = self:filter(function(cap) return not caps[cap.cap_idx] end)
+  local diff_r = caps:filter(function(cap) return not self[cap.cap_idx] end)
   return diff_l:union(diff_r)
 end
 
@@ -511,25 +525,29 @@ function parse_dump(dump)
 
   for _, line in ipairs(lines) do
     if line:sub(1, 1) == '\t' then -- this is a capability line
-      local cap_addr, cap_id, space_id, space_name, rights, flags, obj_addr
+      local cap_addr, cap_idx, space_id, space_name, rights, flags, obj_addr
       -- a space name is optionally given within parentheses, so we need to use
       -- slightly different patterns to parse this line
       if line:match("%b()") ~= nil then
         local attrs_regex =
            'space=D:(%x+)%(([^)]+)%) rights=(%x+) flags=(%x+) obj=0x(%x+)'
-        cap_addr, cap_id, space_id, space_name, rights, flags, obj_addr =
+        cap_addr, cap_idx, space_id, space_name, rights, flags, obj_addr =
           parse(line, '^\t(%x+)%[C:(%x+)%]: ' .. attrs_regex .. '$')
       else
         space_name = nil
         local attrs_regex =
           'space=D:(%x+) rights=(%x+) flags=(%x+) obj=0x(%x+)'
-        cap_addr, cap_id, space_id, rights, flags, obj_addr =
+        cap_addr, cap_idx, space_id, rights, flags, obj_addr =
           parse(line, '^\t(%x+)%[C:(%x+)%]: ' .. attrs_regex .. '$')
       end
 
-      objects[cur_obj_id].caps[cap_id] = {
+      if objects[cur_obj_id].caps[cap_addr] ~= nil then
+        abort('object dump: ambiguous capability address ' .. inspect(cap_addr)
+              .. '. Source line:\n' .. line)
+      end
+      objects[cur_obj_id].caps[cap_addr] = {
         cap_addr = cap_addr,
-        cap_id = cap_id,
+        cap_idx = cap_idx,
         space_id = space_id,
         space_name = space_name,
         rights = parse_rights(rights),
@@ -549,6 +567,11 @@ function parse_dump(dump)
         attr = split(attr, '[^=]+')
         if #attr > 2 then abort("Failed parsing attribute") end
         attrs[attr[1]] = attr[2] or true
+      end
+
+      if objects[obj_id] ~= nil then
+        abort('object dump: ambiguous object id ' .. inspect(obj_id)
+              .. '. Source line:\n' .. line)
       end
 
       cur_obj_id = obj_id
