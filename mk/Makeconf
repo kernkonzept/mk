@@ -407,6 +407,7 @@ get_cc_version_part = $(shell echo $(1) | $(callcc) -E -x c - | tail -1)
 #       be set in .config.all. However, this is the place were
 #       they are determined on a 'make config' in $(L4DIR)
 BID_COMPILER_TYPE_f = $(if $(findstring clang, $(shell $(callcc) --version)),clang,gcc)
+BID_LD_TYPE_f = $(if $(findstring LLD, $(shell $(callld) --version)),lld,gnu)
 
 ifeq ($(BID_COMPILER_TYPE),gcc)
  BID_COMPILER_IS_GCC = 1
@@ -442,7 +443,10 @@ GCCDIR_f = $(GCCDIR_f_$(BID_COMPILER_TYPE_f))
 
 check_path_absolute = $(if $(patsubst /%,,$(2)),$(error Path $(1)=$(2) is not absolute),$(2))
 
-LDVERSION_f     = $(shell $(callld) -v | sed -e 's/.* \([0-9]\)\.\([^. ]*\).*/\1\2/')
+LDVERSION_f     = $(shell $(callld) -v | sed -e \
+		    $(if $(filter LLD,$(shell $(callld) -v)),\
+		     's/.* \([0-9]\+\)\.\([0-9]\+\)\.\([0-9]\+\).*/\1\2\3/',\
+		     's/.* \([0-9]\)\.\([^. ]*\).*/\1\2/'))
 LDNOWARNRWX_f   = $(call checkld,--no-warn-rwx-segments)
 GCCSYSLIBDIRS_f = $(shell $(callcc) -print-search-dirs | sed '/^libraries:/{s/^libraries: =\?/-L/;s/:/ -L/g;q;};d')
 GCCLIB_file_f   = $(call check_path_absolute,GCCLIB_file_$(1),$(shell $(callcc) -print-file-name=$(1)))

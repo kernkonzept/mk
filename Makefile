@@ -336,15 +336,15 @@ add_if_f = $(if $($(1)_f),$(1))
 Makeconf.bid.local-helper:
 	$(VERBOSE)echo BUILD_SYSTEMS="$(strip $(ARCH)_$(CPU)            \
 	               $(ARCH)_$(CPU)-$(BUILD_ABI))" >> $(DROPSCONF_CONFIG_MK)
-	$(VERBOSE)$(foreach v, BID_COMPILER_TYPE CONDITIONAL_WARNINGS_FULL \
-	              CONDITIONAL_WARNINGS_MEDIUM GCCDIR GCCFORTRANAVAIL \
-	              GCC_HAS_ATOMICS GCCINCFIXEDPATH GCCLIBCAVAIL GCCLIB_EH \
-	              GCCLIB_HOST GCCLIB_S_SO GCCMAJORVERSION GCCMINORVERSION \
-	              GCCNOSTACKPROTOPT GCCPATCHLEVEL GCCPREFIXOPT \
-	              GCCSTACKPROTALLOPT GCCSTACKPROTOPT GCCSYSLIBDIRS \
-	              GCCVERSION GCCWNOC99DESIGNATOR GCCWNONOEXCEPTTYPE \
-	              GCCWNOPSABI GCCWNOUNUSEDPRIVATEFIELD LDNOWARNRWX \
-	              LDVERSION \
+	$(VERBOSE)$(foreach v, BID_COMPILER_TYPE BID_LD_TYPE \
+	              CONDITIONAL_WARNINGS_FULL CONDITIONAL_WARNINGS_MEDIUM \
+	              GCCDIR GCCFORTRANAVAIL GCC_HAS_ATOMICS GCCINCFIXEDPATH \
+	              GCCLIBCAVAIL GCCLIB_EH GCCLIB_HOST GCCLIB_S_SO \
+	              GCCMAJORVERSION GCCMINORVERSION GCCNOSTACKPROTOPT \
+	              GCCPATCHLEVEL GCCPREFIXOPT GCCSTACKPROTALLOPT \
+	              GCCSTACKPROTOPT GCCSYSLIBDIRS GCCVERSION \
+	              GCCWNOC99DESIGNATOR GCCWNONOEXCEPTTYPE GCCWNOPSABI \
+	              GCCWNOUNUSEDPRIVATEFIELD LDNOWARNRWX LDVERSION \
 	              $(call add_if_f,GCCARMV5TEFPOPT_$(ARCH)) \
 	              $(call add_if_f,GCCARMV6FPOPT_$(ARCH)) \
 	              $(call add_if_f,GCCARMV6T2FPOPT_$(ARCH)) \
@@ -403,6 +403,13 @@ define determine_emulation_gnu_ld =
         exit 1
 endef
 
+# l.lld does not provide a list of supported emulations.
+# Just use the first item of $(LD_EMULATION_CHOICE_$(ARCH)).
+define determine_emulation_lld_ld =
+        echo LD_EMULATION=$(firstword $(LD_EMULATION_CHOICE_$(ARCH))) \
+          >> $(DROPSCONF_CONFIG_MK)
+endef
+
 Makeconf.bid.local-internal-names:
 ifneq ($(CONFIG_INT_CPP_NAME_SWITCH),)
 	$(VERBOSE)set -e; X="$(OBJ_BASE)/tmp.$$$$$$RANDOM.c" ;               \
@@ -424,9 +431,11 @@ ifneq ($(CONFIG_INT_CPP_NAME_SWITCH),)
 endif
 ifneq ($(CONFIG_INT_LD_NAME_SWITCH),)
 	$(VERBOSE)set -e; echo INT_LD_NAME=$$($(callld) 2>&1 \
-	          | perl -p -e 's,^(.+/)?(.+):.+,$$2,') >> $(DROPSCONF_CONFIG_MK)
+	          | perl -p -e 's,^(.+/)?([^:]+):.+,$$2,') >> $(DROPSCONF_CONFIG_MK)
 endif
-	$(VERBOSE)$(determine_emulation_gnu_ld)
+	$(VERBOSE)$(if $(filter LLD,$(shell $(callld) --version)),\
+	             $(determine_emulation_lld_ld),\
+	             $(determine_emulation_gnu_ld))
 
 libgendep:
 	$(VERBOSE)if [ ! -r tool/gendep/Makefile ]; then    \

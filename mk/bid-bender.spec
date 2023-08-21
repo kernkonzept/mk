@@ -7,7 +7,7 @@ link_arg_opts =
   %:arg-option(b -format A -architecture y -trace-symbol MF)
   %:arg-option(-hash-style -version-script)
   %:arg-option(T Tbss Tdata Ttext Ttext-segment Trodata-segment Tldata-segment)
-  %:arg-option(dT)
+  %:arg-option(dT -image-base)
 
 # options that are part of the output file list %o
 link_output_args =
@@ -43,7 +43,7 @@ check_linker = %(linker:;:%:error(linker variable not defined))
 
 
 ######### ld compatibility (pass through) mode for linking ##################
-# options to pass to the linker (binutils ld)
+# options to pass to the linker (binutils GNU ld and LLVM ld)
 link_pass_opts = %:set-var(link_pass_opts
   %{M} %{-print-map} %{-trace-symbol*} %{y} %{-verbose}
   %{-cref} %{-trace} %{r} %{O*}
@@ -61,16 +61,31 @@ link_pass_opts = %:set-var(link_pass_opts
   %{nostdlib:} %{no-pie:} %{pie} %{-no-dynamic-linker} %{-version-script*})
   %{-wrap*}
 
-# linker arguments
-link_args =
+# linker arguments part I
+link_args_ld_part1 =
   %(link_arg_opts)%(link_output_args)
   %:read-pc-file(%(pc_file_dir) %{PC*:%*})
   %{nocrt|r:;:%:read-pc-file(%(pc_file_dir) ldscripts)}
   %{o} -nostdlib %{static:-static;:--eh-frame-hdr} %{shared}
   %{static-pie:-static -pie --no-dynamic-linker -z text}
+
+# linker arguments part II -- specific to GNU ld
+link_args_ld_part2_gnu_ld =
   %(link_pass_opts) %:foreach(%%{: -L%%*} %(l4libdir)) %{T*&L*}
   %{!r:%{!dT:-dT %:search(main_%{static:stat;static-pie:pie;shared:rel;:dyn}.ld
                           %(libdir));dT}}
+
+# linker arguments part II -- specific to LLVM ld
+# - use `-T <script>` rather than `-dT <script>`
+# - use `--image-base=...` rather than `-Ttext-segment=...`
+link_args_ld_part2_llvm_lld =
+  %(link_pass_opts) %:foreach(%%{: -L%%*} %(l4libdir)) %{L*}
+  %{-image-base*}
+  %{!r:%{!T:-T %:search(main_%{static:stat;static-pie:pie;shared:rel;:dyn}.ld
+                        %(libdir));T}}
+
+# linker arguments part III
+link_args_ld_part3 =
   %{r|shared|static|static-pie|-dynamic-linker*:;:
     --dynamic-linker=%(Link_DynLinker)
     %(Link_DynLinker:;:
@@ -85,7 +100,12 @@ link_args =
   %{MD:%(generate_deps)} %:error-unused-options()
 
 # executed when called with '-t ld' (L4 linker with ld)
-ld = %(check_linker) %:exec(%(linker) %(link_args))
+ld = %(check_linker) %:exec(%(linker) %(link_args_ld_part1)
+     %(link_args_ld_part2_gnu_ld) %(link_args_ld_part3))
+
+# executed when called with '-t lld' (L4 linker with ld)
+lld = %(check_linker) %:exec(%(linker) %(link_args_ld_part1)
+      %(link_args_ld_part2_llvm_lld) %(link_args_ld_part3))
 
 
 ######### gcc command line compatibility mode for linker ###################

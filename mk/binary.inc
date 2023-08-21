@@ -304,7 +304,8 @@ bid_bender_default_vars = $(call BID_BENDER_DEFINES,$(OBJ_BASE),$(L4DIR),$(GCCSY
 
 # linker for L4 libs and applications
 BID_LINK = $(L4DIR)/tool/bin/l4-bender $(if $(VERBOSE),,--trace-exec) \
-           -t ld $(bid_bender_default_vars) -Dlinker="$(LD)" \
+           -t $(if $(filter lld,$(BID_LD_TYPE)),lld,ld) \
+	   $(bid_bender_default_vars) -Dlinker="$(LD)" \
            --spec=$(L4DIR)/mk/bid-bender.spec --
 
 # linker for host mode and l4linux mode
@@ -658,7 +659,9 @@ ifneq ($(MODE),shared)
   else
     define make_per_target_reloc
       $(1): $$(BID_RAM_BASE_DEP)
-      LDFLAGS_$(1) += -Ttext-segment=$$(firstword $$(call default_reloc,$(1)))
+      LDFLAGS_$(1) += $$(if $$(filter lld,$$(BID_LD_TYPE)),\
+                         --image-base=$$(firstword $$(call default_reloc,$(1))),\
+                         -Ttext-segment=$$(firstword $$(call default_reloc,$(1))))
     endef
   endif
 else

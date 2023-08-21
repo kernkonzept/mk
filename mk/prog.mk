@@ -80,7 +80,7 @@ endif
 ifneq ($(HOST_LINK),1)
   # linking for our L4 platform
   LDFLAGS += $(addprefix -L, $(L4LIBDIR))
-  LDFLAGS += $(addprefix -dT , $(LDSCRIPT))
+  LDFLAGS += $(addprefix $(if $(filter lld,$(BID_LD_TYPE)),-T,-dT) , $(LDSCRIPT))
   LDFLAGS += --warn-common
 else
   # linking for some POSIX platform
