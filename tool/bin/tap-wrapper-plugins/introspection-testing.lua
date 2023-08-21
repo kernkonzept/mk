@@ -552,6 +552,7 @@ function parse_dump(dump)
         space_name = space_name,
         rights = parse_rights(rights),
         flags = parse_flags(flags),
+        obj_addr = obj_addr,
         obj_id = cur_obj_id
       }
     else -- this is an object line
