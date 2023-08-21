@@ -76,7 +76,11 @@ CONFIG_MK_REAL          = $(OBJ_BASE)/.config
 CONFIG_MK_INDEP         = $(OBJ_BASE)/.config.indep
 CONFIG_MK_PLATFORM      = $(OBJ_BASE)/.config.platform
 
+# Makeconf.boot will be included by the imagebuilder scripts, so don't include
+# it here.
+ifeq ($(filter efiimage elfimage rawimage uimage qemu, $(MAKECMDGOALS)),)
 INCLUDE_BOOT_CONFIG    := optional
+endif
 
 # Do not require Makeconf if *all* targets work without a builddir.
 # The default target does not!
@@ -668,21 +672,28 @@ shellcodeentry:
 	 SHELLCODE="$(SHELLCODE)" $(common_envvars) $(tool_envvars)       \
 	  $(L4DIR)/tool/bin/shell-entry $$ml "$$e"
 
-elfimage: check_and_adjust_ram_base
-	$(call genimage,BOOTSTRAP_DO_UIMAGE= BOOTSTRAP_DO_RAW_IMAGE=)
-	$(VERBOSE)$(if $(POST_IMAGE_CMD),$(call POST_IMAGE_CMD,$(IMAGES_DIR)/bootstrap.elf))
+define imagebuilder_goal
+$1:
+	$(if $(CHECK_FOR_ARCH_$1),$$(call check_for_arch,$(CHECK_FOR_ARCH_$1))) \
+	+$$(VERBOSE)$$(entryselection);                       \
+	$$(MKDIR) $$(IMAGES_DIR);                             \
+	MODULES_LIST=$$$$ml ENTRY=$$$$e E= $$(common_envvars) $$(tool_envvars) \
+		$(if $(2),,TARGET_IMAGE=$$(IMAGES_DIR)/bootstrap_$$$$e.$1) \
+		$$(L4DIR)/tool/imagebuilder/$1 && \
+    $(if $(2),true,ln -snf bootstrap_$$$$e.$1 $(IMAGES_DIR)/bootstrap.$1)
+endef
 
-uimage: check_and_adjust_ram_base
-	$(call genimage,BOOTSTRAP_DO_UIMAGE=y BOOTSTRAP_DO_RAW_IMAGE=)
-	$(VERBOSE)$(if $(POST_IMAGE_CMD),$(call POST_IMAGE_CMD,$(IMAGES_DIR)/bootstrap.uimage))
+# touches images dir
+CHECK_FOR_ARCH_efiimage = x86 amd64 arm64
+$(foreach g,efiimage elfimage rawimage uimage,$(eval $(call imagebuilder_goal,$g)))
+
+# does not touch images dir
+CHECK_FOR_ARCH_fvp = arm arm64
+$(foreach g,qemu fvp,$(eval $(call imagebuilder_goal,$g,y)))
 
 itb: check_and_adjust_ram_base
 	$(call genimage,BOOTSTRAP_DO_ITB=y)
 	$(VERBOSE)$(if $(POST_IMAGE_CMD),$(call POST_IMAGE_CMD,$(IMAGES_DIR)/bootstrap.itb))
-
-rawimage: check_and_adjust_ram_base
-	$(call genimage,BOOTSTRAP_DO_UIMAGE= BOOTSTRAP_DO_RAW_IMAGE=y)
-	$(VERBOSE)$(if $(POST_IMAGE_CMD),$(call POST_IMAGE_CMD,$(IMAGES_DIR)/bootstrap.raw))
 
 fastboot fastboot_rawimage: rawimage
 	$(VERBOSE)$(FASTBOOT_BOOT_CMD) \
@@ -691,33 +702,6 @@ fastboot fastboot_rawimage: rawimage
 fastboot_uimage: uimage
 	$(VERBOSE)$(FASTBOOT_BOOT_CMD) \
 	  $(if $(FASTBOOT_IMAGE),$(FASTBOOT_IMAGE),$(IMAGES_DIR)/bootstrap.uimage)
-
-efiimage: check_and_adjust_ram_base
-	$(call check_for_arch,x86 amd64 arm64)
-	$(call genimage,BOOTSTRAP_DO_UIMAGE= BOOTSTRAP_DO_RAW_IMAGE= BOOTSTRAP_DO_UEFI=y)
-
-ifneq ($(filter $(ARCH),x86 amd64),)
-qemu:
-	$(VERBOSE)$(entryselection);                                      \
-	 qemu=$(QEMU_PATH);   \
-	 $(if $(filter -serial "-serial",$(QEMU_OPTIONS)),,echo "Warning: No -serial in QEMU_OPTIONS." >&2;) \
-	 QEMU=$$qemu QEMU_OPTIONS="$(QEMU_OPTIONS)"                       \
-	  $(tool_envvars) $(common_envvars)                               \
-	  $(L4DIR)/tool/bin/qemu-x86-launch $$ml "$$e"
-else
-qemu: $(QEMU_KERNEL_TYPE)
-	$(VERBOSE)qemu=$(if $(QEMU_PATH),$(QEMU_PATH),$(QEMU_ARCH_MAP_$(ARCH))); \
-	if [ -z "$$qemu" ]; then echo "Set QEMU_PATH!"; exit 1; fi;              \
-	$(if $(filter -serial "-serial",$(QEMU_OPTIONS)),,echo "Warning: No -serial in QEMU_OPTIONS." >&2;) \
-	echo QEMU-cmd: $$qemu -kernel $(QEMU_KERNEL_FILE) $(QEMU_OPTIONS);    \
-	$$qemu -kernel $(QEMU_KERNEL_FILE) $(QEMU_OPTIONS)
-endif
-
-ifneq ($(filter $(ARCH),arm arm64),)
-fvp: elfimage
-	echo FVP-cmd: $(FVP_PATH) -a "cluster0*="$(FVP_KERNEL_FILE) $(FVP_OPTIONS);    \
-	$(FVP_PATH) -a "cluster0*="$(FVP_KERNEL_FILE) $(FVP_OPTIONS)
-endif
 
 vbox: $(if $(VBOX_ISOTARGET),$(VBOX_ISOTARGET),grub2iso)
 	$(call check_for_arch,x86 amd64)

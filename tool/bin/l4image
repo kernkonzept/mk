@@ -667,6 +667,9 @@ sub op_launch
 
   $ENV{L4IMAGE_FILE} = $imagefile;
 
+  print STDERR "Warning: No '-serial' found in launch command\n"
+    unless $cmd =~ /-serial/;
+
   system("echo Launching: $cmd\n") if $verbose;
 
   if (   $args->{"--output-processing-perl-line"}
