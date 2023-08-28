@@ -76,8 +76,10 @@ testvars_fix    :=  ARCH NED_CFG REQUIRED_MODULES KERNEL_CONF L4LINUX_CONF \
 testvars_conf   := TEST_TIMEOUT TEST_EXPECTED_REPEAT
 testvars_append := QEMU_ARGS MOE_ARGS TEST_ROOT_TASK_ARGS BOOTSTRAP_ARGS \
 
+# Variable value, only if it does not come from the environment. Otherwise empty
+non_env_var = $(if $(findstring environment,$(origin $1)),,$($1))
 # use either a target-specific value or the general version of a variable
-targetvar = $(or $($(1)_$(2)),$($(1)))
+targetvar = $(or $(call non_env_var,$(1)_$(2)),$(call non_env_var,$(1)))
 
 # This is the same as INSTALLFILE_LIB_LOCAL
 INSTALLFILE_TEST_LOCAL = $(LN) -sf $(call absfilename,$(1)) $(2)
