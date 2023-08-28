@@ -330,28 +330,31 @@ checkconf:
         libgendep checkconf
 CC := $(if $(filter sparc,$(ARCH)),$(if $(call GCCIS_sparc_leon_f),sparc-elf-gcc,$(CC)),$(CC))
 LD := $(if $(filter sparc,$(ARCH)),$(if $(call GCCIS_sparc_leon_f),sparc-elf-ld,$(LD)),$(LD))
+add_if_f = $(if $($(1)_f),$(1))
 Makeconf.bid.local-helper:
 	$(VERBOSE)echo BUILD_SYSTEMS="$(strip $(ARCH)_$(CPU)            \
 	               $(ARCH)_$(CPU)-$(BUILD_ABI))" >> $(DROPSCONF_CONFIG_MK)
-	$(VERBOSE)$(foreach v, BID_COMPILER_TYPE GCCDIR GCCLIB_HOST GCCLIB_EH GCCLIB_S_SO \
-	                GCCVERSION GCCMAJORVERSION GCCMINORVERSION      \
-			GCCPATCHLEVEL GCC_HAS_ATOMICS GCCPREFIXOPT      \
-			GCCNOSTACKPROTOPT GCCSTACKPROTOPT GCCSTACKPROTALLOPT LDVERSION LDNOWARNRWX \
-			GCCWNONOEXCEPTTYPE GCCWNOPSABI GCCWNOUNUSEDPRIVATEFIELD \
-			GCCWNOC99DESIGNATOR GCCSYSLIBDIRS GCCFORTRANAVAIL GCCLIBCAVAIL \
-			GCCINCFIXEDPATH CONDITIONAL_WARNINGS_MEDIUM CONDITIONAL_WARNINGS_FULL \
-			$(if $(GCCARMV5TEFPOPT_$(ARCH)_f),GCCARMV5TEFPOPT_$(ARCH)) \
-			$(if $(GCCARMV6FPOPT_$(ARCH)_f),GCCARMV6FPOPT_$(ARCH)) \
-			$(if $(GCCARMV6T2FPOPT_$(ARCH)_f),GCCARMV6T2FPOPT_$(ARCH)) \
-			$(if $(GCCARMV6ZKFPOPT_$(ARCH)_f),GCCARMV6ZKFPOPT_$(ARCH)) \
-			$(if $(GCCARMV7AFPOPT_$(ARCH)_f),GCCARMV7AFPOPT_$(ARCH)) \
-			$(if $(GCCARMV7RFPOPT_$(ARCH)_f),GCCARMV7RFPOPT_$(ARCH)) \
-			$(if $(GCCARMV7VEFPOPT_$(ARCH)_f),GCCARMV7VEFPOPT_$(ARCH)) \
-			$(if $(GCCARM64OUTLINEATOMICSOPT_$(ARCH)_f),GCCARM64OUTLINEATOMICSOPT_$(ARCH)) \
-			$(if $(GCCNOFPU_$(ARCH)_f),GCCNOFPU_$(ARCH))    \
-			$(if $(GCCIS_$(ARCH)_leon_f),GCCIS_$(ARCH)_leon),   \
-			echo $(v)=$(call $(v)_f,$(ARCH))                \
-			>>$(DROPSCONF_CONFIG_MK);)
+	$(VERBOSE)$(foreach v, BID_COMPILER_TYPE CONDITIONAL_WARNINGS_FULL \
+	              CONDITIONAL_WARNINGS_MEDIUM GCCDIR GCCFORTRANAVAIL \
+		      GCC_HAS_ATOMICS GCCINCFIXEDPATH GCCLIBCAVAIL GCCLIB_EH \
+	              GCCLIB_HOST GCCLIB_S_SO GCCMAJORVERSION GCCMINORVERSION \
+		      GCCNOSTACKPROTOPT GCCPATCHLEVEL GCCPREFIXOPT \
+		      GCCSTACKPROTALLOPT GCCSTACKPROTOPT GCCSYSLIBDIRS \
+		      GCCVERSION GCCWNOC99DESIGNATOR GCCWNONOEXCEPTTYPE \
+		      GCCWNOPSABI GCCWNOUNUSEDPRIVATEFIELD LDNOWARNRWX \
+		      LDVERSION \
+	              $(call add_if_f,GCCARMV5TEFPOPT_$(ARCH)) \
+	              $(call add_if_f,GCCARMV6FPOPT_$(ARCH)) \
+	              $(call add_if_f,GCCARMV6T2FPOPT_$(ARCH)) \
+	              $(call add_if_f,GCCARMV6ZKFPOPT_$(ARCH)) \
+	              $(call add_if_f,GCCARMV7AFPOPT_$(ARCH)) \
+	              $(call add_if_f,GCCARMV7RFPOPT_$(ARCH)) \
+	              $(call add_if_f,GCCARMV7VEFPOPT_$(ARCH)) \
+	              $(call add_if_f,GCCARM64OUTLINEATOMICSOPT_$(ARCH)) \
+	              $(call add_if_f,GCCNOFPU_$(ARCH)) \
+	              $(call add_if_f,GCCIS_$(ARCH)_leon), \
+	            echo $(v)=$(call $(v)_f,$(ARCH)) \
+	            >>$(DROPSCONF_CONFIG_MK);)
 	$(VERBOSE)echo '#include <generated/autoconf.h>' >$(OBJ_BASE)/include/l4/bid_config.h
 	$(VERBOSE)$(foreach v, crtbegin.o crtbeginS.o crtbeginT.o \
 	                       crtendS.o crtend.o, \
