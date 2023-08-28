@@ -251,11 +251,11 @@ endif # empty $(S)
 HOST_SYSTEM := $(shell uname | tr 'A-Z' 'a-z')
 export HOST_SYSTEM
 
-# it becomes a bit confusing now: 'make config' results in a config file, which
-# must be postprocessed. This is done in config.inc. Then,
-# we evaluate some variables that depend on the postprocessed config file.
-# The variables are defined in mk/Makeconf, which sources Makeconf.bid.local.
-# Hence, we have to 1) postprocess, 2) call make again to get the variables.
+# 'make config' results in a config file, which must be postprocessed. This is
+# done in config.inc. Then, we evaluate some variables that depend on the
+# postprocessed config file. The variables are defined in mk/Makeconf, which
+# sources Makeconf.bid.local. Hence, we have to 1) postprocess, 2) call make
+# again to get the variables.
 BID_DCOLON_TARGETS += DROPSCONF_CONFIG_MK_POST_HOOK
 DROPSCONF_CONFIG_MK_POST_HOOK:: check_build_tools $(OBJ_DIR)/Makefile
         # libgendep must be done before calling make with the local helper
@@ -268,9 +268,10 @@ DROPSCONF_CONFIG_MK_POST_HOOK:: check_build_tools $(OBJ_DIR)/Makefile
 KCONFIGS_ARCH     := $(wildcard $(L4DIR)/mk/arch/Kconfig.*.inc)
 KCONFIG_PLATFORMS := $(wildcard $(L4DIR)/mk/platforms/*.conf $(L4DIR)/conf/platforms/*.conf)
 
-$(KCONFIG_FILE)%platform_types $(KCONFIG_FILE)%platforms $(KCONFIG_FILE)%platforms.list: Makefile $(L4DIR)/tool/bin/gen_kconfig_includes \
-                                                          $(KCONFIG_PLATFORMS)
-	$(file >$(KCONFIG_FILE_DEPS).platforms,$@: $(KCONFIG_PLATFORMS) Makefile $(L4DIR)/tool/bin/gen_kconfig_includes)
+$(addprefix $(KCONFIG_FILE)%,platform_types platforms platforms.list): \
+            Makefile $(L4DIR)/tool/bin/gen_kconfig_includes $(KCONFIG_PLATFORMS)
+	$(file >$(KCONFIG_FILE_DEPS).platforms,$@: \
+	  $(KCONFIG_PLATFORMS) Makefile $(L4DIR)/tool/bin/gen_kconfig_includes)
 	$(foreach f,$^,$(file >>$(KCONFIG_FILE_DEPS).platforms,$(f):))
 	$(VERBOSE)MAKE="$(MAKE)"; $(L4DIR)/tool/bin/gen_kconfig_includes $(KCONFIG_FILE) $(KCONFIG_PLATFORMS)
 
@@ -384,6 +385,24 @@ Makeconf.bid.local-helper:
 	           fi
 	$(VERBOSE)$(RM) $(CONFIG_MK_REAL).tmp $(CONFIG_MK_REAL).tmp2
 
+# Scan the output of `ld --help` for `supported emulations:` and chose one of
+# the listed items in $(LD_EMULATION_CHOICE_$(ARCH)).
+define determine_emulation_gnu_ld =
+        emulations=$$($(callld) --help                         \
+                   | grep -i "supported emulations:"           \
+                   | sed -e 's/.*supported emulations: //');   \
+        for e in $$emulations; do                              \
+          for c in $(LD_EMULATION_CHOICE_$(ARCH)); do          \
+            if [ "$$e" = "$$c" ]; then                         \
+              echo LD_EMULATION=$$e >> $(DROPSCONF_CONFIG_MK); \
+              exit 0;                                          \
+            fi;                                                \
+          done;                                                \
+        done;                                                  \
+        echo "No known ld emulation found";                    \
+        exit 1
+endef
+
 Makeconf.bid.local-internal-names:
 ifneq ($(CONFIG_INT_CPP_NAME_SWITCH),)
 	$(VERBOSE)set -e; X="$(OBJ_BASE)/tmp.$$$$$$RANDOM.c" ;               \
@@ -404,27 +423,10 @@ ifneq ($(CONFIG_INT_CPP_NAME_SWITCH),)
 	          rm -f $$X $$X.{o,out};
 endif
 ifneq ($(CONFIG_INT_LD_NAME_SWITCH),)
-	$(VERBOSE)set -e; echo INT_LD_NAME=$$($(callld) 2>&1 | perl -p -e 's,^(.+/)?(.+):.+,$$2,') >> $(DROPSCONF_CONFIG_MK)
+	$(VERBOSE)set -e; echo INT_LD_NAME=$$($(callld) 2>&1 \
+	          | perl -p -e 's,^(.+/)?(.+):.+,$$2,') >> $(DROPSCONF_CONFIG_MK)
 endif
-	$(VERBOSE)emulations=$$($(callld) --help |     \
-	                        grep -i "supported emulations:" |        \
-	                        sed -e 's/.*supported emulations: //') ; \
-	unset found_it;                                                  \
-	for e in $$emulations; do                                        \
-	  for c in $(LD_EMULATION_CHOICE_$(ARCH)); do                    \
-	    if [ "$$e" = "$$c" ]; then                                   \
-	      echo LD_EMULATION=$$e >> $(DROPSCONF_CONFIG_MK);           \
-	      found_it=1;                                                \
-	      break;                                                     \
-	    fi;                                                          \
-	  done;                                                          \
-	  if [ "$$found_it" = "1" ]; then                                \
-	    break;                                                       \
-	  fi;                                                            \
-	done;                                                            \
-	if [ "$$found_it" != "1" ]; then                                 \
-	  echo "No known ld emulation found"; exit 1;                    \
-	fi
+	$(VERBOSE)$(determine_emulation_gnu_ld)
 
 libgendep:
 	$(VERBOSE)if [ ! -r tool/gendep/Makefile ]; then    \
