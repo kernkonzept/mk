@@ -2,7 +2,7 @@
 # GLOBAL Makefile for the whole L4 tree
 #
 
-L4DIR		?= .
+L4DIR         ?= .
 
 PRJ_SUBDIRS   := pkg tests $(wildcard l4linux)
 BUILD_DIRS    := tool
@@ -12,8 +12,8 @@ cleanall-dirs := tool pkg tests doc
 
 BUILD_TOOLS    = bash bison flex gawk perl tput \
                  $(foreach v,CC CXX LD HOST_CC HOST_CXX HOST_LD, \
-                           $(firstword $(foreach x,$($(v)),\
-			                         $(if $(findstring =,$(x)),,$(x)))))
+                   $(firstword $(foreach x,$($(v)),\
+                     $(if $(findstring =,$(x)),,$(x)))))
 BUILD_TOOLS_pkg/uvmm  := dtc
 
 CMDS_WITHOUT_OBJDIR := help checkbuild checkbuild.% check_build_tools
@@ -26,28 +26,28 @@ all::
 #####################
 # config-tool
 
-DROPSCONF 		= y
-DROPSCONF_DEFCONFIG	?= $(L4DIR)/mk/defconfig/config.amd64
+DROPSCONF               = y
+DROPSCONF_DEFCONFIG    ?= $(L4DIR)/mk/defconfig/config.amd64
 KCONFIG_FILE            = $(OBJ_BASE)/Kconfig.generated
 KCONFIG_FILE_DEPS       = $(OBJ_BASE)/.Kconfig.generated.d
 KCONFIG_FILE_SRC        = $(L4DIR)/mk/Kconfig
-DROPSCONF_CONFIG	= $(OBJ_BASE)/include/config/auto.conf
-DROPSCONF_CONFIG_H	= $(OBJ_BASE)/include/generated/autoconf.h
-DROPSCONF_CONFIG_MK	= $(OBJ_BASE)/.config.all
-DROPSCONF_DONTINC_MK	= y
-DROPSCONF_HELPFILE	= $(L4DIR)/mk/config.help
+DROPSCONF_CONFIG        = $(OBJ_BASE)/include/config/auto.conf
+DROPSCONF_CONFIG_H      = $(OBJ_BASE)/include/generated/autoconf.h
+DROPSCONF_CONFIG_MK     = $(OBJ_BASE)/.config.all
+DROPSCONF_DONTINC_MK    = y
+DROPSCONF_HELPFILE      = $(L4DIR)/mk/config.help
 
 # separation in "dependent" (ie opts the build output depends on) and
 # "independent" (ie opts the build output does not depend on) opts
-CONFIG_MK_INDEPOPTS	= BID_LIBGENDEP_PATHS CONFIG_BID_COLORED_PHASES \
-			  CONFIG_BID_GENERATE_MAPFILE CONFIG_BID_STRIP_PROGS \
-			  CONFIG_DEPEND_VERBOSE CONFIG_INT_CPP_.*_NAME \
-			  CONFIG_INT_CPP_NAME_SWITCH CONFIG_INT_CXX_.*_NAME \
-			  CONFIG_INT_LD_.*_NAME CONFIG_INT_LD_NAME_SWITCH \
-			  CONFIG_VERBOSE CONFIG_VERBOSE_SWITCH
+CONFIG_MK_INDEPOPTS     = BID_LIBGENDEP_PATHS CONFIG_BID_COLORED_PHASES \
+                          CONFIG_BID_GENERATE_MAPFILE CONFIG_BID_STRIP_PROGS \
+                          CONFIG_DEPEND_VERBOSE CONFIG_INT_CPP_.*_NAME \
+                          CONFIG_INT_CPP_NAME_SWITCH CONFIG_INT_CXX_.*_NAME \
+                          CONFIG_INT_LD_.*_NAME CONFIG_INT_LD_NAME_SWITCH \
+                          CONFIG_VERBOSE CONFIG_VERBOSE_SWITCH
 CONFIG_MK_PLATFORM_OPTS = CONFIG_PLATFORM_.*
-CONFIG_MK_REAL		= $(OBJ_BASE)/.config
-CONFIG_MK_INDEP		= $(OBJ_BASE)/.config.indep
+CONFIG_MK_REAL          = $(OBJ_BASE)/.config
+CONFIG_MK_INDEP         = $(OBJ_BASE)/.config.indep
 CONFIG_MK_PLATFORM      = $(OBJ_BASE)/.config.platform
 
 INCLUDE_BOOT_CONFIG    := optional
@@ -72,7 +72,7 @@ BID_ROOT_CONF=$(DROPSCONF_CONFIG_MK)
 endif
 
 # $(L4DIR)/mk/Makeconf shouln't include Makeconf.local twice
-MAKECONFLOCAL		= /dev/null
+MAKECONFLOCAL = /dev/null
 
 
 # Use project.mk if we use the default goal (MAKECMDGOALS is empty)
@@ -109,9 +109,9 @@ ifneq ($(wildcard $(L4DIR)/mk/defconfig/config.$(T)),)
 endif
 all::
 	@echo "Creating build directory \"$(BUILDDIR_TO_CREATE)\"..."
-	@if [ -e $(BUILDDIR_TO_CREATE) ]; then	\
-		echo "Already exists, aborting.";	\
-		exit 1;					\
+	@if [ -e $(BUILDDIR_TO_CREATE) ]; then \
+	   echo "Already exists, aborting.";   \
+	   exit 1;                             \
 	fi
 	@mkdir -p $(BUILDDIR_TO_CREATE)
 	@cp $(DROPSCONF_DEFCONFIG) $(BUILDDIR_TO_CREATE)/.kconfig
@@ -161,16 +161,18 @@ BID_POST_CONT_HOOK := $(MAKE) regen_l4defs
 .PHONY: $(BUILD_DIRS) doc check_build_tools cont cleanfast
 
 cleanfast:
-	$(VERBOSE)if [ -f $(OBJ_BASE)/include/generated/autoconf.h ]; then  \
-	            cp -a $(OBJ_BASE)/include/generated/autoconf.h          \
-	                  $(OBJ_BASE)/.tmp.bid_config.h;               \
+	$(VERBOSE)if [ -f $(OBJ_BASE)/include/generated/autoconf.h ]; then \
+	            cp -a $(OBJ_BASE)/include/generated/autoconf.h         \
+	                  $(OBJ_BASE)/.tmp.bid_config.h;                   \
 	          fi
-	$(VERBOSE)$(RM) -r $(addprefix $(OBJ_BASE)/,bin include pkg tests doc ext-pkg pc lib test l4defs.mk.inc l4defs.sh.inc .Makeconf.phys_reloc) \
-	                   $(IMAGES_DIR)
-	$(VERBOSE)if [ -f $(OBJ_BASE)/.tmp.bid_config.h ]; then        \
-	            mkdir -p $(OBJ_BASE)/include/generated;            \
-	            mv $(OBJ_BASE)/.tmp.bid_config.h                   \
-	               $(OBJ_BASE)/include/generated/autoconf.h;       \
+	$(VERBOSE)$(RM) -r $(addprefix $(OBJ_BASE)/,bin include pkg tests    \
+	                               doc ext-pkg pc lib test l4defs.mk.inc \
+	                               l4defs.sh.inc .Makeconf.phys_reloc)   \
+	                               $(IMAGES_DIR)
+	$(VERBOSE)if [ -f $(OBJ_BASE)/.tmp.bid_config.h ]; then  \
+	            mkdir -p $(OBJ_BASE)/include/generated;      \
+	            mv $(OBJ_BASE)/.tmp.bid_config.h             \
+	               $(OBJ_BASE)/include/generated/autoconf.h; \
 	          fi
 
 cleanall::
@@ -180,9 +182,9 @@ clean-test-scripts:
 	$(VERBOSE)$(RM) -r $(OBJ_BASE)/test/t
 
 clean cleanall install::
-	$(VERBOSE)set -e; for i in $($@-dirs) ; do \
-	  if [ -r $$i/Makefile -o -r $$i/GNUmakefile ] ; then \
-		PWD=$(PWD)/$$i $(MAKE) -C $$i $@ ; fi ; done
+	$(VERBOSE)set -e; for i in $($@-dirs) ; do                     \
+	            if [ -r $$i/Makefile -o -r $$i/GNUmakefile ]; then \
+	              PWD=$(PWD)/$$i $(MAKE) -C $$i $@; fi; done
 
 L4DEF_FILE_MK ?= $(OBJ_BASE)/l4defs.mk.inc
 L4DEF_FILE_SH ?= $(OBJ_BASE)/l4defs.sh.inc
@@ -233,11 +235,11 @@ $(COMPILE_COMMANDS_JSON):
 # there and if we build the build-directory the compile_commands.json file
 # was originally created from.
 regen_compile_commands_json:
-	$(VERBOSE)if [ -e "$(COMPILE_COMMANDS_JSON)" ]; then \
-	  if grep -qF "$(OBJ_DIR)" $(COMPILE_COMMANDS_JSON); then  \
-	    $(call GEN_MESSAGE,$(COMPILE_COMMANDS_JSON)); \
+	$(VERBOSE)if [ -e "$(COMPILE_COMMANDS_JSON)" ]; then               \
+	  if grep -qF "$(OBJ_DIR)" $(COMPILE_COMMANDS_JSON); then          \
+	    $(call GEN_MESSAGE,$(COMPILE_COMMANDS_JSON));                  \
 	    $(L4DIR)/tool/bin/gen_ccj $(OBJ_DIR) $(COMPILE_COMMANDS_JSON); \
-	  fi; \
+	  fi;                                                              \
 	fi
 
 .PHONY: l4defs regen_l4defs compile_commands.json regen_compile_commands_json
@@ -259,7 +261,7 @@ DROPSCONF_CONFIG_MK_POST_HOOK:: check_build_tools $(OBJ_DIR)/Makefile
         # libgendep must be done before calling make with the local helper
 	$(VERBOSE)$(MAKE) libgendep
 	$(VERBOSE)$(MAKE) Makeconf.bid.local-helper || \
-		(rm -f $(DROPSCONF_CONFIG_MK) $(CONFIG_MK_REAL) $(CONFIG_MK_INDEP); false)
+	    (rm -f $(DROPSCONF_CONFIG_MK) $(CONFIG_MK_REAL) $(CONFIG_MK_INDEP); false)
 	$(VEROBSE)$(LN) -snf $(L4DIR_ABS) $(OBJ_BASE)/source
 	$(VERBOSE)$(MAKE) checkconf
 
@@ -335,13 +337,13 @@ Makeconf.bid.local-helper:
 	               $(ARCH)_$(CPU)-$(BUILD_ABI))" >> $(DROPSCONF_CONFIG_MK)
 	$(VERBOSE)$(foreach v, BID_COMPILER_TYPE CONDITIONAL_WARNINGS_FULL \
 	              CONDITIONAL_WARNINGS_MEDIUM GCCDIR GCCFORTRANAVAIL \
-		      GCC_HAS_ATOMICS GCCINCFIXEDPATH GCCLIBCAVAIL GCCLIB_EH \
+	              GCC_HAS_ATOMICS GCCINCFIXEDPATH GCCLIBCAVAIL GCCLIB_EH \
 	              GCCLIB_HOST GCCLIB_S_SO GCCMAJORVERSION GCCMINORVERSION \
-		      GCCNOSTACKPROTOPT GCCPATCHLEVEL GCCPREFIXOPT \
-		      GCCSTACKPROTALLOPT GCCSTACKPROTOPT GCCSYSLIBDIRS \
-		      GCCVERSION GCCWNOC99DESIGNATOR GCCWNONOEXCEPTTYPE \
-		      GCCWNOPSABI GCCWNOUNUSEDPRIVATEFIELD LDNOWARNRWX \
-		      LDVERSION \
+	              GCCNOSTACKPROTOPT GCCPATCHLEVEL GCCPREFIXOPT \
+	              GCCSTACKPROTALLOPT GCCSTACKPROTOPT GCCSYSLIBDIRS \
+	              GCCVERSION GCCWNOC99DESIGNATOR GCCWNONOEXCEPTTYPE \
+	              GCCWNOPSABI GCCWNOUNUSEDPRIVATEFIELD LDNOWARNRWX \
+	              LDVERSION \
 	              $(call add_if_f,GCCARMV5TEFPOPT_$(ARCH)) \
 	              $(call add_if_f,GCCARMV6FPOPT_$(ARCH)) \
 	              $(call add_if_f,GCCARMV6T2FPOPT_$(ARCH)) \
@@ -357,8 +359,8 @@ Makeconf.bid.local-helper:
 	$(VERBOSE)echo '#include <generated/autoconf.h>' >$(OBJ_BASE)/include/l4/bid_config.h
 	$(VERBOSE)$(foreach v, crtbegin.o crtbeginS.o crtbeginT.o \
 	                       crtendS.o crtend.o, \
-			echo GCCLIB_FILE_$(v)=$(call GCCLIB_file_f,$(v))   \
-			>>$(DROPSCONF_CONFIG_MK);)
+	              echo GCCLIB_FILE_$(v)=$(call GCCLIB_file_f,$(v))   \
+	                >>$(DROPSCONF_CONFIG_MK);)
 	$(VERBOSE)$(foreach v, LD_GENDEP_PREFIX, echo $v=$($(v)) >>$(DROPSCONF_CONFIG_MK);)
 	$(VERBOSE)echo "HOST_SYSTEM=$(HOST_SYSTEM)" >>$(DROPSCONF_CONFIG_MK)
 	$(VERBOSE)# we need to call make again, because HOST_SYSTEM (set above) must be
@@ -371,36 +373,35 @@ Makeconf.bid.local-helper:
 	$(VERBOSE)grep $(addprefix -e ^,$(CONFIG_MK_PLATFORM_OPTS)) <$(CONFIG_MK_REAL).tmp >>$(CONFIG_MK_PLATFORM)
 	$(VERBOSE)echo -e "# Automatically generated. Don't edit\n" >$(CONFIG_MK_REAL).tmp2
 	$(VERBOSE)grep -v $(addprefix -e ^,$$ # $(CONFIG_MK_INDEPOPTS) $(CONFIG_MK_PLATFORM_OPTS)) \
-		<$(CONFIG_MK_REAL).tmp >>$(CONFIG_MK_REAL).tmp2
+	          <$(CONFIG_MK_REAL).tmp >>$(CONFIG_MK_REAL).tmp2
 	$(VERBOSE)echo -e 'include $(call absfilename,$(CONFIG_MK_INDEP))' >>$(CONFIG_MK_REAL).tmp2
 	$(VERBOSE)echo -e 'include $(call absfilename,$(CONFIG_MK_PLATFORM))' >>$(CONFIG_MK_REAL).tmp2
-	$(VERBOSE)if [ -e "$(CONFIG_MK_REAL)" ]; then                        \
+	$(VERBOSE)if [ -e "$(CONFIG_MK_REAL)" ]; then \
 	            diff --brief -I ^COLOR_TERMINAL $(CONFIG_MK_REAL) $(CONFIG_MK_REAL).tmp2 || \
-		      mv $(CONFIG_MK_REAL).tmp2 $(CONFIG_MK_REAL);           \
-		  else                                                       \
-		    mv $(CONFIG_MK_REAL).tmp2 $(CONFIG_MK_REAL);             \
-		  fi
+	            mv $(CONFIG_MK_REAL).tmp2 $(CONFIG_MK_REAL); \
+	           else \
+	            mv $(CONFIG_MK_REAL).tmp2 $(CONFIG_MK_REAL); \
+	           fi
 	$(VERBOSE)$(RM) $(CONFIG_MK_REAL).tmp $(CONFIG_MK_REAL).tmp2
 
 Makeconf.bid.local-internal-names:
 ifneq ($(CONFIG_INT_CPP_NAME_SWITCH),)
-	$(VERBOSE) set -e; X="$(OBJ_BASE)/tmp.$$$$$$RANDOM.c" ; \
-		echo 'int main(void){}'>$$X ; \
-		rm -f $$X.out ; $(LD_GENDEP_PREFIX) GENDEP_SOURCE=$$X \
-		GENDEP_OUTPUT=$$X.out $(CC) $(CCXX_FLAGS) -c $$X -o $$X.o; \
-		if [ ! -e $$X.out ]; then \
-			echo -e "\n\033[1;31mGendep did not generate output. Is the compiler ($(CC)) statically linked?\033[0m"; \
-			echo -e "Please use a dynamically linked compiler.\n"; exit 1; \
-		fi; echo INT_CPP_NAME=`cat $$X.out` \
-			>>$(DROPSCONF_CONFIG_MK); \
-		rm -f $$X $$X.{o,out};
-	$(VERBOSE)set -e; X="$(OBJ_BASE)/tmp.$$$$$$RANDOM.cc" ; \
-		echo 'int main(void){}'>$$X; \
-		rm -f $$X.out; $(LD_GENDEP_PREFIX) GENDEP_SOURCE=$$X \
-		GENDEP_OUTPUT=$$X.out $(CXX) -c $$X -o $$X.o; \
-		test -e $$X.out; echo INT_CXX_NAME=`cat $$X.out` \
-			>>$(DROPSCONF_CONFIG_MK); \
-		rm -f $$X $$X.{o,out};
+	$(VERBOSE)set -e; X="$(OBJ_BASE)/tmp.$$$$$$RANDOM.c" ;               \
+	          echo 'int main(void){}'>$$X ;                              \
+	          rm -f $$X.out; $(LD_GENDEP_PREFIX) GENDEP_SOURCE=$$X       \
+	          GENDEP_OUTPUT=$$X.out $(CC) $(CCXX_FLAGS) -c $$X -o $$X.o; \
+	          if [ ! -e $$X.out ]; then                                  \
+	            echo -e "\n\033[1;31mGendep did not generate output. Is the compiler ($(CC)) statically linked?\033[0m"; \
+	            echo -e "Please use a dynamically linked compiler.\n"; exit 1; \
+	          fi; echo INT_CPP_NAME=`cat $$X.out` >>$(DROPSCONF_CONFIG_MK); \
+	          rm -f $$X $$X.{o,out};
+	$(VERBOSE)set -e; X="$(OBJ_BASE)/tmp.$$$$$$RANDOM.cc" ;        \
+	          echo 'int main(void){}'>$$X;                         \
+	          rm -f $$X.out; $(LD_GENDEP_PREFIX) GENDEP_SOURCE=$$X \
+	          GENDEP_OUTPUT=$$X.out $(CXX) -c $$X -o $$X.o;        \
+	          test -e $$X.out; echo INT_CXX_NAME=`cat $$X.out`     \
+	           >>$(DROPSCONF_CONFIG_MK);                           \
+	          rm -f $$X $$X.{o,out};
 endif
 ifneq ($(CONFIG_INT_LD_NAME_SWITCH),)
 	$(VERBOSE)set -e; echo INT_LD_NAME=$$($(callld) 2>&1 | perl -p -e 's,^(.+/)?(.+):.+,$$2,') >> $(DROPSCONF_CONFIG_MK)
@@ -426,10 +427,10 @@ endif
 	fi
 
 libgendep:
-	$(VERBOSE)if [ ! -r tool/gendep/Makefile ]; then	\
-	            echo "=== l4/tool/gendep missing! ===";	\
-		    exit 1;					\
-	          fi
+	$(VERBOSE)if [ ! -r tool/gendep/Makefile ]; then    \
+	            echo "=== l4/tool/gendep missing! ==="; \
+	            exit 1;                                 \
+		  fi
 	$(VERBOSE)PWD=$(PWD)/tool/gendep $(MAKE) -C tool/gendep
 
 DIRS_FOR_BUILD_TOOLS_CHECKS = $(patsubst BUILD_TOOLS_%,%,    \
@@ -496,8 +497,8 @@ define genimage
 	    QEMU_BINARY_NAME=$(if $(QEMU_PATH),$(QEMU_PATH),$(QEMU_ARCH_MAP_$(ARCH))) \
 	    $(MAKE) -C pkg/bootstrap/server/src ENTRY="$$e"                           \
 	            BOOTSTRAP_MODULES_LIST=$$ml $(1)                                  \
-		    BOOTSTRAP_MODULE_PATH_BINLIB="$(BUILDDIR_SEARCHPATH)"             \
-		    BOOTSTRAP_SEARCH_PATH="$(MODULE_SEARCH_PATH)"
+	            BOOTSTRAP_MODULE_PATH_BINLIB="$(BUILDDIR_SEARCHPATH)"             \
+	            BOOTSTRAP_SEARCH_PATH="$(MODULE_SEARCH_PATH)"
 endef
 
 # Contains PHYS_RELOC_DIR_LIST
@@ -701,7 +702,7 @@ check_base_dir:
 	fi
 
 BID_CHECKBUILD_LOG_REDIR_f = $(if $(BID_CHECKBUILD_LOG), 1>>$(BID_CHECKBUILD_LOG).$(strip $(1)).log) \
-			     $(if $(BID_CHECKBUILD_LOG), 2>&1) #>$(BID_CHECKBUILD_LOG).$(strip $(1)).log)
+                             $(if $(BID_CHECKBUILD_LOG), 2>&1) #>$(BID_CHECKBUILD_LOG).$(strip $(1)).log)
 
 .PRECIOUS: $(CHECK_BASE_DIR)/config.%/.kconfig
 .PRECIOUS: $(CHECK_BASE_DIR)/config.%/.config.all
