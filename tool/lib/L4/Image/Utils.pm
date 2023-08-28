@@ -7,7 +7,8 @@ use Exporter;
 use vars qw(@ISA @EXPORT);
 @ISA    = qw(Exporter);
 @EXPORT = qw(error check_syswrite check_sysread checked_sysseek
-             filepos_get filepos_set sysreadz);
+             filepos_get filepos_set sysreadz syswritez
+             rtrim_zerobytes alignto alignto_fd);
 
 
 sub error
@@ -42,14 +43,27 @@ sub check_sysread
 sub sysreadz
 {
   my $fd = shift;
-  my $result = "";
-  while (my $err = sysread($fd, my $s, 10) != 0)
+  my $string_addr = filepos_get($fd);
+  my $string = "";
+  my $chunk;
+  my $strlen;
+
+  while (($strlen = index($string,"\0")) == -1)
     {
-      error("Error reading zero terminated string") unless defined $err;
-      $result .= [split(/\0/, $s, 2)]->[0];
-      last if $s =~ /\0/;
+      sysread($fd,$chunk,16) or die "Incomplete c string: $!";
+      $string .= $chunk;
     }
-  $result;
+
+  # Move fd to after 0-byte
+  filepos_set($fd, $string_addr + $strlen + 1);
+
+  return substr($string, 0, $strlen);
+}
+
+sub syswritez
+{
+  my ($fd, $string) = @_;
+  syswrite($fd, $string . "\0");
 }
 
 sub checked_sysseek
@@ -71,5 +85,37 @@ sub filepos_set
 {
   return checked_sysseek(shift, shift, 0);
 }
+
+sub rtrim_zerobytes {
+  return shift =~ s/\0*$//r;
+}
+
+sub alignto {
+  my ($addr, $alignment) = @_;
+
+  my $padding = $alignment - ($addr % $alignment);
+  $padding = 0 if $padding == $alignment;
+
+  return $addr + $padding;
+}
+
+sub alignto_fd {
+  my ($fd, $alignment) = @_;
+  my $curpos = filepos_get($fd);
+  my $newpos = alignto($curpos, $alignment);
+  my $fsize = checked_sysseek($fd, 0, 2);
+
+  if ($newpos < $fsize)
+    {
+      filepos_set($fd, $newpos);
+    }
+  else
+    {
+      syswrite($fd, "\0" x ($newpos - $fsize));
+    }
+
+  return $newpos;
+}
+
 
 1;

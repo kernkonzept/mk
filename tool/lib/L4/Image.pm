@@ -42,6 +42,7 @@ use L4::Image::Utils qw/error check_sysread check_syswrite
 use L4::Image::Elf;
 use L4::Image::Raw;
 use L4::Image::EFI;
+use L4::Image::ITB;
 use L4::Image::UImage;
 
 BEGIN { unshift @INC, dirname($0).'../lib'; }
@@ -121,9 +122,10 @@ use constant {
   FILE_TYPE_ELF     => 2,
   FILE_TYPE_UIMAGE  => 3,
   FILE_TYPE_EFI     => 4,
+  FILE_TYPE_ITB     => 5,
 };
 
-use constant FILE_TYPES => qw(ERROR Unknown/Raw ELF uImage EFI);
+use constant FILE_TYPES => qw(ERROR Unknown/Raw ELF uImage EFI ITB);
 
 sub map_type_name_to_flag
 {
@@ -171,6 +173,8 @@ sub get_file_type
     $type = FILE_TYPE_UIMAGE;
   } elsif($n[0] == 0x4d and $n[1] == 0x5a) { # ASCII 'MZ' (PE magic)
     $type = FILE_TYPE_EFI;
+  } elsif($n[0] == 0xd0 and $n[1] == 0x0d and $n[2] == 0xfe and $n[3] == 0xed) {
+    $type = FILE_TYPE_ITB;
   }
 
   close $fd;
@@ -491,6 +495,15 @@ sub process_image
           $fn = $inner_fh->filename;
         }
     }
+  elsif ($file_type == FILE_TYPE_ITB)
+    {
+      my $wrapper = L4::Image::ITB->new($fn, $opts->{itbkey});
+      my ($inner_fn, $loadaddr) = $wrapper->unpack_inner();
+      $img = L4::Image::Raw->new($inner_fn, $loadaddr);
+      $img->{'wrapper-img'} = $wrapper;
+      $img->{'wrapper-fn'} = $fn;
+      $fn = $inner_fn;
+    }
 
   my $workdir;
 
@@ -547,6 +560,8 @@ sub process_image
   if ($file_type == FILE_TYPE_UIMAGE) {
     $img = L4::Image::UImage->new($fn, $_start);
   } elsif ($file_type == FILE_TYPE_ELF) {
+    # Already parsed above due to unwrapping ...
+  } elsif ($file_type == FILE_TYPE_ITB) {
     # Already parsed above due to unwrapping ...
   } elsif ($file_type == FILE_TYPE_EFI) {
     $img = L4::Image::EFI->new($fn, $_start);

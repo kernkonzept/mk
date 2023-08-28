@@ -60,6 +60,7 @@ sub edit_lines_in_editor
 
 my $imagefile;
 my $outimagefile;
+my $itbkey;
 my $verbose = 0;
 my $workdir;
 my $arch;
@@ -1156,6 +1157,8 @@ Usage: $0
 Common/global options:
   --image, -i file           Image file to use. Required.
   --outimage, -o file        Output image file. Optional.
+  --itbkey key               The key of the image to process inside an ITB file
+                             (only necessary if multiple images are present)
   --verbose, -v              Verboseness.
   --workdir, --outputdir dir Directory to store temporary or output files.
   --help                     Helping information.
@@ -1204,6 +1207,12 @@ for (my $i = 0; $i < @ARGV; ++$i)
     elsif ($arg eq '--outimage' or $arg eq '-o')
       {
         $outimagefile = $ARGV[$i + 1];
+        splice(@ARGV, $i, 2);
+        $i--;
+      }
+    elsif ($arg eq '--itbkey')
+      {
+        $itbkey = $ARGV[$i + 1];
         splice(@ARGV, $i, 2);
         $i--;
       }
@@ -1316,6 +1325,7 @@ for (my $i = 0; $i < @ARGV; ++$i)
 my %process_opts;
 $process_opts{workdir} = $workdir;
 $process_opts{outimagefile} = $outimagefile;
+$process_opts{itbkey} = $itbkey;
 
 # figure out whether we need to write files to storage and whether we need
 # to generate a new image
