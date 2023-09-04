@@ -547,6 +547,7 @@ function Sandbox.new(scope)
   ---@type Sandbox
   local self =
     { scope = scope
+    , succeeded = true
     , uuid = nil
     , _env = env
     , _ignored_kernel_object_attrs = ignored_kernel_object_attrs
@@ -570,9 +571,8 @@ function Sandbox:exec(snip)
     tap:comment('EXEC not ok.', 2)
     tap:comment(snip, '  Lua source: ')
     tap:comment(tostring(res), '  Lua error: ')
-    return false
   end
-  return true
+  self.succeeded = self.succeeded and status
 end
 
 function Sandbox:check(snip)
@@ -584,20 +584,20 @@ function Sandbox:check(snip)
     tap:comment('CHECK not ok.', 2)
     tap:comment(snip, '  Lua source: ')
     tap:comment(tostring(res), '  Lua error: ')
-    return false
+    self.succeeded = false
   elseif type(res) ~= 'boolean' then
     tap:comment('CHECK not ok.', 2)
     tap:comment(snip, '  Lua source: ')
     tap:comment('Result has type ' .. type(res) .. '. Expected boolean.', 2)
-    return false
+    self.succeeded = false
   elseif not res then
     tap:comment('CHECK not ok.', 2)
     tap:comment(snip, '  Lua source: ')
     tap:comment('Result is ' .. tostring(res) .. '.', 2)
     if errstr then tap:comment(errstr, 2) end
-    return false
+    self.succeeded = false
   end
-  return true
+  self.succeeded = self.succeeded and status
 end
 
 -- Add dump under given tag to `d` in the sandbox environment.
@@ -617,17 +617,17 @@ function Sandbox:insert_dump(tag, dump)
   self._env.d[tag] = dump
 end
 
-function print_test_result(name, uuid, succeeded)
+function Sandbox:print_test_result()
   -- if UUID of the last test was not set, print out a warning
-  if uuid == nil then
+  if self.uuid == nil then
     tap:prepend_comment('WARNING: UUID was not set!')
   else
-    tap:prepend_comment('Test-uuid: ' .. uuid, 3)
+    tap:prepend_comment('Test-uuid: ' .. self.uuid, 3)
   end
-  tap:flush_test(succeeded, name .. ':Introspection')
+  tap:flush_test(self.succeeded, self.scope .. ':Introspection')
 end
 
--- The invalid sandbox is no actual sandbox. It is unuseable; indexing it aborts
+-- The invalid sandbox is no actual sandbox. It is unusable; indexing it aborts
 -- the script. It is used instead of nil to get a clean error message in case it
 -- is used.
 invalid_sandbox = setmetatable({},
@@ -637,8 +637,6 @@ invalid_sandbox = setmetatable({},
 -- Start with invalid sandbox. The first actual sandox must be initialized with
 -- RESETSCOPE because a sandbox needs a scope name.
 sandbox = invalid_sandbox
--- store whether all introspection tests for a test succeed
-succeeded = true
 
 function process_input(id, input)
   tap:comment_header(input.filename)
@@ -647,15 +645,14 @@ function process_input(id, input)
     if input.info == 'RESETSCOPE' then
       if sandbox ~= invalid_sandbox then
         -- print current test output
-        print_test_result(sandbox.scope, sandbox.uuid, succeeded)
+        sandbox:print_test_result()
       end
       -- reset Lua sandbox and status of test output for next test
       sandbox = Sandbox.new(input.text)
-      succeeded = true
     elseif input.info == 'EXEC' then
-      succeeded = succeeded and sandbox:exec(input.text)
+      sandbox:exec(input.text)
     elseif input.info == 'CHECK' then
-      succeeded = succeeded and sandbox:check(input.text)
+      sandbox:check(input.text)
     elseif input.info == "UUID" then
       if sandbox.uuid ~= nil then
         tap:comment('WARNING: Overwriting already set UUID; was '
@@ -696,7 +693,7 @@ end
 
 -- print output of last test
 if sandbox ~= invalid_sandbox then
-  print_test_result(sandbox.scope, sandbox.uuid, succeeded)
+  sandbox:print_test_result()
 end
 
 tap:flush_plan()
