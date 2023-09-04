@@ -250,8 +250,7 @@ config EXPERIMENTAL
 choice
 	prompt "Position independent executables"
 	depends on EXPERIMENTAL
-	depends on BUILD_ARCH_amd64 || BUILD_ARCH_arm || BUILD_ARCH_arm64 \
-	           || BUILD_ARCH_x86
+	depends on BUILD_ARCH_amd64 || BUILD_ARCH_arm || BUILD_ARCH_arm64
 	default BID_PIE_NONE
 
 config BID_PIE_NONE
