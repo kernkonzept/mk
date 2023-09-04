@@ -599,6 +599,7 @@ Sandbox = {}
 function Sandbox.new(scope)
   local self =
     { scope = scope
+    , uuid = nil
     , _ignored_kernel_object_attrs =
         { ['Factory'] = {'c'}    -- remaining quota
         , ['IRQ ipc'] = {'F'}    -- flags
@@ -715,6 +716,8 @@ function print_test_result(name, uuid, succeeded)
   -- if UUID of the last test was not set, print out a warning
   if uuid == nil then
     tap:prepend_comment('WARNING: UUID was not set!')
+  else
+    tap:prepend_comment('Test-uuid: ' .. uuid, 3)
   end
   tap:flush_test(succeeded, name .. ':Introspection')
 end
@@ -731,8 +734,7 @@ invalid_sandbox = setmetatable({},
 sandbox = invalid_sandbox
 -- store whether all introspection tests for a test succeed
 succeeded = true
--- table for collecting output of a single test
-uuid = nil
+
 function process_input(id, input)
   tap:comment_header(input.filename)
 
@@ -744,12 +746,11 @@ function process_input(id, input)
   if input.info == 'RESETSCOPE' then
     if sandbox ~= invalid_sandbox then
       -- print current test output
-      print_test_result(sandbox.scope, uuid, succeeded)
+      print_test_result(sandbox.scope, sandbox.uuid, succeeded)
     end
     -- reset Lua sandbox and status of test output for next test
     sandbox = Sandbox.new(input.text)
     succeeded = true
-    uuid = nil
   elseif input.info == 'EXEC' then
     succeeded = succeeded and sandbox:exec(input.text)
   elseif input.info == 'CHECK' then
@@ -766,11 +767,11 @@ function process_input(id, input)
     local tag, dump = parse_dump(headers .. body)
     sandbox:insert_dump(tag, dump)
   elseif input.info == "UUID" then
-    if uuid ~= nil then
-      tap:comment('WARNING: Overwriting already set UUID; was ' .. uuid, 2)
+    if sandbox.uuid ~= nil then
+      tap:comment('WARNING: Overwriting already set UUID; was ' .. sandbox.uuid,
+                  2)
     end
-    tap:prepend_comment('Test-uuid: ' .. input.text, 3)
-    uuid = input.text
+    sandbox.uuid = input.text
   else
     tap:comment('WARNING: Unsupported type of input: ' .. input.info, 2)
   end
@@ -821,7 +822,7 @@ end
 
 -- print output of last test
 if sandbox ~= invalid_sandbox then
-  print_test_result(sandbox.scope, uuid, succeeded)
+  print_test_result(sandbox.scope, sandbox.uuid, succeeded)
 end
 
 tap:flush_plan()
