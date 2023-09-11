@@ -86,7 +86,7 @@ INSTALLFILE_TEST_LOCAL = $(LN) -sf $(call absfilename,$(1)) $(2)
 DEFAULT_TEST_STARTER = $(L4DIR)/tool/bin/default-test-starter
 
 $(TEST_SCRIPTS):%.t: $(GENERAL_D_LOC)
-	$(VERBOSE)echo -e "#!/bin/bash\n\nset -a" > $@
+	$(VERBOSE)echo -e "#!/usr/bin/env bash\n\nset -a" > $@
 	$(VERBOSE)echo 'L4DIR="$(L4DIR)"' >> $@
 	$(VERBOSE)echo 'SEARCHPATH="$(if $(PRIVATE_LIBDIR),$(PRIVATE_LIBDIR):)$(INSTALLDIR_BIN_LOCAL):$(OBJ_BASE)/bin/$(ARCH)_$(CPU):$(OBJ_BASE)/bin/$(ARCH)_$(CPU)/$(BUILD_ABI):$(OBJ_BASE)/lib/$(ARCH)_$(CPU):$(OBJ_BASE)/lib/$(ARCH)_$(CPU)/$(BUILD_ABI):$(SRC_DIR):$(L4DIR)/conf/test"' >> $@
 	$(VERBOSE)$(foreach v,$(testvars_fix), echo '$(v)="$(subst ",\",$(call targetvar,$(v),$(notdir $*)))"' >> $@;)
