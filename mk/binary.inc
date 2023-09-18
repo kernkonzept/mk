@@ -448,12 +448,11 @@ endif
 
 
 CFLAGS  += $(if $(CONFIG_BID_GCC_OMIT_FP),-fomit-frame-pointer,-fno-omit-frame-pointer)
-CFLAGS	+= $(call bid_flag_variants,CFLAGS)
 CFLAGS	+= $(OPTS) $(WARNINGS)
 CFLAGS  += -fno-common
 CFLAGS  += $(CFLAGS_C99)
 CFLAGS  += $(CFLAGS_L4_GENERIC)
-DEFINES += $(call bid_flag_variants,DEFINES)
+CFLAGS	+= $(call bid_flag_variants,CFLAGS)
 DEFINES += -DSYSTEM_$(subst -,_,$(SYSTEM)) -DARCH_$(ARCH) -DCPUTYPE_$(CPU) -DL4API_$(L4API)
 DEFINES += -D_GNU_SOURCE $(if $(L4API),,-DL4_MINIMAL_LIBC)
 ifdef DEBUG
@@ -461,6 +460,7 @@ ifneq (,$(filter 0 n N, $(DEBUG)))
 DEFINES	+= -DNDEBUG
 endif
 endif
+DEFINES += $(call bid_flag_variants,DEFINES)
 
 CPPFLAGS-DEBUG_MODE = \
     $(if $(L4API), \
@@ -469,7 +469,6 @@ CPPFLAGS-DEBUG_MODE = \
                             $(OBJ_BASE)/include/l4/util/kprintf.h \
                             $(OBJ_BASE)/include/l4/sys/debugger.h))
 
-CPPFLAGS+= $(call bid_flag_variants,CPPFLAGS)
 CPPFLAGS+= $(DEFINES)
 CPPFLAGS+= $(addprefix -I,  $(PRIVATE_INCDIR) $(call bid_flag_variants,PRIVATE_INCDIR))
 CPPFLAGS+= $(if $(CONTRIB_INCDIR),$(addprefix -I$(OBJ_BASE)/include/contrib/,$(CONTRIB_INCDIR)))
@@ -479,6 +478,7 @@ CPPFLAGS+= $(addprefix -I, $(L4INCDIR))
 endif
 CPPFLAGS+= $(if $(DEBUG_MODE),$(CPPFLAGS-DEBUG_MODE))
 CPPFLAGS+= $(LIBCINCDIR)
+CPPFLAGS+= $(call bid_flag_variants,CPPFLAGS)
 
 ifneq ($(MODE),host)
 CXXFLAGS_L4_GENERIC += $(CARCHFLAGS) $(CCXX_FLAGS)
@@ -490,7 +490,6 @@ CXXFLAGS_L4_PIC     += $(PICFLAGS)
 endif
 
 CXXFLAGS+= $(if $(CONFIG_BID_GCC_OMIT_FP),-fomit-frame-pointer,-fno-omit-frame-pointer)
-CXXFLAGS+= $(call bid_flag_variants,CXXFLAGS)
 CXXFLAGS+= $(OPTS) $(filter-out $(foreach w,-Wbad-function-cast -Wstrict-prototypes -Wmissing-prototypes,\
                                             $(w) $(patsubst -W%,-Wno-%,$(w))),\
                                 $(WARNINGS))
@@ -498,10 +497,11 @@ CXXFLAGS+= $(GCCWNONOEXCEPTTYPE) $(GCCWNOPSABI) $(GCCWNOUNUSEDPRIVATEFIELD) \
 	   $(GCCWNOC99DESIGNATOR)
 CXXFLAGS+= -fno-common
 CXXFLAGS+= $(CXXFLAGS_L4_GENERIC)
+CXXFLAGS+= $(call bid_flag_variants,CXXFLAGS)
 
 FFLAGS  += $(OPTS)
-FFLAGS  += $(call bid_flag_variants,FFLAGS)
 FFLAGS  += $(filter-out $(GCCPREFIXOPT),$(CFLAGS_L4_GENERIC))
+FFLAGS  += $(call bid_flag_variants,FFLAGS)
 
 NOPICFLAGS += $(if $(CONFIG_BID_PIE),-fPIE)
 PICFLAGS += -fPIC -U__PIC__ -D__PIC__=1
