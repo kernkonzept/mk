@@ -183,6 +183,11 @@ The contents of the file are matched without stripping carriage returns.
 
 The globally unique identifier of the test.
 
+=item C<tap_description>
+
+The tap description to be used in the ok/not ok line. If not specified a generic
+one will be used, which changes depending on the test outcome.
+
 =back
 
 =head1 Usage
