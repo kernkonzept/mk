@@ -122,6 +122,7 @@ else
         # Supress normal output when running within a prove harness.
         open(STDOUT, '>', '/dev/null');
         open(STDERR, '>>', $logfile || '/dev/null');
+        open(STDIN, '<', '/dev/null');
       }
     else
       {
