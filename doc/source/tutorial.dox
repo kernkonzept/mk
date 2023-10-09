@@ -3,8 +3,7 @@
 \page l4re_tutorial Tutorial
 
 This tutorial assumes that the reader is familiar with the basic %L4 concepts
-that were discussed in the \ref l4re_intro section and has
-a working knowledge of C++.
+that were discussed in the \ref l4re_intro section.
 
 Here you can find the first steps to boot a very simple setup.  The setup
 consists of the following components:
@@ -12,11 +11,11 @@ consists of the following components:
 \li Sigma0 --- Root Pager
 \li Moe --- Root Task
 \li Ned --- Init Process
-\li hello --- Hello World Application
+\li hello --- The classical 'Hello World' Application
 
 The guide assumes that you already compiled the base components and describes
-how to generate an ISO image, with GRUB 1 or GRUB 2 as a boot loader, that
-can for example be booted within QEMU.
+how to generate an ISO image, with GRUB as a boot loader, that can for
+example be booted within QEMU.
 
 First you need a \c modules.list file that contains an entry for the scenario.
 
@@ -61,24 +60,17 @@ Now you can go to your L4Re build directory and run the following command.
       somewhere else.
 
 \code
-make grub1iso E=hello MODULES_LIST=/tmp/modules.list MODULE_SEARCH_PATH=/tmp:<path_to_fiasco_builddir>
-\endcode
-
-Or as an alternative use GRUB 2:
-
-\code
 make grub2iso E=hello MODULES_LIST=/tmp/modules.list MODULE_SEARCH_PATH=/tmp:<path_to_fiasco_builddir>
 \endcode
 
 Now you should be able to boot the image in QEMU by running:
 
 \code
-qemu-system-i386 -cdrom images/hello.iso -serial stdio
+qemu-system-x86_64 -m 1024 -cdrom images/hello.iso -serial stdio
 \endcode
 
 If you press `<ESC>` in the terminal that shows you the serial output you
 enter the microkernel's debugger... Have fun.
-
 
 \section customizations Customizations
 
