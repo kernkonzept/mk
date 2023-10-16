@@ -39,22 +39,12 @@ sub kill_ps_tree
 
   return unless $pid > 1;
 
-  my %already_handled;
-
   while (my @pids = get_ps_tree($pid))
     {
-      my $innerpid;
-
-      do {
-        $innerpid = pop @pids;
-      } while(defined $innerpid && $already_handled{$innerpid});
-
+      my $innerpid = $pids[-1];
       if ($innerpid)
         {
-          $already_handled{$innerpid} = 1;
           kill 'SIGTERM', $innerpid;
-          next if waitpid($innerpid, 0) > 0;
-          kill 'SIGKILL', $innerpid;
           waitpid $innerpid, 0;
         }
     }
