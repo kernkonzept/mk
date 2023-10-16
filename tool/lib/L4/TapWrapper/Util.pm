@@ -103,7 +103,6 @@ sub kill_ps_tree
       if ($innerpid)
         {
           kill 'SIGTERM', $innerpid;
-          waitpid $innerpid, 0;
         }
     }
   kill 'SIGTERM', $pid;
