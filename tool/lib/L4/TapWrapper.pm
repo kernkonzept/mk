@@ -155,6 +155,11 @@ sub exit_test
 {
   my ($exit_code) = @_;
 
+  # tell test runner to finish up
+  # signals aren't passed to whole children tree - kill explicit
+  kill_ps_tree($pid);
+  $pid = -1; # clean behaviour on multiple calling
+
   # graceful exit override
   $exit_code = 0
     if (not defined $exit_code   # default
