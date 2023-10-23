@@ -25,8 +25,9 @@ make -C "${L4DIR}" \
      SRC_DIR="${L4DIR}" \
      INCLUDE_BOOT_CONFIG=required \
      BID_printm VARS="$*" \
-    | perl -ne $'if(my($key,$value) = m/^([^=]+)=(.*)$/) {
-                   # Escape single quotes for bash.
-                   $value =~ s/\'/\'\\\\\'\'/g;
-                   print("MAKECONF_$key=\'$value\'\n");
-                 }'
+    | VARS="$*" perl -ne $'my %vars = map { $_ => 1 } split /\s+/, $ENV{VARS};
+                           if(my($key,$value) = m/^([^=\s]+)=(.*)$/) {
+                             # Escape single quotes for bash.
+                             $value =~ s/\'/\'\\\\\'\'/g;
+                             print("MAKECONF_$key=\'$value\'\n") if $vars{$key};
+                           }'
