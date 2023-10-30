@@ -247,6 +247,15 @@ config EXPERIMENTAL
 
 	  Use with caution!
 
+config EXPERT
+	bool "Show expert options"
+	help
+	  Expert options are those that you should never have to change unless
+	  you have a very good reason to do so. Their default values are
+	  intended to be used for nearly all use-cases. So only enable this
+	  option if you are certain that you need it and ensure you are aware
+	  of all consequences when changing any of them.
+
 choice
 	prompt "Position independent executables"
 	depends on EXPERIMENTAL
