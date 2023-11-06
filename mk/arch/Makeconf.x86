@@ -1,3 +1,5 @@
+# vim:se ft=make:
+
 CROSS_COMPILE_x86         = x86_64-linux-gnu-
 LD_EMULATION_CHOICE_x86   = elf_i386
 LDFLAGS_x86              += -z noexecstack

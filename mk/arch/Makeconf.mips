@@ -1,3 +1,5 @@
+# vim:se ft=make:
+
 CROSS_COMPILE_mips        = mips-linux-
 ELF_BINARY_TYPE_mips_bl   = $(if $(CONFIG_MIPS_LITTLE_ENDIAN),l,b)
 OFORMAT_mips_bl           = $(if $(CONFIG_MIPS_LITTLE_ENDIAN),little,big)

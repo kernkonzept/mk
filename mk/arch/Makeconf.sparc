@@ -1,3 +1,4 @@
+# vim:se ft=make:
 
 CROSS_COMPILE_sparc         = $(if $(GCCIS_sparc_leon),sparc-elf-,sparc-linux-)
 LD_EMULATION_CHOICE_sparc   = $(if $(GCCIS_sparc_leon),sparcleon,elf32_sparc)
