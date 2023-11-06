@@ -29,8 +29,18 @@ my $tmpdir       = tempdir(CLEANUP => 1);
 sub qemu_get_file
 {
   my $mod = shift;
-  my $fp = L4::ModList::get_file_uncompressed_or_die($mod->{file}, $module_path,
-                                                     $tmpdir);
+  my $fp;
+
+  if (exists $mod->{opts}->{uncompress})
+    {
+      $fp = L4::ModList::get_file_uncompressed_or_die($mod->{file}, $module_path,
+                                                      $tmpdir);
+    }
+  else
+    {
+      $fp = L4::ModList::search_file_or_die($mod->{file}, $module_path);
+    }
+
   my $bn = basename($fp);
 
   if ($bn ne $mod->{command})
