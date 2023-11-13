@@ -609,8 +609,15 @@ sub op_launch
   error("No command line specification specified or found in image")
     unless defined $cmd;
 
+  if ($args->{"--show-cmd-raw"})
+    {
+      print "$cmd\n";
+      return;
+    }
+
   if ($args->{"--show-cmd"})
     {
+      $cmd =~ s/\$L4IMAGE_FILE/$imagefile/;
       print "$cmd\n";
       return;
     }
@@ -936,6 +943,7 @@ my %args = (
       "--cmd-key" => 1,
       "--cmd-mod" => 1,
       "--show-cmd" => 0,
+      "--show-cmd-raw" => 0,
       "--edit" => 0,
       "--output-processing-perl-line" => 1,
       "--output-processing-perl" => 1,
@@ -952,6 +960,8 @@ my %args = (
             "                                command stored in the image. The stored\n".
             "                                command is available via \$_.\n".
             "  --show-cmd                    Only show the command that would be executed\n".
+            "  --show-cmd-raw                Only show the command that would be executed\n".
+            "                                without substitutions.\n".
             "  --output-processing           Command to process output of launched\n".
             "                                command with\n".
             "  --output-processing-perl      Perl code to process output of\n".
