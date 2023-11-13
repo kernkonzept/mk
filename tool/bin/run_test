@@ -67,7 +67,6 @@ my @modulepaths = split(/[:\s]+/, $ENV{SEARCHPATH});
 unshift @modulepaths, split(/[:\s]+/, $ENV{MODULE_SEARCH_PATH})
   if defined($ENV{MODULE_SEARCH_PATH}) && $ENV{MODULE_SEARCH_PATH} ne "";
 # need a split according to the rules of shell quoting
-my @qemu_args   = split("\0", qx:perl -e 'foreach (\@ARGV) { print "\$_\\0";}' -- $ENV{QEMU_ARGS}:) if $ENV{QEMU_ARGS};
 my $test_setup  = $ENV{TEST_SETUP} || '';
 my $test_target = $ENV{TEST_TARGET} || '';
 my $test_args   = $ENV{TEST_ARGS} || '';
@@ -435,9 +434,9 @@ if ($test_setup)
 
 close($test_env_cfg) if ($test_env_cfg);
 my $module_search_path=join(":", @modulepaths);
-my $qemu_options = join(' ', map { qq{"$_"} } @qemu_args);
 chdir $obj_base;
-$ENV{QEMU_OPTIONS} = $qemu_options;
+# Backwards compatibility
+$ENV{QEMU_OPTIONS} = $ENV{QEMU_ARGS};
 $ENV{MODULES_LIST} = $test_modules_name;
 $ENV{MODULE_SEARCH_PATH} = $module_search_path;
 
