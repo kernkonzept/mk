@@ -136,7 +136,6 @@ find_prj_dirs = $(shell $(L4DIR)/mk/pkgfind $(1) $(BID_PRJ_DIR_MAX_DEPTH))
 # QEMU defaults
 QEMU_ARCH_MAP_$(ARCH) ?= qemu-system-$(ARCH)
 QEMU_PATH             ?= $(QEMU_ARCH_MAP_$(ARCH))
-QEMU_OPTIONS          ?= -serial stdio $(QEMU_OPTIONS_$(ARCH))
 
 # functions that are handy
 absfilename_target_dir_needs_to_exist = $(foreach w,$(1),$(addsuffix /$(notdir $(w)),$(shell cd $(dir $(w)) 2>/dev/null&&$(PWDCMD))))
@@ -328,6 +327,7 @@ BID_SPACE  := $(BID_EMPTY) $(BID_EMPTY)
 BID_SQUOTE := '
 BID_DQUOTE := "
 
+QEMU_OPTIONS          ?= -serial stdio $(QEMU_OPTIONS_$(ARCH))
 
 ifneq ($(PL),)
 PL_j := -j $(PL)
