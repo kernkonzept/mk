@@ -174,6 +174,7 @@ sub readin_config($)
                       $tmp[@tmp - 1] = $f;
                       $abs = join('/', @tmp);
                     }
+                  $abs =~ s/\$\{([[:print:]]+)\}/$ENV{$1}/g;
                   unshift @mod_files_for_include, glob $abs;
                 }
 
