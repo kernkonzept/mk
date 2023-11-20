@@ -162,6 +162,10 @@ endif
 	@echo "  scrub          - delete backup and temporary files"
 	@echo "  clean          - delete generated object files"
 	@echo "  cleanall       - delete all generated, backup and temporary files"
+ifneq ($(BID_COLLECT_DIAGNOSTICS),)
+	@echo "  diag           - show collected compiler diagnostics."
+	@echo "                   (using format $(BID_COLLECT_DIAGNOSTICS))"
+endif
 	@echo "  help           - this help"
 	@echo
 ifneq ($(SYSTEM),)

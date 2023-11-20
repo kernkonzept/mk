@@ -440,6 +440,7 @@ Makeconf.bid.local-helper:
 	               $(ARCH)_$(CPU)-$(BUILD_ABI))" >> $(DROPSCONF_CONFIG_MK)
 	$(VERBOSE)$(foreach v, BID_COMPILER_TYPE BID_LD_TYPE \
 	              CONDITIONAL_WARNINGS_FULL CONDITIONAL_WARNINGS_MEDIUM \
+	              DIAGNOSTICS_SARIF DIAGNOSTICS_JSON DIAGNOSTICS_COLOR \
 	              GCCDIR GCCFORTRANAVAIL GCC_HAS_ATOMICS GCCINCFIXEDPATH \
 	              GCCLIBCAVAIL GCCLIB_EH_HOST GCCLIB_HOST \
 	              GCCMAJORVERSION GCCMINORVERSION GCCNOSTACKPROTOPT \
@@ -988,6 +989,10 @@ help::
 	@echo "  clean            - Call 'clean' target recursively."
 	@echo "  cleanfast        - Delete all directories created during build."
 	@echo "  mrproper         - cleanfast + delete configuration."
+ifneq ($(BID_COLLECT_DIAGNOSTICS),)
+	@echo "  diag             - show collected compiler diagnostics."
+	@echo "                     (using format $(BID_COLLECT_DIAGNOSTICS))"
+endif
 	@echo "  doc              - Generate documentation."
 	@echo "                     The default behavior is building HTML with"
 	@echo "                     graphics. To change the default behavior,"

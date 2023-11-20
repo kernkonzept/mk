@@ -511,6 +511,12 @@ CONDITIONAL_WARNINGS_MEDIUM_f = $(call checkcc,-Wmissing-prototypes)
 CONDITIONAL_WARNINGS_FULL_f   = $(call checkcc,-Wfloat-conversion) \
                                 $(call checkcc,-Wfloat-equal) \
                                 $(call checkcc,-Wlogical-op)
+
+DIAGNOSTICS_SARIF_f = $(call checkcc,-fdiagnostics-format=sarif -Wno-sarif-format-unstable)
+#                      $(call checkcc,-fdiagnostics-format=sarif-stderr)
+DIAGNOSTICS_JSON_f  = $(call checkcc,-fdiagnostics-format=json)
+DIAGNOSTICS_COLOR_f = $(call checkcc,-fdiagnostics-color=always)
+
 GCCPREFIXOPT_f  = $(call checkcc,-fmacro-prefix-map=$(L4DIR_ABS)/= \
                                  -fmacro-prefix-map=$(OBJ_BASE)/=)
 
@@ -579,6 +585,16 @@ scrub clean cleanall::
 install:: $(SUBDIRS)
 	$(VERBOSE)set -e; $(foreach i,$(SUBDIRS), \
 		PWD=$(PWD)/$(i) $(MAKE) -C $(i) $@ $(MKFLAGS) $(MKFLAGS_$(i));)
+
+DIAG_DISPLAY_CMD := cat
+diag::
+	@printf $(EMPHSTART)"Diagnostics:"$(EMPHSTOP)
+	@DIAGS=( $$(find $(OBJ_DIR) -name '*.diag') );  \
+	if [[ "$${#DIAGS[@]}" -eq 0 ]] ; then \
+	  echo "<None>";
+	else \
+	  $(DIAG_DISPLAY_CMD) "$${DIAGS[@]}"; \
+	fi
 
 endif
 

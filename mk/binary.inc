@@ -571,6 +571,32 @@ CXXFLAGS+= -fno-common
 CXXFLAGS+= $(CXXFLAGS_L4_GENERIC)
 CXXFLAGS+= $(call bid_flag_variants,CXXFLAGS)
 
+ifeq ($(BID_COLLECT_DIAGNOSTICS),sarif)
+ifneq ($(strip $(DIAGNOSTICS_SARIF)),)
+  CXXFLAGS += $(DIAGNOSTICS_SARIF)
+  CFLAGS   += $(DIAGNOSTICS_SARIF)
+else
+  $(error SARIF diagnostics not supported by compiler)
+endif
+endif
+
+ifeq ($(BID_COLLECT_DIAGNOSTICS),json)
+ifneq ($(strip $(DIAGNOSTICS_JSON)),)
+  CXXFLAGS += $(DIAGNOSTICS_JSON)
+  CFLAGS   += $(DIAGNOSTICS_JSON)
+  CXX_COLLECT_REDIR  = |& sed '/^\[\]/d' | tee $$@.diag && ( [[ -s $$@.diag ]] || rm $$@.diag )
+else
+  $(error JSON diagnostics not supported by compiler)
+endif
+endif
+
+ifneq ($(BID_COLLECT_DIAGNOSTICS),)
+CXXFLAGS          += $(DIAGNOSTICS_COLOR)
+CFLAGS            += $(DIAGNOSTICS_COLOR)
+CXX_COLLECT_REDIR ?= |& tee $@.diag && ( [[ -s $@.diag ]] || rm $@.diag )
+C_COLLECT_REDIR    = $(CXX_COLLECT_REDIR)
+endif
+
 FFLAGS  += $(OPTS)
 FFLAGS  += $(filter-out $(GCCPREFIXOPT),$(CFLAGS_L4_GENERIC))
 FFLAGS  += $(call bid_flag_variants,FFLAGS)

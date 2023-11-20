@@ -65,6 +65,7 @@ define BID_call_compiler_default
   $(if $(buildinfo_missing)$(prereqs_changed)$(call BID_cmp_str_ne,$1,$(savedcmd_$@)), \
       $(call COMP_MESSAGE,$(bid_trace));                                      \
       $(BID_MAKE_RULE_CREATE_SUBDIR)                                          \
+      set +o pipefail;                                                        \
       $1 || exit 1;                                                           \
       $(FIXDEP) $(call BID_dot_fname,$@).d                                    \
                    $@ '$(call escape_cmd,$1)' > $(call BID_dot_fname,$@).cmd; \
@@ -90,7 +91,8 @@ $1: $2 $(if $(BID_call_compiler_$3),$(GENERAL_D_LOC),FORCE)
 	                BID_call_compiler_default),$\
 	              $$($(BID_$(3)_COMPILER)) \
 	              $$(strip -c $$(DEPFLAGS) $$(DEPFLAGS_$(3)) $$(CPPFLAGS) \
-	              $$($(3)FLAGS_EARLY) $$($(3)FLAGS) $(4) $$< -o $$@)))
+	              $$($(3)FLAGS_EARLY) $$($(3)FLAGS) $(4) $$< -o $$@ \
+	              $$($(3)_COLLECT_REDIR))))
 endef
 
 # which template rule do we really use
