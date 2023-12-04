@@ -59,6 +59,10 @@ sub finalize {
   $self->add_raw_tap_line("1..1");
   $self->add_tap_line($self->{block_count_expect} == $self->{block_count},
                       "BUNDLE: Expected $self->{block_count_expect} TAP TEST blocks, found $self->{block_count}");
+  # Satisfy requirement for a uuid on every ok line, but don't use a real
+  # looking UUID because this ok line doesn't really test anything substantial.
+  $self->add_raw_tap_line("#  Test-uuid: 00000000-0000-0000-0000-000000000000\n");
+
   return $self->SUPER::finalize();
 }
 
