@@ -738,24 +738,30 @@ succeeded = true
 function process_input(id, input)
   tap:comment_header(input.filename)
 
-  if input.tag ~= 'IntrospectionTesting' then
-    tap:comment('WARNING: Unsupported type of input: ' .. input.tag, 2)
-    return
-  end
-
-  if input.info == 'RESETSCOPE' then
-    if sandbox ~= invalid_sandbox then
-      -- print current test output
-      print_test_result(sandbox.scope, sandbox.uuid, succeeded)
+  if input.tag == 'IntrospectionTesting' then
+    if input.info == 'RESETSCOPE' then
+      if sandbox ~= invalid_sandbox then
+        -- print current test output
+        print_test_result(sandbox.scope, sandbox.uuid, succeeded)
+      end
+      -- reset Lua sandbox and status of test output for next test
+      sandbox = Sandbox.new(input.text)
+      succeeded = true
+    elseif input.info == 'EXEC' then
+      succeeded = succeeded and sandbox:exec(input.text)
+    elseif input.info == 'CHECK' then
+      succeeded = succeeded and sandbox:check(input.text)
+    elseif input.info == "UUID" then
+      if sandbox.uuid ~= nil then
+        tap:comment('WARNING: Overwriting already set UUID; was '
+                    .. sandbox.uuid, 2)
+      end
+      sandbox.uuid = input.text
+    else
+      tap:comment('WARNING: ' .. input.tag .. ' - Unsupported type of input: '
+                  .. input.info, 2)
     end
-    -- reset Lua sandbox and status of test output for next test
-    sandbox = Sandbox.new(input.text)
-    succeeded = true
-  elseif input.info == 'EXEC' then
-    succeeded = succeeded and sandbox:exec(input.text)
-  elseif input.info == 'CHECK' then
-    succeeded = succeeded and sandbox:check(input.text)
-  elseif input.info == "DUMP" then
+  elseif input.tag == 'KernelObjects' then
     local two_lines = '^[^\n]+\n[^\n]+\n'
     local headers = input.text:match(two_lines)
     if not headers then abort('extract object dump headers') end
@@ -766,14 +772,8 @@ function process_input(id, input)
 
     local tag, dump = parse_dump(headers .. body)
     sandbox:insert_dump(tag, dump)
-  elseif input.info == "UUID" then
-    if sandbox.uuid ~= nil then
-      tap:comment('WARNING: Overwriting already set UUID; was ' .. sandbox.uuid,
-                  2)
-    end
-    sandbox.uuid = input.text
   else
-    tap:comment('WARNING: Unsupported type of input: ' .. input.info, 2)
+    tap:comment('WARNING: Unsupported tag ' .. input.tag, 2)
   end
 
   tap:comment_header()
@@ -795,8 +795,12 @@ local ids = {}
 for file in lfs.dir(dir) do
   if file ~= '.' and file ~= '..' then
     local i, tag, info = file:match('^(%d+)_(%w+)_(%w+).snippet$')
+    if not i then
+      i, tag = file:match('^(%d+)_(%w+).snippet$')
+      info = nil
+    end
 
-    if not i or not tag or not info then
+    if not i then
       abort('input filename "' .. tostring(file) ..
             '" does not adhere to the plugin interface')
     end

@@ -15,7 +15,17 @@ sub new {
   $self->{args} = shift;
   L4::TapWrapper::fail_test("Tag not specified for plugin!")
     unless defined($self->{args}{tag});
-  print "Tag: $self->{args}{tag}\n";
+  my $tags = $self->{args}{tag};
+  if (length $tags)
+    {
+      my @ta = split(/;/, $tags);
+      $self->{args}{tags} = \@ta;
+    }
+  my @tags = @{$self->{args}{tags}};
+  print "Tags: @tags\n";
+  # create a simple regular expression matching any of the tags set for the
+  # plugin
+  $self->{tagre} = join("|", @tags);
 
   $self->inhibit_exit() if $self->{args}{require_blocks};
   return bless $self, $type;
@@ -23,10 +33,11 @@ sub new {
 
 sub check_start {
   my $self = shift;
-  return unless shift =~ m/^(.*)@@ $self->{args}{tag} @< BLOCK *([^\v]*)/;
+  return unless shift =~ m/^(.*)@@ ($self->{tagre}) @< BLOCK *([^\v]*)/;
   $self->{in_block} = 1;
   $self->{block_prefix} = $1;
-  $self->{block_info} = ($2 =~ s/\e\[[\d,;\s]+[A-Za-z]//gir); # strip color escapes
+  $self->{cur_tag} = $2;
+  $self->{block_info} = ($3 =~ s/\e\[[\d,;\s]+[A-Za-z]//gir); # strip color escapes
   $self->start_block($self->{block_info});
 
   # Inhibit unless we already do because we require more blocks
@@ -36,8 +47,9 @@ sub check_start {
 sub check_end {
   my $self = shift;
   $self->{clean_line} =~ s/^\Q$self->{block_prefix}\E//;
-  return unless shift =~ m/^\Q$self->{block_prefix}\E@@ $self->{args}{tag} BLOCK >@/;
+  return unless shift =~ m/^\Q$self->{block_prefix}\E@@ $self->{cur_tag} BLOCK >@/;
   $self->{in_block} = 0;
+  $self->{cur_tag} = "";
   $self->end_block();
   $self->permit_exit()
     unless $self->{args}{require_blocks} && --$self->{args}{require_blocks};
@@ -78,9 +90,10 @@ sub has_tag {
   # https://perldoc.perl.org/perlretut
   # https://perldoc.perl.org/perlrecharclass#Special-Characters-Inside-a-Bracketed-Character-Class
   $self->{clean_line} =~ s/\e\[[\d,;\s]+[A-Za-z]//gi;
-  if ($self->{clean_line} =~ s/^.*@@ $self->{args}{tag}(?:\[([^]]*)\])?://)
+  if ($self->{clean_line} =~ s/^.*@@ ($self->{tagre})(?:\[([^]]*)\])?://)
     {
-      $self->{block_info} = $1; # strip color escapes
+      $self->{cur_tag} = $1;
+      $self->{block_info} = $2; # strip color escapes
       return 1;
     }
   return 0
@@ -97,8 +110,8 @@ __END__
 
 Plugins parsing output in the standard tag format should use this plugin as a
 base. It provides the logic to detect tags using the following standardized
-format, where TAG corresponds to the tag set using the tag option for the
-plugin:
+format, where TAG corresponds to any of the tags set using the tag option for
+the plugin:
 
 =over
 

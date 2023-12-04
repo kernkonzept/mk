@@ -147,8 +147,8 @@ if ($ENV{TAP_FILTERS})
 if ($ENV{INTROSPECTION_TESTS})
   {
     L4::TapWrapper::load_plugin("External", {
-      tag => "IntrospectionTesting",
-      tool => "tool/bin/tap-wrapper-plugins/introspection-testing.lua",
+      tag => "IntrospectionTesting;KernelObjects",
+      tool => "tool/bin/tap-wrapper-plugins/introspection-testing.lua"
     });
   }
 

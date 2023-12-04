@@ -31,7 +31,7 @@ sub process_mine {
     }
   else
     {
-      my $fname = "$self->{idx}_$self->{args}{tag}";
+      my $fname = "$self->{idx}_$self->{cur_tag}";
       $fname .= "_$info" if $info ne "";
       open(my $fh, '>', $self->tmpdir() . "/$fname.snippet");
       print $fh $self->{clean_line};
@@ -44,7 +44,7 @@ sub start_block()
 {
   my $self = shift;
   my $info = shift;
-  my $fname = "$self->{idx}_$self->{args}{tag}";
+  my $fname = "$self->{idx}_$self->{cur_tag}";
   $fname .= "_$info" if $info ne "";
   open($self->{cur_file}, '>', $self->tmpdir() . "/$fname.snippet");
   $self->{idx}++;
@@ -100,7 +100,7 @@ Files are named
 where C<seq> is a  non-padded number, numbered in sequence as found in the
 output, tag is the specified C<tag> covered by the plugin instance and C<info>
 is any additional info specified for the block or the line (see
-C<TagPluginBase> documentation)
+C<TagPluginBase> documentation).
 
 The _<info> part is optional.
 
