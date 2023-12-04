@@ -56,7 +56,7 @@ sub process_mine {
 sub finalize {
   my $self = shift;
   return unless defined($self->{have_bundle});
-  $self->add_raw_tap_line("1..1");
+  $self->add_raw_tap_line("1..1\n");
   $self->add_tap_line($self->{block_count_expect} == $self->{block_count},
                       "BUNDLE: Expected $self->{block_count_expect} TAP TEST blocks, found $self->{block_count}");
   # Satisfy requirement for a uuid on every ok line, but don't use a real
