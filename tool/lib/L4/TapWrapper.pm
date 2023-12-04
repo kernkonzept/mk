@@ -142,6 +142,7 @@ sub fail_test
   print $TAP_FD <<EOT;
 1..1
 not ok 1 - execution - exit code $exit_code - $L4::TapWrapper::test_description
+# Test-uuid: 00000000-0000-0000-0000-000000000000
   ---
   message: $long_msg
   severity: fail
