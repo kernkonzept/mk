@@ -4,6 +4,10 @@
 -- Copyright (C) 2021 Kernkonzept GmbH.
 -- Author(s): Marius Melzer <marius.melzer@kernkonzept.com>
 
+-- This file contains LuaCATS (Lua Comment And Type System) annotations. They
+-- are supported by the Lua Language Server (https://luals.github.io/). Usage is
+-- highly recommended during development.
+
 --[[
 The plugin handles four cases of labelled input and produces valid TAP output.
   1. Scope declarations:
@@ -60,8 +64,10 @@ function union(dict1, dict2, res)
   return res
 end
 
+---@class Dump
 Dump = {}
 
+---@return Dump
 function Dump.new()
   local o = {}
   setmetatable(o, {__index = Dump});
@@ -164,32 +170,39 @@ function Dump:cap(cap_idx, task)
   return self:caps_of(task.obj_id)[cap_idx]
 end
 
+---@class Caps
 Caps = {}
 
+---@return Caps
 function Caps.new()
   local o = {}
   setmetatable(o, {__index = Caps});
   return o;
 end
 
+---@return Caps
 function Caps:filter(func)
   return filter(self, func, Caps.new())
 end
 
+---@return Caps
 function Caps:union(caps)
   return union(self, caps, Caps.new())
 end
 
+---@return Caps
 function Caps:intersect(caps)
   return self:filter(function(cap) return caps[cap.cap_idx] end)
 end
 
+---@return Caps
 function Caps:diff(caps)
   local diff_l = self:filter(function(cap) return not caps[cap.cap_idx] end)
   local diff_r = caps:filter(function(cap) return not self[cap.cap_idx] end)
   return diff_l:union(diff_r)
 end
 
+---@return Caps
 function Caps:by(key, value)
   return self:filter(function(cap) return cap[key] == value end)
 end
@@ -203,6 +216,9 @@ function sanitize(str)
             :gsub('\r\n', '\n')
 end
 
+---@param str string
+---@param regex string
+---@return string[]
 function split(str, regex)
   local parts = {}
   for part in str:gmatch(regex) do
@@ -252,6 +268,7 @@ end
 
 
 -- Helper for eq(). Same as inspect() but truncates long results.
+---@return string
 local function eq_inspect(x)
   local maxlen = 20000
   local ret = inspect(x)
@@ -261,6 +278,8 @@ local function eq_inspect(x)
   return ret
 end
 
+---@return boolean
+---@return string? rationale # when not equal
 local function eq_helper(a, b, path)
   -- fast return if equal values or identical table
   if a == b then return true end
@@ -295,7 +314,7 @@ local function eq_helper(a, b, path)
 
   -- compare corresponding values of both tables recursively
   for k, v in pairs(a) do
-    res, err = eq_helper(v, b[k], path .. k .. '/')
+    res, err = eq_helper(v, b[k], path .. tostring(k) .. '/')
     if not res then
       return res, err
     end
@@ -306,6 +325,8 @@ end
 -- Compare two values and, in case of tables, compare their entries recursively.
 -- Two `nil` values are considered unequal.
 -- When the values are unequal, the second return value provides a rationale.
+---@return boolean is_equal  # `true` iff equal (except `eq(nil, nil) == false`)
+---@return string? rationale # when not equal
 function eq(a, b)
   if a == nil and b == nil then
     return false, 'Both values are nil. This is considered not equal because \z
@@ -315,6 +336,9 @@ function eq(a, b)
 end
 
 
+---@generic V
+---@param o table<any, V>
+---@return V
 function unpack(o)
   if type(o) ~= 'table' then
     error('called unpack() not on a table', 2)
@@ -329,6 +353,8 @@ function unpack(o)
   return v
 end
 
+---@param str string
+---@return string?
 function gunzip(str)
   local inflated, eof = zlib.inflate()(str)
   if not eof then
@@ -337,6 +363,8 @@ function gunzip(str)
   return inflated
 end
 
+---@param str string
+---@return string
 function uudecode(str)
   -- We assume '`' is always used to encode a 0.
   local decoded = ''
@@ -369,6 +397,9 @@ end
 
 -- Prepend each line of `str` by `prefix. If `prefix` is a number, then each
 -- line is prefixed by this number of spaces.
+---@param prefix? string|number
+---@param str string
+---@return string
 function indent(prefix, str)
   if prefix == nil or prefix == 0 or prefix == '' then
     return str
@@ -392,8 +423,8 @@ end
 tap = { _comment_header = nil, _comments = {}, _plan_number = 0 }
 
 -- Write and reset current comment buffer.
--- Returns true if the comment buffer was not empty and false otherwise.
-function tap:_flush_comments(ok, description)
+---@return boolean # `true` iff the comment buffer was not empty
+function tap:_flush_comments()
   local res = next(self._comments) ~= nil
   for _, c in ipairs(self._comments) do
     io.write('# ', c:gsub('\n', '\n# '), '\n')
@@ -415,6 +446,8 @@ function tap:flush_plan()
 end
 
 -- Output a (not) ok line followed by the buffered comments.
+---@param ok boolean
+---@param description string
 function tap:flush_test(ok, description)
   self._plan_number = self._plan_number + 1
   if not ok then
@@ -426,11 +459,13 @@ function tap:flush_test(ok, description)
 end
 
 -- Output an ok line followed by the buffered comments.
+---@param description string
 function tap:ok(description)
   self:flush_test(true, description)
 end
 
 -- Output a not ok line followed by the buffered comments.
+---@param description string
 function tap:not_ok(description)
   self:flush_test(false, description)
 end
@@ -442,6 +477,8 @@ end
 -- There can only be one pending header at a time. Subsequent calls to this
 -- funtion overwrite the current pending header. A call without arguments drops
 -- a pending header.
+---@param c? string
+---@param prefix? string|number
 function tap:comment_header(c, prefix)
   if c ~= nil then
     self._comment_header = indent(prefix, c)
@@ -451,6 +488,8 @@ function tap:comment_header(c, prefix)
 end
 
 -- Append a comment to the comment buffer.
+---@param c string
+---@param prefix? string|number
 function tap:comment(c, prefix)
   if self._comment_header ~= nil then
     table.insert(self._comments, self._comment_header)
@@ -460,6 +499,8 @@ function tap:comment(c, prefix)
 end
 
 -- Prepend a comment to the comment buffer.
+---@param c string
+---@param prefix? string|number
 function tap:prepend_comment(c, prefix)
   table.insert(self._comments, 1, indent(prefix, c))
 end
@@ -467,6 +508,7 @@ end
 -- Abort script with some “not ok” TAP output but with zero exit code. This is
 -- intended for expected fatal errors. Errors that abort the script with
 -- non-zero exit code are considered a bug in the script.
+---@param comment string
 function abort(comment)
   tap:comment('FATAL ERROR:')
   tap:comment(comment, 2)
@@ -479,6 +521,8 @@ end
 -- PARSE INPUT --
 -----------------
 
+---@param rights string hex string
+---@return table
 function parse_rights(rights)
   local r = tonumber(rights, 16)
   local parsed = {}
@@ -489,6 +533,8 @@ function parse_rights(rights)
   return parsed
 end
 
+---@param flags string hex string
+---@return table
 function parse_flags(flags)
   local f = tonumber(flags, 16)
   local parsed = {}
@@ -498,11 +544,17 @@ function parse_flags(flags)
   return parsed
 end
 
+---@param dump string
+---@return string tag
+---@return Dump
 function parse_dump(dump)
   local objects = Dump.new()
   local lines = split(dump, '[^\n]+')
   local cur_obj_id
 
+  ---@param line? string
+  ---@param pat string
+  ---@return string ...
   local function parse(line, pat)
     local res = {}
     if line ~= nil then
@@ -565,9 +617,9 @@ function parse_dump(dump)
 
       local attrs = {}
       for attr in attrstrs:gmatch('[^%s]+') do
-        attr = split(attr, '[^=]+')
-        if #attr > 2 then abort("Failed parsing attribute") end
-        attrs[attr[1]] = attr[2] or true
+        local split_attr = split(attr, '[^=]+')
+        if #split_attr > 2 then abort("Failed parsing attribute") end
+        attrs[split_attr[1]] = split_attr[2] or true
       end
 
       if objects[obj_id] ~= nil then
@@ -594,29 +646,36 @@ end
 -- SANDBOXING --
 -----------------
 
+---@class Sandbox
+---@field public scope string
+---@field private _env table
+---@field private _ignored_kernel_object_attrs table<string, string[]>
+---@field private _ignored_kernel_object_ids string[]
 Sandbox = {}
 
+---@return Sandbox
+---@param scope string
 function Sandbox.new(scope)
-  local self =
-    { scope = scope
-    , uuid = nil
-    , _ignored_kernel_object_attrs =
-        { ['Factory'] = {'c'}    -- remaining quota
-        , ['IRQ ipc'] = {'F'}    -- flags
-        , ['Thread']  = {'rdy'}  -- ignore scheduling decisions
-        }
-    , _ignored_kernel_object_ids = {}
+  local ignored_kernel_object_attrs =
+    { ['Factory'] = {'c'}    -- remaining quota
+    , ['IRQ ipc'] = {'F'}    -- flags
+    , ['Thread']  = {'rdy'}  -- ignore scheduling decisions
     }
-  self._env =
-    { d = {}
+
+  local ignored_kernel_object_ids = {}
+
+  local env_d = {}
+
+  local env =
+    { d = env_d
     , eq = eq
     , ignore_kernel_object_attr = function (proto, attr)
-        if self._ignored_kernel_object_attrs[proto] == nil then
-          self._ignored_kernel_object_attrs[proto] = {attr}
+        if ignored_kernel_object_attrs[proto] == nil then
+          ignored_kernel_object_attrs[proto] = {attr}
         else
-          table.insert(self._ignored_kernel_object_attrs[proto], attr)
+          table.insert(ignored_kernel_object_attrs[proto], attr)
         end
-        for _, dump in pairs(self._env.d) do
+        for _, dump in pairs(env_d) do
           for _, obj in pairs(dump) do
             if obj.proto == proto then
               obj.attrs[attr] = nil
@@ -632,8 +691,8 @@ function Sandbox.new(scope)
           error('ignore_kernel_object_id(): Argument must be number or string.',
                 2)
         end
-        table.insert(self._ignored_kernel_object_ids, id)
-        for _, dump in pairs(self._env.d) do
+        table.insert(ignored_kernel_object_ids, id)
+        for _, dump in pairs(env_d) do
           dump[id] = nil
         end
       end
@@ -646,6 +705,15 @@ function Sandbox.new(scope)
         tap:comment(table.concat(args, '\t'), '  Lua output: ')
       end
     , unpack = unpack
+    }
+
+  ---@type Sandbox
+  local self =
+    { scope = scope
+    , uuid = nil
+    , _env = env
+    , _ignored_kernel_object_attrs = ignored_kernel_object_attrs
+    , _ignored_kernel_object_ids = ignored_kernel_object_ids
     }
   setmetatable(self, {__index = Sandbox})
   return self
@@ -807,6 +875,8 @@ for file in lfs.dir(dir) do
 
     local f = io.open(dir .. '/' .. file, 'r')
     if not f then abort('failed to open file ' .. dir .. '/' .. file) end
+    -- In case of nil, abort() terminates the script so f cannot be nil here.
+    ---@cast f -nil
     local text = sanitize(f:read('a'))
     f:close()
 
