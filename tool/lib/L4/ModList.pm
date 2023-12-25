@@ -159,12 +159,17 @@ sub readin_config($)
           s/^\s*//;
           next if /^$/;
 
-          my ($cmd, $remaining) = split /\s+/, $_, 2;
+          my ($cmd, $opts, $remaining) = disassemble_line($_);
+          my %opts = parse_options($opts) if defined $opts;
+
           $cmd = lc($cmd);
 
           if ($cmd eq 'include')
             {
-              my @f = handle_line($remaining);
+              error "Error: Do not use 'glob' feature with 'include'\n"
+                if exists $opts{glob};
+
+              my @f = handle_line($remaining, %opts);
               foreach my $f (@f)
                 {
                   my $abs;
