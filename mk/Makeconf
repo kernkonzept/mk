@@ -618,6 +618,8 @@ $(GENERAL_D_LOC): $(L4DIR)/mk/Makeconf $(FIXDEP) $(EXTRA_GENERAL_D_DEP)
 	$(DEPEND_VERBOSE)$(call BID_DEPEND_GENERAL_D_COND,\
 		$(OBJ_BASE)/Makeconf.local)
 	$(DEPEND_VERBOSE)$(call BID_DEPEND_GENERAL_D_COND,\
+		$(OBJ_BASE)/conf/Makeconf.local)
+	$(DEPEND_VERBOSE)$(call BID_DEPEND_GENERAL_D_COND,\
 		$(L4DIR)/Makeconf.local)
 	$(DEPEND_VERBOSE)$(call BID_DEPEND_GENERAL_D_COND,\
 		$(L4DIR)/conf/Makeconf.local)
