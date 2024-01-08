@@ -278,9 +278,10 @@ else
  include $(BID_ROOT_CONF)
 endif
 
-# if we're working on a program that wants the RAM_BASE be considered in its
-# linking address, source a possible privately configured one
-ifneq ($(RELOC_PHYS),)
+# If we're working on a program that wants the RAM_BASE be considered in its
+# linking address, source a possible privately configured one. Without MMU,
+# we naturally need RAM_BASE.
+ifneq ($(if $(CONFIG_MMU),$(RELOC_PHYS),y),)
 INCLUDE_BOOT_CONFIG := required
 endif
 

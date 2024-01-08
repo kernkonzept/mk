@@ -484,7 +484,7 @@ default_reloc_base = $(firstword $(DEFAULT_RELOC_$(1)) \
                                  $(DEFAULT_RELOC) \
                                  $(if $(NO_DEFAULT_RELOC),,0x01000000))
 default_reloc = $(if $(call default_reloc_base,$(1)),\
-                     $(if $(RELOC_PHYS), \
+                     $(if $(if $(CONFIG_MMU),$(RELOC_PHYS),y), \
 		          $(shell printf "0x%x" $$(($(RAM_BASE) + $(call default_reloc_base,$(1))))), \
 			  $(call default_reloc_base,$(1))))
 
