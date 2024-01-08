@@ -112,7 +112,7 @@ private:
         if (!(phdr->p_flags & (PF_R | PF_W | PF_X)))
           continue;
 
-        if (phdr->p_flags & PF_X)
+        if (phdr->p_flags & PF_X && phdr->p_align > align)
           align = phdr->p_align;
 
         if (min_addr > phdr->p_paddr)
