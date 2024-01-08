@@ -312,7 +312,19 @@ config BID_THUMB
 	  Build with -mthumb by default. This will reduce the code size at the
 	  slight expense of execution speed.
 
+config BID_STATIC_HEAP
+	bool "Static heap reservation"
+	depends on BID_CAN_STATIC_HEAP
+	help
+	  Statically reserve the heap in the bss section of executables.
+
+	  This will save the additional MPU region that would otherwise be
+	  necessary due to the dynmamic allocation of a dataspace.
+
 endif # EXPERIMENTAL
+
+config BID_CAN_STATIC_HEAP
+	bool # enabled by l4re-core for configurations that support this
 
 config BID_PIE
 	bool
