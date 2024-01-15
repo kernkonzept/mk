@@ -334,7 +334,7 @@ CC := $(if $(filter sparc,$(ARCH)),$(if $(call GCCIS_sparc_leon_f),sparc-elf-gcc
 LD := $(if $(filter sparc,$(ARCH)),$(if $(call GCCIS_sparc_leon_f),sparc-elf-ld,$(LD)),$(LD))
 add_if_f = $(if $($(1)_f),$(1))
 Makeconf.bid.local-helper:
-	$(VERBOSE)echo BUILD_SYSTEMS="$(strip $(ARCH)_$(CPU)            \
+	$(VERBOSE)echo BUILD_SYSTEMS="$(strip $(ARCH)_$(CPU)-plain            \
 	               $(ARCH)_$(CPU)-$(BUILD_ABI))" >> $(DROPSCONF_CONFIG_MK)
 	$(VERBOSE)$(foreach v, BID_COMPILER_TYPE BID_LD_TYPE \
 	              CONDITIONAL_WARNINGS_FULL CONDITIONAL_WARNINGS_MEDIUM \

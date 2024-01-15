@@ -192,10 +192,10 @@ L4INCDIR ?=	$(addprefix $(OBJ_BASE)/include/$(ARCH)/,$(L4API)) \
                 $(DROPS_STDDIR)/include
 
 L4LIBDIR ?=	$(addprefix $(OBJ_BASE)/lib/$(ARCH)_$(CPU)/,$(L4API)) \
-                $(OBJ_BASE)/lib/$(ARCH)_$(CPU) \
+                $(OBJ_BASE)/lib/$(ARCH)_$(CPU)/plain \
                 $(OBJ_BASE)/lib \
                 $(addprefix $(DROPS_STDDIR)/lib/$(ARCH)_$(CPU)/,$(L4API)) \
-                $(DROPS_STDDIR)/lib/$(ARCH)_$(CPU) \
+                $(DROPS_STDDIR)/lib/$(ARCH)_$(CPU)/plain \
                 $(DROPS_STDDIR)/lib
 
 else
@@ -206,7 +206,7 @@ L4INCDIR ?=	$(addprefix $(OBJ_BASE)/include/$(ARCH)/,$(L4API)) \
                 $(OBJ_BASE)/include
 
 L4LIBDIR ?=     $(addprefix $(OBJ_BASE)/lib/$(ARCH)_$(CPU)/,$(L4API)) \
-                $(OBJ_BASE)/lib/$(ARCH)_$(CPU) \
+                $(OBJ_BASE)/lib/$(ARCH)_$(CPU)/plain \
                 $(OBJ_BASE)/lib
 endif
 
@@ -263,10 +263,13 @@ REQUIRES_CFLAGS += $(call BID_mode_var,REQUIRES_CFLAGS)
 CARCHFLAGS += $(CARCHFLAGS_$(ARCH)) $(CARCHFLAGS_$(ARCH)_$(CPU))
 
 
-LDFLAGS       += $(LDFLAGS-y) $(LDFLAGS_$(OSYSTEM)) $(LDFLAGS_$(OSYSTEM)-y) \
+LDFLAGS       += $(LDFLAGS-y) $(LDFLAGS_$(ARCH)) $(LDFLAGS_$(ARCH)-y) \
+                 $(LDFLAGS_$(OSYSTEM)) $(LDFLAGS_$(OSYSTEM)-y) \
                  $(LDFLAGS_$@) $(LDFLAGS_$@-y) $(LDFLAGS_$@_$(OSYSTEM)) $(LDFLAGS_$@_$(OSYSTEM)-y) \
                  $(LDFLAGS_$(<F)_$(OSYSTEM)) $(LDFLAGS_$(<F)_$(OSYSTEM)-y)
-REQUIRES_LIBS += $(REQUIRES_LIBS-y) $(REQUIRES_LIBS_$(OSYSTEM)) $(REQUIRES_LIBS_$(OSYSTEM)-y)
+REQUIRES_LIBS += $(REQUIRES_LIBS-y) \
+                 $(REQUIRES_LIBS_$(ARCH)) $(REQUIRES_LIBS_$(ARCH)-y) \
+                 $(REQUIRES_LIBS_$(OSYSTEM)) $(REQUIRES_LIBS_$(OSYSTEM)-y)
 
 # ---------------------------------
 
@@ -371,8 +374,11 @@ endif
 
 # -----------------------
 
+# TEMP-only
+$(if $(filter x86 arm arm64 amd64 mips sparc ppc32,$(SYSTEMS)), $(error Please appends "-plain" to each architecture in SYSTEMS ))
 
-bid_flag_variants = $($(1)-y) $($(1)_$(OSYSTEM)) $($(1)_$(OSYSTEM)-y) \
+bid_flag_variants = $($(1)-y) $($(1)_$(ARCH)) $($(1)_$(ARCH)-y) \
+                    $($(1)_$(OSYSTEM)) $($(1)_$(OSYSTEM)-y) \
                     $($(1)_$@) $($(1)_$@-y) $($(1)_$@_$(OSYSTEM)) $($(1)_$@_$(OSYSTEM)-y) \
                     $($(1)_$(@D)) $($(1)_$<) $($(1)_$(@D)/$(<F)) \
                     $($(1)_$(<F)) $($(1)_$(<F)_$(OSYSTEM)) $($(1)_$(<F)_$(OSYSTEM)-y) \
@@ -457,7 +463,9 @@ CFLAGS  += $(CFLAGS_C99)
 CFLAGS  += $(CFLAGS_L4_GENERIC)
 CFLAGS	+= $(call bid_flag_variants,CFLAGS)
 DEFINES += -DSYSTEM_$(subst -,_,$(SYSTEM)) -DARCH_$(ARCH) -DCPUTYPE_$(CPU) -DL4API_$(L4API)
-DEFINES += -D_GNU_SOURCE $(if $(L4API),,-DL4_MINIMAL_LIBC)
+DEFINES += -D_GNU_SOURCE
+DEFINES-l4api-plain := -DL4_MINIMAL_LIBC
+DEFINES += $(DEFINES-l4api-$(L4API))
 ifdef DEBUG
 ifneq (,$(filter 0 n N, $(DEBUG)))
 DEFINES	+= -DNDEBUG
@@ -466,7 +474,7 @@ endif
 DEFINES += $(call bid_flag_variants,DEFINES)
 
 CPPFLAGS-DEBUG_MODE = \
-    $(if $(L4API), \
+    $(if $(filter l4f,$(L4API)), \
       $(addprefix -include ,$(OBJ_BASE)/include/l4/sys/kdebug.h \
                             $(OBJ_BASE)/include/l4/sys/ktrace.h \
                             $(OBJ_BASE)/include/l4/util/kprintf.h \
@@ -558,6 +566,7 @@ convert_cc_to_o_file = $(patsubst %.cc,%$(2).o, $(filter %.cc,$(1)))     \
 #
 get_target_var = $(strip                                                 \
                    $($(1)) $($(1)-y)                                     \
+                   $($(1)_$(ARCH)) $($(1)_$(ARCH)-y)                     \
                    $(if $(OSYSTEM),                                      \
                      $($(1)_$(OSYSTEM)) $($(1)_$(OSYSTEM)-y))            \
                    $($(1)_$(2)) $($(1)_$(2)-y)                           \

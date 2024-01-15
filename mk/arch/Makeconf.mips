@@ -17,7 +17,7 @@ CXX_mips                  = $(CROSS_COMPILE)g++
 FC_mips                   = $(CROSS_COMPILE)gfortran
 
 SYSTEMS_ABI              += mips-l4f
-SYSTEMS_PLAIN            += mips
+SYSTEMS_PLAIN            += mips-plain
 
 QEMU_ARCH_MAP_mips_64     = qemu-system-mips64el
 QEMU_ARCH_MAP_mips_32     = qemu-system-mipsel

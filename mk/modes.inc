@@ -15,7 +15,9 @@ LIBCXX_INCLUDE = -I$(OBJ_BASE)/include/contrib/libstdc++-v3        \
 
 # Select default compiler runtime libraries based on whether targeting system
 # with L4 API. The pure compiler runtime libraries do not use L4 specific APIs.
-COMPILER_RT   ?= $(if $(L4API),compiler-rt,compiler-rt-pure)
+COMPILER_RT-l4api-plain := compiler-rt-pure
+COMPILER_RT-l4api-l4f   := compiler-rt
+COMPILER_RT   ?= $(COMPILER_RT-l4api-$(L4API))
 
 #############################################################################
 

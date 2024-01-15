@@ -33,7 +33,7 @@ CXX_x86         = $(CROSS_COMPILE)g++
 FC_x86          = $(CROSS_COMPILE)gfortran
 
 SYSTEMS_ABI    += x86-l4f
-SYSTEMS_PLAIN  += x86
+SYSTEMS_PLAIN  += x86-plain
 
 GCCNOFPU_x86_f  = $(call checkcc,-mno-mmx) $(call checkcc,-mno-3dnow) \
                   $(call checkcc,-mno-sse) $(call checkcc,-mno-sse2)  \

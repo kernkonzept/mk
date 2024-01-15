@@ -22,7 +22,7 @@ CXX_amd64       = $(CROSS_COMPILE)g++
 FC_amd64        = $(CROSS_COMPILE)gfortran
 
 SYSTEMS_ABI    += amd64-l4f
-SYSTEMS_PLAIN  += amd64
+SYSTEMS_PLAIN  += amd64-plain
 
 GCCNOFPU_amd64_f = $(call checkcc,-mno-mmx) $(call checkcc,-mno-3dnow) \
                    $(call checkcc,-mno-sse) $(call checkcc,-mno-sse2)  \

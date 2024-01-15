@@ -22,7 +22,7 @@ L4_SYSTEM="${ARCH}_${CPU}"
 
 # Select base image and target image
 : ${ENTRY:=${E}}; export ENTRY
-BASE_IMAGE="${OBJ_BASE}/bin/${L4_SYSTEM}/${BASE_IMAGE_FILENAME:-bootstrap}"
+BASE_IMAGE="${OBJ_BASE}/bin/${L4_SYSTEM}/plain/${BASE_IMAGE_FILENAME:-bootstrap}"
 : ${TARGET_IMAGE="${OBJ_BASE}/images/${TARGET_IMAGE_FILENAME//entry/${ENTRY}}"}
 
 # Make sure there is no such image

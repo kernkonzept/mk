@@ -26,7 +26,7 @@ CXX_arm           = $(CROSS_COMPILE)g++
 FC_arm            = $(CROSS_COMPILE)gfortran
 
 SYSTEMS_ABI    += arm-l4f
-SYSTEMS_PLAIN  += arm
+SYSTEMS_PLAIN  += arm-plain
 
 GCCNOFPU_arm_f  = $(call checkcc,-mgeneral-regs-only)
 
