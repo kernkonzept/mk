@@ -96,10 +96,10 @@ sub process_input
   for my $line ( @data )
     {
       my $no_exit = 0;
-      for (@_plugins)
+      for my $plugin (@_plugins)
         {
-          $_->process_any($line);
-          $no_exit ||= $_->{inhibit_exit};
+          $plugin->process_any($line);
+          $no_exit ||= $plugin->{inhibit_exit};
         }
       return 1 unless $no_exit;
     }
