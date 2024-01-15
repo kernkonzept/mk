@@ -223,7 +223,7 @@ config BID_LIBGCC_SHARED
 
 config BID_USE_TOOLCHAIN_LIBGCC
 	bool "Use libgcc from toolchain"
-	default n
+	default y
 	help
 	  Say Y if you want to use the libgcc shipped with your toolchain
 	  instead of the one built specifically for L4Re.
