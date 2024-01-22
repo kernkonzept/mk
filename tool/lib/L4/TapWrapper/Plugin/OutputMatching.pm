@@ -67,7 +67,7 @@ sub check_start {
   my $self = shift;
   return if $self->{had_block}; # Only ever start matching once
   my $data = shift;
-  $data =~ s/\e\[[\d,;\s]+[A-Za-z]//gi; # strip color escapes
+  $data =~ s/\e\[[\d,;\s]*[A-Za-z]//gi; # strip color escapes
   if ($data =~ m@^(L4 Bootstrapper|Welcome to L4/Fiasco.OC!)@)
     {
       $self->{in_block} = 1;
@@ -78,7 +78,7 @@ sub check_start {
 
 sub process_mine {
   my $self = shift;
-  (my $data = shift) =~ s/\e\[[\d,;\s]+[A-Za-z]//gi; #Strip color escapes
+  (my $data = shift) =~ s/\e\[[\d,;\s]*[A-Za-z]//gi; #Strip color escapes
   $data =~ s/\r+$//g unless $self->{args}{raw}; # lines from tap-wrapper do not contain final newline
 
   if ((!$self->{args}{literal} && $data =~ m/$self->{next_line}/) ||
