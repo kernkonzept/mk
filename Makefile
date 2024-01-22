@@ -529,6 +529,8 @@ QEMU_KERNEL_FILE-itb       = $(IMAGES_DIR)/bootstrap.itb
 QEMU_KERNEL_FILE-rawimage  = $(IMAGES_DIR)/bootstrap.raw
 QEMU_KERNEL_FILE          ?= $(QEMU_KERNEL_FILE-$(QEMU_KERNEL_TYPE))
 
+FVP_KERNEL_FILE	 = $(IMAGES_DIR)/bootstrap.elf
+
 FASTBOOT_BOOT_CMD    ?= fastboot boot
 
 check_and_adjust_ram_base:
@@ -600,6 +602,12 @@ qemu: $(QEMU_KERNEL_TYPE)
 	$(if $(filter -serial "-serial",$(QEMU_OPTIONS)),,echo "Warning: No -serial in QEMU_OPTIONS." >&2;) \
 	echo QEMU-cmd: $$qemu -kernel $(QEMU_KERNEL_FILE) $(QEMU_OPTIONS);    \
 	$$qemu -kernel $(QEMU_KERNEL_FILE) $(QEMU_OPTIONS)
+endif
+
+ifneq ($(filter $(ARCH),arm arm64),)
+fvp: elfimage
+	echo FVP-cmd: $(FVP_PATH) -a "cluster0*="$(FVP_KERNEL_FILE) $(FVP_OPTIONS);    \
+	$(FVP_PATH) -a "cluster0*="$(FVP_KERNEL_FILE) $(FVP_OPTIONS)
 endif
 
 vbox: $(if $(VBOX_ISOTARGET),$(VBOX_ISOTARGET),grub2iso)
@@ -680,6 +688,7 @@ help::
 	@echo "  grub1iso   - Generate an ISO using GRUB1 in images/<name>.iso [x86, amd64]" 
 	@echo "  grub2iso   - Generate an ISO using GRUB2 in images/<name>.iso [x86, amd64]" 
 	@echo "  qemu       - Use Qemu to run 'name'." 
+	@echo "  fvp        - Use Arm FVP to run 'name'. [arm, arm64]"
 	@echo "  exportpack - Export binaries with launch support." 
 	@echo "  vbox       - Use VirtualBox to run 'name'." 
 	@echo "  fastboot   - Call fastboot with the created rawimage."
@@ -697,7 +706,7 @@ listplatforms: $(KCONFIG_FILE).platforms.list
 .PHONY: elfimage rawimage uimage qemu vbox ux switch_ram_base \
         grub1iso grub2iso listentries shellcodeentry exportpack \
         fastboot fastboot_rawimage fastboot_uimage \
-	check_and_adjust_ram_base listplatforms itb
+	check_and_adjust_ram_base listplatforms itb fvp
 
 switch_ram_base:
 	$(VERBOSE)$(call switch_ram_base_func,$(RAM_BASE))
