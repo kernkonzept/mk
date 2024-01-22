@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+MAKECONF="${OBJ_BASE}/source/tool/bin/makeconf"
+
+source <("$MAKECONF" "$OBJ_BASE" FVP_PATH FVP_OPTIONS)
+
+if [[ -z "$TARGET_IMAGE" ]]; then
+    export TARGET_IMAGE="$(mktemp --tmpdir "bootstrap-qemu-XXXXXXXXXX.elf")"
+    trap 'rm $TARGET_IMAGE' EXIT
+fi
+
+"$(dirname $0)/elfimage" || exit $?
+
+# We need to override the stdout buffering, otherwise tap-wrapper won't see
+# the last couple of lines.
+exec stdbuf -oL "$MAKECONF_FVP_PATH" $MAKECONF_FVP_OPTIONS \
+  -a "cluster0*=$TARGET_IMAGE"

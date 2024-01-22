@@ -473,6 +473,7 @@ if (my $test_starter = $ENV{EXTERNAL_TEST_STARTER})
   }
 
 
-my @cmd = ( "$obj_base/source/tool/imagebuilder/qemu" );
+my $builder = ($platform =~ /^arm_fvp/) ? "fvp" : "qemu";
+my @cmd = ( "$obj_base/source/tool/imagebuilder/$builder" );
 print join(' ', @cmd)."\n";
 exec @cmd;
