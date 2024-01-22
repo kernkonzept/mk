@@ -79,8 +79,8 @@ LIBCINCDIR_all_lib               = $(LIBCXX_INCLUDE) $(LIBC_INCLUDE)
 # still be used by a program that links against compiler-rt. With REQUIRES_LIBS
 # the program would be linked against both compiler-rt-pure and compiler-rt.
 REQUIRES_CFLAGS_all_lib          = $(COMPILER_RT)
-LDFLAGS_all_lib                  = $(addprefix -PC,$(COMPILER_RT))
-
+# Shared libraries need hidden symbols from compiler runtime.
+LDFLAGS_SO_all_lib               = $(addprefix -PC,$(COMPILER_RT))
 
 #####################################
 # host mode -- no L4 specifics
