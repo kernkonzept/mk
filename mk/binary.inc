@@ -531,8 +531,6 @@ endif
 
 ASFLAGS += $(OPTS) $(ASFLAGS_L4_GENERIC)
 ASFLAGS += $(call bid_flag_variants,ASFLAGS)
-# Only if $(OSYSTEM) != $(ARCH) to avoid adding the same flags twice.
-ASFLAGS += $(if $(filter-out $(OSYSTEM),$(ARCH)),$(ASFLAGS_$(ARCH)))
 
 ALLOBJS  = $(OBJS) $(foreach target,$(TARGET) $(TARGET_$(OSYSTEM)),\
                              $(OBJS_$(target)) $(OBJS_$(target)_$(OSYSTEM)))
