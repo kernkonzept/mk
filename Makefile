@@ -324,6 +324,20 @@ checkconf:
 	  $(ECHO); \
 	  $(if $(DISABLE_CC_CHECK),,exit 1;) \
 	fi
+	$(VERBOSE)if ! $(OBJDUMP) -f $$(grep GCCLIB_HOST= $(DROPSCONF_CONFIG_MK) | cut -d= -f2) | grep -q $(OFORMAT); then \
+	  $(ECHO); \
+	  $(ECHO) "Missing the cross-compiler's libgcc variant for the target ($(OFORMAT))."; \
+	  $(ECHO) "Install it, or disable the \"Use libgcc from toolchain\" (BID_USE_TOOLCHAIN_LIBGCC) config option."; \
+	  $(ECHO); \
+	  exit 1; \
+	fi
+	$(VERBOSE)if ! $(OBJDUMP) -f $$(grep GCCLIB_EH_HOST= $(DROPSCONF_CONFIG_MK) | cut -d= -f2) | grep -q $(OFORMAT); then \
+	  $(ECHO); \
+	  $(ECHO) "Missing the cross-compiler's libgcc_eh variant for the target ($(OFORMAT))."; \
+	  $(ECHO) "Install it, or disable the \"Use libgcc from toolchain\" (BID_USE_TOOLCHAIN_LIBGCC) config option."; \
+	  $(ECHO); \
+	  exit 1; \
+	fi
 
 
 # caching of some variables. Others are determined directly.
