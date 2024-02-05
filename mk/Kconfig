@@ -243,9 +243,10 @@ config BID_BUILD_DOC
 	  Say Y if you also want to build the doc directories.
 
 config RELEASE_MODE
-	bool "Enable RELEASE flag"
+	bool "Do a release and non-debug(able) build"
 	help
 	  Enable to leave out debugging and other code normally not needed.
+	  Do only enable this after you have a working configuration.
 
 	  Say N.
 
