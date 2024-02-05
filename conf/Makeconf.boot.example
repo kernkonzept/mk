@@ -88,9 +88,7 @@ QEMU_OPTIONS       += $(QEMU_OPTIONS-$(ARCH))
 FVP_OPTIONS += -C cluster0.NUM_CORES=1 -C pctl.startup=0.0.*.*
 
 # Basic settings for bare-metal boot without an ATF
-FVP_OPTIONS += -C bp.secure_memory=false
 FVP_OPTIONS += -C bp.refcounter.non_arch_start_at_default=1
-FVP_OPTIONS += -C cluster0.has_el3=0 -C cluster0.has_secure_el2=0
 FVP_OPTIONS += -C gic_distributor.has-two-security-states=0
 
 # Speed up simulation
@@ -101,9 +99,26 @@ FVP_OPTIONS += -C bp.vis.disable_visualisation=1
 FVP_OPTIONS += -C bp.pl011_uart0.out_file=-
 #FVP_OPTIONS += -C bp.terminal_0.start_telnet=0
 
-FVP_OPTIONS-arm   += $(FVP_OPTIONS-arm-$(PLATFORM_TYPE)) -C cluster0.has_aarch64=0
-FVP_OPTIONS-arm64 += $(FVP_OPTIONS-arm64-$(PLATFORM_TYPE))
+# A-profile specific settings. Required because we boot witout ATF.
+FVP_OPTIONS-arm_fvp_base += -C bp.secure_memory=false
+FVP_OPTIONS-arm_fvp_base += -C cluster0.has_el3=0 -C cluster0.has_secure_el2=0
+
+# R-profile specific settings.
+FVP_OPTIONS-arm_fvp_base_r += -C gic_distributor.GICD_CTLR-DS-1-means-secure-only=1
+FVP_OPTIONS-arm_fvp_base_r += -C gic_distributor.has-two-security-states=0
+FVP_OPTIONS-arm_fvp_base_r += -C cci400.force_on_from_start=1
+FVP_OPTIONS-arm_fvp_base_r += -C bp.exclusive_monitor.monitor_access_level=1
+
+# Armv8-R VMSA is only supported on AArch64
+FVP_OPTIONS-arm-arm_fvp_base_r   += -C cluster0.VMSA_supported=0
+FVP_OPTIONS-arm64-arm_fvp_base_r += -C cluster0.VMSA_supported=1
+
+FVP_OPTIONS-arm   += -C cluster0.has_aarch64=0
+FVP_OPTIONS-arm64 += -C cluster0.has_aarch64=1
+
 FVP_OPTIONS       += $(FVP_OPTIONS-$(ARCH))
+FVP_OPTIONS       += $(FVP_OPTIONS-$(PLATFORM_TYPE))
+FVP_OPTIONS       += $(FVP_OPTIONS-$(ARCH)-$(PLATFORM_TYPE))
 
 # Set path to FVP binary if model is not in $PATH - optional
 #FVP_PATH = /path/to/FVP_Base_RevC-2xAEMvA
