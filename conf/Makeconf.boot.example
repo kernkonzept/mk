@@ -71,7 +71,7 @@ QEMU_OPTIONS-arm64 += $(QEMU_OPTIONS-arm64-$(PLATFORM_TYPE))
 QEMU_OPTIONS-mips  += $(QEMU_OPTIONS-mips-$(PLATFORM_TYPE))
 QEMU_OPTIONS-x86   += -m 512 -M q35
 QEMU_OPTIONS-amd64 += -m 512 -M q35
-#QEMU_OPTIONS-amd64 += -m 1024 -M q35 -enable-kvm -cpu host
+#QEMU_OPTIONS-amd64 += -m 1024 -enable-kvm -M q35,kernel_irqchip=split -cpu host -device intel-iommu,intremap=on,eim=on
 QEMU_OPTIONS       += $(QEMU_OPTIONS-$(ARCH))
 
 # The path to the QEMU binary - optional
