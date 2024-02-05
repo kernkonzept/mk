@@ -41,7 +41,8 @@ $(1): $(2) $(GENERAL_D_LOC)
 	$$(VERBOSE)$$(BID_MAKE_RULE_CREATE_SUBDIR)
 	$$(VERBOSE)$$(if $$(BID_OBJ_SRC_$$@),$$(call \
 	  MAKEDEP,$$($(BID_$(3)_COMPILER_INT_NAME))) $$($(BID_$(3)_COMPILER)) \
-	  -c $$(DEPEND_FLAG) $$(CPPFLAGS) $$($(3)FLAGS) $(4) $$< -o $$@)
+	  -c $$(DEPEND_FLAG) $$(CPPFLAGS) $$($(3)FLAGS_EARLY) $$($(3)FLAGS) $(4) $$< \
+	  -o $$@)
 	$$(DEPEND_VERBOSE)$$(if $$(BID_OBJ_SRC_$$@),$$(call \
 	  DEPEND_EXTEND_FUNC, $$(*F).d, $$(dir $$@).$$(notdir $$@).d))
 endef
@@ -89,7 +90,7 @@ $1: $2 $(if $(BID_call_compiler_$3),$(GENERAL_D_LOC),FORCE)
 	                BID_call_compiler_default),$\
 	              $$($(BID_$(3)_COMPILER)) \
 	              $$(strip -c $$(DEPFLAGS) $$(DEPFLAGS_$(3)) $$(CPPFLAGS) \
-	              $$($(3)FLAGS) $(4) $$< -o $$@)))
+	              $$($(3)FLAGS_EARLY) $$($(3)FLAGS) $(4) $$< -o $$@)))
 endef
 
 # which template rule do we really use
