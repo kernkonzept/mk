@@ -121,7 +121,7 @@ $(OBJ_DIR)/.Package.deps: $(L4DIR)/mk/pkgdeps $(OBJ_DIR)/.Package.deps.pkgs \
 define variant_package_deps_rule
 $(OBJ_DIR)/.Packages.variant.$(1): FORCE
 	$(VERBOSE)echo -n "BUILD_VARIANT_$(1) := " > $$@.tmp
-	$(VERBOSE)$(PKGDEPS_CMD) pkgdeps $(SRC_DIR) $(VARIANT_DIRS-variant-$(1)) >> $$@.tmp
+	$(VERBOSE)$(PKGDEPS_CMD) pkgdeps $(SRC_DIR) $(wildcard $(VARIANT_DIRS-variant-$(1))) >> $$@.tmp
 	$(VERBOSE)$(call move_if_changed,$$@,$$@.tmp)
 endef
 
