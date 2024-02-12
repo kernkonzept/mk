@@ -545,7 +545,8 @@ CXXFLAGS_L4_NOPIC   += $(call BID_mode_var,NOPICFLAGS)
 CXXFLAGS_L4_PIC     += $(PICFLAGS)
 endif
 
-CXXFLAGS_EARLY += $(if $(filter 9 10,$(BID_COMPILER_IS_CLANG)$(GCCVERSION)),-std=gnu++17)
+CXXFLAGS_EARLY += $(if $(filter 1-15,$(BID_COMPILER_IS_CLANG)-$(GCCVERSION)),-std=gnu++17)
+CXXFLAGS_EARLY += $(if $(filter 1-9 1-10,$(BID_COMPILER_IS_GCC)-$(GCCVERSION)),-std=gnu++17)
 
 CXXFLAGS+= $(if $(CONFIG_BID_GCC_OMIT_FP),-fomit-frame-pointer,-fno-omit-frame-pointer)
 CXXFLAGS+= $(OPTS) $(filter-out $(foreach w,-Wbad-function-cast -Wstrict-prototypes -Wmissing-prototypes,\
