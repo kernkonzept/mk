@@ -99,7 +99,7 @@ PC_LIBS     ?= $(sort $(patsubst lib%.so,-l%,$(TARGET_SHARED) \
 
 PC_FILENAME  ?= $(PKGNAME)
 PC_FILENAMES ?= $(PC_FILENAME)
-PC_FILES     := $(foreach pcfile,$(PC_FILENAMES),$(OBJ_BASE)/pc/$(pcfile).pc)
+PC_FILES     := $(if $(filter std,$(VARIANT)),$(foreach pcfile,$(PC_FILENAMES),$(OBJ_BASE)/pc/$(pcfile).pc))
 
 PC_LIBS_pic = $(patsubst lib%.p.a,-l%.p,$(filter %.p.a,$(TARGET_PIC)))
 PC_EXTRA += $(if $(PC_LIBS_pic),$(newline)Libs_pic= $(PC_LIBS_pic))
