@@ -89,6 +89,7 @@ local function uudecode(str)
   return decoded
 end
 
+---@param objects string
 local function decode_kernel_objects(objects)
   local two_lines = '^[^\n]+\n[^\n]+\n'
 
