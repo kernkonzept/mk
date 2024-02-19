@@ -124,15 +124,15 @@ sub write_alias_pcfile($@)
   die "Path for pc-files not set, use '-P dir'"
     unless defined $pcfiledir_for_aliases;
 
-  open(U, ">$pcfiledir_for_aliases/$alias.pc")
+  open(my $u, ">$pcfiledir_for_aliases/$alias.pc")
     || die "Cannot create '$pcfiledir_for_aliases/$alias.pc': $!";
 
-  print U "Name: $alias\n".
-          "Version: 0\n".
-          "Description: Alias Dependency Package\n".
-          "Requires: ".join(' ', grep { not defined $build_only_deps{$_} } @_)."\n";
+  print $u "Name: $alias\n".
+           "Version: 0\n".
+           "Description: Alias Dependency Package\n".
+           "Requires: ".join(' ', grep { not defined $build_only_deps{$_} } @_)."\n";
 
-  close U;
+  close $u;
 }
 
 sub write_kconfig_file()
