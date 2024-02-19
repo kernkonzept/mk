@@ -762,7 +762,7 @@ sub read_pc_file
   print STDOUT "read pc file: '$dir/$name.pc'\n" if $trace_pc_files;
   my $pc_file = "$dir/$name.pc";
   open(my $f, $pc_file) || do {
-    print $errout "error: package '$name', not found\n" unless $silence;
+    print $errout "error: package '$name' not found\n" unless $silence;
     exit (1);
   };
 
