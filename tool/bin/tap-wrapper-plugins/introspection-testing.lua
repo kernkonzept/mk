@@ -33,9 +33,13 @@ The plugin handles four cases of labelled input and produces valid TAP output.
      The result is emitted as comments to the TAP output.
 --]]
 
+-- adapt the package search path to access the local modules
+local plugin_path = os.getenv("L4DIR") .. "/tool/bin/tap-wrapper-plugins/?.lua"
+package.path = package.path .. ";" .. plugin_path
+
 inspect = require('inspect') -- luarocks install inspect
-lfs     = require('lfs')     -- luarocks install luafilesystem
-zlib    = require('zlib')    -- luarocks install lua-zlib
+helper  = require('helper')
+tap     = require('tap')
 
 ---------------------
 -- DATA STRUCTURES --
@@ -211,11 +215,6 @@ end
 -- HELPER FUNCTIONS --
 ----------------------
 
-function sanitize(str)
-  return str:gsub('%s+$', '')
-            :gsub('\r\n', '\n')
-end
-
 ---@param str string
 ---@param regex string
 ---@return string[]
@@ -353,169 +352,6 @@ function unpack(o)
   return v
 end
 
----@param str string
----@return string?
-function gunzip(str)
-  local inflated, eof = zlib.inflate()(str)
-  if not eof then
-    return nil
-  end
-  return inflated
-end
-
----@param str string
----@return string
-function uudecode(str)
-  -- We assume '`' is always used to encode a 0.
-  local decoded = ''
-
-  for line in str:gmatch('[^\n]+') do
-    if not (line:find('^begin ') or line == '`' or line == 'end') then
-      local len = line:byte(1) - 32
-      local decoded_line = ''
-      line = line:sub(2)
-      repeat
-        local enc1 = (line:byte(1) - 32) & 63
-        local enc2 = (line:byte(2) - 32) & 63
-        local enc3 = (line:byte(3) - 32) & 63
-        local enc4 = (line:byte(4) - 32) & 63
-
-        local dec1 = (enc1 << 2) + (enc2 >> 4)
-        local dec2 = ((enc2 & 15) << 4) + (enc3 >> 2)
-        local dec3 = ((enc3 & 3) << 6) + enc4
-
-        decoded_line = decoded_line .. string.char(dec1, dec2, dec3)
-
-        line = line:sub(5)
-      until(line == '')
-      decoded = decoded .. string.sub(decoded_line, 1, len)
-    end
-  end
-
-  return decoded
-end
-
--- Prepend each line of `str` by `prefix. If `prefix` is a number, then each
--- line is prefixed by this number of spaces.
----@param prefix? string|number
----@param str string
----@return string
-function indent(prefix, str)
-  if prefix == nil or prefix == 0 or prefix == '' then
-    return str
-  end
-  if type(prefix) == 'number' then
-    prefix = string.rep(' ', prefix)
-  end
-  return prefix .. str:gsub('\n', '\n' .. prefix)
-end
-
-----------------
--- TAP OUTPUT --
-----------------
-
--- The singleton tap object buffers comments and only outputs them when a (not)
--- ok line is printed via flush_test(), ok(), etc. The comments are printed
--- after that (not) ok line. Besides the tap object counts how many (not) ok
--- lines were written. For valid test output, this count must finally be written
--- via flush_plan(); the comment buffer must be empty then.
-
-tap = { _comment_header = nil, _comments = {}, _plan_number = 0 }
-
--- Write and reset current comment buffer.
----@return boolean # `true` iff the comment buffer was not empty
-function tap:_flush_comments()
-  local res = next(self._comments) ~= nil
-  for _, c in ipairs(self._comments) do
-    io.write('# ', c:gsub('\n', '\n# '), '\n')
-  end
-  self._comments = {}
-  self._comment_header = nil
-  return res
-end
-
-function tap:flush_plan()
-  io.write('1..', self._plan_number, '\n')
-  io.flush()
-  self._plan_number = 0
-  if self:_flush_comments() then
-    io.flush()
-    error('Non-empty comment buffer while flushing plan. Did you forget \z
-           outputting a (not) ok line?', 2)
-  end
-end
-
--- Output a (not) ok line followed by the buffered comments.
----@param ok boolean
----@param description string
-function tap:flush_test(ok, description)
-  self._plan_number = self._plan_number + 1
-  if not ok then
-    io.write('not ')
-  end
-  io.write('ok ', description:gsub('\n', '\n# '), '\n')
-  self:_flush_comments()
-  io.flush()
-end
-
--- Output an ok line followed by the buffered comments.
----@param description string
-function tap:ok(description)
-  self:flush_test(true, description)
-end
-
--- Output a not ok line followed by the buffered comments.
----@param description string
-function tap:not_ok(description)
-  self:flush_test(false, description)
-end
-
--- Prepare a comment that is is only written to the comment buffer before the
--- comment of the next comment() call. If no comment() call follows before the
--- next flush, the header is dropped.
---
--- There can only be one pending header at a time. Subsequent calls to this
--- funtion overwrite the current pending header. A call without arguments drops
--- a pending header.
----@param c? string
----@param prefix? string|number
-function tap:comment_header(c, prefix)
-  if c ~= nil then
-    self._comment_header = indent(prefix, c)
-  else
-    self._comment_header = nil
-  end
-end
-
--- Append a comment to the comment buffer.
----@param c string
----@param prefix? string|number
-function tap:comment(c, prefix)
-  if self._comment_header ~= nil then
-    table.insert(self._comments, self._comment_header)
-    self._comment_header = nil
-  end
-  table.insert(self._comments, indent(prefix, c))
-end
-
--- Prepend a comment to the comment buffer.
----@param c string
----@param prefix? string|number
-function tap:prepend_comment(c, prefix)
-  table.insert(self._comments, 1, indent(prefix, c))
-end
-
--- Abort script with some “not ok” TAP output but with zero exit code. This is
--- intended for expected fatal errors. Errors that abort the script with
--- non-zero exit code are considered a bug in the script.
----@param comment string
-function abort(comment)
-  tap:comment('FATAL ERROR:')
-  tap:comment(comment, 2)
-  tap:not_ok('Introspection::FatalError')
-  tap:flush_plan()
-  os.exit(0)
-end
 
 -----------------
 -- PARSE INPUT --
@@ -561,8 +397,8 @@ function parse_dump(dump)
       res = {line:match(pat)}
     end
     if res[1] == nil then
-      abort('object dump line: "' .. inspect(line) ..
-            '" does not match pattern "' .. pat .. '"')
+      tap:abort('object dump line: "' .. inspect(line)
+                .. '" does not match pattern "' .. pat .. '"')
     end
     return table.unpack(res)
   end
@@ -570,7 +406,8 @@ function parse_dump(dump)
   local version =
     parse(table.remove(lines, 1), '^dump format version number: (%d+)$')
   if version ~= '0' then
-    abort('Expected kernel object dump version 0 but got ' .. version .. '.')
+    tap:abort('Expected kernel object dump version 0 but got ' .. version
+              .. '.')
   end
 
   local tag = parse(table.remove(lines, 1), '^user space tag: (%w+)$')
@@ -594,8 +431,8 @@ function parse_dump(dump)
       end
 
       if objects[cur_obj_id].caps[cap_addr] ~= nil then
-        abort('object dump: ambiguous capability address ' .. inspect(cap_addr)
-              .. '. Source line:\n' .. line)
+        tap:abort('object dump: ambiguous capability address '
+                  .. inspect(cap_addr) .. '. Source line:\n' .. line)
       end
       objects[cur_obj_id].caps[cap_addr] = {
         cap_addr = cap_addr,
@@ -618,12 +455,12 @@ function parse_dump(dump)
       local attrs = {}
       for attr in attrstrs:gmatch('[^%s]+') do
         local split_attr = split(attr, '[^=]+')
-        if #split_attr > 2 then abort("Failed parsing attribute") end
+        if #split_attr > 2 then tap:abort("Failed parsing attribute") end
         attrs[split_attr[1]] = split_attr[2] or true
       end
 
       if objects[obj_id] ~= nil then
-        abort('object dump: ambiguous object id ' .. inspect(obj_id)
+        tap:abort('object dump: ambiguous object id ' .. inspect(obj_id)
               .. '. Source line:\n' .. line)
       end
 
@@ -795,7 +632,7 @@ end
 -- is used.
 invalid_sandbox = setmetatable({},
                     { __index = function ()
-                                  abort('First action must be RESETSCOPE.')
+                                  tap:abort('First action must be RESETSCOPE.')
                                 end })
 -- Start with invalid sandbox. The first actual sandox must be initialized with
 -- RESETSCOPE because a sandbox needs a scope name.
@@ -832,11 +669,11 @@ function process_input(id, input)
   elseif input.tag == 'KernelObjects' then
     local two_lines = '^[^\n]+\n[^\n]+\n'
     local headers = input.text:match(two_lines)
-    if not headers then abort('extract object dump headers') end
+    if not headers then tap:abort('extract object dump headers') end
 
-    local body = gunzip(uudecode(input.text:gsub(two_lines, '')))
-    if not body then abort('decode object dump body') end
-    body = sanitize(body):gsub('\27%[[^m]*m', '') -- escape color codes
+    local body = helper.gunzip(helper.uudecode(input.text:gsub(two_lines, '')))
+    if not body then tap:abort('decode object dump body') end
+    body = helper.sanitize(body):gsub('\27%[[^m]*m', '') -- escape color codes
 
     local tag, dump = parse_dump(headers .. body)
     sandbox:insert_dump(tag, dump)
@@ -852,42 +689,13 @@ end
 ----------
 
 if #arg ~= 1 then
-  abort('number of command-line arguments')
+  tap:abort('number of command-line arguments')
 end
 
 local dir = arg[1]
-if not lfs.attributes(dir) then abort('valid path as first argument') end
+if not lfs.attributes(dir) then tap:abort('valid path as first argument') end
 
-local input = {}
-local ids = {}
-for file in lfs.dir(dir) do
-  if file ~= '.' and file ~= '..' then
-    local i, tag, info = file:match('^(%d+)_(%w+)_(%w+).snippet$')
-    if not i then
-      i, tag = file:match('^(%d+)_(%w+).snippet$')
-      info = nil
-    end
-
-    if not i then
-      abort('input filename "' .. tostring(file) ..
-            '" does not adhere to the plugin interface')
-    end
-
-    local f = io.open(dir .. '/' .. file, 'r')
-    if not f then abort('failed to open file ' .. dir .. '/' .. file) end
-    -- In case of nil, abort() terminates the script so f cannot be nil here.
-    ---@cast f -nil
-    local text = sanitize(f:read('a'))
-    f:close()
-
-    if input[i] ~= nil then
-      abort('duplicate file id '.. i)
-    end
-
-    input[i] = {filename = file, tag = tag, info = info, text = text}
-    ids[#ids+1] = i
-  end
-end
+local ids, input = helper.load_snippets(dir)
 
 table.sort(ids, function(a, b) return tonumber(a) < tonumber(b) end)
 for _, id in ipairs(ids) do
