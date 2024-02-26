@@ -487,7 +487,7 @@ sub get_module_entry($$$)
 
   foreach (sort keys %shlibs)
     {
-      push @mods, { get_command_and_cmdline($_) };
+      push @mods, { get_command_and_cmdline($_), type => 0 };
     }
 
   return (
