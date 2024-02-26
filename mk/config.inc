@@ -81,24 +81,26 @@ ifneq ($(DROPSCONF),)
 
 DIRS_FOR_CONFIG = $(KCONFIG_OBJ_DIR) $(OBJ_BASE)/config
 
-$(DIRS_FOR_CONFIG): $(KCONFIG_FILE)
+$(DIRS_FOR_CONFIG):
 	$(VERBOSE)[ -d $@ ] || install -d $@
 
-menuconfig config: $(DIRS_FOR_CONFIG)
+DROPSCONF_CONFIG_DEPS = $(DIRS_FOR_CONFIG) $(KCONFIG_FILE)
+
+menuconfig config: $(DROPSCONF_CONFIG_DEPS)
 	$(VERBOSE)+$(kconfig_call) menuconfig syncconfig
 	$(VERBOSE)test ! -r $(DROPSCONF_CONFIG) -o \
 		! $(DROPSCONF_CONFIG) -nt $(DROPSCONF_CONFIG_MK) || \
 		$(MAKE) $(DROPSCONF_CONFIG_MK)
 
-textconfig: $(DIRS_FOR_CONFIG)
+textconfig: $(DROPSCONF_CONFIG_DEPS)
 	$(VERBOSE)+$(kconfig_call) config syncconfig
 	@$(MAKE) $(DROPSCONF_CONFIG_MK)
 
-oldconfig olddefconfig xconfig gconfig nconfig randconfig allyesconfig allnoconfig savedefconfig: $(DIRS_FOR_CONFIG)
+oldconfig olddefconfig xconfig gconfig nconfig randconfig allyesconfig allnoconfig savedefconfig: $(DROPSCONF_CONFIG_DEPS)
 	$(VERBOSE)+$(kconfig_call) $@ syncconfig
 	@$(MAKE) $(DROPSCONF_CONFIG_MK)
 
-$(DROPSCONF_CONFIG) syncconfig: $(DIRS_FOR_CONFIG)
+$(DROPSCONF_CONFIG) syncconfig: $(DROPSCONF_CONFIG_DEPS)
 	$(VERBOSE)+$(kconfig_call) syncconfig
 	
 
