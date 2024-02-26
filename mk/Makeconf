@@ -485,7 +485,7 @@ GCCARMV7RFPOPT_arm_f = $(call checkcc,-march=armv7-r+fp,-march=armv7-r)
 GCCARMV7VEFPOPT_arm_f = $(call checkcc,-march=armv7ve+fp,-march=armv7ve)
 GCCARM64OUTLINEATOMICSOPT_arm64_f = $(call checkcc,-mno-outline-atomics)
 GCCFORTRANAVAIL_f = $(shell echo | $(callfc) -dD -E - 2>&1 | grep -q __GNUC__ && echo y)
-GCCLIBCAVAIL_f  = $(shell echo '$(BID_POUND)include <unistd.h>' | $(callcc) -c -x c -o /dev/null - > /dev/null 2>&1 && echo y)
+GCCLIBCAVAIL_f  = $(shell echo -e '$(BID_POUND)include <unistd.h>\nint main(void){return 0;}' | $(callcc) -x c -o /dev/null - > /dev/null 2>&1 && echo y)
 GCC_HAS_ATOMICS_f = $(shell if echo '$(BID_POUND)include <bits/c++config.h>' | \
 		               $(callcxx) -dD -E -x c++ - 2>&1 | \
 			       grep -q _GLIBCXX_ATOMIC_BUILTINS; then \
