@@ -302,22 +302,32 @@ $(DROPSCONF_TARGETS): $(KCONFIG_FILE).defines
 KCONFIGS_ARCH     := $(wildcard $(L4DIR)/mk/arch/Kconfig.*.inc)
 KCONFIG_PLATFORMS := $(wildcard $(L4DIR)/mk/platforms/*.conf $(L4DIR)/conf/platforms/*.conf)
 
+# Cannot use $^ inside the $(KCONFIG_FILE).platforms recipe to refer to its
+# dependencies, as this would include obsolete dependencies stored in
+# $(KCONFIG_FILE_DEPS).platforms from the previous generation of it.
+KCONFIG_FILE_PLATFORMS_DEPS_CURRENT = $(KCONFIG_PLATFORMS) Makefile $(L4DIR)/tool/bin/gen_kconfig_includes
+
 $(addprefix $(KCONFIG_FILE)%,platform_types platforms platforms.list): \
-            Makefile $(L4DIR)/tool/bin/gen_kconfig_includes $(KCONFIG_PLATFORMS)
-	$(file >$(KCONFIG_FILE_DEPS).platforms,$@: \
-	  $(KCONFIG_PLATFORMS) Makefile $(L4DIR)/tool/bin/gen_kconfig_includes)
-	$(foreach f,$^,$(file >>$(KCONFIG_FILE_DEPS).platforms,$(f):))
+            $(KCONFIG_FILE_PLATFORMS_DEPS_CURRENT)
+	$(file >$(KCONFIG_FILE_DEPS).platforms,$@: $(KCONFIG_FILE_PLATFORMS_DEPS_CURRENT))
+	$(foreach f,$(KCONFIG_FILE_PLATFORMS_DEPS_CURRENT),$(file >>$(KCONFIG_FILE_DEPS).platforms,$(f):))
 	$(VERBOSE)MAKE="$(MAKE)"; $(L4DIR)/tool/bin/gen_kconfig_includes $(KCONFIG_FILE) $(KCONFIG_PLATFORMS)
 
 # Kconfig.L4 files must be next to the Control file
 PKG_DIRS := $(call find_prj_dirs,$(SRC_DIR))
 PKG_KCONFIG_L4_FILES := $(wildcard $(addsuffix /Kconfig.L4,$(PKG_DIRS)))
 
-$(KCONFIG_FILE): $(KCONFIG_FILE_SRC) $(PKG_KCONFIG_L4_FILES) Makefile \
-                 $(KCONFIGS_ARCH) $(L4DIR)/tool/bin/gen_kconfig \
-                 | $(KCONFIG_FILE).platform_types $(KCONFIG_FILE).platforms $(KCONFIG_FILE).platforms.list
-	$(file >$(KCONFIG_FILE_DEPS),$(KCONFIG_FILE): $^)
-	$(foreach f,$^,$(file >>$(KCONFIG_FILE_DEPS),$(f):))
+# Cannot use $^ inside the $(KCONFIG_FILE) recipe to refer to its dependencies,
+# as this would include obsolete dependencies stored in $(KCONFIG_FILE_DEPS)
+# from the previous generation of it.
+KCONFIG_FILE_DEPS_CURRENT = $(KCONFIG_FILE_SRC) $(PKG_KCONFIG_L4_FILES) Makefile \
+                            $(KCONFIGS_ARCH) $(L4DIR)/tool/bin/gen_kconfig
+
+$(KCONFIG_FILE): $(KCONFIG_FILE_DEPS_CURRENT) \
+                 | $(KCONFIG_FILE).platform_types $(KCONFIG_FILE).platforms \
+                   $(KCONFIG_FILE).platforms.list
+	$(file >$(KCONFIG_FILE_DEPS),$(KCONFIG_FILE): $(KCONFIG_FILE_DEPS_CURRENT))
+	$(foreach f,$(KCONFIG_FILE_DEPS_CURRENT),$(file >>$(KCONFIG_FILE_DEPS),$(f):))
 	$(VERBOSE)$(L4DIR)/tool/bin/gen_kconfig \
 	         --kconfig-src-file $(KCONFIG_FILE_SRC) \
 	         --kconfig-obj-file $(KCONFIG_FILE) \
@@ -326,6 +336,9 @@ $(KCONFIG_FILE): $(KCONFIG_FILE_SRC) $(PKG_KCONFIG_L4_FILES) Makefile \
 	$(VERBOSE)$(L4DIR)/mk/pkgdeps -I -K $(OBJ_BASE)/Kconfig.generated.pkgs \
 	         genkconfig $(SRC_DIR) $(PKG_DIRS)
 
+# Include dependencies from the previous generation of $(KCONFIG_FILE) and
+# $(KCONFIG_FILE).platforms to detect if one of these dependencies has been
+# removed, in which case the files need to be regenerated.
 -include $(KCONFIG_FILE_DEPS) $(KCONFIG_FILE_DEPS).platforms
 
 ifeq ($(filter y 1,$(DISABLE_CC_CHECK)),)
