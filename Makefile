@@ -293,11 +293,9 @@ DROPSCONF_CONFIG_MK_POST_HOOK:: check_build_tools $(OBJ_DIR)/Makefile
 	$(VERBOSE)$(MAKE) checkconf
 
 $(KCONFIG_FILE).defines: FORCE
-	$(VERBOSE)echo "# Automatically generated. Don't edit" >$@
-	$(VERBOSE)echo "BID_COMPILER_TYPE := $(call BID_COMPILER_TYPE_f)" >>$@
-
-# Regenerate defines only if a config target is executed.
-$(DROPSCONF_TARGETS): $(KCONFIG_FILE).defines
+	$(VERBOSE)echo "# Automatically generated. Don't edit" >$@.tmp
+	$(VERBOSE)echo "BID_COMPILER_TYPE := $(call BID_COMPILER_TYPE_f)" >>$@.tmp
+	$(VERBOSE)$(call move_if_changed,$@,$@.tmp)
 
 KCONFIGS_ARCH     := $(wildcard $(L4DIR)/mk/arch/Kconfig.*.inc)
 KCONFIG_PLATFORMS := $(wildcard $(L4DIR)/mk/platforms/*.conf $(L4DIR)/conf/platforms/*.conf)
@@ -325,7 +323,7 @@ KCONFIG_FILE_DEPS_CURRENT = $(KCONFIG_FILE_SRC) $(PKG_KCONFIG_L4_FILES) Makefile
 
 $(KCONFIG_FILE): $(KCONFIG_FILE_DEPS_CURRENT) \
                  | $(KCONFIG_FILE).platform_types $(KCONFIG_FILE).platforms \
-                   $(KCONFIG_FILE).platforms.list
+                   $(KCONFIG_FILE).platforms.list $(KCONFIG_FILE).defines
 	$(file >$(KCONFIG_FILE_DEPS),$(KCONFIG_FILE): $(KCONFIG_FILE_DEPS_CURRENT))
 	$(foreach f,$(KCONFIG_FILE_DEPS_CURRENT),$(file >>$(KCONFIG_FILE_DEPS),$(f):))
 	$(VERBOSE)$(L4DIR)/tool/bin/gen_kconfig \

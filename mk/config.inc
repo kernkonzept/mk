@@ -84,7 +84,7 @@ DIRS_FOR_CONFIG = $(KCONFIG_OBJ_DIR) $(OBJ_BASE)/config
 $(DIRS_FOR_CONFIG):
 	$(VERBOSE)[ -d $@ ] || install -d $@
 
-DROPSCONF_CONFIG_DEPS = $(DIRS_FOR_CONFIG) $(KCONFIG_FILE)
+DROPSCONF_CONFIG_DEPS = $(DIRS_FOR_CONFIG) $(KCONFIG_FILE) $(KCONFIG_FILE).defines
 
 menuconfig config: $(DROPSCONF_CONFIG_DEPS)
 	$(VERBOSE)+$(kconfig_call) menuconfig syncconfig
@@ -179,7 +179,6 @@ else
 config txtconfig oldconfig olddefconfig syncconfig::
 endif
 
-DROPSCONF_TARGETS = config oldconfig olddefconfig syncconfig txtconfig menuconfig \
-                    xconfig gconfig nconfig randconfig allyesconfig allnoconfig \
-                    savedefconfig
-.PHONY: $(DROPSCONF_TARGETS)
+.PHONY: config oldconfig olddefconfig syncconfig txtconfig menuconfig \
+        xconfig gconfig nconfig randconfig allyesconfig allnoconfig \
+        savedefconfig
