@@ -58,6 +58,7 @@ GetOptions(
   'timestamps'      => sub { $test_timestamps = 1; },
   'jdb-system-report-on-timeout' => \$jdb_system_report_on_timeout,
   'introspection-tests' => sub { $ENV{INTROSPECTION_TESTS} = 1; },
+  'exclude-filters=s' => sub { $ENV{TEST_EXCLUDE_FILTERS} .= " $_[1]"; }
 ) or pod2usage(-verbose => 99, -sections => "OPTIONS");
 
 pod2usage(-verbose => 99,
@@ -133,6 +134,12 @@ else
 
 $L4::TapWrapper::TAP_FD->autoflush(1);
 
+my %filter_excludes;
+if ($ENV{TEST_EXCLUDE_FILTERS})
+  {
+    $filter_excludes{$_} = 1 foreach split(' ', $ENV{TAP_FILTERS});
+  }
+
 if ($ENV{TAP_FILTERS})
   {
     foreach (split(' ', $ENV{TAP_FILTERS}))
@@ -140,7 +147,8 @@ if ($ENV{TAP_FILTERS})
         my ($name, $arg) = split(/:/, $_, 2);
         $arg = "" unless defined $arg;
         my %harg = map { split(/=/, $_, 2) } (split (/,/, $arg));
-        L4::TapWrapper::load_filter($name, \%harg);
+        L4::TapWrapper::load_filter($name, \%harg)
+          unless $filter_excludes{$name};
       }
   }
 
