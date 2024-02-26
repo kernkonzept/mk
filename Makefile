@@ -355,6 +355,7 @@ checkconf:
 	  $(ECHO); \
 	  $(if $(DISABLE_CC_CHECK),,exit 1;) \
 	fi
+ifeq ($(CONFIG_BID_USE_TOOLCHAIN_LIBGCC),y)
 	$(VERBOSE)if ! $(OBJDUMP) -f $$(grep GCCLIB_HOST= $(DROPSCONF_CONFIG_MK) | cut -d= -f2) | grep -q $(OFORMAT); then \
 	  $(ECHO); \
 	  $(ECHO) "Missing the cross-compiler's libgcc variant for the target ($(OFORMAT))."; \
@@ -369,6 +370,7 @@ checkconf:
 	  $(ECHO); \
 	  exit 1; \
 	fi
+endif
 
 
 # caching of some variables. Others are determined directly.
