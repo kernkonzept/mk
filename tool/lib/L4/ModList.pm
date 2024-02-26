@@ -264,7 +264,7 @@ sub get_module_entry($$$)
 {
   my ($mod_file, $entry_to_pick, $module_path) = @_;
   my @mods;
-  my %type_num = ( kernel => 1, sigma0 => 2, roottask => 3 );
+  my %type_num = ( generic => 0, kernel => 1, sigma0 => 2, roottask => 3 );
   my %base_mods = (
     kernel   => { get_command_and_cmdline("fiasco"), default => 1 },
     sigma0   => { get_command_and_cmdline("sigma0"), default => 1 },
@@ -396,13 +396,13 @@ sub get_module_entry($$$)
               push @mods, @{$groups{$_}};
             }
           } else {
-            push @mods, { %modinfo, type => 0 };
+            push @mods, { %modinfo, type => $type_num{generic} };
           }
         }
       } elsif ($process_mode eq 'group') {
         foreach my $m (@params) {
           my %modinfo = get_command_and_cmdline($m, %opts);
-          push @{$groups{$current_group_name}}, { %modinfo, type => 0 };
+          push @{$groups{$current_group_name}}, { %modinfo, type => $type_num{generic} };
         }
       } else {
         error "$mod_file_db{id_to_file}{$$fileentry[0]}:$$fileentry[1]: Invalid mode '$process_mode'\n";
@@ -487,7 +487,7 @@ sub get_module_entry($$$)
 
   foreach (sort keys %shlibs)
     {
-      push @mods, { get_command_and_cmdline($_), type => 0 };
+      push @mods, { get_command_and_cmdline($_), type => $type_num{generic} };
     }
 
   return (
