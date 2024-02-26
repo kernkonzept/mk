@@ -79,20 +79,6 @@ entry hello-shared
 roottask moe --init=rom/ex_hello_shared
 module l4re
 module ex_hello_shared
-module libld-l4.so
-module libl4util.so
-module libl4sys.so
-module libl4sys-direct.so
-module libdl.so
-module lib4re.so
-module lib4re-util.so
-module libc_support_misc.so
-module libc_be_socket_noop.so
-module libc_be_l4refile.so
-module libc_be_l4re.so
-module libsupc++.so
-module libuc_c.so
-module libpthread.so
 
 entry[arch=x86|amd64] framebuffer-example
 roottask moe rom/x86-fb.cfg
