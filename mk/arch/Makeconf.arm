@@ -23,9 +23,6 @@ CARCHFLAGS_arm_armv7r     = $(GCCARMV7RFPOPT_arm)
 CARCHFLAGS_arm_armv8r     = -march=armv8-r+fp.sp
 
 CCXX_FLAGS_arm   += $(if $(CONFIG_BID_THUMB),-mthumb,-marm)
-CC_arm            = $(CROSS_COMPILE)gcc
-CXX_arm           = $(CROSS_COMPILE)g++
-FC_arm            = $(CROSS_COMPILE)gfortran
 
 SYSTEMS_ABI    += arm-l4f
 SYSTEMS_PLAIN  += arm-plain

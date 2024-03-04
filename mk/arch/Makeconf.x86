@@ -29,10 +29,6 @@ CARCHFLAGS_x86_opteron    = -march=opteron
 
 CCXX_FLAGS_x86  += -m32
 
-CC_x86          = $(CROSS_COMPILE)gcc
-CXX_x86         = $(CROSS_COMPILE)g++
-FC_x86          = $(CROSS_COMPILE)gfortran
-
 SYSTEMS_ABI    += x86-l4f
 SYSTEMS_PLAIN  += x86-plain
 

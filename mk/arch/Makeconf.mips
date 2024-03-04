@@ -13,10 +13,6 @@ CCXX_FLAGS_mips          += -march=mips$(CPU) -mabi=$(CPU_ABI)
 CCXX_FLAGS_mips          += $(if $(CONFIG_MIPS_LITTLE_ENDIAN),-EL,-EB)
 LDFLAGS_mips             += $(if $(CONFIG_MIPS_LITTLE_ENDIAN),-EL,-EB) \
                             -z noexecstack
-CC_mips                   = $(CROSS_COMPILE)gcc
-CXX_mips                  = $(CROSS_COMPILE)g++
-FC_mips                   = $(CROSS_COMPILE)gfortran
-
 SYSTEMS_ABI              += mips-l4f
 SYSTEMS_PLAIN            += mips-plain
 

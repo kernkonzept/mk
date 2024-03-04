@@ -21,9 +21,6 @@ CARCHFLAGS_sparc_niagara3    = -mcpu=niagara3
 CARCHFLAGS_sparc_niagara4    = -mcpu=niagara4
 
 CCXX_FLAGS_sparc += -m32
-CC_sparc        = $(CROSS_COMPILE)gcc
-CXX_sparc       = $(CROSS_COMPILE)g++
-FC_sparc        = $(CROSS_COMPILE)gfortran
 
 SYSTEMS_ABI    += sparc-l4f
 SYSTEMS_PLAIN  += sparc-plain

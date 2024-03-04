@@ -69,7 +69,7 @@ $(call dv,AR)	 = $(CROSS_COMPILE)ar
 $(call dv,AS)	 = $(CROSS_COMPILE)as
 AWKP		?= gawk --posix
 CCACHE          ?= ccache
-$(call dv,FC)    = $(if $(USE_CCACHE),$(CCACHE) )$(FC_$(BUILD_ARCH))
+$(call dv,FC)    = $(if $(USE_CCACHE),$(CCACHE) )$(CROSS_COMPILE)gfortran
 
 # Args: 1=$(CLANG); 2=clang/clang++/clang-cpp
 # Rules:
@@ -84,9 +84,9 @@ clang-bin-tgt    = $(call clang-bin,$(1),$(2)) \
 		   $(addprefix --target=,$(notdir $(CROSS_COMPILE:%-=%)))
 
 $(call dv,CC)    = $(if $(USE_CCACHE),$(CCACHE) )$(if $(CLANG),$(call \
-                     clang-bin-tgt,$(CLANG),clang),$(CC_$(BUILD_ARCH)))
+                     clang-bin-tgt,$(CLANG),clang),$(CROSS_COMPILE)gcc)
 $(call dv,CXX)   = $(if $(USE_CCACHE),$(CCACHE) )$(if $(CLANG),$(call \
-                     clang-bin-tgt,$(CLANG),clang++),$(CXX_$(BUILD_ARCH)))
+                     clang-bin-tgt,$(CLANG),clang++),$(CROSS_COMPILE)g++)
 $(call dv,CPP)   = $(if $(CLANG),$(call \
                      clang-bin-tgt,$(CLANG),clang-cpp),$(CROSS_COMPILE)cpp)
 

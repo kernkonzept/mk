@@ -13,10 +13,6 @@ L4_STACK_ADDR_arm64      ?= 0xb0000000
 CARCHFLAGS_arm64_armv8a   = -march=armv8-a $(GCCARM64OUTLINEATOMICSOPT_arm64)
 CARCHFLAGS_arm64_armv8r   = -march=armv8-r $(GCCARM64OUTLINEATOMICSOPT_arm64)
 
-CC_arm64          = $(CROSS_COMPILE)gcc
-CXX_arm64         = $(CROSS_COMPILE)g++
-FC_arm64          = $(CROSS_COMPILE)gfortran
-
 SYSTEMS_ABI    += arm64-l4f
 SYSTEMS_PLAIN  += arm64-plain
 
