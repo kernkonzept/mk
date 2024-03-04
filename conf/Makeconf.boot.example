@@ -62,7 +62,7 @@ QEMU_OPTIONS-arm-rv_vexpress_a15 += -M vexpress-a15 -m 2047 -cpu cortex-a15 \
 QEMU_OPTIONS-arm-rv_pbx          += realview-pbx-a9 -m 512 -cpu cortex-a9 -smp 4
 QEMU_OPTIONS-arm-arm_virt        += -M virt,virtualization=true -cpu cortex-a15 -m 1024
 
-QEMU_OPTIONS-arm64-arm_virt      += -M virt,virtualization=true -cpu cortex-a57 -m 1024
+QEMU_OPTIONS-arm64-arm_virt      += -M virt,virtualization=true,iommu=smmuv3 -cpu cortex-a57 -m 1024
 
 QEMU_OPTIONS-mips-malta          += -M malta -m 256 -cpu P5600
 
