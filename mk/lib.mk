@@ -101,12 +101,18 @@ PC_FILENAME  ?= $(PKGNAME)
 PC_FILENAMES ?= $(PC_FILENAME)
 PC_FILES     := $(if $(filter std,$(VARIANT)),$(foreach pcfile,$(PC_FILENAMES),$(OBJ_BASE)/pc/$(pcfile).pc))
 
-PC_LIBS_pic ?= $(patsubst lib%.p.a,-l%.p,$(filter %.p.a,$(TARGET_PIC)))
-PC_EXTRA += $(if $(PC_LIBS_pic),$(newline)Libs_pic= $(PC_LIBS_pic))
+PC_LIBS_PIC ?= $(patsubst lib%.p.a,-l%.p,$(filter %.p.a,$(TARGET_PIC)))
 
 # 1: basename
 # 2: pcfilename
-get_cont = $(if $($(1)_$(2)),$($(1)_$(2)),$($(1)))
+# 3: optional prefix
+get_cont = $(if $($(1)_$(2)),$(3)$($(1)_$(2)),$(if $($(1)),$(3)$($(1))))
+
+# 1: pcfile
+get_extra = $(call get_cont,PC_EXTRA,$(1))$\
+            $(call get_cont,PC_LIBS_PIC,$(1),$(newline)Libs_pic= )$\
+            $(call get_cont,PC_LINK_LIBS,$(1),$(newline)Link_Libs= )$\
+            $(call get_cont,PC_LINK_LIBS_PIC,$(1),$(newline)Link_Libs_pic= )
 
 # Ths must contain all the contents of all possible PC files as used in
 # below generate_pcfile
@@ -114,7 +120,7 @@ PC_FILES_CONTENTS := $(strip $(foreach pcfile,$(PC_FILENAMES),\
   $(call get_cont,CONTRIB_INCDIR,$(pcfile)) \
   $(call get_cont,PC_LIBS,$(pcfile)) \
   $(call get_cont,REQUIRES_LIBS,$(pcfile)) \
-  $(call get_cont,PC_CFLAGS,$(pcfile)) $(call get_cont,PC_EXTRA,$(pcfile))))
+  $(call get_cont,PC_CFLAGS,$(pcfile)) $(call get_extra,$(pcfile))))
 
 ifneq ($(PC_FILES_CONTENTS),)
 
@@ -122,7 +128,7 @@ ifneq ($(PC_FILES_CONTENTS),)
 # PC_FILES_CONTENTS above, otherwise PC files may not be generated
 $(patsubst %,$(OBJ_BASE)/pc/%.pc,$(PC_FILENAMES)):$(OBJ_BASE)/pc/%.pc: $(GENERAL_D_LOC)
 	@$(call GEN_MESSAGE,$(@F))
-	$(VERBOSE)$(call generate_pcfile,$*,$@,$(call get_cont,CONTRIB_INCDIR,$*),$(call get_cont,PC_LIBS,$*),$(call get_cont,REQUIRES_LIBS,$*),$(call get_cont,PC_CFLAGS,$*),$(call get_cont,PC_EXTRA,$*))
+	$(VERBOSE)$(call generate_pcfile,$*,$@,$(call get_cont,CONTRIB_INCDIR,$*),$(call get_cont,PC_LIBS,$*),$(call get_cont,REQUIRES_LIBS,$*),$(call get_cont,PC_CFLAGS,$*),$(call get_extra,$*))
 
 all:: $(PC_FILES)
 
