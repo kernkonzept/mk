@@ -423,15 +423,7 @@ get_cc_version_part = $(shell echo $(1) | $(callcc) -E -x c - | tail -1)
 # note: determining these variables is slow, and the values should
 #       be set in .config.all. However, this is the place were
 #       they are determined on a 'make config' in $(L4DIR)
-
-ifeq ($(CC),)
-# Compiler not explicitly set by the environment or by the architecture (yet).
-# Thus we assume Clang if requested and GCC otherwise.
-BID_COMPILER_TYPE_f = $(if $(CLANG),clang,gcc)
-else
 BID_COMPILER_TYPE_f = $(if $(findstring clang, $(shell $(callcc) --version)),clang,gcc)
-endif
-
 BID_LD_TYPE_f = $(if $(findstring LLD, $(shell $(callld) --version)),lld,gnu)
 
 ifeq ($(BID_COMPILER_TYPE),gcc)
