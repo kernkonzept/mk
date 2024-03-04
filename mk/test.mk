@@ -60,14 +60,6 @@ ifneq ($(SYSTEM),) # if we have a system, really build
 $(foreach t, $(TARGET) $(EXTRA_TEST), $(eval TEST_SCRIPTS += $(t).t))
 $(foreach t, $(TARGET) $(EXTRA_TEST), $(eval TEST_TARGET_$(t) ?= $(t)))
 
-ifeq ($(MODE),host)
-# in host mode the script can be run directly
-test_script = $(INSTALLDIR_BIN_LOCAL)/$(TEST_TARGET_$(1)) "$$@"
-else
-# all other modes require a VM or similar to be set up
-test_script = $(L4DIR)/tool/bin/run_test
-endif
-
 # L4RE_ABS_SOURCE_DIR_PATH is used in gtest-internal.h to shorten absolute path
 # names to L4Re relative paths.
 CPPFLAGS += -DL4RE_ABS_SOURCE_DIR_PATH='"$(L4DIR_ABS)"'
