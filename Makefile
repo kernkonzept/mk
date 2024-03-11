@@ -945,7 +945,6 @@ help::
 	@echo "Miscellaneous targets:"
 	@echo "  switch_ram_base RAM_BASE=0xaddr"
 	@echo "                   - Switch physical RAM base of build to 'addr'."
-	@echo "  update           - Update working copy by using SVN."
 	@echo "  cont             - Continue building after fixing a build error."
 	@echo "  clean            - Call 'clean' target recursively."
 	@echo "  cleanfast        - Delete all directories created during build."
