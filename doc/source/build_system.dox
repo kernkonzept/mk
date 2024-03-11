@@ -267,6 +267,7 @@ File containing expected output.
 By default the variable is empty, which means the test binary
 is expected to produce TAP test output, that can be directly
 processed.
+When the `TEST_TAP_PLUGINS` variable is given, `TEST_EXPECTED` is ignored.
 
 \par `TEST_EXPECTED_REPEAT`
 Number of times the expected output should be repeated, by default 1.
