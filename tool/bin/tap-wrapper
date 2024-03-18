@@ -256,8 +256,11 @@ sub trigger_jdb_system_report {
   # abort here if no jdb found
   unless ($line)
     {
-      print $LOG_FD "Warning: jdb did not react to trigger. Maybe missing?\n";
-      print STDERR "Warning: jdb did not react to trigger. Maybe missing?\n";
+      my $timestamp = "";
+      $timestamp = get_timestamp if $test_timestamps;
+
+      print $LOG_FD "$timestamp Warning: jdb did not react to trigger. Maybe missing?\n";
+      print STDERR "$timestamp Warning: jdb did not react to trigger. Maybe missing?\n";
       return;
     }
 
