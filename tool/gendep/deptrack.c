@@ -464,8 +464,13 @@ gendep__register_unlink (char const *fn)
   gendep__deldep(fn);
 }
 
-
 static void finish (void) __attribute__ ((destructor));
+
+void
+gendep__finish (void)
+{
+  finish();
+}
 
 static void finish (void)
 {
@@ -482,6 +487,7 @@ static void finish (void)
         fputs(":\n", output);
       }
       fclose (output);
+      output = NULL; // don't write twice
       return;
     }
 
@@ -491,7 +497,7 @@ static void finish (void)
 
       /*
        * libgendep is called in a nested fashion (fork+execve in various
-       * wrappers), so we only write out the most inner occurence, which
+       * wrappers), so we only write out the most inner occurrence, which
        * means we only write as long as depfile_name is not there
        */
       if (access(depfile_name, W_OK) == -1 && errno == ENOENT)

@@ -31,12 +31,14 @@
 #  define FOPEN   __fopen
 #  define FOPEN64 __fopen64
 #  define UNLINK  __unlink
+#  define _EXIT   ___Exit
 #else
 #  define OPEN    open
 #  define OPEN64  open64
 #  define FOPEN   fopen
 #  define FOPEN64 fopen64
 #  define UNLINK  unlink
+#  define _EXIT   _Exit
 #endif
 
 #define VERBOSE 0	/* set to 1 to log open/unlink calls */
@@ -187,10 +189,38 @@ int UNLINK(const char *fn)
 }
 
 /* ----------------------------------------------------------------------- */
+typedef void(*_Exit_type)(int) __attribute__((noreturn));
+
+/* Alternative if destructors are skipped on exit, e.g. ld.lld. */
+static void __attribute__ ((__noreturn__)) real__Exit (int status)
+{
+  static _Exit_type f__Exit;
+
+  if(VERBOSE) printf("real__Exit(%d)\n", status);
+  if(f__Exit==0){
+    *(void**)(&f__Exit) = dlsym(RTLD_NEXT, "_Exit");
+    if(!f__Exit){
+      fprintf(stderr, "gendep: Cannot resolve _Exit()\n");
+      errno=ENOENT;
+      _exit(status);
+    }
+  }
+  gendep__finish();
+  f__Exit(status);
+}
+
+void _EXIT(int status) __THROW __attribute__ ((__noreturn__));
+void _EXIT(int status)
+{
+  real__Exit (status);
+}
+
+/* ----------------------------------------------------------------------- */
 #ifdef __ELF__
 int open (const char *fn, int flags, ...) __attribute__ ((alias ("__open")));
 int open64 (const char *fn, int flags, ...) __attribute__ ((alias ("__open64")));
 int unlink(const char *fn) __attribute__ ((alias ("__unlink")));
+void _Exit(int status) __attribute__ ((alias ("___Exit")));
 FILE *fopen (const char *path, const char *mode) __attribute__ ((alias ("__fopen")));
 FILE *fopen64 (const char *path, const char *mode) __attribute__ ((alias ("__fopen64")));
 #endif

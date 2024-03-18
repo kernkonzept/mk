@@ -7,7 +7,7 @@ MAN	= man/man7/libgendep.so.7
 MAN_SRC	= manpage.dox Doxyfile
 DDIR	= gendep-$(VERSION)
 
-CFLAGS	= -fPIC -Wall -pedantic -g
+CFLAGS	= -fPIC -Wall -Wextra -pedantic -g -O2
 
 USE_M_FLAG := $(if $(call check_compiler_opt,-m32,,$(HOST_CC),c),1)
 
