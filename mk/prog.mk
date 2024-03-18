@@ -71,15 +71,9 @@ LDFLAGS += $(addprefix -L, $(PRIVATE_LIBDIR) $(PRIVATE_LIBDIR_$(OSYSTEM)) $(PRIV
 # here because order of --defsym's is important
 ifeq ($(MODE),l4linux)
   L4LX_USER_KIP_ADDR = 0xbfdfd000
-  LDFLAGS += --defsym __L4_KIP_ADDR__=$(L4LX_USER_KIP_ADDR) \
-             --defsym __l4sys_invoke_direct=$(L4LX_USER_KIP_ADDR)+$(L4_KIP_OFFS_SYS_INVOKE) \
+  LDFLAGS += --defsym __l4sys_invoke_direct=$(L4LX_USER_KIP_ADDR)+$(L4_KIP_OFFS_SYS_INVOKE) \
              --defsym __l4sys_debugger_direct=$(L4LX_USER_KIP_ADDR)+$(L4_KIP_OFFS_SYS_DEBUGGER)
   CPPFLAGS += -DL4SYS_USE_UTCB_WRAP=1
-else
-ifneq ($(HOST_LINK),1)
-  LDFLAGS += --defsym __L4_KIP_ADDR__=$(L4_KIP_ADDR) \
-	     --defsym __L4_STACK_ADDR__=$(L4_STACK_ADDR)
-endif
 endif
 
 ifneq ($(HOST_LINK),1)
