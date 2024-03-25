@@ -137,7 +137,7 @@ endif
 
 DEPS	+= $(foreach file,$(TARGET), $(call BID_LINK_DEPS,$(file)))
 
-$(filter-out $(LINK_INCR) %.so %.o.a %.o.pr.a, $(TARGET)):%.a: $(OBJS)
+$(filter-out $(LINK_INCR) %.so %.o.a %.o.pr.a, $(TARGET)):%.a: $(OBJS) $(GENERAL_D_LOC)
 	@$(AR_MESSAGE)
 	$(VERBOSE)$(call create_dir,$(@D))
 	$(VERBOSE)$(RM) $@
@@ -145,7 +145,7 @@ $(filter-out $(LINK_INCR) %.so %.o.a %.o.pr.a, $(TARGET)):%.a: $(OBJS)
 	@$(BUILT_MESSAGE)
 
 # shared lib
-$(filter %.so, $(TARGET)):%.so: $(OBJS) $(LIBDEPS)
+$(filter %.so, $(TARGET)):%.so: $(OBJS) $(LIBDEPS) $(GENERAL_D_LOC)
 	@$(LINK_SHARED_MESSAGE)
 	$(VERBOSE)$(call create_dir,$(@D))
 	$(VERBOSE)$(call MAKEDEP,$(LD)) $(BID_LINK) -MD -MF $(call BID_link_deps_file,$@) -o $@ $(LDFLAGS_SO) \
