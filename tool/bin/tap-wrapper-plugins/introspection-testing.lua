@@ -667,15 +667,8 @@ function process_input(id, input)
                   .. input.info, 2)
     end
   elseif input.tag == 'KernelObjects' then
-    local two_lines = '^[^\n]+\n[^\n]+\n'
-    local headers = input.text:match(two_lines)
-    if not headers then tap:abort('extract object dump headers') end
 
-    local body = helper.gunzip(helper.uudecode(input.text:gsub(two_lines, '')))
-    if not body then tap:abort('decode object dump body') end
-    body = helper.sanitize(body):gsub('\27%[[^m]*m', '') -- escape color codes
-
-    local tag, dump = parse_dump(headers .. body)
+    local tag, dump = parse_dump(helper.decode_kernel_objects(input.text))
     sandbox:insert_dump(tag, dump)
   else
     tap:comment('WARNING: Unsupported tag ' .. input.tag, 2)

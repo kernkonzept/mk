@@ -91,10 +91,15 @@ end
 
 local function decode_kernel_objects(objects)
   local two_lines = '^[^\n]+\n[^\n]+\n'
+
+  local headers = objects:match(two_lines)
+  if not headers then tap:abort('extract object dump headers') end
+
   local body = helper.gunzip(helper.uudecode(objects:gsub(two_lines, '')))
   if not body then tap:abort('decode object dump body') end
   body = helper.sanitize(body):gsub('\27%[[^m]*m', '') -- escape color codes
-  return body
+
+  return headers .. body
 end
 
 
