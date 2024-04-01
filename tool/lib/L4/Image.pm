@@ -180,36 +180,15 @@ sub get_file_type
 sub fill_module
 {
   my $m_file = shift;
-  my $m_name = shift;
-  my $m_type = shift;
-  my $m_cmdline = shift;
-
   return ( error => "File '$m_file' does not exist" ) unless -e $m_file;
 
+  my $m_name = shift // basename($m_file);
+  my $m_type = shift // 0;
+  my $m_cmdline = shift // $m_name;
+
   my %d;
-
-  $m_name = basename($m_file) unless defined $m_name;
-  $m_type = 0 unless defined $m_type;
-  $m_cmdline = $m_name unless defined $m_cmdline;
-
-  $d{name} = $m_name;
-  $d{cmdline} = $m_cmdline;
-  $d{flags} = $m_type;
-  $d{filepath} = $m_file;
-
-  my $md5uncomp = Digest::MD5->new;
-  my $ff;
-  if (!open($ff, $m_file))
-    {
-      return ( error => "Failed to open '$m_file': $!" );
-    }
-  binmode $ff;
-  $md5uncomp->addfile($ff);
-  close $ff;
-  $d{md5sum_compr}   = $md5uncomp->hexdigest;
-  $d{md5sum_uncompr} = $md5uncomp->hexdigest;
-  $d{size} = -s $m_file;
-  $d{size_uncompressed} = -s $m_file;
+  my $r = update_module(\%d, $m_file, $m_name, $m_type, $m_cmdline);
+  return ( error => $r ) if $r;
 
   return %d;
 }
@@ -226,7 +205,7 @@ sub update_module
 
   $d->{name}     = $m_name if defined $m_name;
   $d->{cmdline}  = $m_cmdline if defined $m_cmdline;
-  $d->{flags}    = map_type_name_to_flag($m_type) if defined $m_type;
+  $d->{flags}    = $m_type if defined $m_type;
   $d->{filepath} = $m_file;
 
   my $md5uncomp = Digest::MD5->new;

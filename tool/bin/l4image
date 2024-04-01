@@ -266,7 +266,7 @@ sub op_replace
   my $r = L4::Image::update_module($d->{mods}[$pos],
                                    $args->{"--file"},
                                    $args->{"--name"},
-                                   $args->{"--type"},
+                                   L4::Image::map_type_name_to_flag($args->{"--type"}),
                                    $args->{"--cmdline"});
   error($r) if $r;
 }
