@@ -144,8 +144,12 @@ sub do_add_module
   error("Need to give a file via --file option")
     unless defined $args->{"--file"};
 
+  my %opts = ();
+  $opts{compress} = $args->{"--compress"} // "none";
+
   splice(@{${$d}{mods}}, $pos, 0, {
     L4::Image::fill_module($args->{"--file"},
+                           \%opts,
                            $args->{"--name"},
                            L4::Image::map_type_name_to_flag($args->{"--type"}),
                            $args->{"--cmdline"})
@@ -263,8 +267,12 @@ sub op_replace
   error("Need to give a file via --file option")
     unless defined $args->{"--file"};
 
+  my %opts = ();
+  $opts{compress} = $args->{"--compress"} // "none";
+
   my $r = L4::Image::update_module($d->{mods}[$pos],
                                    $args->{"--file"},
+                                   \%opts,
                                    $args->{"--name"},
                                    L4::Image::map_type_name_to_flag($args->{"--type"}),
                                    $args->{"--cmdline"});
@@ -293,7 +301,7 @@ sub op_edit
   else
     {
       system("$editor $mod->{filepath}");
-      my $r = L4::Image::update_module($mod, $mod->{filepath});
+      my $r = L4::Image::update_module($mod, $mod->{filepath}, $mod->{opts});
       error($r) if $r;
     }
 
@@ -315,6 +323,7 @@ sub create_image
   my $modules_list_file = shift;
   my $entry_name = shift;
   my $search_path = shift;
+  my $compress_all = shift;
 
   error("No architecture information found in image")
     unless $d->{arch};
@@ -337,6 +346,9 @@ sub create_image
       my $f;
       if (exists($mod->{opts}{uncompress}))
         {
+          printf("Warning: Will compress entry with uncompress flag!")
+            if ($compress_all // "none") ne "none";
+
           $tmpdir = tempdir('XXXXXXXX', CLEANUP => 1, TMPDIR => 1)
             unless defined $tmpdir;
           $f = L4::ModList::get_file_uncompressed_or_die(
@@ -353,8 +365,12 @@ sub create_image
           );
         }
 
+      # This is a hard override. Alt: =// only overrides if not explicitly set
+      $mod->{opts}{compress} = $compress_all if defined $compress_all;
+
       my %filled_mod = L4::Image::fill_module(
         $f,
+        $mod->{opts},
         $mod->{command},
         $mod->{type},
         $mod->{cmdline_quoted}
@@ -402,7 +418,7 @@ sub op_create
   $d->{attrs}{$_} = $set_attrs{$_}
     foreach (keys %set_attrs);
 
-  create_image($d, $modules_list, $entry, $searchpath);
+  create_image($d, $modules_list, $entry, $searchpath, $args->{"--compress-all"});
 }
 
 sub op_pack
@@ -686,7 +702,8 @@ my $help_module_add =
   "  --file                File to add as a module\n".
   "  --name                Name of the module\n".
   "  --type                Type of the module, use for: kernel sigma0 roottask\n".
-  "  --cmdline             Command line of the module\n";
+  "  --cmdline             Command line of the module\n".
+  "  --compress            Compression method for the module (none, gz)\n";
 
 my $help_module_find_one =
   "  --num                 Number of the module\n".
@@ -722,6 +739,7 @@ my %args = (
       "--file" => 1,
       "--name" => 1,
       "--cmdline" => 1,
+      "--compress" => 1,
       "--type" => 1,
     },
     mods_to_disk => 1,
@@ -739,6 +757,7 @@ my %args = (
       "--file" => 1,
       "--name" => 1,
       "--cmdline" => 1,
+      "--compress" => 1,
       "--type" => 1,
     },
     mods_to_disk => 1,
@@ -757,6 +776,7 @@ my %args = (
       "--file" => 1,
       "--name" => 1,
       "--cmdline" => 1,
+      "--compress" => 1,
       "--type" => 1,
     },
     mods_to_disk => 1,
@@ -775,6 +795,7 @@ my %args = (
       "--file" => 1,
       "--name" => 1,
       "--cmdline" => 1,
+      "--compress" => 1,
       "--type" => 1,
     },
     mods_to_disk => 1,
@@ -917,6 +938,7 @@ my %args = (
   },
   create => {
     args => {
+      "--compress-all" => 1,
       "--entry" => 1,
       "--modules-list-file" => 1,
       "--search-path" => 1,
@@ -926,6 +948,9 @@ my %args = (
     func => \&op_create,
     help => "Add modules according to a modules.list-entry.\n".
             "Any other existing module is being removed.\n".
+            "  --compress-all       Force compression method for all modules.\n".
+            "                       Available: none (default), gz\n".
+            "                       Overrides modules.list flags if specified.\n".
             "  --entry              Entry to use\n".
             "                       Can be omitted if modules.list file only\n".
             "                       contains a single entry.\n".
