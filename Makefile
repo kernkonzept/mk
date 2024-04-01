@@ -472,7 +472,7 @@ ifneq ($(CONFIG_INT_CPP_NAME_SWITCH),)
 	$(VERBOSE)set -e; X="$(OBJ_BASE)/tmp.$$$$$$RANDOM.c" ;               \
 	          echo 'int main(void){}'>$$X ;                              \
 	          rm -f $$X.out; $(LD_GENDEP_PREFIX) GENDEP_SOURCE=$$X       \
-	          GENDEP_OUTPUT=$$X.out $(CC) $(CCXX_FLAGS) -c $$X -o $$X.o; \
+	          GENDEP_OUTPUT=$$X.out $(CC) $(CARCHFLAGS) $(CCXX_FLAGS) -c $$X -o $$X.o; \
 	          if [ ! -e $$X.out ]; then                                  \
 	            echo -e "\n\033[1;31mGendep did not generate output. Is the compiler ($(CC)) statically linked?\033[0m"; \
 	            echo -e "Please use a dynamically linked compiler.\n"; exit 1; \
@@ -898,8 +898,8 @@ report:
 	@echo "Git:"
 	@git describe || true
 	@echo
-	@echo "CC       = $(CC) $(CCXX_FLAGS)"
-	@echo "CXX      = $(CXX) $(CCXX_FLAGS)"
+	@echo "CC       = $(CC) $(CARCHFLAGS) $(CCXX_FLAGS)"
+	@echo "CXX      = $(CXX) $(CARCHFLAGS) $(CCXX_FLAGS)"
 	@echo "HOST_CC  = $(HOST_CC)"
 	@echo "HOST_CXX = $(HOST_CXX)"
 	@echo "LD       = $(LD)"

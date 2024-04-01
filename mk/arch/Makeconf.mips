@@ -9,8 +9,8 @@ OFORMAT_mips              = elf$(CPU_ABI)-trad$(OFORMAT_mips_bl)mips
 BFD_ARCH_mips             = mips:isa$(CPU)
 L4_KIP_ADDR_mips         ?= 0x7fff0000
 L4_STACK_ADDR_mips       ?= 0x70000000
-CCXX_FLAGS_mips          += -march=mips$(CPU) -mabi=$(CPU_ABI)
-CCXX_FLAGS_mips          += $(if $(CONFIG_MIPS_LITTLE_ENDIAN),-EL,-EB)
+CARCHFLAGS_mips          += -march=mips$(CPU) -mabi=$(CPU_ABI)
+CARCHFLAGS_mips          += $(if $(CONFIG_MIPS_LITTLE_ENDIAN),-EL,-EB)
 LDFLAGS_mips             += $(if $(CONFIG_MIPS_LITTLE_ENDIAN),-EL,-EB) \
                             -z noexecstack
 SYSTEMS_ABI              += mips-l4f

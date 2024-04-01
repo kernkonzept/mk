@@ -15,7 +15,7 @@ CARCHFLAGS_amd64_K8         = -march=k8
 CARCHFLAGS_amd64_K10        = -march=k10
 CARCHFLAGS_amd64_opteron    = -march=opteron
 
-CCXX_FLAGS_amd64 += -m64
+CARCHFLAGS_amd64 += -m64
 
 SYSTEMS_ABI    += amd64-l4f
 SYSTEMS_PLAIN  += amd64-plain

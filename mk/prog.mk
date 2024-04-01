@@ -130,7 +130,7 @@ BID_LDFLAGS_FOR_LINKING = $(call BID_mode_var,NOPIEFLAGS) -MD -MF $(call BID_lin
                           $(addprefix -PC,$(REQUIRES_LIBS)) $(LDFLAGS)
 else
 BID_LDFLAGS_FOR_LINKING = $(call BID_mode_var,NOPIEFLAGS) -MD -MF $(call BID_link_deps_file,$@) \
-                          $(if $(HOST_LINK_TARGET),$(CCXX_FLAGS)) $(call ldflags_to_gcc,$(LDFLAGS))
+                          $(if $(HOST_LINK_TARGET),$(CARCHFLAGS) $(CCXX_FLAGS)) $(call ldflags_to_gcc,$(LDFLAGS))
 endif
 
 $(TARGET): $(OBJS) $(LIBDEPS)

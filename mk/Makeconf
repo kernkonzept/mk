@@ -61,6 +61,7 @@ BUILD_ABI        = $(patsubst "%",%,$(CONFIG_BUILD_ABI))
 BUILD_ARCH       = $(patsubst "%",%,$(CONFIG_BUILD_ARCH))
 MAKECONFS_ADD    = $(call strip_quotes,$(CONFIG_MAKECONFS_ADD))
 
+CARCHFLAGS       = $(CARCHFLAGS_$(ARCH)) $(CARCHFLAGS_$(ARCH)_$(CPU))
 CCXX_FLAGS       = $(CCXX_FLAGS_$(BUILD_ARCH))
 
 dv               = $(if $(filter-out default undefined,$(origin $(1))),$(1)-default,$(1))
@@ -399,20 +400,20 @@ BID_ASM_CPP_FILE_EXTENSIONS ?= .S
 # 2: return if argument does not work with compiler
 # 3: compiler name
 # 4: compiler type
-check_compiler_opt = $(if $(shell $(3) $(CCXX_FLAGS) $(1) -c -o /dev/null -x $(4) \
+check_compiler_opt = $(if $(shell $(3) $(CARCHFLAGS) $(CCXX_FLAGS) $(1) -c -o /dev/null -x $(4) \
                                 /dev/null 2>&1),$(2),$(1))
 checkcc   = $(call check_compiler_opt,$(1),$(2),$(CC),c)
 checkcxx  = $(call check_compiler_opt,$(1),$(2),$(CXX),c++)
 checkdtc  = $(shell if $(DTC) $(1) --version /dev/null > /dev/null 2>&1; \
                     then echo "$(1)"; fi)
-checkcxx_nowarn = $(if $(shell $(CXX) $(CCXX_FLAGS) -W$(1) -c -o /dev/null \
+checkcxx_nowarn = $(if $(shell $(CXX) $(CARCHFLAGS) $(CCXX_FLAGS) -W$(1) -c -o /dev/null \
                                       -x c++ /dev/null 2>&1),,-Wno-$(1))
 checkld   = $(shell if $(callld) -v "$1" > /dev/null 2>&1; \
              then echo "$(1)"; else echo "$(2)"; fi)
 
-callcc    = LC_ALL=C $(CC)  $(CCXX_FLAGS)
-callcxx   = LC_ALL=C $(CXX) $(CCXX_FLAGS)
-callfc    = LC_ALL=C $(FC)  $(CCXX_FLAGS)
+callcc    = LC_ALL=C $(CC)  $(CARCHFLAGS) $(CCXX_FLAGS)
+callcxx   = LC_ALL=C $(CXX) $(CARCHFLAGS) $(CCXX_FLAGS)
+callfc    = LC_ALL=C $(FC)  $(CARCHFLAGS) $(CCXX_FLAGS)
 callld    = LC_ALL=C $(firstword $(LD))
 
 get_cc_version_part = $(shell echo $(1) | $(callcc) -E -x c - | tail -1)

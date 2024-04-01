@@ -6,7 +6,7 @@ OFORMAT_ppc32              = elf32-powerpc
 BFD_ARCH_ppc32             = powerpc
 L4_KIP_ADDR_ppc32         ?= 0xaffff000
 L4_STACK_ADDR_ppc32       ?= 0xb0000000
-CCXX_FLAGS_ppc32          += -m32
+CARCHFLAGS_ppc32          += -m32
 
 SYSTEMS_ABI    += ppc32-l4f
 SYSTEMS_PLAIN  += ppc32-plain

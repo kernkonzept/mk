@@ -20,7 +20,7 @@ CARCHFLAGS_sparc_niagara2    = -mcpu=niagara2
 CARCHFLAGS_sparc_niagara3    = -mcpu=niagara3
 CARCHFLAGS_sparc_niagara4    = -mcpu=niagara4
 
-CCXX_FLAGS_sparc += -m32
+CARCHFLAGS_sparc += -m32
 
 SYSTEMS_ABI    += sparc-l4f
 SYSTEMS_PLAIN  += sparc-plain

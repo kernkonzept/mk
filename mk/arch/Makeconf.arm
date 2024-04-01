@@ -22,7 +22,7 @@ CARCHFLAGS_arm_armv7a     = $(GCCARMV7AFPOPT_arm)
 CARCHFLAGS_arm_armv7r     = $(GCCARMV7RFPOPT_arm)
 CARCHFLAGS_arm_armv8r     = -march=armv8-r+fp.sp
 
-CCXX_FLAGS_arm   += $(if $(CONFIG_BID_THUMB),-mthumb,-marm)
+CARCHFLAGS_arm   += $(if $(CONFIG_BID_THUMB),-mthumb,-marm)
 
 SYSTEMS_ABI    += arm-l4f
 SYSTEMS_PLAIN  += arm-plain
