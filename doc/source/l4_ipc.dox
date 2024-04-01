@@ -206,6 +206,14 @@ In certain cases it also makes sense to specify an IPC timeout different from
       #L4_IPC_TIMEOUT_NEVER and #L4_IPC_TIMEOUT_0. Specifying a different
       timeout causes more maintenance effort for the kernel.
 
+\note Special care is required if a finite timeout for the receive phase of an
+      IPC call is specified: The IPC receive operation could abort before the
+      partner was able to send the reply message. Under certain circumstances
+      the partner may still have the temporary reply capability to the calling
+      thread and may use this capability to reply to the caller at a later,
+      unexpected time specifying an arbitrary IPC label. This case is relevant
+      for servers which call another, possibly untrusted, server while serving a
+      client request.
 
 \subsection l4re_concepts_descr_utcb User-level Thread Control Block
 The \ref l4_utcb_api "UTCB" is located on a power-of-2-sized and
