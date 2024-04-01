@@ -4,6 +4,7 @@
 #
 use strict;
 use warnings;
+use feature qw/state/;
 use File::Basename;
 use File::Temp qw/tempdir tempfile/;
 use Cwd qw/cwd/;
@@ -16,6 +17,17 @@ BEGIN { $libdir = dirname(-l $0 ? readlink($0) : $0).'/../lib'; unshift @INC, $l
 
 use L4::Image;
 use L4::ModList;
+
+sub warn_once
+{
+  state %warnings = ();
+
+  my $msg = shift;
+  return if exists $warnings{$msg};
+
+  print("WARNING: $msg\n");
+  $warnings{$msg} = undef;
+}
 
 sub error
 {
@@ -147,6 +159,10 @@ sub do_add_module
   my %opts = ();
   $opts{compress} = $args->{"--compress"} // "none";
 
+  my $feats = $d->{attrs}{"bootstrap:features"} // "";
+  warn_once("bootstrap cannot decompress '$opts{compress}'. Image may not boot.")
+    if $opts{compress} ne "none" and $feats !~ /\bcompress-$opts{compress}\b/;
+
   splice(@{${$d}{mods}}, $pos, 0, {
     L4::Image::fill_module($args->{"--file"},
                            \%opts,
@@ -270,6 +286,10 @@ sub op_replace
   my %opts = ();
   $opts{compress} = $args->{"--compress"} // "none";
 
+  my $feats = $d->{attrs}{"bootstrap:features"} // "";
+  warn_once("bootstrap cannot decompress '$opts{compress}'. Image may not boot.")
+    if $opts{compress} ne "none" and $feats !~ /\bcompress-$opts{compress}\b/;
+
   my $r = L4::Image::update_module($d->{mods}[$pos],
                                    $args->{"--file"},
                                    \%opts,
@@ -367,6 +387,12 @@ sub create_image
 
       # This is a hard override. Alt: =// only overrides if not explicitly set
       $mod->{opts}{compress} = $compress_all if defined $compress_all;
+      my $compr = $mod->{opts}{compress} // "none";
+
+      my $feats = $d->{attrs}{"bootstrap:features"} // "";
+      warn_once("bootstrap cannot decompress '$compr'. Image may not boot.")
+        if $compr ne "none" and $feats !~ /\bcompress-$compr\b/;
+
 
       my %filled_mod = L4::Image::fill_module(
         $f,
