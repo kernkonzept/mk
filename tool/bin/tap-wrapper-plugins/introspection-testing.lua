@@ -690,7 +690,6 @@ if not lfs.attributes(dir) then tap:abort('valid path as first argument') end
 
 local ids, input = helper.load_snippets(dir)
 
-table.sort(ids, function(a, b) return tonumber(a) < tonumber(b) end)
 for _, id in ipairs(ids) do
   process_input(id, input[id])
 end
