@@ -1,3 +1,6 @@
+// vi:ft=c
+/* -*- c -*- */
+
 /**
 \page l4re_concepts_ipc %L4 Inter-Process Communication (IPC)
 
