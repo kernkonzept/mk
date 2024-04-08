@@ -274,18 +274,10 @@ config EXPERIMENTAL
 
 	  Use with caution!
 
-config EXPERT
-	bool "Show expert options"
-	help
-	  Expert options are those that you should never have to change unless
-	  you have a very good reason to do so. Their default values are
-	  intended to be used for nearly all use-cases. So only enable this
-	  option if you are certain that you need it and ensure you are aware
-	  of all consequences when changing any of them.
+if EXPERIMENTAL
 
 choice
 	prompt "Position independent executables"
-	depends on EXPERIMENTAL
 	depends on BUILD_ARCH_amd64 || BUILD_ARCH_arm || BUILD_ARCH_arm64
 	default BID_PIE_NONE
 
@@ -315,16 +307,26 @@ endchoice
 
 config BID_THUMB
 	bool "Build thumb code"
-	depends on EXPERIMENTAL
 	depends on BUILD_ARCH_arm
 	help
 	  Build with -mthumb by default. This will reduce the code size at the
 	  slight expense of execution speed.
 
+endif # EXPERIMENTAL
+
 config BID_PIE
 	bool
 	default y
 	depends on BID_PIE_VOLUNTARY || BID_PIE_ALL
+
+config EXPERT
+	bool "Show expert options"
+	help
+	  Expert options are those that you should never have to change unless
+	  you have a very good reason to do so. Their default values are
+	  intended to be used for nearly all use-cases. So only enable this
+	  option if you are certain that you need it and ensure you are aware
+	  of all consequences when changing any of them.
 
 endmenu
 
