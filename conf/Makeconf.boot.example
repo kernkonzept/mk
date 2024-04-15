@@ -61,6 +61,14 @@ QEMU_OPTIONS-arm-rv_vexpress_a15 += -M vexpress-a15 -m 2047 -cpu cortex-a15 \
                                     -smp 4
 QEMU_OPTIONS-arm-rv_pbx          += realview-pbx-a9 -m 512 -cpu cortex-a9 -smp 4
 QEMU_OPTIONS-arm-arm_virt        += -M virt,virtualization=true -cpu cortex-a15 -m 1024
+QEMU_OPTIONS-arm-arm_mps3_an536  += -M mps3-an536 -smp 2
+# Have to add additional serial devices to see output of UARTs other than UART0.
+# UART0: Exclusively accessible to CPU0.
+# UART1: Exclusively accessible to CPU1.
+# UART2/3/4/5: Shared between CPU0 and CPU1.
+# The following adds serial devices for UART0-3 and muxes them all into stdio.
+# Must not be combined with the usual "-serial stdio".
+# QEMU_OPTIONS-arm-arm_mps3_an536  += -chardev stdio,mux=on,id=stdio-mux -serial chardev:stdio-mux -serial chardev:stdio-mux -serial chardev:stdio-mux -serial chardev:stdio-mux
 
 QEMU_OPTIONS-arm64-arm_virt      += -M virt,virtualization=true,iommu=smmuv3 -cpu cortex-a57 -m 1024
 
