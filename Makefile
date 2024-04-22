@@ -103,10 +103,19 @@ endif
 ifneq ($(strip $(B)),)
 BUILDDIR_TO_CREATE := $(B)
 endif
+
 ifneq ($(strip $(BUILDDIR_TO_CREATE)),)
-ifneq ($(wildcard $(L4DIR)/mk/defconfig/config.$(T)),)
-  DROPSCONF_DEFCONFIG=$(L4DIR)/mk/defconfig/config.$(T)
+
+# Use custom default configuration file if T is specified
+ifneq ($(T),)
+  DROPSCONF_DEFCONFIG_CANDIDATE=$(L4DIR)/mk/defconfig/config.$(T)
+  ifneq ($(wildcard $(DROPSCONF_DEFCONFIG_CANDIDATE)),)
+    DROPSCONF_DEFCONFIG=$(DROPSCONF_DEFCONFIG_CANDIDATE)
+  else
+    $(error ERROR: Default configuration file $(DROPSCONF_DEFCONFIG_CANDIDATE) (derived from T=$(T)) not found)
+  endif
 endif
+
 all::
 	@echo "Creating build directory \"$(BUILDDIR_TO_CREATE)\"..."
 	@if [ -e $(BUILDDIR_TO_CREATE) ]; then \
