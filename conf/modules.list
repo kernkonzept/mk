@@ -151,7 +151,7 @@ module ned
 module cons
 module l4vio_net_p2p
 module uvmm
-module[arch=arm,fname=virt.dtb]    dtb/virt-arm_virt-64.dtb
+module[arch=arm,fname=virt.dtb]    dtb/virt-arm_virt-32.dtb
 module[arch=arm64,fname=virt.dtb]  dtb/virt-arm_virt-64.dtb
 module[arch=amd64,fname=virt.dtb]  dtb/virt-pc.dtb
 module[arch=arm,fname=linux,nostrip]      https://l4re.org/download/Linux-kernel/arm32/zImage-6.6.8
