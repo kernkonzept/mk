@@ -27,7 +27,9 @@ all::
 # config-tool
 
 DROPSCONF               = y
-DROPSCONF_DEFCONFIG    ?= $(L4DIR)/mk/defconfig/config.amd64
+TEMPLDIR	       := mk/defconfig
+DFL_TEMPLATE           := amd64
+DROPSCONF_DEFCONFIG    ?= $(TEMPLDIR)/config.$(DFL_TEMPLATE)
 KCONFIG_FILE            = $(OBJ_BASE)/Kconfig.generated
 KCONFIG_FILE_DEPS       = $(OBJ_BASE)/.Kconfig.generated.d
 KCONFIG_FILE_SRC        = $(L4DIR)/mk/Kconfig
@@ -108,7 +110,7 @@ ifneq ($(strip $(BUILDDIR_TO_CREATE)),)
 
 # Use custom default configuration file if T is specified
 ifneq ($(T),)
-  DROPSCONF_DEFCONFIG_CANDIDATE=$(L4DIR)/mk/defconfig/config.$(T)
+  DROPSCONF_DEFCONFIG_CANDIDATE=$(TEMPLDIR)/config.$(T)
   ifneq ($(wildcard $(DROPSCONF_DEFCONFIG_CANDIDATE)),)
     DROPSCONF_DEFCONFIG=$(DROPSCONF_DEFCONFIG_CANDIDATE)
   else
@@ -797,7 +799,7 @@ BID_CHECKBUILD_LOG_REDIR_f = $(if $(BID_CHECKBUILD_LOG), 1>>$(BID_CHECKBUILD_LOG
 checkbuild_prepare.%:
 	$(if $(CHECK_INCREMENTAL),,rm -rf $(CHECK_BASE_DIR)/$(patsubst checkbuild_prepare.%,config.%,$@))
 
-$(CHECK_BASE_DIR)/config.%/.kconfig: mk/defconfig/config.% checkbuild_prepare.%
+$(CHECK_BASE_DIR)/config.%/.kconfig: $(TEMPLDIR)/config.% checkbuild_prepare.%
 	mkdir -p $(@D)
 	cp $< $@
 
