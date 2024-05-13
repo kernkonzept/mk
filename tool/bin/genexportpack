@@ -34,6 +34,11 @@ unless (defined $targetdir) {
   exit(1);
 }
 
+unless ($targetdir =~ m,^/,) {
+  print "==> Error: EXPORTPACKTARGETDIR has to be an absolute path!\n";
+  exit(2);
+}
+
 system("mkdir -p \"$targetdir\"");
 
 open(GRUB1, ">$targetdir/menu.lst")
