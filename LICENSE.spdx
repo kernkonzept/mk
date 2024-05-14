@@ -24,7 +24,9 @@ PackageDownloadLocation: NOASSERTION
 
 FileName: ./tool/bin/abs2rel.sh
 SPDXID: SPDXRef-abs2rel.sh
-LicenseConcluded: GPL-2.0-only
+LicenseConcluded: MIT
+LicenseComments: <text>The license is not exactly MIT but a custom license in
+                 the style of MIT</text>
 LicenseInfoInFile: NOASSERTION
 FileCopyrightText: NOASSERTION
 
