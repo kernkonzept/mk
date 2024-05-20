@@ -118,11 +118,12 @@ end
 -- Abort script with some “not ok” TAP output but with zero exit code. This is
 -- intended for expected fatal errors. Errors that abort the script with
 -- non-zero exit code are considered a bug in the script.
+---@param plugin string
 ---@param comment string
-function tap:abort(comment)
+function tap:abort(plugin, comment)
   tap:comment('FATAL ERROR:')
   tap:comment(comment, 2)
-  tap:not_ok('Introspection::FatalError')
+  tap:not_ok(plugin .. '::FatalError')
   tap:flush_plan()
   os.exit(0)
 end

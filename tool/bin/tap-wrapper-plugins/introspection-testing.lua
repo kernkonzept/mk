@@ -41,6 +41,8 @@ inspect = require('inspect') -- luarocks install inspect
 helper  = require('helper')
 tap     = require('tap')
 
+local plugin      = "Introspection"
+
 ---------------------
 -- DATA STRUCTURES --
 ---------------------
@@ -397,7 +399,7 @@ function parse_dump(dump)
       res = {line:match(pat)}
     end
     if res[1] == nil then
-      tap:abort('object dump line: "' .. inspect(line)
+      tap:abort(plugin, 'object dump line: "' .. inspect(line)
                 .. '" does not match pattern "' .. pat .. '"')
     end
     return table.unpack(res)
@@ -406,8 +408,8 @@ function parse_dump(dump)
   local version =
     parse(table.remove(lines, 1), '^dump format version number: (%d+)$')
   if version ~= '0' then
-    tap:abort('Expected kernel object dump version 0 but got ' .. version
-              .. '.')
+    tap:abort(plugin, 'Expected kernel object dump version 0 but got '
+              .. version .. '.')
   end
 
   local tag = parse(table.remove(lines, 1), '^user space tag: (%w+)$')
@@ -431,7 +433,7 @@ function parse_dump(dump)
       end
 
       if objects[cur_obj_id].caps[cap_addr] ~= nil then
-        tap:abort('object dump: ambiguous capability address '
+        tap:abort(plugin, 'object dump: ambiguous capability address '
                   .. inspect(cap_addr) .. '. Source line:\n' .. line)
       end
       objects[cur_obj_id].caps[cap_addr] = {
@@ -455,12 +457,14 @@ function parse_dump(dump)
       local attrs = {}
       for attr in attrstrs:gmatch('[^%s]+') do
         local split_attr = split(attr, '[^=]+')
-        if #split_attr > 2 then tap:abort("Failed parsing attribute") end
+        if #split_attr > 2 then
+          tap:abort(plugin, "Failed parsing attribute")
+        end
         attrs[split_attr[1]] = split_attr[2] or true
       end
 
       if objects[obj_id] ~= nil then
-        tap:abort('object dump: ambiguous object id ' .. inspect(obj_id)
+        tap:abort(plugin, 'object dump: ambiguous object id ' .. inspect(obj_id)
               .. '. Source line:\n' .. line)
       end
 
@@ -632,7 +636,8 @@ end
 -- is used.
 invalid_sandbox = setmetatable({},
                     { __index = function ()
-                                  tap:abort('First action must be RESETSCOPE.')
+                                  tap:abort(plugin,
+                                            'First action must be RESETSCOPE.')
                                 end })
 -- Start with invalid sandbox. The first actual sandox must be initialized with
 -- RESETSCOPE because a sandbox needs a scope name.
@@ -679,11 +684,13 @@ end
 ----------
 
 if #arg ~= 1 then
-  tap:abort('number of command-line arguments')
+  tap:abort(plugin, 'number of command-line arguments')
 end
 
 local dir = arg[1]
-if not lfs.attributes(dir) then tap:abort('valid path as first argument') end
+if not lfs.attributes(dir) then
+  tap:abort(plugin, 'valid path as first argument')
+end
 
 local ids, input = helper.load_snippets(dir)
 

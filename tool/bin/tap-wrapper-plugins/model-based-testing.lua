@@ -44,13 +44,16 @@ package.path = package.path .. ";" .. plugin_path
 helper            = require('helper')
 tap               = require('tap')
 
+local plugin      = "ModelBasedTesting"
 
 if #arg ~= 1 then
-  tap:abort('number of command-line arguments')
+  tap:abort(plugin, 'number of command-line arguments')
 end
 
 local dir = arg[1]
-if not lfs.attributes(dir) then tap:abort('no valid path as first argument') end
+if not lfs.attributes(dir) then
+  tap:abort(plugin, 'no valid path as first argument')
+end
 
 local abstract = nil
 
@@ -65,22 +68,24 @@ for _, id in pairs(ids) do
     -- at the end of the last input
     objects = objects .. '\n'
     local f = io.open(path, 'w')
-    if not f then tap:abort('opening ' .. path) end
+    if not f then tap:abort(plugin, 'opening ' .. path) end
     ---@cast f -nil
     f:write(objects)
-    if not f then tap:abort('writing file ' .. path) end
+    if not f then tap:abort(plugin, 'writing file ' .. path) end
     f:close()
   elseif input.tag == 'ModelBasedTest' and input.info == 'AbstractTestName' then
     abstract = input.text
   end
 end
 
-if not abstract then tap:abort('no name of abstract test file provided') end
+if not abstract then
+  tap:abort(plugin, 'no name of abstract test file provided')
+end
 ---@cast abstract -nil
 
 -- SEARCHPATH is set by the TapperWrapper framework
 local searchpath = os.getenv("SEARCHPATH")
-if not searchpath then tap:abort('SEARCHPATH is not set') end
+if not searchpath then tap:abort(plugin, 'SEARCHPATH is not set') end
 ---@cast searchpath -nil
 
 -- search for the abstract test file in the directories in SEARCHPATH
@@ -89,18 +94,20 @@ for path in string.gmatch(searchpath, '[^:]+') do
   local f =  path .. '/' .. abstract
   local _, err = lfs.attributes(f)
   if not err then
-    if testfile then tap:abort("test file " .. abstract
+    if testfile then tap:abort(plugin, "test file " .. abstract
                                .. " is not unique in search path") end
     testfile = f
   end
 end
-if not testfile then tap:abort("test file " .. abstract
+if not testfile then tap:abort(plugin, "test file " .. abstract
                                .. " not found in search path") end
 --@cast testfile -nil
 
 -- TODO: document that user or framework is required to set this env variable
 local model = os.getenv("L4RE_MODEL")
-if not model then tap:abort('model executable not provided in L4RE_MODEL') end
+if not model then
+  tap:abort(plugin, 'model executable not provided in L4RE_MODEL')
+end
 --@cast model -nil
 
 os.execute(model .. ' compare ' .. testfile .. ' ' .. dir)
