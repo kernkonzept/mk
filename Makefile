@@ -416,7 +416,7 @@ Makeconf.bid.local-helper:
 	              GCCSTACKPROTOPT GCCSYSLIBDIRS GCCVERSION \
 	              GCCWNOC99DESIGNATOR GCCWNONOEXCEPTTYPE GCCWNOPSABI \
 	              GCCWNOUNUSEDPRIVATEFIELD LDNOWARNRWX LDVERSION \
-	              RISCV_ZICSR_ZIFENCEI \
+	              RISCV_ZICSR_ZIFENCEI CLANGVISNEWDELETEHIDDEN \
 	              $(call add_if_f,GCCARMV5TEFPOPT_$(ARCH)) \
 	              $(call add_if_f,GCCARMV6FPOPT_$(ARCH)) \
 	              $(call add_if_f,GCCARMV6T2FPOPT_$(ARCH)) \
