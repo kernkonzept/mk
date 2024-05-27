@@ -31,6 +31,10 @@
 #        roottask moe rom/file.cfg
 #        module file.cfg
 #
+# Modules can have an arbitrary number of attributes (key-value-pairs). The
+# attribute key must be prefixed by 'attr:':
+# - module[attr:nodes=0-3]: The attribute 'nodes' with the value '0-3'
+#
 # Define a module group:
 #  group oftenneedthose
 #  module one

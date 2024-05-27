@@ -211,6 +211,16 @@ sub update_module
   $d->{flags}    = $m_type if defined $m_type;
   $d->{filepath} = $m_file;
 
+  my %attrs;
+  foreach my $key (sort keys %{$m_opts})
+    {
+      if ($key =~ /^attr:(.*)/)
+        {
+          $attrs{$1} = $m_opts->{$key};
+        }
+    }
+  $d->{attrs} = \%attrs;
+
   my $md5 = Digest::MD5->new;
   my $ff;
   if (!open($ff, $m_file))
@@ -749,9 +759,9 @@ sub import_modules
           $s =~ s/^\S+//;
           $s = $mods[$i]{name}.$s;
           my $flags = "";
+          my @kv;
           if (%{$mods[$i]{opts}})
             {
-              my @kv;
               foreach my $k ( keys %{$mods[$i]{opts}} )
                 {
                   my $f = $k;
@@ -759,6 +769,16 @@ sub import_modules
                   $f .= "=$v" if defined $v;
                   push @kv, $f;
                 }
+            }
+          if (defined $mods[$i]{attrs})
+            {
+              foreach my $k ( keys %{$mods[$i]{attrs}} )
+                {
+                  push @kv, "attr:" . $k . "=" . $mods[$i]{attrs}{$k}
+                }
+            }
+          if (@kv)
+            {
               $flags = "[" . join(",", @kv) . "]";
             }
           if ($type == 1) {
