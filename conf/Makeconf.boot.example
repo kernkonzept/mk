@@ -72,7 +72,7 @@ QEMU_OPTIONS-arm-arm_mps3_an536  += -M mps3-an536 -smp 2
 
 QEMU_OPTIONS-arm64-arm_virt      += -M virt,virtualization=true,iommu=smmuv3 -cpu cortex-a57 -m 1024
 
-QEMU_OPTIONS-mips-malta          += -M malta -m 256 -cpu P5600
+QEMU_OPTIONS-mips-malta          += -M malta -m 1024 -cpu P5600
 
 QEMU_OPTIONS-riscv-riscv_virt    += -bios default -M virt -m 1024 -smp 4
 QEMU_OPTIONS-riscv-sifive_u      += -bios default -M sifive_u -m 1024 -smp 4
