@@ -150,6 +150,17 @@ config BID_BUILD_TESTS
 
 	  If unsure, say 'N'.
 
+config BID_BUILD_TESTS_SHARED
+	bool "Use shared linking for tests" if EXPERT
+	depends on BID_BUILD_TESTS
+	default y if !ARCH_NO_MMU
+	help
+	  Linking tests shared reduces the on-disk footprint of the build tree,
+	  and, potentially, also the amount of data needed to be transferred on
+	  a single test invocation.
+
+	  Enable this on platforms that support it if in doubt.
+
 config INT_CPP_NAME_SWITCH
 	bool "Automatically determine internal gcc preprocessor names"
 	default y
