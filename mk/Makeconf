@@ -464,7 +464,7 @@ check_path_absolute = $(if $(patsubst /%,,$(2)),$(error Path $(1)=$(2) is not ab
 
 LDVERSION_f     = $(shell $(callld) -v | sed -e \
 		    $(if $(filter LLD,$(shell $(callld) -v)),\
-		     's/.* \([0-9]\+\)\.\([0-9]\+\)\.\([0-9]\+\).*/\1\2\3/',\
+		     '/.* \([0-9]\+\)\.\([0-9]\+\)\.\([0-9]\+\).*/{s//\1\2\3/;p;q}' -n,\
 		     's/.* \([0-9]\)\.\([^. ]*\).*/\1\2/'))
 LDNOWARNRWX_f   = $(call checkld,--no-warn-rwx-segments)
 GCCSYSLIBDIRS_f = $(shell $(callcc) -print-search-dirs | sed '/^libraries:/{s/^libraries: =\?/-L/;s/:/ -L/g;q;};d')
