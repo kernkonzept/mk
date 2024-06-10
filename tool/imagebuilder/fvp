@@ -11,7 +11,10 @@ fi
 
 "$(dirname $0)/elfimage" || exit $?
 
+declare optlist=( $MAKECONF_FVP_OPTIONS "-a" "cluster0*=$TARGET_IMAGE" )
+
+echo "FVP options: ${optlist[*]}"
+
 # We need to override the stdout buffering, otherwise tap-wrapper won't see
 # the last couple of lines.
-exec stdbuf -oL "$MAKECONF_FVP_PATH" $MAKECONF_FVP_OPTIONS \
-  -a "cluster0*=$TARGET_IMAGE"
+exec stdbuf -oL "$MAKECONF_FVP_PATH" "${optlist[@]}"
