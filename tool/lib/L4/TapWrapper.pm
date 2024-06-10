@@ -112,6 +112,7 @@ sub finalize {
   kill_ps_tree($pid);
   $pid = -1; # clean behaviour on multiple calling
 
+  my $plan_found = 0;
   my $taplines = 0;
   foreach (@_plugins, @_filters)
     {
@@ -120,6 +121,7 @@ sub finalize {
           if (/^1\.\.([0-9]+)/)
             {
               $taplines += $1;
+              $plan_found = 1;
             }
           else
             {
@@ -130,7 +132,7 @@ sub finalize {
             }
         }
     }
-  print $TAP_FD "1..$taplines\n" if $print_to_tap_fd;
+  print $TAP_FD "1..$taplines\n" if $print_to_tap_fd && $plan_found;
 }
 
 sub fail_test
@@ -271,4 +273,3 @@ Defaults to 0.
 
 
 =cut
-
