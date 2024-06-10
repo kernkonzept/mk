@@ -93,14 +93,18 @@ end
 local function decode_kernel_objects(objects)
   local two_lines = '^[^\n]+\n[^\n]+\n'
 
-  local headers = objects:match(two_lines)
-  if not headers then tap:abort('extract object dump headers') end
+  -- Heuristically check if object list is compressed and encoded (see kernel
+  -- config option CONFIG_JDB_GZIP). If so, then decode and decompress.
+  if objects:find(two_lines .. 'begin ') then
+    local headers = objects:match(two_lines)
+    if not headers then tap:abort('extract object dump headers') end
 
-  local body = helper.gunzip(helper.uudecode(objects:gsub(two_lines, '')))
-  if not body then tap:abort('decode object dump body') end
-  body = helper.sanitize(body):gsub('\27%[[^m]*m', '') -- escape color codes
+    local body = gunzip(uudecode(objects:gsub(two_lines, '')))
+    if not body then tap:abort('decode object dump body') end
+    objects = headers .. body
+  end
 
-  return headers .. body
+  return sanitize(objects):gsub('\27%[[^m]*m', '')  -- remove color escape codes
 end
 
 
