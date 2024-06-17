@@ -497,7 +497,7 @@ sub get_deps_recursive(@)
   return values %deps;
 }
 
-sub figure_out_pkg_dependecies(@)
+sub figure_out_pkg_dependencies(@)
 {
   my %newpkgs;
   foreach (@_)
@@ -841,7 +841,7 @@ EOFOO
       gen_required_by_dot_subtree($pnode, *F);
 
       my %rev_deps = figure_out_dependant_pkgs($pkg);
-      my @deps     = figure_out_pkg_dependecies($pkg);
+      my @deps     = figure_out_pkg_dependencies($pkg);
       print F "  \"$pkg\" [style=filled, fillcolor=dodgerblue];\n";
       print F "}\n";
       close F;
@@ -962,7 +962,7 @@ sub show_pkg_deps($$@)
   my $prefix = shift;
   scan_files($base_path, 0);
 
-  my @p = figure_out_pkg_dependecies(@_);
+  my @p = figure_out_pkg_dependencies(@_);
 
   print join("\n", map { "$prefix$_" } sort @p), "\n" if $prefix;
   print join(' ', sort @p), "\n"                      unless $prefix;
@@ -976,7 +976,7 @@ sub show_pkg_deps_and_rdeps($$@)
   scan_files($base_path, 0);
 
   my %r = figure_out_dependant_pkgs(@_);
-  my @p = figure_out_pkg_dependecies(@_, keys %r);
+  my @p = figure_out_pkg_dependencies(@_, keys %r);
 
   print join("\n", map { "$prefix$_" } sort @p), "\n" if $prefix;
   print join(' ', sort @p), "\n"                      unless $prefix;
