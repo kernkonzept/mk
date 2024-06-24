@@ -64,13 +64,13 @@ fi
 
 
 # Check provided parameters
-if [[ -z ${source_dir} || -z ${dest_dir} ]]; then
-  echo "Please provide source and destination directory paths."
+if [[ ! -d "${source_dir}" || ! -d "${obj_base}" ]]; then
+  echo "Please provide valid directories for --sdir and --obj-base."
   exit 1
 fi
 
-if [[ -z ${obj_base} ]]; then
-  echo "Please provide the L4Re build directory path."
+if [[ -z ${dest_dir}  ]]; then
+  echo "Please provide the destination directory path."
   exit 1
 fi
 
