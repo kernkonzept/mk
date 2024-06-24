@@ -34,6 +34,21 @@ define newline
 
 endef
 
+# Tools #
+#########
+
+# Variable value, only if it does not come from the environment. Otherwise empty
+non_env_var = $(if $(findstring environment,$(origin $1)),,$($1))
+
+# The name of a variable if it is set (not in environment)
+name_if_set = $(if $(call non_env_var,$(1)),$(1))
+
+# Numbers #
+###########
+
+# maximum number from wordlist
+max_num = $(shell echo $(strip $1) | tr ' ' $$'\n' | sort -n | tail -1)
+
 
 # Strings #
 ###########

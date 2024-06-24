@@ -81,7 +81,9 @@ unshift @modulepaths, split(/[:\s]+/, $ENV{MODULE_SEARCH_PATH})
   if defined($ENV{MODULE_SEARCH_PATH}) && $ENV{MODULE_SEARCH_PATH} ne "";
 # need a split according to the rules of shell quoting
 my $test_setup  = $ENV{TEST_SETUP} || '';
-my $test_target = $ENV{TEST_TARGET} || '';
+my @test_target = split(' ', $ENV{TEST_TARGET} || '');
+my $single_test_target = $ENV{TEST_TARGET} || '';
+my @extra_test  = split(' ', $ENV{EXTRA_TEST} || '');
 my $test_args   = $ENV{TEST_ARGS} || '';
 my $ned_cfg     = $ENV{NED_CFG} || '';
 my $moe_args    = $ENV{MOE_ARGS} || '';
@@ -104,6 +106,8 @@ $platform = L4::Makeconf::get($obj_base,"PLATFORM_TYPE") unless defined $platfor
 
 print STDERR "Warning: Unable to determine platform type.\n"
   unless defined $platform;
+
+$single_test_target = "invalid_in_bundle_mode" if defined $ENV{BUNDLE_ENV};
 
 if ($ENV{TEST_KUNIT_RESTART})
   {
@@ -154,7 +158,7 @@ sub check_config
 {
   my $binname = shift;
   my $copts = shift;
-  return if (!$copts);
+  return undef if (!$copts);
 
   my $cfgfile;
 
@@ -177,29 +181,33 @@ sub check_config
         {
           my $o = qx:grep "^$copt" $cfgfile:;
 
-          exit_skip("$binname not configured for '$copt'.\n") if (!$o);
+          return "$binname not configured for '$copt'." if (!$o);
         }
     }
   else
     {
       print "WARNING: $binname config not found\n";
     }
+  return undef;
 }
 
 # Check platform limitations
-$test_platform_allow =~ s/^\s+|\s+$//g; # Strip whitespaces front and back
-$test_platform_deny =~ s/^\s+|\s+$//g; # Strip whitespaces front and back
-if ($test_platform_allow || $test_platform_deny)
-  {
-    exit_error "Test must not have both TEST_PLATFORM_ALLOW and TEST_PLATFORM_DENY set."
-      if $test_platform_allow && $test_platform_deny;
+sub check_allow_deny
+{
+  my $pf_allow = (shift =~ s/^\s+|\s+$//gr); # Strip whitespaces front and back
+  my $pf_deny  = (shift =~ s/^\s+|\s+$//gr); # Strip whitespaces front and back
 
-    exit_skip "Platform $platform is not listed in TEST_PLATFORM_ALLOW ($test_platform_allow)."
-      if $test_platform_allow && scalar(grep { $_ eq $platform } split(/\s+/, $test_platform_allow)) == 0;
+  exit_error "Test must not have both TEST_PLATFORM_ALLOW and TEST_PLATFORM_DENY set."
+    if $pf_allow && $pf_deny;
 
-    exit_skip "Platform $platform is listed in TEST_PLATFORM_DENY ($test_platform_deny)"
-      if $test_platform_deny && scalar(grep { $_ eq $platform } split(/\s+/, $test_platform_deny)) != 0;
-  }
+  return "Platform $platform is not listed in TEST_PLATFORM_ALLOW ($pf_allow)."
+    if $pf_allow && scalar(grep { $_ eq $platform } split(/\s+/, $pf_allow)) == 0;
+
+  return "Platform $platform is listed in TEST_PLATFORM_DENY ($pf_deny)"
+    if $pf_deny && scalar(grep { $_ eq $platform } split(/\s+/, $pf_deny)) != 0;
+
+  return undef;
+}
 
 # Remove whitespaces
 $test_run_tags =~ s/\s+//g;
@@ -218,70 +226,79 @@ sub coverage_name
     return $name;
 }
 
+sub check_tags
+{
+  my $test_required_tags = shift;
+  return undef unless defined($test_required_tags);
+  # Remove whitespaces
+  $test_required_tags =~ s/\s+//g;
+
+  # Create arrays
+  my @run_tags = split(",", $test_run_tags);
+  my @requirements = split(",", $test_required_tags);
+
+  # Parse run tags
+  my %parsed_run_tags;
+  foreach my $run_tag (@run_tags)
+    {
+      if ($run_tag =~ /^([A-Za-z0-9][A-Za-z0-9_-]*)(=([01yn]))?$/)
+        {
+          my $right_side = $3;
+          # If not = is specified assume 1
+          $right_side = 1 unless defined $2;
+          # map y/n to 1/0
+          my $value = { 0 => 0, 1 => 1, n => 0, y => 1 }->{$right_side};
+          $parsed_run_tags{$1} = 0+ $value;
+        }
+      else
+        {
+          exit_error "Invalid tag in TEST_RUN_TAGS: $run_tag\n";
+        }
+    }
+
+  # Interpret test's tag requirements
+  my %conditions = (
+    ""  => [ sub { my $value = shift; return defined($value) && $value == 1; }, "set to 1" ],
+    "-" => [ sub { my $value = shift; return defined($value) && $value == 0; }, "set to 0" ],
+    "!" => [ sub { my $value = shift; return !defined($value) || $value == 0; }, "set to 0 or not specified" ],
+    "+" => [ sub { my $value = shift; return !defined($value) || $value == 1; }, "set to 1 or not specified" ],
+  );
+
+  foreach my $req (@requirements)
+    {
+      if ($req =~ /^([!+-]?)([A-Za-z0-9][A-Za-z0-9_-]*)/) # Is valid tag specification
+        {
+          my ($cb,$desc) = @{$conditions{$1}};
+          my $tag = $2;
+
+          if (!$cb->($parsed_run_tags{$tag}))
+            {
+              return "Running this test requires tag '$tag' to be $desc.";
+            }
+        }
+      else
+        {
+          exit_error "Invalid test tag specification: $req\n";
+        }
+    }
+  return undef;
+}
+
+# Do we fit the allow / deny requirements
+my $err = check_allow_deny($test_platform_allow, $test_platform_deny);
+
 # Are the tags required by the current test?
-if ($test_required_tags)
-  {
-    # Remove whitespaces
-    $test_required_tags =~ s/\s+//g;
-
-    # Create arrays
-    my @run_tags = split(",", $test_run_tags);
-    my @requirements = split(",", $test_required_tags);
-
-    # Parse run tags
-    my %parsed_run_tags;
-    foreach my $run_tag (@run_tags)
-      {
-        if ($run_tag =~ /^([A-Za-z0-9][A-Za-z0-9_-]*)(=([01yn]))?$/)
-          {
-            my $right_side = $3;
-            # If not = is specified assume 1
-            $right_side = 1 unless defined $2;
-            # map y/n to 1/0
-            my $value = { 0 => 0, 1 => 1, n => 0, y => 1 }->{$right_side};
-            $parsed_run_tags{$1} = 0+ $value;
-          }
-        else
-          {
-            exit_error "Invalid tag in TEST_RUN_TAGS: $run_tag\n";
-          }
-      }
-
-    # Interpret test's tag requirements
-    my %conditions = (
-      ""  => [ sub { my $value = shift; return defined($value) && $value == 1; }, "set to 1" ],
-      "-" => [ sub { my $value = shift; return defined($value) && $value == 0; }, "set to 0" ],
-      "!" => [ sub { my $value = shift; return !defined($value) || $value == 0; }, "set to 0 or not specified" ],
-      "+" => [ sub { my $value = shift; return !defined($value) || $value == 1; }, "set to 1 or not specified" ],
-    );
-
-    foreach my $req (@requirements)
-      {
-        if ($req =~ /^([!+-]?)([A-Za-z0-9][A-Za-z0-9_-]*)/) # Is valid tag specification
-          {
-            my ($cb,$desc) = @{$conditions{$1}};
-            my $tag = $2;
-
-            if (!$cb->($parsed_run_tags{$tag}))
-              {
-                exit_skip "Running this test requires tag '$tag' to be $desc.\n";
-              }
-          }
-        else
-          {
-            exit_error "Invalid test tag specification: $req\n";
-          }
-      }
-  }
+$err ||= check_tags($test_required_tags);
 
 # Any L4Re options as requirements?
-check_config('L4Re userland', $ENV{"L4RE_CONF"},
-             $ENV{OBJ_BASE} . "/.kconfig");
+$err ||= check_config('L4Re userland', $ENV{"L4RE_CONF"},
+                       $ENV{OBJ_BASE} . "/.kconfig");
 
+my $globalconfig = dirname($modlist_info->{kernel}{name}) . '/globalconfig.out';
 # Any L4Re kernel features as requirements?
-check_config('L4Re kernel', $ENV{"KERNEL_CONF"},
-             $fiascoconfig_file,
-             dirname($modlist_info->{kernel}{name}) . '/globalconfig.out');
+$err ||= check_config('L4Re kernel', $ENV{"KERNEL_CONF"},
+             $fiascoconfig_file, $globalconfig);
+exit_skip($err . "\n") if defined $err;
 
 # check add gtest_shuffle unless specific output is expected.
 check_add_gtest_shuffle();
@@ -302,7 +319,7 @@ if ($ned_cfg and $modlist_info->{roottask}{name} eq 'moe')
     # Create an additional LUA config file where environment variables can
     # be exported to.
     my @mod_list = map { $_->{name} } @more_mods;
-    my $test_prog = $test_target;
+    my $test_prog = $single_test_target;
     $test_prog .= ' '.$test_args if $test_args;
     open($test_env_cfg, '>', $test_env_cfg_name)
       or confess "Cannot create configuration file $test_env_cfg_name.";
@@ -310,9 +327,48 @@ if ($ned_cfg and $modlist_info->{roottask}{name} eq 'moe')
     my $testenv = L4::TestEnvLua::generate_test_env($hwconfig_file, $fiascoconfig_file);
 
     $testenv->{COVERAGE} = 'y' if $coverage;
-    $testenv->{TEST_PROG} = $test_prog;
-    $testenv->{TEST_TARGET} = $test_target;
+    $testenv->{BUNDLE_ENV} = {};
+    foreach my $var (split(' ', $ENV{BUNDLE_ENV}))
+      {
+        foreach my $target (@test_target, @extra_test)
+          {
+            my $val = $ENV{"${var}_${target}"};
+            if (defined $val)
+              {
+                $val =~ s/.*\/// if $var eq "NED_CFG";
+                $testenv->{BUNDLE_ENV}{$var}{$target} = $val;
+              }
+          }
+      }
+
+    foreach my $target (@test_target)
+      {
+        my $err = undef;
+        $err   = check_allow_deny($ENV{"TEST_PLATFORM_ALLOW_$target"} || "",
+                                  $ENV{"TEST_PLATFORM_DENY_$target"} || "");
+        $err ||= check_tags($ENV{"TEST_TAGS_$target"});
+        $err ||= check_config('L4Re userland', $ENV{"L4RE_CONF_$target"},
+                              $ENV{OBJ_BASE} . "/.kconfig");
+        $err ||= check_config('L4Re kernel', $ENV{"KERNEL_CONF_$target"},
+                              $fiascoconfig_file, $globalconfig);
+
+        if (defined $err)
+          {
+            $err =~ s/'/\\'/g;
+            $err =~ s/\n//;
+            $testenv->{BUNDLE_ENV}{SKIP}{$target} = $err . " :: " . $target;
+          }
+      }
+
+    $testenv->{TEST_PROG} = "$test_prog";
+    $testenv->{TEST_TARGET} = [@test_target, @extra_test];
     $testenv->{TEST_ARGS} = $test_args;
+
+    if (defined($ENV{BASE_NED_CFG}))
+      {
+        $testenv->{BASE_NED_CFG} = $ENV{BASE_NED_CFG} if $ENV{BASE_NED_CFG};
+        $testenv->{BASE_NED_CFG} =~ s,.*/,,;
+      }
     $testenv->{REQUIRED_MODULES} = \@mod_list;
     $testenv->{FULLCONFIG}{PLATFORM} = $platform;
 
@@ -323,8 +379,9 @@ if ($ned_cfg and $modlist_info->{roottask}{name} eq 'moe')
         # This is optional, missing parts lead to a simple skip of the test.
         exit_skip("No L4Linux binary provided.") if (!$l4linux);
         exit_skip("No ramdisk for L4Linux provided.") if (!$ramdisk);
-        check_config('L4Linux kernel', $ENV{"L4LINUX_CONF"}.' CONFIG_L4_CHR_DS_DRV',
-          dirname($l4linux) . '/.config');
+        $err = check_config('L4Linux kernel', $ENV{"L4LINUX_CONF"}.' CONFIG_L4_CHR_DS_DRV',
+            dirname($l4linux) . '/.config');
+        exit_skip($err) if defined $err;
 
         add_mods(parse_mod($l4linux), parse_mod($ramdisk));
 
@@ -332,10 +389,25 @@ if ($ned_cfg and $modlist_info->{roottask}{name} eq 'moe')
         my $ramdisk_bin = basename($ramdisk);
         my $ramdisk_size= qx(du -b $ramdisk);
         chomp($ramdisk_size);
-        $testenv->{L4LX_EXEC_CMD} = "rom/$l4linux_bin l4x_rd=rom/$ramdisk_bin ramdisk_size=$ramdisk_size l4re_testprog=/dev/rom/$test_target l4cdds.add=rom/$test_target console=ttyLv0";
+        $testenv->{L4LX_EXEC_CMD} = "rom/$l4linux_bin l4x_rd=rom/$ramdisk_bin ramdisk_size=$ramdisk_size l4re_testprog=/dev/rom/$single_test_target l4cdds.add=rom/$single_test_target console=ttyLv0";
       }
 
     print $test_env_cfg "local t = " . L4::TestEnvLua::to_lua($testenv) . "\n";
+
+    if (defined $ENV{"BUNDLE_ENV"})
+      {
+        print {$test_env_cfg}<<~EOT;
+          if arg[1] ~= nil then
+            t.TEST_TARGET = arg[1]
+            t.TEST_PROG = arg[1]
+            if t.BUNDLE_ENV.TEST_ARGS then
+              t.TEST_ARGS = t.BUNDLE_ENV.TEST_ARGS[arg[1]]
+              t.TEST_PROG = arg[1] .. " " .. t.TEST_ARGS
+            end
+          end
+          EOT
+       }
+
     print $test_env_cfg "return t\n";
 
     # Now set up boot for use with ned.
@@ -346,14 +418,13 @@ if ($ned_cfg and $modlist_info->{roottask}{name} eq 'moe')
 elsif ($modlist_info->{roottask}{name} eq 'moe')
   {
     # Run the test program directly as the init process.
-    $modlist_info->{roottask}{args}  = " --init=rom/$test_target $moe_args";
+    $modlist_info->{roottask}{args}  = " --init=rom/$single_test_target $moe_args";
     $modlist_info->{roottask}{args} .= " -- ".$test_args if $test_args;
   }
 
 if ($coverage)
 {
-    $coverage_bins{$test_target} = 1;
-
+    $coverage_bins{$_} = 1 foreach @test_target;
     $modlist_info->{roottask}{name} .= ".cov"
       if $coverage_bins{$modlist_info->{roottask}{name}};
     $modlist_info->{rootpager}{name} .= ".cov"
@@ -361,7 +432,6 @@ if ($coverage)
 }
 
 add_mods(@more_mods);
-add_mods(parse_mod($test_target)) unless $is_kunit_test;
 
 if ($is_kunit_test)
   {
@@ -389,6 +459,10 @@ if ($is_kunit_test)
 
     $modlist_info->{kernel}{args} .= " -utest_opts=" . $opts_string;
     $modlist_template = "kunit_test.tpl";
+  }
+else
+  {
+    add_mods(parse_mod($_)) foreach @test_target;
   }
 
 my $tt = Template->new({ TRIM => 1, STRICT => 1, ABSOLUTE => 1,

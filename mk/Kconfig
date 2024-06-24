@@ -149,6 +149,21 @@ config BID_BUILD_TESTS_SHARED
 
 	  Enable this on platforms that support it if in doubt.
 
+config BID_ALLOW_TEST_BUNDLING
+	bool "Allow test bundling"
+	depends on BID_BUILD_TESTS
+	help
+	  Enable running several test binaries in one boot.
+
+	  This bundles test binaries from a single test group in one directory
+	  together in one .t file and thus in one test run. This significantly
+	  reduces the number of required reboots speeding up testing with large
+	  test sets.
+
+	  Beware that for large test groups that dominate the runtime of all
+	  other tests this may make the wall clock runtime longer, as you cannot
+	  spread out tests within a group to cores.
+
 config COV
 	bool "Coverage support" if !RELEASE_MODE
 	help
