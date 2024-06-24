@@ -434,13 +434,15 @@ sub generate_dep_makefile
 }
 
 # get the package providing the given abstract target
-sub get_providing_pkg($$)
+sub get_providing_pkg($$$)
 {
   my $n = shift;
   my $r = shift;
+  my $optional = shift;
   my $p = $provided{$n};
   return $p if defined $p;
-  print STDERR "ERROR: no package providing '$n' found, as required by '$r'\n";
+  print STDERR "ERROR: no package providing '$n' found, as required by '$r'\n"
+    unless defined $optional;
   return undef;
 }
 
@@ -486,7 +488,8 @@ sub get_deps_recursive(@)
 
           foreach my $rpkg (@{$pkg->{requires}}, @{$pkg->{optional}})
             {
-              my $r = get_providing_pkg($rpkg, $pkg->{name});
+              my $r = get_providing_pkg($rpkg, $pkg->{name},
+                                        grep { $rpkg eq $_ } @{$pkg->{optional}});
               next unless defined $r;
               $done = 0 unless defined $deps{$r->{name}};
               $deps{$r->{name}} = $r;
@@ -694,7 +697,7 @@ sub resolve_requires($)
   my $n = shift;
   foreach (@{$n->{requires}})
     {
-      my $p = get_providing_pkg($_, $n->{name});
+      my $p = get_providing_pkg($_, $n->{name}, undef);
       next unless defined $p;
       $p->{required_by}->{$n->{name}} = $n;
       $n->{requires_pkgs}->{$p->{name}} = $p;
