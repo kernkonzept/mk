@@ -164,10 +164,8 @@ if ($ENV{TEST_TAP_PLUGINS})
   {
     foreach (split(' ', $ENV{TEST_TAP_PLUGINS}))
       {
-        my ($name, $arg) = split(/:/, $_, 2);
-        $arg = "" unless defined $arg;
-        my %harg = map { split(/=/, $_, 2) } (split (/,/, $arg));
-        L4::TapWrapper::load_plugin($name, \%harg);
+        my ($name, $args) = L4::TapWrapper::parse_plugin($_);
+        L4::TapWrapper::load_plugin($name, $args);
       }
   }
 

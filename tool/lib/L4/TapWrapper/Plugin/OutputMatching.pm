@@ -13,8 +13,9 @@ sub new {
   my $type = shift;
   my $self = L4::TapWrapper::Plugin->new( () );
   $self->{args} = shift;
-  $self->{args}{literal} = 0 unless defined $self->{args}{literal};
-  $self->{args}{raw} = 0 unless defined $self->{args}{raw};
+  $self->{args}{literal} //= 0;
+  $self->{args}{raw} //= 0;
+  $self->{args}{no_boot} //= 0;
   my $file = $self->{args}{file};
   if (! -e $file or -d $file)
     {
@@ -36,11 +37,20 @@ sub new {
   $self->{had_block} = 0;
   $self->{features}{shuffling_support} = 0;
   $self->{wait_until} = time + 2 * $L4::TapWrapper::timeout;
-  $self->{number_of_runs} = $ENV{TEST_EXPECTED_REPEAT};
+  $self->{number_of_runs} = $ENV{TEST_EXPECTED_REPEAT}; #TODO: Make robust for bundle?
   $self->{number_of_runs} = 1 unless looks_like_number($self->{number_of_runs});
+
+  $self = bless $self, $type;
+
+  if ($self->{args}{no_boot})
+    {
+      $self->{in_block} = 1;
+      $self->{had_block} = 1;
+      $self->{next_line} = $self->get_next_line();
+    }
   $L4::TapWrapper::print_to_tap_fd = 1; # OutputMatching always prints
 
-  return bless $self, $type;
+  return $self;
 }
 
 sub get_next_line {
@@ -115,7 +125,7 @@ sub finalize
   my $ok = not defined($self->{next_line});
 
   # Ok or not ok?
-  if ($ok)
+  if ($ok and $self->{had_block})
     {
       $expect_message =  "A total of $self->{num_res} line(s) of output matched.";
     }

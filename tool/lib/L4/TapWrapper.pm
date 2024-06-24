@@ -40,16 +40,31 @@ sub __load_module
   return $c;
 }
 
+sub get_plugin
+{
+  my $name = shift;
+  my $arg = shift;
+  my $class = "L4::TapWrapper::Plugin::$name";
+  return __load_module($class, $arg);
+}
+
 sub load_plugin
 {
   my $name = shift;
   my $arg = shift;
   return if defined $_have_plugins{$name}; # Do not load twice
   print "Loading Plugin '$name' with args: " . Dumper($arg). "\n";
-  my $class = "L4::TapWrapper::Plugin::$name";
-  my $plugin = __load_module($class, $arg);
+  my $plugin = get_plugin($name, $arg);
   push @_plugins, $plugin;
   $_have_plugins{$name} = $plugin;
+}
+
+sub parse_plugin
+{
+  my ($name, $arg) = split(/:/, shift, 2);
+  $arg = "" unless defined $arg;
+  my %harg = map { split(/=/, $_, 2) } (split (/,/, $arg));
+  return ($name, \%harg);
 }
 
 sub load_filter
