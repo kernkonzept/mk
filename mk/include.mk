@@ -73,6 +73,8 @@ headers::
 
 all:: headers $(PC_FILES)
 	@$(TARGET_CMD) | $(call installscript,1)
+	@# Remove stale links - use rm -f for concurrent execution
+	$(VERBOSE)find $(INSTALLDIR_LOCAL) -xtype l | xargs $(RM)
 
 install::
 	@$(INSTALL_LINK_MESSAGE)
