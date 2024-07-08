@@ -401,14 +401,16 @@ BID_ASM_CPP_FILE_EXTENSIONS ?= .S
 # 2: return if argument does not work with compiler
 # 3: compiler name
 # 4: compiler type
-check_compiler_opt = $(if $(shell $(3) $(CARCHFLAGS) $(CCXX_FLAGS) $(1) -c -o /dev/null -x $(4) \
-                                /dev/null 2>&1),$(2),$(1))
+check_compiler_opt = $(if $(shell $(3) $(CARCHFLAGS) $(CCXX_FLAGS) \
+                        $(check_compiler_flags) $(1) -c -o /dev/null -x $(4) \
+                        /dev/null >/dev/null 2>&1 || echo X),$(2),$(1))
 checkcc   = $(call check_compiler_opt,$(1),$(2),$(CC),c)
 checkcxx  = $(call check_compiler_opt,$(1),$(2),$(CXX),c++)
 checkdtc  = $(shell if $(DTC) $(1) --version /dev/null > /dev/null 2>&1; \
                     then echo "$(1)"; fi)
-checkcxx_nowarn = $(if $(shell $(CXX) $(CARCHFLAGS) $(CCXX_FLAGS) -W$(1) -c -o /dev/null \
-                                      -x c++ /dev/null 2>&1),,-Wno-$(1))
+checkcxx_nowarn = $(if $(shell $(CXX) $(CARCHFLAGS) $(CCXX_FLAGS) \
+                    $(check_compiler_flags) -W$(1) -c -o /dev/null -x c++ \
+                    /dev/null >/dev/null 2>&1 || echo X),,-Wno-$(1))
 checkld   = $(shell if $(callld) -v "$1" > /dev/null 2>&1; \
              then echo "$(1)"; else echo "$(2)"; fi)
 
@@ -428,11 +430,16 @@ get_cc_version_part = $(shell echo $(1) | $(callcc) -E -x c - | tail -1)
 BID_COMPILER_TYPE_f = $(if $(findstring clang, $(shell $(callcc) --version)),clang,gcc)
 BID_LD_TYPE_f = $(if $(findstring LLD, $(shell $(callld) --version)),lld,gnu)
 
-ifeq ($(BID_COMPILER_TYPE),gcc)
+# We fall back to BID_COMPILER_TYPE_f if BID_COMPILER_TYPE is not cached yet,
+# because we need this info in the following lines before caching
+__tmp_bid_compiler_type := $(or $(BID_COMPILER_TYPE),$(BID_COMPILER_TYPE_f))
+
+ifeq ($(__tmp_bid_compiler_type),gcc)
  BID_COMPILER_IS_GCC = 1
 endif
-ifeq ($(BID_COMPILER_TYPE),clang)
+ifeq ($(__tmp_bid_compiler_type),clang)
  BID_COMPILER_IS_CLANG = 1
+ check_compiler_flags := -Werror=unknown-warning-option
 endif
 
 GCCMAJORVERSION_ID_gcc   = __GNUC__
