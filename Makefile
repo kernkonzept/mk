@@ -178,9 +178,9 @@ cleanfast:
 	                  $(OBJ_BASE)/.tmp.bid_config.h;                   \
 	          fi
 	$(VERBOSE)$(RM) -r $(addprefix $(OBJ_BASE)/,bin include pkg tests    \
-	                               doc ext-pkg pc lib test l4defs.mk.inc \
-	                               l4defs.sh.inc .Makeconf.phys_reloc    \
-	                               sysroot )                             \
+	                               doc ext-pkg pc lib test               \
+	                               .Makeconf.phys_reloc sysroot )        \
+	                               $(L4DEFS_FILES)                       \
 	                               $(IMAGES_DIR)
 	$(VERBOSE)if [ -f $(OBJ_BASE)/.tmp.bid_config.h ]; then  \
 	            mkdir -p $(OBJ_BASE)/include/generated;      \
