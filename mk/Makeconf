@@ -613,10 +613,15 @@ $(FIXDEP): $(L4DIR)/tool/kconfig/scripts/basic/fixdep.c
 	@echo \'fixdep\' outdated or unavailable, please call \'make oldconfig\' in the root of your build directory.
 	@exit 1
 
+$(dir $(GENERAL_D_LOC)):
+	$(VERBOSE)$(MKDIR) $@
+
 $(GENERAL_D_LOC): $(L4DIR)/mk/Makeconf $(FIXDEP) $(EXTRA_GENERAL_D_DEP)
+$(GENERAL_D_LOC): | $(dir $(GENERAL_D_LOC))
 	@$(BUILD_MESSAGE)
-	@install -d $(dir $@)
-	$(DEPEND_VERBOSE)$(RM) $(filter-out %.cmd,$(DEPS))
+	$(file >$@.in,$(filter-out %.cmd,$(DEPS)))
+	$(DEPEND_VERBOSE)xargs -a $@.in $(RM)
+	$(DEPEND_VERBOSE)$(RM) $@.in
 	$(DEPEND_VERBOSE)echo '$@: $(SRC_DIR)/Makefile ' > $@
 	$(DEPEND_VERBOSE)$(call BID_DEPEND_GENERAL_D_COND,\
 		$(OBJ_BASE)/.config.all)
