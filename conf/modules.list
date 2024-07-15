@@ -128,9 +128,9 @@ module[arch=amd64,fname=virt.dtb]  dtb/virt-pc.dtb
 module[arch=arm,fname=linux,nostrip]      https://l4re.org/download/Linux-kernel/arm32/zImage-6.6.8
 module[arch=arm64,fname=linux,nostrip]    https://l4re.org/download/Linux-kernel/arm64/Image-6.6.8
 module[arch=amd64,fname=linux,nostrip]    https://l4re.org/download/Linux-kernel/x86-64/bzImage-6.6.8
-module[arch=arm,fname=ramdisk-arm.rd]     https://l4re.org/download/ramdisks/ramdisk-armv7.rd
-module[arch=arm64,fname=ramdisk-arm64.rd] https://l4re.org/download/ramdisks/ramdisk-armv8-64.rd
-module[arch=amd64]                        https://l4re.org/download/ramdisks/ramdisk-amd64.rd
+module[arch=arm,fname=ramdisk.cpio.gz]    https://l4re.org/download/ramdisks/ramdisk-armv7.cpio.gz
+module[arch=arm64,fname=ramdisk.cpio.gz]  https://l4re.org/download/ramdisks/ramdisk-armv8-64.cpio.gz
+module[arch=amd64]                        https://l4re.org/download/ramdisks/ramdisk-amd64.cpio.gz
 
 entry[arch=arm|arm64|amd64] VM-multi
 moe vm-multi.cfg
@@ -144,9 +144,9 @@ module[arch=amd64,fname=virt.dtb]  dtb/virt-pc.dtb
 module[arch=arm,fname=linux,nostrip]      https://l4re.org/download/Linux-kernel/arm32/zImage-6.6.8
 module[arch=arm64,fname=linux,nostrip]    https://l4re.org/download/Linux-kernel/arm64/Image-6.6.8
 module[arch=amd64,fname=linux,nostrip]    https://l4re.org/download/Linux-kernel/x86-64/bzImage-6.6.8
-module[arch=arm,fname=ramdisk-arm.rd]     https://l4re.org/download/ramdisks/ramdisk-armv7.rd
-module[arch=arm64,fname=ramdisk-arm64.rd] https://l4re.org/download/ramdisks/ramdisk-armv8-64.rd
-module[arch=amd64]                        https://l4re.org/download/ramdisks/ramdisk-amd64.rd
+module[arch=arm,fname=ramdisk.cpio.gz]    https://l4re.org/download/ramdisks/ramdisk-armv7.cpio.gz
+module[arch=arm64,fname=ramdisk.cpio.gz]  https://l4re.org/download/ramdisks/ramdisk-armv8-64.cpio.gz
+module[arch=amd64,fname=ramdisk.cpio.gz]  https://l4re.org/download/ramdisks/ramdisk-amd64.cpio.gz
 
 entry[arch=arm|arm64|amd64] VM-multi-p2p
 moe vm-multi-p2p.cfg
@@ -161,9 +161,9 @@ module[arch=amd64,fname=virt.dtb]  dtb/virt-pc.dtb
 module[arch=arm,fname=linux,nostrip]      https://l4re.org/download/Linux-kernel/arm32/zImage-6.6.8
 module[arch=arm64,fname=linux,nostrip]    https://l4re.org/download/Linux-kernel/arm64/Image-6.6.8
 module[arch=amd64,fname=linux,nostrip]    https://l4re.org/download/Linux-kernel/x86-64/bzImage-6.6.8
-module[arch=arm,fname=ramdisk-arm.rd]     https://l4re.org/download/ramdisks/ramdisk-armv7.rd
-module[arch=arm64,fname=ramdisk-arm64.rd] https://l4re.org/download/ramdisks/ramdisk-armv8-64.rd
-module[arch=amd64]                        https://l4re.org/download/ramdisks/ramdisk-amd64.rd
+module[arch=arm,fname=ramdisk.cpio.gz]    https://l4re.org/download/ramdisks/ramdisk-armv7.cpio.gz
+module[arch=arm64,fname=ramdisk.cpio.gz]  https://l4re.org/download/ramdisks/ramdisk-armv8-64.cpio.gz
+module[arch=amd64,fname=ramdisk.cpio.gz]  https://l4re.org/download/ramdisks/ramdisk-amd64.cpio.gz
 
 entry[arch=arm|arm64|amd64] VM-basic-pci
 moe vm-basic-pci.cfg
@@ -180,6 +180,6 @@ module[arch=amd64,fname=virt-pci.dtb]     dtb/virt-pc.dtb
 module[arch=arm,fname=linux,nostrip]      https://l4re.org/download/Linux-kernel/arm32/zImage-6.6.8
 module[arch=arm64,fname=linux,nostrip]    https://l4re.org/download/Linux-kernel/arm64/Image-6.6.8
 module[arch=amd64,fname=linux,nostrip]    https://l4re.org/download/Linux-kernel/x86-64/bzImage-6.6.8
-module[arch=arm,fname=ramdisk-arm.rd]     https://l4re.org/download/ramdisks/ramdisk-armv7.rd
-module[arch=arm64,fname=ramdisk-arm64.rd] https://l4re.org/download/ramdisks/ramdisk-armv8-64.rd
-module[arch=amd64]                        https://l4re.org/download/ramdisks/ramdisk-amd64.rd
+module[arch=arm,fname=ramdisk.cpio.gz]    https://l4re.org/download/ramdisks/ramdisk-armv7.cpio.gz
+module[arch=arm64,fname=ramdisk.cpio.gz]  https://l4re.org/download/ramdisks/ramdisk-armv8-64.cpio.gz
+module[arch=amd64,fname=ramdisk.cpio.gz]  https://l4re.org/download/ramdisks/ramdisk-amd64.cpio.gz
