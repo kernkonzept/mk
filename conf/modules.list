@@ -183,3 +183,15 @@ module[arch=amd64,fname=linux,nostrip]    https://l4re.org/download/Linux-kernel
 module[arch=arm,fname=ramdisk.cpio.gz]    https://l4re.org/download/ramdisks/ramdisk-armv7.cpio.gz
 module[arch=arm64,fname=ramdisk.cpio.gz]  https://l4re.org/download/ramdisks/ramdisk-armv8-64.cpio.gz
 module[arch=amd64,fname=ramdisk.cpio.gz]  https://l4re.org/download/ramdisks/ramdisk-amd64.cpio.gz
+
+entry ipcbench
+roottask moe rom/ipcbench.cfg
+module l4re
+module ned
+module ipcbench
+module ipcbench_client
+module ipcbench_server
+module ipcbench_parallel
+module syscallbench
+module syscallbench_parallel
+module ../pkg/ipcbench/conf/ipcbench.cfg
