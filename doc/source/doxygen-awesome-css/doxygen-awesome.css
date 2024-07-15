@@ -152,6 +152,7 @@ html {
     --fragment-lineheight: 20px;
 
     /* sidebar navigation (treeview) colors */
+    --side-nav-hover-background: #f0f0f0;
     --side-nav-background: #fbfbfb;
     --side-nav-foreground: var(--page-foreground-color);
     --side-nav-arrow-opacity: 0.4;
@@ -860,6 +861,10 @@ html.dark-mode iframe#MSearchResults {
     font-family: serif;
     height: auto;
     text-align: right;
+}
+
+#nav-tree div.item:has(a:hover), #nav-tree div.item:has(a:focus) {
+    background-color: var(--side-nav-hover-background);
 }
 
 #nav-tree a:hover .arrow, #nav-tree a:focus .arrow {
