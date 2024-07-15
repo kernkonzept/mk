@@ -179,10 +179,10 @@ corresponding addresses from the receive flexpage while leaving the
 parent/child relationship of the moved mappings with other mappings untouched.
 
 During a map operation at most the access rights of the source mapping(s) can
-be transferred but no additional rights. So only rights that are present in the
-source mapping and that are specified in the send item/flexpage are
-transferred. This also holds for grant mappings, however, rights revocation is
-*not* guaranteed to be applied to descendant mappings in case of grant.
+be transferred but no additional rights can be added. So only rights that are
+present in the source mapping and that are specified in the send item/flexpage
+are transferred. This also holds for grant mappings, however, rights revocation
+is *not* guaranteed to be applied to descendant mappings in case of grant.
 
 There are cases where a grant operation is not or cannot be performed as
 requested; see #L4_MAP_ITEM_GRANT for details.
