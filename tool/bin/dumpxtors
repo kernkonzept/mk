@@ -239,8 +239,11 @@ foreach my $f (@ARGV) {
   dump_xtor_section($f, $bits, $en, ".dtors", 1);
   dump_xtor_section($f, $bits, $en, ".fini_array", 0);
   dump_xtor_symbols($f, $bits, $en, "__CTOR_END__", "__CTOR_LIST__");
+  dump_xtor_symbols($f, $bits, $en, "__CTORS_END", "__CTORS_BEGIN");
   dump_xtor_symbols($f, $bits, $en, "__DTOR_END__", "__DTOR_LIST__");
   dump_xtor_symbols($f, $bits, $en, "__INIT_ARRAY_START__", "__INIT_ARRAY_END__");
+  dump_xtor_symbols($f, $bits, $en, "__init_array_start", "__init_array_end");
+  dump_xtor_symbols($f, $bits, $en, "__preinit_array_start", "__preinit_array_end");
   dump_xtor_symbols($f, $bits, $en, "__PER_CPU_INIT_ARRAY_START__", "__PER_CPU_INIT_ARRAY_END__");
   dump_xtor_symbols($f, $bits, $en, "__PER_CPU_LATE_INIT_ARRAY_START__", "__PER_CPU_LATE_INIT_ARRAY_END__");
 }
