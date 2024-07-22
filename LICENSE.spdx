@@ -122,8 +122,19 @@ PackageCopyrightText: NOASSERTION
 PackageDownloadLocation: NOASSERTION
 FilesAnalyzed: false
 
+PackageName: doxygen-awesome-css
+SPDXID: SPDXRef-doxygen-awesome-css
+PackageFileName: ./doc/source/doxygen-awesome-css
+PackageOriginator: Person: Jothepro (https://github.com/jothepro)
+PackageLicenseDeclared: MIT
+PackageLicenseConcluded: MIT
+PackageCopyrightText: NOASSERTION
+PackageDownloadLocation: NOASSERTION
+FilesAnalyzed: false
+
 Relationship: SPDXRef-mk CONTAINS SPDXRef-gendep
 Relationship: SPDXRef-mk CONTAINS SPDXRef-kconfig
+Relationship: SPDXRef-mk CONTAINS SPDXRef-doxygen-awesome-css
 
 ## License Information
 LicenseID: LicenseRef-public-domain
