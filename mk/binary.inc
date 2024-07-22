@@ -136,7 +136,7 @@ TARGET_SYSTEMS_ADD_VARIANT = $(firstword $(1))-$(2)-$(word 2,$(1))
 # Add Variant infix to TARGET_SYSTEMS
 TARGET_SYSTEMS := $(strip \
                     $(foreach ts,$(TARGET_SYSTEMS), \
-                      $(foreach v,$(VARIANTS), \
+                      $(foreach v,$(sort $(VARIANTS)), \
                         $(call TARGET_SYSTEMS_ADD_VARIANT,$(subst -,$(BID_SPACE),$(ts)),$(v)) \
                        ) \
                      ) \
