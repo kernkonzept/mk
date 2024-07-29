@@ -103,7 +103,7 @@ endif
 # .cfg removed.
 # $(VERBOSE)$(ECHO) ENABLED_SECTIONS=WORKING_SUBPAGES >> $@.flags
 FORCE: ;
-$(OBJ_DIR)/% $(OBJ_DIR)/%/html:$(SRC_DIR)/%.cfg FORCE
+$(OBJ_DIR)/% $(OBJ_DIR)/%/html:$(SRC_DIR)/%.cfg $(SRC_DIR)/search.js.reduce_keyTimeoutLength.patch FORCE
         #generate the flags-file
 	$(VERBOSE)$(MKDIR) $@
 	$(VERBOSE)$(ECHO) '@INCLUDE_PATH=/'                                 > $@.flags
@@ -128,6 +128,10 @@ $(OBJ_DIR)/% $(OBJ_DIR)/%/html:$(SRC_DIR)/%.cfg FORCE
 	  for f in $(ALL_SUBDIRS); \
 	    do [ ! -e $(L4DIR)/pkg/$$f/doc/files.cfg ] || sed -e "s,%PKGDIR%,$(L4DIR)/pkg/$$f,g" $(L4DIR)/pkg/$$f/doc/files.cfg || true; done >> $@.flags
 	$(VERBOSE)cd $(OBJ_BASE)/include && L4DIR=$(L4DIR) $(DOXYGEN) $@.flags
+	$(VERBOSE)patch --forward --unified  \
+	    $(OBJ_DIR)/$(call OUTPUTDIR,$<)/html/search/search.js  \
+	    $(SRC_DIR)/search.js.reduce_keyTimeoutLength.patch  \
+	  || true
 	$(VERBOSE)for file in $(ADD_FILES_TO_HTML); do cp $$file $@/html; done
 	$(VERBOSE)( [ -r $@/latex/Makefile ] && \
 	   echo | PWD=$@/latex $(MAKE) -C $@/latex ) || true

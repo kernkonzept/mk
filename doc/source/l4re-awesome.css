@@ -1,0 +1,4 @@
+/* Disable animation when showing search results. */
+#MSearchResultsWindow {
+    animation: none;
+}

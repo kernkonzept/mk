@@ -1,0 +1,14 @@
+Make Doxygen search field snappier.
+
+diff -Naur old/html/search/search.js new/html/search/search.js
+--- old/html/search/search.js	2024-08-05 15:40:32.890343561 +0200
++++ new/html/search/search.js	2024-08-05 15:40:42.557089345 +0200
+@@ -63,7 +63,7 @@
+   this.name                  = name;
+   this.resultsPath           = resultsPath;
+   this.keyTimeout            = 0;
+-  this.keyTimeoutLength      = 500;
++  this.keyTimeoutLength      = 50;
+   this.closeSelectionTimeout = 300;
+   this.lastSearchValue       = "";
+   this.lastResultsPage       = "";
