@@ -152,11 +152,10 @@ html {
     --fragment-lineheight: 20px;
 
     /* sidebar navigation (treeview) colors */
-    --side-nav-hover-background: #f0f0f0;
     --side-nav-background: #fbfbfb;
     --side-nav-foreground: var(--page-foreground-color);
-    --side-nav-arrow-opacity: 0.4;
-    --side-nav-arrow-hover-opacity: 1;
+    --side-nav-arrow-opacity: 0;
+    --side-nav-arrow-hover-opacity: 0.9;
 
     --toc-background: var(--side-nav-background);
     --toc-foreground: var(--side-nav-foreground);
@@ -863,11 +862,7 @@ html.dark-mode iframe#MSearchResults {
     text-align: right;
 }
 
-#nav-tree div.item:has(a:hover), #nav-tree div.item:has(a:focus) {
-    background-color: var(--side-nav-hover-background);
-}
-
-#nav-tree a:hover .arrow, #nav-tree a:focus .arrow {
+#nav-tree div.item:hover .arrow, #nav-tree a:focus .arrow {
     opacity: var(--side-nav-arrow-hover-opacity);
 }
 

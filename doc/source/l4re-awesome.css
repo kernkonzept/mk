@@ -2,3 +2,23 @@
 #MSearchResultsWindow {
     animation: none;
 }
+
+/* more visually responsive sidebar */
+html {
+    --side-nav-arrow-opacity: 0.4;
+    --side-nav-arrow-hover-opacity: 1;
+
+    --side-nav-hover-background: #f0f0f0;
+}
+
+#nav-tree div.item:hover .arrow {
+    opacity: var(--side-nav-arrow-opacity);
+}
+
+#nav-tree div.item a:hover .arrow {
+    opacity: var(--side-nav-arrow-hover-opacity);
+}
+
+#nav-tree div.item:has(a:hover), #nav-tree div.item:has(a:focus) {
+    background-color: var(--side-nav-hover-background);
+}
