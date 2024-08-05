@@ -128,15 +128,22 @@ sub finalize {
   $pid = -1; # clean behaviour on multiple calling
 
   my $plan_found = 0;
+  my @plan_explanations;
   my $taplines = 0;
   foreach (@_plugins, @_filters)
     {
       foreach ($_->finalize())
         {
-          if (/^1\.\.([0-9]+)/)
+          if (/^1\.\.([0-9]+)(.*)$/)
             {
               $taplines += $1;
               $plan_found = 1;
+
+              # Collect any #SKIPs at the end of plan lines
+              my $explanation = $2 // "";
+              $explanation =~ s/[\r\n]//g;
+              $explanation =~ s/^\s+|\s+$//g;
+              push @plan_explanations, [ref($_),$explanation] if $explanation;
             }
           else
             {
@@ -147,7 +154,38 @@ sub finalize {
             }
         }
     }
-  print $TAP_FD "1..$taplines\n" if $print_to_tap_fd && $plan_found;
+
+  return unless $print_to_tap_fd;
+
+  if ($taplines != 0 || scalar(@plan_explanations) > 1)
+    {
+      foreach my $exp (@plan_explanations)
+        {
+          my ($class, $reason) = @$exp;
+          $reason =~ s/^#\s*SKIP\s+//i;
+          print $TAP_FD "ok $class #SKIP $reason\n";
+          $taplines++;
+        }
+      @plan_explanations = ();
+    }
+
+  if ($plan_found)
+    {
+      print $TAP_FD "1..$taplines";
+      if (@plan_explanations)
+        {
+          # Can only contain one here, because multiple are handled further up
+          my ($class, $reason) = @{$plan_explanations[0]};
+
+          print $TAP_FD " $reason";
+
+          # We should not alter plain TAP output too much, so skip this when
+          # using the TAPOutput plugin. In other cases we might want to know
+          # which plugin added the reason
+          print $TAP_FD " ($class)" unless $class eq "L4::TapWrapper::Plugin::TAPOutput";
+        }
+      print $TAP_FD "\n";
+    }
 }
 
 sub fail_test
