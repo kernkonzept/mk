@@ -151,10 +151,12 @@ clean::
 
 ifeq ($(S),)
 cleanall::
+	$(VERBOSE)$(RM) -r $(KCONFIG_OBJ_DIR)
+
+mrproper::
 	$(VERBOSE)$(RM) $(DROPSCONF_CONFIG) $(DROPSCONF_CONFIG_H) \
 			$(DROPSCONF_CONFIG_MK) .menuconfig.log \
 			$(DROPSCONF_CONFIG).old
-	$(VERBOSE)$(RM) -r $(KCONFIG_OBJ_DIR)
 endif
 
 help::
@@ -169,7 +171,7 @@ help::
 # special switch not to include DROPSCONF_CONFIG_MK
 ifeq ($(DROPSCONF_DONTINC_MK),)
 # do not prebuild the config file on "make config"
-ifeq ($(filter config oldconfig syncconfig txtconfig help scrub clean cleanall $(DROPSCONF_CONFIG_MK),$(MAKECMDGOALS)),)
+ifeq ($(filter config oldconfig syncconfig txtconfig help scrub clean cleanall mrproper $(DROPSCONF_CONFIG_MK),$(MAKECMDGOALS)),)
 $(info INCLUDING $(DROPSCONF_CONFIG_MK) config.inc)
 -include $(DROPSCONF_CONFIG_MK)
 endif

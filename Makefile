@@ -21,7 +21,7 @@ CMDS_PROJECT_MK     := all clean cleanall install scrub cont doc help sysroot \
                        $(wildcard $(MAKECMDGOALS))
 
 # Hack, see project.mk
-BID_DCOLON_TARGETS := all clean cleanall install scrub DROPSCONF_CONFIG_MK_POST_HOOK olddefconfig oldconfig config
+BID_DCOLON_TARGETS := all clean cleanall mrproper install scrub DROPSCONF_CONFIG_MK_POST_HOOK olddefconfig oldconfig config
 
 # This goes very early
 # TODO: should be done in mk/Makeconf to catch all make invocations (maybe
@@ -985,6 +985,7 @@ help::
 	@echo "  cont             - Continue building after fixing a build error."
 	@echo "  clean            - Call 'clean' target recursively."
 	@echo "  cleanfast        - Delete all directories created during build."
+	@echo "  mrproper         - cleanfast + delete configuration."
 	@echo "  doc              - Generate documentation."
 	@echo "                     The default behavior is building HTML with"
 	@echo "                     graphics. To change the default behavior,"

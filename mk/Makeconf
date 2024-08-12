@@ -17,6 +17,8 @@ MAKEFLAGS        += --no-print-directory -Rr
 # the default target is all
 all::
 
+mrproper:: cleanall
+
 # make .general.d dependent on the role-file
 $(if $(ROLE),$(OBJ_DIR)/.general.d: $(L4DIR)/mk/$(ROLE))
 
@@ -697,7 +699,7 @@ INSTALL_LOCAL_MESSAGE      ?= echo -e "  [$(BID_MESSAGE_TAG)] ==> Installing $(i
 
 # allows an include $(DEPSVAR) at the end of the makefile
 # but prevents rebuilding them on a scrub, clean, cleanall and help
-ifneq ($(filter scrub clean cleanall help,$(MAKECMDGOALS)),)
+ifneq ($(filter scrub clean cleanall mrproper help,$(MAKECMDGOALS)),)
 DEPSVAR	=
 else
 DEPSVAR	= $(DEPS)
