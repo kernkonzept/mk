@@ -106,6 +106,7 @@ MAKECONFLOCAL = /dev/null
 # Use project.mk if we use the default goal (MAKECMDGOALS is empty)
 # or any of the goals listed in CMDS_PROJECT_MK, this saves us
 # from running the time consuming project.mk find operations.
+ROOT_MAKEFILE := 1
 ifeq ($(MAKECMDGOALS),)
   include $(L4DIR)/mk/project.mk
 else

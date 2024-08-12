@@ -122,7 +122,7 @@ $(foreach v,$(VARIANTS_AVAILABLE),$(eval $(call variant_package_deps_rule,$(v)))
 
 include $(OBJ_DIR)/.Package.deps
 
-$(ALL_SUBDIRS):%:%/Makefile BID_cont_reset
+$(ALL_SUBDIRS):%:%/Makefile BID_cont_reset $(FIXDEP)
 	@$(PKG_MESSAGE)
 	$(VERBOSE)PWD=$(PWD)/$@ $(MAKE) -C $@ all
 	$(VERBOSE)$(BID_SAVE_STATE)

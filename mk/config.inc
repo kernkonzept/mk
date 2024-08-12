@@ -15,6 +15,7 @@
 # oldconfig::	        - (re)create the configuration header
 #                         based on a prior configuration
 #                         or default values
+# genfixdep             - build fixdep tool
 #
 # Required Parameters:
 #
@@ -40,8 +41,7 @@
 
 KCONFIG_OBJ_DIR  = $(OBJ_BASE)/scripts/kconfig
 
-kconfig_call = $(MKDIR) $(OBJ_BASE)/include/l4; \
-	       $(MAKE) -C $(L4DIR)/tool/kconfig O=$(OBJ_BASE) \
+kconfig_call = $(MAKE) -C $(L4DIR)/tool/kconfig O=$(OBJ_BASE) \
                Kconfig=$(KCONFIG_FILE) \
 	       KCONFIG_AUTOHEADER=include/generated/autoconf.h \
 	       KCONFIG_CONFIG=.kconfig \
@@ -79,30 +79,35 @@ DROPSCONF_DONTINC_MK	?=
 ifneq ($(DROPSCONF),)
 .o:	$(DROPSCONF_CONFIG_H)
 
-DIRS_FOR_CONFIG = $(KCONFIG_OBJ_DIR) $(OBJ_BASE)/config
+DIRS_FOR_CONFIG = $(KCONFIG_OBJ_DIR) $(OBJ_BASE)/config $(OBJ_BASE)/include/l4
 
 $(DIRS_FOR_CONFIG):
-	$(VERBOSE)[ -d $@ ] || install -d $@
+	$(VERBOSE)$(MKDIR) $@
 
-DROPSCONF_CONFIG_DEPS = $(DIRS_FOR_CONFIG) $(KCONFIG_FILE) $(KCONFIG_FILE).defines
+DROPSCONF_CONFIG_DEPS = $(KCONFIG_FILE) $(KCONFIG_FILE).defines
 
-menuconfig config: $(DROPSCONF_CONFIG_DEPS)
+menuconfig config: $(DROPSCONF_CONFIG_DEPS) | $(DIRS_FOR_CONFIG)
 	$(VERBOSE)+$(kconfig_call) menuconfig syncconfig
 	$(VERBOSE)test ! -r $(DROPSCONF_CONFIG) -o \
 		! $(DROPSCONF_CONFIG) -nt $(DROPSCONF_CONFIG_MK) || \
 		$(MAKE) $(DROPSCONF_CONFIG_MK)
 
-textconfig: $(DROPSCONF_CONFIG_DEPS)
+textconfig: $(DROPSCONF_CONFIG_DEPS) | $(DIRS_FOR_CONFIG)
 	$(VERBOSE)+$(kconfig_call) config syncconfig
 	@$(MAKE) $(DROPSCONF_CONFIG_MK)
 
-oldconfig olddefconfig xconfig gconfig nconfig randconfig allyesconfig allnoconfig savedefconfig: $(DROPSCONF_CONFIG_DEPS)
+oldconfig olddefconfig xconfig gconfig nconfig randconfig allyesconfig allnoconfig savedefconfig: $(DROPSCONF_CONFIG_DEPS) | $(DIRS_FOR_CONFIG)
 	$(VERBOSE)+$(kconfig_call) $@ syncconfig
 	@$(MAKE) $(DROPSCONF_CONFIG_MK)
 
-$(DROPSCONF_CONFIG) syncconfig: $(DROPSCONF_CONFIG_DEPS)
+$(DROPSCONF_CONFIG) syncconfig: $(DROPSCONF_CONFIG_DEPS) | $(DIRS_FOR_CONFIG)
 	$(VERBOSE)+$(kconfig_call) syncconfig
 	
+.PHONY: genfixdep
+# script_basic: only fixdep for now
+# config-build=1: Force doing config things and not Linux build system things
+genfixdep:
+	$(VERBOSE)+$(kconfig_call) config-build=1 scripts_basic
 
 #$(DROPSCONF_CONFIG_H): $(DROPSCONF_CONFIG)
 
