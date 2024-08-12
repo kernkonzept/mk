@@ -154,6 +154,7 @@ cleanall::
 	$(VERBOSE)$(RM) $(DROPSCONF_CONFIG) $(DROPSCONF_CONFIG_H) \
 			$(DROPSCONF_CONFIG_MK) .menuconfig.log \
 			$(DROPSCONF_CONFIG).old
+	$(VERBOSE)$(RM) -r $(KCONFIG_OBJ_DIR)
 endif
 
 help::
