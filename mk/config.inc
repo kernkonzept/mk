@@ -38,7 +38,7 @@
 # DROPSCONF_TOOL_OLD	- helper for recreating the config header file
 
 
-KCONFIG_OBJ_DIR  = $(OBJ_BASE)/tool/kconfig
+KCONFIG_OBJ_DIR  = $(OBJ_BASE)/scripts/kconfig
 
 kconfig_call = [ -d $@ ] || install -d $(OBJ_BASE)/include/l4; \
 	       $(MAKE) -C $(L4DIR)/tool/kconfig O=$(OBJ_BASE) \
