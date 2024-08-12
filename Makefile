@@ -90,7 +90,10 @@ IGNORE_MAKECONF_INCLUDE=1
 endif
 
 ifeq ($(IGNORE_MAKECONF_INCLUDE),)
-ifneq ($(filter help config oldconfig olddefconfig silentoldconfig,$(MAKECMDGOALS)),)
+_config_targets := config oldconfig olddefconfig silentoldconfig \
+                    menuconfig nconfig gconfig xconfig \
+                    allnoconfig allyesconfig randconfig defconfig
+ifneq ($(filter help $(_config_targets),$(MAKECMDGOALS)),)
 # tweek $(L4DIR)/mk/Makeconf to use the intermediate file
 export BID_IGN_ROOT_CONF=y
 BID_ROOT_CONF=$(DROPSCONF_CONFIG_MK)
