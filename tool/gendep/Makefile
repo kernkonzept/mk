@@ -57,32 +57,39 @@ endif
 all:: $(LIB)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c $(SRC_DIR)/Makefile
+	@$(COMP_MESSAGE)
 	$(VERBOSE)$(call create_dir,$(@D))
-	$(HOST_CC) $(CFLAGS) -c $< -o $@
+	$(VERBOSE)$(HOST_CC) $(CFLAGS) -c $< -o $@
 
 $(OBJ_DIR)/%.32.o: $(SRC_DIR)/%.c $(SRC_DIR)/Makefile
+	@$(COMP_MESSAGE)
 	$(VERBOSE)$(call create_dir,$(@D))
-	$(HOST_CC) $(CFLAGS) -m32 -c $< -o $@
+	$(VERBOSE)$(HOST_CC) $(CFLAGS) -m32 -c $< -o $@
 
 $(OBJ_DIR)/%.64.o: $(SRC_DIR)/%.c $(SRC_DIR)/Makefile
+	@$(COMP_MESSAGE)
 	$(VERBOSE)$(call create_dir,$(@D))
-	$(HOST_CC) $(CFLAGS) -m64 -c $< -o $@
+	$(VERBOSE)$(HOST_CC) $(CFLAGS) -m64 -c $< -o $@
 
 $(LIB96): $(OBJS96) $(SRC_DIR)/Makefile
-	$(call cmd_link,$@) $(OBJS96)
+	@$(LINK_MESSAGE)
+	$(VERBOSE)$(call cmd_link,$@) $(OBJS96)
 
 $(LIB32): $(OBJS32) $(SRC_DIR)/Makefile
+	@$(LINK_MESSAGE)
 	$(VERBOSE)$(call create_dir,$(OBJ_DIR)/32)
-	$(call cmd_link,$@,32) $(OBJS32)
+	$(VERBOSE)$(call cmd_link,$@,32) $(OBJS32)
 
 $(LIB64): $(OBJS64) $(SRC_DIR)/Makefile
+	@$(LINK_MESSAGE)
 	$(VERBOSE)$(call create_dir,$(OBJ_DIR)/64)
-	$(call cmd_link,$@,64) $(OBJS64)
+	$(VERBOSE)$(call cmd_link,$@,64) $(OBJS64)
 
 doc: $(MAN)
 
 $(MAN): $(MAN_SRC)
-	doxygen
+	@$(call GEN_MESSAGE,manpages)
+	$(VERBOSE)doxygen
 
 install:: $(LIB) $(MAN)
 	$(if $(DROPS_STDDIR),,$(error DROPS_STDDIR is not set. Do a 'make config' in $(L4DIR)))
@@ -111,13 +118,15 @@ test:
 	cat blabla.dep
 
 clean cleanall::
-	rm -f $(OBJ_DIR)/.*.d $(OBJ_DIR)/*.o $(OBJ_DIR)/simple-cat
-	rm -f $(OBJ_DIR)/32/*.so $(OBJ_DIR)/64/*.so
-	rm -rf $(OBJ_DIR)/32 $(OBJ_DIR)/64
+	@$(CLEAN_MESSAGE)
+	$(VERBOSE)$(RM) $(OBJ_DIR)/.*.d $(OBJ_DIR)/*.o $(OBJ_DIR)/simple-cat
+	$(VERBOSE)$(RM) $(OBJ_DIR)/32/*.so $(OBJ_DIR)/64/*.so
+	$(VERBOSE)$(RM) -r $(OBJ_DIR)/32 $(OBJ_DIR)/64
 
 cleanall::
-	rm -f $(LIB)
-	rm -fr man/ html/
+	@$(CLEANALL_MESSAGE)
+	$(VERBOSE)$(RM) $(LIB)
+	$(VERBOSE)$(RM) -r man/ html/
 
 dist:
 	rm -rf $(DDIR)
