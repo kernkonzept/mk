@@ -1,4 +1,5 @@
-L4DIR ?= ../..
+L4DIR  ?= ../..
+PKGDIR ?= .
 include $(L4DIR)/mk/Makeconf
 
 VERSION	= 0.2

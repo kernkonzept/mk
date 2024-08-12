@@ -1,4 +1,5 @@
-L4DIR ?= ../..
+L4DIR  ?= ../..
+PKGDIR ?= .
 
 MODE           = host
 TARGET         = elf-util
