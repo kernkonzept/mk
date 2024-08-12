@@ -40,7 +40,7 @@
 
 KCONFIG_OBJ_DIR  = $(OBJ_BASE)/scripts/kconfig
 
-kconfig_call = [ -d $@ ] || install -d $(OBJ_BASE)/include/l4; \
+kconfig_call = $(MKDIR) $(OBJ_BASE)/include/l4; \
 	       $(MAKE) -C $(L4DIR)/tool/kconfig O=$(OBJ_BASE) \
                Kconfig=$(KCONFIG_FILE) \
 	       KCONFIG_AUTOHEADER=include/generated/autoconf.h \
