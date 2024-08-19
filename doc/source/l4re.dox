@@ -27,10 +27,6 @@
  * \example examples/sys/utcb-ipc/main.c
  * This example shows how to send IPC using the UTCB to store payload.
  *
- * \example examples/sys/ux-vhw/main.c
- * This example shows how to iterate the virtual hardware descriptors under
- * Fiasco-UX.
- *
  * \example examples/sys/isr/main.c
  * Example of an interrupt service routine.
  *
