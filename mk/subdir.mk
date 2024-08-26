@@ -39,7 +39,7 @@ install oldconfig txtconfig relink::
 
 # first the subdir-targets (this is where "all" will be built, e.g. in lib
 # or server).
-$(filter-out ptest,$(SUBDIR_TARGET)): %:
+$(SUBDIR_TARGET): %:
 	$(VERBOSE)test -f $@/broken -o -f $@/obsolete ||		\
 	    if [ -f $@/Makefile ] ; then PWD=$(PWD)/$@ $(MAKE) -C $@ $(MKFLAGS) ; fi
 # Second, the rules for going down into sub-pkgs with "lib" and "server"
@@ -49,15 +49,6 @@ $(filter-out ptest,$(SUBDIR_TARGET)): %:
 			PWD=$(PWD)/$$s $(MAKE) -C $$s $@ $(MKFLAGS); done ))
 
 idl include lib server examples doc:
-
-# the test target is something special:
-TEST_DEPENDS ?= server
-
-# check if the test directory exists, check if its broken or obsolete
-# to be able to specify additional dependencies, we make it a :: target
-ptest:: $(TEST_DEPENDS) 
-	$(VERBOSE)test -f $@/broken -o -f $@/obsolete || \
-	  if [ -f $@/Makefile ] ; then PWD=$(PWD)/$@ $(MAKE) -C $@ $(MKFLAGS) ; fi
 
 install-symlinks:
 	$(warning target install-symlinks is obsolete. Use 'include' instead (warning only))

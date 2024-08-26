@@ -726,20 +726,6 @@ kexec:
 	 $(tool_envvars) $(common_envvars)                  \
 	  $(L4DIR)/tool/bin/kexec-launch $$ml "$$e"
 
-ux:
-	$(VERBOSE)if [ "$(ARCH)" != "x86" ]; then                   \
-	  echo "This mode can only be used with architecture x86."; \
-	  exit 1;                                                   \
-	fi
-	$(VERBOSE)$(entryselection);                                 \
-	$(tool_envvars)  $(common_envvars)                           \
-	  $(if $(UX_GFX),UX_GFX="$(UX_GFX)")                         \
-	  $(if $(UX_GFX_CMD),UX_GFX_CMD="$(UX_GFX_CMD)")             \
-	  $(if $(UX_NET),UX_NET="$(UX_NET)")                         \
-	  $(if $(UX_NET_CMD),UX_NET_CMD="$(UX_NET_CMD)")             \
-	  $(if $(UX_GDB_CMD),UX_GDB_CMD="$(UX_GDB_CMD)")             \
-	  $(L4DIR)/tool/bin/ux-launch $$ml "$$e" $(UX_OPTIONS)
-
 GRUB_TIMEOUT ?= 0
 
 ISONAME_SUFFIX ?= .iso
@@ -793,7 +779,6 @@ help::
 	@echo "  fastboot   - Call fastboot with the created rawimage."
 	@echo "  fastboot_rawimage - Call fastboot with the created rawimage."
 	@echo "  fastboot_uimage   - Call fastboot with the created uimage."
-	@echo "  ux         - Run 'name' under Fiasco/UX. [x86]" 
 	@echo "  kexec      - Issue a kexec call to start the entry." 
 	@echo " Add 'E=name' to directly select the entry without using the menu."
 	@echo " Modules are defined in conf/modules.list."
@@ -802,7 +787,7 @@ listplatforms: $(KCONFIG_FILE).platforms.list
 	$(VERBOSE)sed -nE "s/^\[$(BUILD_ARCH)\](.*)/\1/p" $(KCONFIG_FILE).platforms.list | sort -b
 
 
-.PHONY: elfimage rawimage uimage qemu vbox ux switch_ram_base \
+.PHONY: elfimage rawimage uimage qemu vbox switch_ram_base \
         grub1iso grub2iso listentries shellcodeentry exportpack \
         fastboot fastboot_rawimage fastboot_uimage \
 	check_and_adjust_ram_base listplatforms itb fvp
