@@ -36,8 +36,9 @@ do-all-make-targets:
 	              --sys-dir "$(or $(SANDBOX_SYSDIR),/)" \
 	              --dir-rw "$(OBJ_DIR)" \
 	              --dir-ro "$(if $(L4DIR_ABS),$(L4DIR_ABS),$(PWD))" \
-	              --cmd "$(MAKE) -C $(OBJ_DIR) $(MAKECMDGOALS)"
+	              --cmd "$(MAKE) -C $(PWD) $(MAKECMDGOALS) O=$(OBJ_DIR)"
 
+BID_IGN_ROOT_CONF=y
 include $(L4DIR)/mk/Makeconf
 
 $(filter-out $(BID_DCOLON_TARGETS),$(MAKECMDGOALS)):  do-all-make-targets
