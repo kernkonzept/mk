@@ -905,6 +905,10 @@ report:
 	elif [ -e /etc/mandrake-release ]; then                \
 	  echo -n "Mandrake: ";                                \
 	  cat /etc/mandrake-release;                           \
+	elif [ -e /etc/os-release ]; then                      \
+	  cat /etc/os-release;                                 \
+	elif [ -e /etc/lsb-release ]; then                     \
+	  cat /etc/lsb-release;                                \
 	else                                                   \
 	  echo "Unknown distribution";                         \
 	fi
