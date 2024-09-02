@@ -142,6 +142,36 @@ config BID_DEBUG_INFO
 
 	  If unsure, say 'Y'.
 
+choice
+	prompt "Position independent executables"
+	depends on BUILD_ARCH_amd64 || BUILD_ARCH_arm || BUILD_ARCH_arm64
+	default BID_PIE_VOLUNTARY
+
+config BID_PIE_NONE
+	bool "no"
+	help
+	  Do not support position independent executables.
+
+config BID_PIE_VOLUNTARY
+	bool "selected packages"
+	help
+	  Build position independent executables where beneficial. All
+	  libraries are built as position independent. Executables are only
+	  linked position independent if the package indicated to do so.
+	  Enabling this option will add some executable size and runtime
+	  overhead.
+
+config BID_PIE_ALL
+	bool "everything"
+	depends on EXPERIMENTAL
+	help
+	  Build all executables as position independent. This is not supported
+	  by all packages on all platforms and might break their build.
+	  Enabling this option will add some executable size and runtime
+	  overhead.
+
+endchoice
+
 config BID_BUILD_TESTS
 	bool "Also build tests"
 	default y
@@ -286,35 +316,6 @@ config EXPERIMENTAL
 	  Use with caution!
 
 if EXPERIMENTAL
-
-choice
-	prompt "Position independent executables"
-	depends on BUILD_ARCH_amd64 || BUILD_ARCH_arm || BUILD_ARCH_arm64
-	default BID_PIE_NONE
-
-config BID_PIE_NONE
-	bool "no"
-	help
-	  Do not support position independent executables.
-
-config BID_PIE_VOLUNTARY
-	bool "selected packages"
-	help
-	  Build position independent executables where beneficial. All
-	  libraries are built as position independent. Executables are only
-	  linked position independent if the package indicated to do so.
-	  Enabling this option will add some executable size and runtime
-	  overhead.
-
-config BID_PIE_ALL
-	bool "everything"
-	help
-	  Build all executables as position independent. This is not supported
-	  by all packages on all platforms and might break their build.
-	  Enabling this option will add some executable size and runtime
-	  overhead.
-
-endchoice
 
 config BID_THUMB
 	bool "Build thumb code"
