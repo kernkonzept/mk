@@ -370,7 +370,8 @@ $ENV{QEMU_OPTIONS} = $ENV{QEMU_ARGS};
 $ENV{MODULES_LIST} = $test_modules_name;
 $ENV{MODULE_SEARCH_PATH} = $module_search_path;
 
-print "$_='" . ($ENV{$_} // "") . "'" foreach qw(QEMU_OPTIONS MODULES_LIST MODULE_SEARCH_PATH);
+print "$_='" . ($ENV{$_} // "") . "'\n"
+  foreach qw(QEMU_OPTIONS MODULES_LIST MODULE_SEARCH_PATH);
 
 $ENV{ENTRY} = "maketest";
 
