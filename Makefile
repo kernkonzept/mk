@@ -934,16 +934,6 @@ report:
 	@echo "OBJ_BASE:  $(OBJ_BASE)"
 	@echo "OBJ_DIR:   $(OBJ_DIR)"
 	@echo
-	@for i in pkg \
-	          ../kernel/fiasco/src/kern/ia32 \
-	          ../kernel/fiasco/tool/preprocess/src/preprocess; do \
-	  if [ -e $$i ]; then \
-	    echo Path $$i found ; \
-	  else                \
-	    echo PATH $$i IS NOT AVAILABLE; \
-	  fi \
-	done
-	@echo
 	@echo Configuration:
 	@for i in $(OBJ_DIR)/.config.all $(OBJ_DIR)/.kconfig   \
 	          $(OBJ_DIR)/Makeconf.local                    \
