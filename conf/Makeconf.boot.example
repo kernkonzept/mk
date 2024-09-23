@@ -1,7 +1,6 @@
 # This file is an example for defining configurations for different boot
 # methods:
 #   - QEMU (qemu)
-#   - Fiasco-UX (ux)
 #   - Image mode (image)
 #   - ISO images (grub1iso, grub2iso)
 #   - VirtualBox
@@ -130,25 +129,6 @@ FVP_OPTIONS       += $(FVP_OPTIONS-$(ARCH)-$(PLATFORM_TYPE))
 
 # Set path to FVP binary if model is not in $PATH - optional
 #FVP_PATH = /path/to/FVP_Base_RevC-2xAEMvA
-
-# Fiasco-UX: Specific configuration for 'ux' target ('make ux E=xxx'):
-#
-# Add Fiasco-UX build directory to MODULE_SEARCH_PATH based
-# on the make target
-
-ux: MODULE_SEARCH_PATH = /path/to/fiasco-ux-build:$(MODULE_SEARCH_PATH)
-
-# Additional (optional) variables:
-#  UX_OPTIONS: Options for Fiasco-UX, such as -m
-#  UX_GFX:     Graphical console resolution and colordepth, e.g.:
-#              UX_GFX=800x600@16
-#  UX_GFX_CMD: Path to ux_con binary, default is to search in the
-#              UX_SEARCH_PATH
-#  UX_NET:     Enable network if set, e.g.: UX_NET=y
-#  UX_NET_CMD: Path to ux_net binary, default is to search in the
-#              UX_SEARCH_PATH 
-
-UX_OPTIONS     = -m 128
 
 # VirtualBox
 #
