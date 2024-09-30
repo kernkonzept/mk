@@ -70,4 +70,4 @@ foreach my $e (@entries)
 close A;
 
 #system("cat $tmpdir/boot/grub/grub.cfg");
-L4::Grub::grub2_mkisofs($isofilename, $tmpdir);
+L4::Grub::grub2_mkisofs(0, $isofilename, $tmpdir);

@@ -770,6 +770,22 @@ sub generate_grub2_entry($$%)
   $s .= "}\n";
 }
 
+sub generate_grub2_efi_entry($$$)
+{
+  my $entryname = shift;
+  my $bn = shift;
+  my $prefix = shift;
+
+  $prefix = '' unless defined $prefix;
+  $prefix = "/$prefix" if $prefix ne '' and $prefix !~ /^[\/(]/;
+
+  my $s = "menuentry \"$entryname\" {\n";
+  $s .= "  echo Loading '$prefix/$bn'\n";
+  $s .= "  chainloader $prefix/$bn\n";
+  $s .= "  echo Done, booting...\n";
+  $s .= "}\n";
+}
+
 # Merge multiple entries such that we only need to copy a file
 # once to a boot medium (e.g. ISO file, target, etc.)
 # For that, the entries will be augmented with additional entries 'file' and

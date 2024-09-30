@@ -730,6 +730,7 @@ kexec:
 GRUB_TIMEOUT ?= 0
 
 ISONAME_SUFFIX ?= .iso
+EFIISONAME_SUFFIX ?= .efi.iso
 
 define geniso
 	$(call check_for_arch,x86 amd64)
@@ -747,6 +748,16 @@ grub1iso:
 
 grub2iso:
 	$(call geniso,2)
+
+grub2efiiso: efiimage
+	$(call check_for_arch,x86 amd64)
+	$(VERBOSE)$(entryselection);                                         \
+	 ISONAME=$(IMAGES_DIR)/$$(echo $$e | tr '[ A-Z]' '[_a-z]')$(EFIISONAME_SUFFIX);      \
+	 EFINAME=$(IMAGES_DIR)/bootstrap_$$(echo $$e | tr '[ ]' '[_]').efi;  \
+	 $(tool_envvars) $(common_envvars)                                   \
+	  $(L4DIR)/tool/bin/gengrub2efiiso --timeout=$(GRUB_TIMEOUT)         \
+	      $$EFINAME $$ISONAME "$$e"                                      \
+	  && $(LN) -f $$ISONAME $(IMAGES_DIR)/.current.iso
 
 exportpack: $(if $(filter $(ARCH),x86 amd64),,$(QEMU_KERNEL_TYPE))
 	$(if $(EXPORTPACKTARGETDIR),, \
@@ -771,8 +782,9 @@ help::
 	@echo "  rawimage   - Generate a raw image (memory dump), containing all modules."
 	@echo "  uimage     - Generate a uimage for u-boot, containing all modules."
 	@echo "  itb        - Generate a FIT image for u-boot, containing all modules."
-	@echo "  grub1iso   - Generate an ISO using GRUB1 in images/<name>.iso [x86, amd64]" 
-	@echo "  grub2iso   - Generate an ISO using GRUB2 in images/<name>.iso [x86, amd64]" 
+	@echo "  grub1iso   - Generate an ISO using GRUB1 in images/<name>.iso [x86, amd64]"
+	@echo "  grub2iso   - Generate an ISO using GRUB2 in images/<name>.iso [x86, amd64]"
+	@echo "  grub2efiiso - Generate an ISO for EFI using GRUB2 in images/<name>.efi.iso [x86, amd64]"
 	@echo "  qemu       - Use Qemu to run 'name'." 
 	@echo "  fvp        - Use Arm FVP to run 'name'. [arm, arm64]"
 	@echo "  exportpack - Export binaries with launch support." 

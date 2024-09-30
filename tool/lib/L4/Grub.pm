@@ -108,8 +108,9 @@ sub check_for_program
 
 sub grub2_mkisofs($$@)
 {
-  my ($isofilename, $dir, @morefiles) = @_;
+  my ($require_efi, $isofilename, $dir, @morefiles) = @_;
   my $mkr = check_for_program("grub2-mkrescue", "grub-mkrescue");
+
   # grub-mkrescue returns without error if those are missing
   check_for_program('xorriso');
   check_for_program('mformat'); # EFI only?
@@ -127,7 +128,6 @@ sub grub2_mkisofs($$@)
   my $opt = '';
   system("$mkr --output=/dev/null /dev/null -f >/dev/null 2>&1");
   $opt = " -as mkisofs" unless $?;
-
 
   # Check whether the installed GRUB works for either PC or UEFI.
   my $is_pc;
@@ -150,6 +150,9 @@ sub grub2_mkisofs($$@)
   die "grub-mkrescue does not seem to work for either PC or UEFI targets. GRUB not (properly) installed?"
     if not $is_pc and not $is_efi and not $is_hybrid;
 
+  die "grub-mkrescue does not seem to support the UEFI target. GRUB not (properly) installed?"
+    if $require_efi and not ($is_efi or $is_hybrid);
+
   if ($is_efi and $is_pc)
     {
       print "\nWarning: Unable to determine whether grub-mkrescue creates PC or UEFI images.\n";
@@ -160,6 +163,7 @@ sub grub2_mkisofs($$@)
             join(' ', @morefiles)." --$opt -f";
   system("$cmd");
   die "Failed to create ISO" if $?;
+
   # grub-mkrescue does not propagate internal tool errors
   die "Failed to create ISO" unless -e $isofilename;
 
@@ -175,7 +179,6 @@ sub grub2_mkisofs($$@)
       print "      (or similar) to your QEMU call to boot it in UEFI mode.\n\n";
     }
 }
-
 
 sub grub1_config_prolog(%)
 {

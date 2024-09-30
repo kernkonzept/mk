@@ -1,0 +1,54 @@
+#! /usr/bin/env perl
+
+# Copyright (C) 2024 Kernkonzept GmbH.
+# Author(s): Martin Decky <martin.decky@kernkonzept.com>
+
+use strict;
+use warnings;
+
+BEGIN
+  {
+    unshift @INC, $ENV{L4DIR} . '/tool/lib'
+      if $ENV{L4DIR} && -d $ENV{L4DIR} . '/tool/lib/L4';
+  }
+
+use L4::ModList;
+use L4::Grub;
+use File::Temp qw/tempdir/;
+use File::Copy;
+use File::Basename;
+
+my $module_path = $ENV{SEARCHPATH} || ".";
+my %opts = L4::Grub::parse_gengrub_args();
+
+my $efifilename = shift;
+my $bn = basename($efifilename);
+
+my $isofilename = shift;
+my $entryname = shift;
+
+unless (defined $entryname)
+  {
+    print "usage: $0 EFIFILENAME ISOFILENAME ENTRY\n";
+    exit(1);
+  }
+
+delete $opts{timeout}
+  if @ARGV > 1 and defined $opts{timeout} and $opts{timeout} == 0;
+
+my $tmpdir = tempdir(CLEANUP => 1);
+L4::Grub::prepare_grub2_dir($tmpdir);
+
+open(CFG, ">$tmpdir/boot/grub/grub.cfg")
+  || die "Cannot create '$tmpdir/boot/grub/grub.cfg': $!!";
+
+print CFG L4::Grub::grub2_config_prolog(%opts);
+print CFG L4::ModList::generate_grub2_efi_entry($entryname, $bn, '');
+close CFG;
+
+if (! -e $tmpdir . "/" . $bn)
+  {
+    copy($efifilename, $tmpdir . "/" . $bn);
+  }
+
+L4::Grub::grub2_mkisofs(1, $isofilename, $tmpdir);
