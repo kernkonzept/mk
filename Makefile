@@ -359,6 +359,7 @@ PKG_KCONFIG_L4_FILES := $(wildcard $(addsuffix /Kconfig.L4,$(PKG_DIRS)))
 # as this would include obsolete dependencies stored in $(KCONFIG_FILE_DEPS)
 # from the previous generation of it.
 KCONFIG_FILE_DEPS_CURRENT = $(KCONFIG_FILE_SRC) $(PKG_KCONFIG_L4_FILES) Makefile \
+                            $(addsuffix /Control,$(PKG_DIRS)) \
                             $(KCONFIGS_ARCH) $(L4DIR)/tool/bin/gen_kconfig
 
 $(KCONFIG_FILE): $(KCONFIG_FILE_DEPS_CURRENT) \
