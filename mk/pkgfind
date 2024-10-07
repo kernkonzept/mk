@@ -12,7 +12,7 @@ sub find_dir
   my $m = shift;
   my $dx = catdir(@_);
   my $d = catdir($p, @_);
-  if (-f "$d/Control" or -f "$d/obsolete" or -f "$d/broken") {
+  if (-f "$d/Control" and ! -f "$d/obsolete" and ! -f "$d/broken") {
     $hits{$dx} = 1;
     return;
   }
