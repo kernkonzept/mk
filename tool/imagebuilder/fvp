@@ -13,7 +13,8 @@ fi
 
 declare optlist=( $MAKECONF_FVP_OPTIONS "-a" "cluster0*=$TARGET_IMAGE" )
 
-echo "FVP options: ${optlist[*]}"
+echo -n "FVP options:"
+printf " '%s'" "${optlist[@]}"
 
 # We need to override the stdout buffering, otherwise tap-wrapper won't see
 # the last couple of lines.
