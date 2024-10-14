@@ -447,13 +447,13 @@ sub get_module_entry($$$)
   my $m = $modaddr_title || $modaddr_global;
   if (defined $m)
     {
-      if ($bootstrap{cmdline} =~ /-modaddr\s+/)
+      if ($bootstrap{cmdline} =~ /-modaddr[\s=]+/)
         {
-          $bootstrap{cmdline} =~ s/(-modaddr\s+)%modaddr%/$1$m/;
+          $bootstrap{cmdline} =~ s/(-modaddr[\s=]+)%modaddr%/-modaddr=$m/;
         }
       else
         {
-          $bootstrap{cmdline} .= " -modaddr $m";
+          $bootstrap{cmdline} .= " -modaddr=$m";
         }
     }
 
