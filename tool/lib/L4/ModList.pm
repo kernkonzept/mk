@@ -95,6 +95,12 @@ sub handle_line
       return () unless grep /^$ENV{ARCH}$/, @a;
     }
 
+  if (exists $opts{bits})
+    {
+      my @a = split /\|+/, $opts{bits};
+      return () unless grep /^$ENV{BITS}$/, @a;
+    }
+
   if (exists $opts{perl})
     {
       my @m = eval $r;
@@ -274,6 +280,7 @@ sub get_module_entry($$$)
 
   check_env_var('L4DIR', 'path');
   check_env_var('PLATFORM_TYPE', 'word');
+  check_env_var('BITS', 'word');
   check_env_var('ARCH', 'word');
   check_env_var('SRC_BASE_ABS', 'path');
 

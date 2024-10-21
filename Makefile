@@ -566,7 +566,7 @@ check_build_tools:
 	fi
 
 define common_envvars
-	ARCH="$(ARCH)" PLATFORM_TYPE="$(PLATFORM_TYPE)"
+	ARCH="$(ARCH)" PLATFORM_TYPE="$(PLATFORM_TYPE)" BITS="$(BITS)"
 endef
 define tool_envvars
 	L4DIR=$(L4DIR)                                           \

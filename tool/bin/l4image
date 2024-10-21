@@ -351,6 +351,7 @@ sub create_image
     unless $d->{attrs}{"l4i:PT"};
 
   $ENV{PLATFORM_TYPE} = $d->{attrs}{"l4i:PT"};
+  $ENV{BITS}          = $d->{attrs}{"l4i:bits"};
   $ENV{ARCH}          = $d->{arch};
 
   my %entry = L4::ModList::get_module_entry($modules_list_file,
