@@ -34,6 +34,8 @@
  * Client/Server example using C++ infrastructure -- Server implementation.
  * \example examples/clntsrv/client.cc
  * Client/Server example using C++ infrastructure -- Client implementation.
+ * \example examples/clntsrv/shared.h
+ * Client/Server example using C++ infrastructure -- Shared header file.
  * \example examples/clntsrv/clntsrv.cfg
  * Sample configuration file for the client/server example.
  *
