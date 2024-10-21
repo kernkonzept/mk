@@ -3,6 +3,10 @@ package L4::TapWrapper::Plugin::External;
 use strict;
 use warnings;
 
+use IPC::Open3;
+use IO::Select;
+use Symbol 'gensym';
+
 use parent 'L4::TapWrapper::Plugin::TagPluginBase';
 use L4::TapWrapper;
 
@@ -65,19 +69,50 @@ sub finalize()
   open(my $fh, '-|', "$tool " . $self->tmpdir())
     or L4::TapWrapper::fail_test("Could not start external tool '$tool'");
 
-  my @lines = <$fh>;
-  close($fh);
-  if ($! != 0)
+  my $pid = open3(my $chld_stdin, my $chld_stdout, my $chld_stderr = gensym, $tool, $self->tmpdir());
+  close($chld_stdin);
+  my $select = IO::Select->new($chld_stdout, $chld_stderr);
+
+  my $stdout_text = "";
+  my $stderr_text = "";
+
+  while (my @ready = $select->can_read())
     {
-      $self->add_tap_line(0, "External ['$tool']: Error closing pipe: $!");
+      for my $fh (@ready)
+        {
+          my $ret = sysread($fh, my $buf, 256);
+
+          if ($ret == 0)
+            {
+              $select->remove($fh);
+              close($fh);
+              next;
+            }
+
+          if ($fh == $chld_stdout)
+            {
+              $stdout_text .= $buf;
+            }
+          else
+            {
+              $stderr_text .= $buf;
+            }
+        }
     }
-  elsif ($? != 0)
+
+  # /(?<=\n)/ means split after \n and keep the \n.
+  my @stdout_lines = split /(?<=\n)/, $stdout_text;
+  my @stderr_lines = split /(?<=\n)/, $stderr_text;
+
+  $self->add_log_line(@stderr_lines);
+
+  if ($? != 0)
     {
       $self->add_tap_line(0, "External ['$tool']: Exited with code $?");
     }
   else
     {
-      $self->add_raw_tap_line(@lines);
+      $self->add_raw_tap_line(@stdout_lines);
     }
   $self->SUPER::finalize();
 }
