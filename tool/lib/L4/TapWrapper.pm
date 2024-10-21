@@ -16,6 +16,7 @@ our @_plugins;
 our @_filters;
 our $TAP_FD;
 our $print_to_tap_fd = 1;
+our $harness_active;
 our $plugintmpdir = undef;
 our %_have_plugins = ();
 our $timeout;
@@ -220,7 +221,7 @@ sub exit_test
   $exit_code = 0
     if (not defined $exit_code   # default
       or $exit_code == 69        # SKIP tests
-      or $ENV{HARNESS_ACTIVE});  # run under 'prove'
+      or $harness_active);       # run under 'prove'
 
 
   close($TAP_FD);

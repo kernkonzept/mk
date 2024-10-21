@@ -87,6 +87,8 @@ my $target = $ENV{TEST_TARGET};
 my $expline;
 $L4::TapWrapper::test_description = $ENV{TEST_DESCRIPTION} || ($testfile ? "run $testfile" : '') || join(" ", map { $_ ? basename($_) : () } @ARGV, $target);
 
+$L4::TapWrapper::harness_active = !!$ENV{HARNESS_ACTIVE};
+
 my $workdir = $ENV{TEST_WORKDIR} || tempdir("/tmp/tap-wrapper-workdir-XXXXXXXX", CLEANUP => 1);
 my ($name, $path, $suffix) = fileparse($testfile || $target || "", ".t");
 my $testworkdir   = "$workdir/$path$name";
@@ -118,7 +120,7 @@ if ($ENV{TAPPER_OUTPUT})
 else
   {
     open($L4::TapWrapper::TAP_FD, '>&', STDOUT);
-    if ($ENV{HARNESS_ACTIVE})
+    if ($L4::TapWrapper::harness_active)
       {
         # Supress normal output when running within a prove harness.
         open(STDOUT, '>', '/dev/null');
@@ -186,7 +188,7 @@ if ($hard_timeout)
 
 print $L4::TapWrapper::TAP_FD "TAP Version 13\n";
 my $repeat = $ENV{TEST_EXPECTED_REPEAT};
-if (looks_like_number($repeat) and $repeat == 0 and $ENV{HARNESS_ACTIVE})
+if (looks_like_number($repeat) and $repeat == 0 and $L4::TapWrapper::harness_active)
   {
     print $L4::TapWrapper::TAP_FD "1..0 # SKIP ";
     print $L4::TapWrapper::TAP_FD "infinite test cannot be run when harness is active\n";
