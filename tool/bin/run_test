@@ -79,7 +79,7 @@ my $test_run_tags = $ENV{TEST_RUN_TAGS} || '';
 my $test_required_tags = $ENV{TEST_TAGS};
 my $is_kunit_test  = $ENV{TEST_KERNEL_UNIT} || 0;
 my $kunit_verbose = $ENV{TEST_KUNIT_VERBOSE} || 0;
-my $kunit_restart = $ENV{TEST_KUNIT_RESTART} || 0;
+my $kunit_on_finished = $ENV{TEST_KUNIT_ON_FINISHED} // "none";
 my $kunit_debug = $ENV{TEST_KUNIT_DEBUG} || 0;
 my $kunit_record = $ENV{TEST_KUNIT_RECORD} || 0;
 my $test_platform_allow = $ENV{TEST_PLATFORM_ALLOW} || "";
@@ -90,6 +90,14 @@ $platform = L4::Makeconf::get($obj_base,"PLATFORM_TYPE") unless defined $platfor
 
 print STDERR "Warning: Unable to determine platform type.\n"
   unless defined $platform;
+
+if ($ENV{TEST_KUNIT_RESTART})
+  {
+    die "Error: Both TEST_KUNIT_RESTART and TEST_KUNIT_ON_FINISHED set. Please unset TEST_KUNIT_RESTART.\n"
+      if defined $ENV{TEST_KUNIT_ON_FINISHED};
+    print STDERR "Warning: TEST_KUNIT_RESTART is deprecated, please use TEST_KUNIT_ON_FINISHED=restart\n";
+    $kunit_on_finished = "restart";
+  }
 
 my $tmpdir      = $ENV{TEST_TMPDIR};
 make_path($tmpdir);
@@ -331,9 +339,15 @@ if ($is_kunit_test)
         $hw_cores = $hwconfig->{NUM_CPUS};
       }
 
+    my %on_finished_mnemonics = (
+      none => 0,
+      restart => 1,
+      shutdown => 2,
+    );
+
     my $opts_string = "";
     $opts_string .= $kunit_verbose ? '1' : '0';
-    $opts_string .= $kunit_restart ? '1' : '0';
+    $opts_string .= $on_finished_mnemonics{$kunit_on_finished} // 0;
     $opts_string .= $kunit_debug ? '1' : '0';
     $opts_string .= $kunit_record ? '1' : '0';
 
