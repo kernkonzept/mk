@@ -15,6 +15,7 @@ use L4::TapWrapper::Util qw/kill_ps_tree/;
 our @_plugins;
 our @_filters;
 our $TAP_FD;
+our $logdir;
 our $print_to_tap_fd = 1;
 our $harness_active;
 our $plugintmpdir = undef;
@@ -128,12 +129,15 @@ sub finalize {
   kill_ps_tree($pid);
   $pid = -1; # clean behaviour on multiple calling
 
+  my @all_log_lines;
   my $plan_found = 0;
   my @plan_explanations;
   my $taplines = 0;
-  foreach (@_plugins, @_filters)
+  foreach my $pluggable (@_plugins, @_filters)
     {
-      foreach ($_->finalize())
+      my ($tap_lines, $log_lines) = $pluggable->finalize();
+
+      foreach (@$tap_lines)
         {
           if (/^1\.\.([0-9]+)(.*)$/)
             {
@@ -154,6 +158,34 @@ sub finalize {
               print $TAP_FD $_ if $print_to_tap_fd;
             }
         }
+
+      my $tag = ref($pluggable);
+      $tag =~ s/^L4::TapWrapper::/@/;
+
+      foreach (@$log_lines)
+        {
+          chomp;
+          push @all_log_lines, "[$tag] $_\n";
+        }
+    }
+
+  if (@all_log_lines)
+    {
+      # Write to plugin.log if harness active, else stdout
+      my $fh;
+
+      if ($harness_active)
+        {
+          open($fh, ">>", "$logdir/plugin.log");
+        }
+      else
+        {
+          $fh = \*STDOUT;
+        }
+
+      print $fh @all_log_lines;
+
+      close($fh) if $harness_active;
     }
 
   return unless $print_to_tap_fd;

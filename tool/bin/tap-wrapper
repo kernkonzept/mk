@@ -94,6 +94,7 @@ my ($name, $path, $suffix) = fileparse($testfile || $target || "", ".t");
 my $testworkdir   = "$workdir/$path$name";
 my $logdir        = "$testworkdir/log"; # tap-wrapper logs
 my $rundir        = "$testworkdir/run"; # run_test modules.list, ned files, etc.
+$L4::TapWrapper::logdir = $logdir;
 $ENV{TEST_TMPDIR} = $rundir;
 make_path($logdir, $rundir);
 $L4::TapWrapper::plugintmpdir = "$ENV{TEST_PLUGIN_TMPDIR}/$path$name" if $ENV{TEST_PLUGIN_TMPDIR};

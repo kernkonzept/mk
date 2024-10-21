@@ -18,7 +18,7 @@ sub add_raw_tap_line {
 }
 
 sub finalize {
-  return @{shift->{tap_lines}};
+  return shift->{tap_lines}, undef;
 }
 
 sub process_any {
@@ -62,13 +62,14 @@ processing pipeline.
 
 =item C<finalize>
 
-Returns a list of all TAP lines that the filter wants to emit to the
-framework. The framework aggregates these lines. In particular it merges
-multiple C<1..count> lines by creating a total C<1..sum_count> line at the end
-of the output.
-The default implementations returns all lines that have been added to the
-C<$self-E<gt>{tap_lines}> array using the C<add_tap_line> and
-C<add_tap_line_raw> functions (see below).
+Returns an array reference of all TAP lines that the filter wants to emit to the
+framework, followed by an array reference of log lines to be emitted into a
+common plugin log file. The framework aggregates these lines. In particular it
+merges multiple C<1..count> lines among the TAP lines by creating a total
+C<1..sum_count> line at the end of the output. The default implementations
+returns all lines that have been added to the C<$self-E<gt>{tap_lines}> array
+using the C<add_tap_line> and C<add_tap_line_raw> functions as TAP lines (see below).
+For now the default implementation does not gather nor return any log lines.
 
 =head2 Base Functions
 

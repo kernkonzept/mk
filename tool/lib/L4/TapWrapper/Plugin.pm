@@ -9,6 +9,7 @@ sub new {
   my $self = {};
   $self->{inhibit_exit} = 0;
   $self->{tap_lines} = [];
+  $self->{log_lines} = [];
   $self->{features} = { 'shuffling_support' => 1 };
   return bless $self, $type;
 }
@@ -23,6 +24,11 @@ sub add_raw_tap_line {
   push @{$self->{tap_lines}}, @_;
 }
 
+sub add_log_line {
+  my $self = shift;
+  push @{$self->{log_lines}}, @_;
+}
+
 sub tmpdir {
   my $self = shift;
   return undef unless $L4::TapWrapper::plugintmpdir;
@@ -35,9 +41,12 @@ sub tmpdir {
 
 
 # Things to do after test is finished. Usually providing output.
-# Returns list of tap lines
+# Either returns
+# - list of tap lines (legacy)
+# - arrayref of tap lines and arrayref of log lines
 sub finalize {
-  return @{shift->{tap_lines}};
+  my $self = shift;
+  return $self->{tap_lines}, $self->{log_lines};
 }
 
 # Guarantee: Not called if already within a block
@@ -143,14 +152,18 @@ for the plugin.
 
 =item C<finalize>
 
-Returns all TAP lines that the plugin wants to emit to the framework as an
-array. The framework aggregates these lines. In particular it merges multiple
-C<1..count> lines by creating a total C<1..sum_count> line at the end of the
-output.
+Returns an array reference to all the TAP lines that the plugin wants to emit to
+the framework, followed by an array reference of all log lines to be emitted to
+a common plugin log file. The framework aggregates these lines. In particular it
+merges multiple C<1..count> lines by creating a total C<1..sum_count> line at
+the end of the output.
 
-The default implementations returns all lines that have been added to the
-C<$self-E<gt>{tap_lines}> array using the C<add_tap_line> and
+The default implementations returns all lines as TAP lines that have been added
+to the C<$self-E<gt>{tap_lines}> array using the C<add_tap_line> and
 C<add_raw_tap_line> functions (see below).
+
+The default implementation returns all lines as Log lines that have been added
+to the C<$self-E<gt>{log_file}> array using the C<add_log_line> function.
 
 =back
 
@@ -184,6 +197,12 @@ version just adds the sole argument to the array. The C<add_tap_line>
 instantiation interprets the first argument as a boolean indicating success and
 the second argument as a descriptive string, joining them for a complete TAP
 line.
+
+=item C<add_log_line>
+
+Adds one or more lines to the C<$self-E<gt>{log_lines}> array, which will be
+returned by the default C<finalize> implementation and emitted into a common log
+file by the framework.
 
 =item C<tmpdir>
 
