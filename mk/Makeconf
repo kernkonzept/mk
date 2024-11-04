@@ -401,22 +401,22 @@ BID_ASM_CPP_FILE_EXTENSIONS ?= .S
 # 2: return if argument does not work with compiler
 # 3: compiler name
 # 4: compiler type
-check_compiler_opt = $(if $(shell $(3) $(CARCHFLAGS) $(CCXX_FLAGS) \
-                        $(check_compiler_flags) $(1) -c -o /dev/null -x $(4) \
-                        /dev/null >/dev/null 2>&1 || echo X),$(2),$(1))
+check_compiler_opt = $(if $(shell $(filter-out $(CCACHE),$(3)) $(CARCHFLAGS) \
+                        $(CCXX_FLAGS) $(check_compiler_flags) $(1) -c -o /dev/null \
+                        -x $(4) /dev/null >/dev/null 2>&1 || echo X),$(2),$(1))
 checkcc   = $(call check_compiler_opt,$(1),$(2),$(CC),c)
 checkcxx  = $(call check_compiler_opt,$(1),$(2),$(CXX),c++)
 checkdtc  = $(shell if $(DTC) $(1) --version /dev/null > /dev/null 2>&1; \
                     then echo "$(1)"; fi)
-checkcxx_nowarn = $(if $(shell $(CXX) $(CARCHFLAGS) $(CCXX_FLAGS) \
-                    $(check_compiler_flags) -W$(1) -c -o /dev/null -x c++ \
-                    /dev/null >/dev/null 2>&1 || echo X),,-Wno-$(1))
+checkcxx_nowarn = $(if $(shell $(filter-out $(CCACHE),$(CXX)) $(CARCHFLAGS) \
+                    $(CCXX_FLAGS) $(check_compiler_flags) -W$(1) -c -o /dev/null \
+                    -x c++ /dev/null >/dev/null 2>&1 || echo X),,-Wno-$(1))
 checkld   = $(shell if $(callld) -v "$1" > /dev/null 2>&1; \
              then echo "$(1)"; else echo "$(2)"; fi)
 
-callcc    = LC_ALL=C $(CC)  $(CARCHFLAGS) $(CCXX_FLAGS)
-callcxx   = LC_ALL=C $(CXX) $(CARCHFLAGS) $(CCXX_FLAGS)
-callfc    = LC_ALL=C $(FC)  $(CARCHFLAGS) $(CCXX_FLAGS)
+callcc    = LC_ALL=C $(filter-out $(CCACHE),$(CC))  $(CARCHFLAGS) $(CCXX_FLAGS)
+callcxx   = LC_ALL=C $(filter-out $(CCACHE),$(CXX)) $(CARCHFLAGS) $(CCXX_FLAGS)
+callfc    = LC_ALL=C $(filter-out $(CCACHE),$(FC))  $(CARCHFLAGS) $(CCXX_FLAGS)
 callld    = LC_ALL=C $(firstword $(LD))
 
 get_cc_version_part = $(shell echo $(1) | $(callcc) -E -x c - | tail -1)
