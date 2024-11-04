@@ -46,6 +46,14 @@ sub new
     unless defined $tmpdir;
   print("Workdir: $tmpdir\n");
   $self->{coverage_dir} = "$tmpdir";
+  $self->{memdump_file} = undef;
+
+  if ($ENV{COVERAGE_MEMBUF})
+    {
+      $self->{memdump_file} = $ENV{COVERAGE_DUMP_FILE} // "${tmpdir}/_memdump";
+      $ENV{COVERAGE_DUMP_FILE} = $self->{memdump_file};
+    }
+
   return $self;
 }
 
@@ -88,9 +96,39 @@ sub process_mine
 sub start_block {}
 sub end_block {}
 
+sub process_memory_dump
+{
+  my ($self) = @_;
+
+  my $file = $self->{memdump_file};
+  return unless $file;
+
+  print "Reading coverage memory dump from $file\n";
+
+  open (my $fh, '<', $file)
+    or die "Could not open memory dump at $file: $!";
+
+  my $last = 0;
+  while (!$last && (my $line = <$fh>))
+    {
+      # Look for 0 byte which marks the end of the used part of the memory buffer
+      if ((my $offset = index($line, "\0")) != -1)
+        {
+          $line = substr($line, 0, $offset);
+          $last = 1;
+        }
+
+      $self->process_any($line);
+    }
+
+  close($fh);
+}
+
 sub finalize
 {
   my $self = shift;
+
+  $self->process_memory_dump();
 
   open (my $sources_file, '>', "$self->{coverage_dir}/sources")
     or die "Could not open file: $!";
