@@ -13,6 +13,22 @@ fi
 
 declare optlist=( $MAKECONF_FVP_OPTIONS "-a" "cluster0*=$TARGET_IMAGE" )
 
+if [[ -n "$COVERAGE_DUMP_FILE" ]]; then
+    if [[ -z "$COVERAGE_MEMBUF_START" ||
+          -z "$COVERAGE_MEMBUF_SIZE" ]]; then
+        echo "Please set the environment variables COVERAGE_MEMBUF_START and COVERAGE_MEMBUF_SIZE according to the values specified in the Kernel" >&2
+        exit 1
+    fi
+
+    optlist+=(
+        # Where to dump what
+        "--dump" "cluster0.cpu0=${COVERAGE_DUMP_FILE}@${COVERAGE_MEMBUF_START},${COVERAGE_MEMBUF_SIZE}"
+
+        # Triggers exit and thus dumping on shutdown
+        "-C" "bp.ve_sysregs.exit_on_shutdown=1"
+    )
+fi
+
 echo -n "FVP options:"
 printf " '%s'" "${optlist[@]}"
 
