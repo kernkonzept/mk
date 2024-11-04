@@ -439,7 +439,7 @@ ifeq ($(__tmp_bid_compiler_type),gcc)
 endif
 ifeq ($(__tmp_bid_compiler_type),clang)
  BID_COMPILER_IS_CLANG = 1
- check_compiler_flags := -Werror=unknown-warning-option
+ check_compiler_flags := -Werror=unknown-warning-option -Werror=unused-command-line-argument
 endif
 
 GCCMAJORVERSION_ID_gcc   = __GNUC__
