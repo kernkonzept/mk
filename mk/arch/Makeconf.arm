@@ -27,7 +27,7 @@ CARCHFLAGS_arm   += $(if $(CONFIG_BID_THUMB),-mthumb,-marm)
 SYSTEMS_ABI    += arm-l4f
 SYSTEMS_PLAIN  += arm-plain
 
-GCCNOFPU_arm_f  = $(call checkcc,-mgeneral-regs-only)
+GCCNOFPU_arm_f  = $(call checkcc,-mfpu=none) $(call checkcc,-mgeneral-regs-only)
 
 # GCC 4.8.0-4.8.2 showed to be buggy on ARM at least
 CC_BLACKLIST-arm-gcc := 4.8.0 4.8.1 4.8.2
