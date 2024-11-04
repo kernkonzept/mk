@@ -123,14 +123,20 @@ endif
 endif
 
 ifeq ($(NOTARGETSTOINSTALL),)
-PC_LIBS     ?= $(sort $(patsubst lib%.so,-l%,$(TARGET_SHARED)) \
-                      $(patsubst lib%.a,-l%,$(TARGET_STANDARD)))
+PC_LIBS     ?= $(if $(and $(PC_LIBS_WHOLELIB),$(TARGET_STANDARD)), \
+	            --whole-archive) \
+               $(sort $(patsubst lib%.so,-l%,$(TARGET_SHARED)) \
+                      $(patsubst lib%.a,-l%,$(TARGET_STANDARD))) \
+               $(if $(and $(PC_LIBS_WHOLELIB),$(TARGET_STANDARD)), \
+	            --no-whole-archive)
 
 PC_FILENAME  ?= $(PKGNAME)
 PC_FILENAMES ?= $(PC_FILENAME)
 PC_FILES     := $(if $(filter std,$(VARIANT)),$(foreach pcfile,$(PC_FILENAMES),$(OBJ_BASE)/pc/$(pcfile).pc))
 
-PC_LIBS_PIC ?= $(patsubst lib%.p.a,-l%.p,$(TARGET_PIC))
+PC_LIBS_PIC ?= $(if $(and $(PC_LIBS_WHOLELIB),$(TARGET_PIC)),--whole-archive) \
+               $(patsubst lib%.p.a,-l%.p,$(TARGET_PIC)) \
+               $(if $(and $(PC_LIBS_WHOLELIB),$(TARGET_PIC)),--no-whole-archive)
 
 # 1: basename
 # 2: pcfilename
