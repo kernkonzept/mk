@@ -13,10 +13,10 @@ L4_STACK_ADDR_riscv      ?= 0x70000000
 # Since version 2.38, binutils by default targets the ISA specification version
 # 20191213, where the CSR instructions and the FENCE.I instruction have been
 # moved from the I extension into separate extensions: Zicsr and Zifencei
-RISCV_ZICSR_ZIFENCEI_f    = $(if $(call checkcc,-march=$(CPU)_zicsr_zifencei \
-                                                -mabi=$(CPU_ABI) \
-                                                -mcmodel=medany),_zicsr_zifencei)
-CARCHFLAGS_riscv         += -march=$(CPU)$(RISCV_ZICSR_ZIFENCEI) \
+RISCV_ZICSR_ZIFENCEI_riscv_f = $(if $(call checkcc,-march=$(CPU)_zicsr_zifencei \
+                                                   -mabi=$(CPU_ABI) \
+                                                   -mcmodel=medany),_zicsr_zifencei)
+CARCHFLAGS_riscv         += -march=$(CPU)$(RISCV_ZICSR_ZIFENCEI_riscv) \
                             -mabi=$(CPU_ABI) -mcmodel=medany
 LDFLAGS_riscv            += -z noexecstack
 
