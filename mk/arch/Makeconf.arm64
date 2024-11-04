@@ -16,6 +16,6 @@ CARCHFLAGS_arm64_armv8r   = -march=armv8-r $(GCCARM64OUTLINEATOMICSOPT_arm64)
 SYSTEMS_ABI    += arm64-l4f
 SYSTEMS_PLAIN  += arm64-plain
 
-GCCNOFPU_arm64    = -mgeneral-regs-only
+GCCNOFPU_arm64_f    = -mgeneral-regs-only
 
 QEMU_ARCH_MAP_arm64       = qemu-system-aarch64

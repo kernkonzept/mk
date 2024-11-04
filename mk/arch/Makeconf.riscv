@@ -25,6 +25,6 @@ SYSTEMS_PLAIN            += riscv-plain
 # As of now (gcc-12) there is no option to prevent the compiler from generating
 # FPU instructions. So we just have to assume that the compiler does not do it,
 # until it introduces a flag able to prevent it.
-GCCNOFPU_riscv            =
+GCCNOFPU_riscv_f          =
 
 QEMU_ARCH_MAP_riscv       = qemu-system-riscv$(CPU_BITS_riscv)
