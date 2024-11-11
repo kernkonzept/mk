@@ -32,7 +32,7 @@ if ($?)
     exit 1;
   }
 
-my @e = L4::ModList::get_entries($ARGV[1]);
+my @e = L4::ModList::get_entries($ARGV[1], $ENV{SEARCHPATH} || "");
 
 if ($ARGV[0] eq 'menu')
   {

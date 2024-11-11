@@ -120,9 +120,9 @@ sub handle_line
   return ( $r );
 }
 
-sub readin_config($)
+sub readin_config($$)
 {
-  my ($mod_file) = @_;
+  my ($mod_file, $module_path) = @_;
 
   my @fs_fds;
   my @fs_filenames;
@@ -133,7 +133,7 @@ sub readin_config($)
   my %id_to_file;
   my $file_id_cur = 0;
 
-  push @mod_files_for_include, $mod_file;
+  push @mod_files_for_include, search_file_or_die($mod_file, $module_path);
 
   while (1)
     {
@@ -296,7 +296,7 @@ sub get_module_entry($$$)
   my $linux_initrd;
   my $is_mode_linux;
 
-  my %mod_file_db = readin_config($mod_file);
+  my %mod_file_db = readin_config($mod_file, $module_path);
 
   foreach my $fileentry (@{$mod_file_db{contents}})
     {
@@ -417,7 +417,7 @@ sub get_module_entry($$$)
     }
 
   error "$mod_file: Unknown entry \"$entry_to_pick\"!\n".
-        "Available entries: ".join(' ', sort &get_entries($mod_file))."\n"
+        "Available entries: ".join(' ', sort &get_entries($mod_file, $module_path))."\n"
     unless $found_entry;
 
   # For backwards compatibility add these modules in the classic order:
@@ -518,12 +518,12 @@ sub entry_is_mb(%)
   return defined $e{type} && $e{type} eq 'MB';
 }
 
-sub get_entries($)
+sub get_entries($$)
 {
-  my ($mod_file) = @_;
+  my ($mod_file, $module_path) = @_;
   my @entry_list;
 
-  my %mod_file_db = readin_config($mod_file);
+  my %mod_file_db = readin_config($mod_file, $module_path);
 
   foreach my $fileentry (@{$mod_file_db{contents}})
     {

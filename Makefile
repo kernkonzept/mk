@@ -574,7 +574,14 @@ define tool_envvars
 endef
 define set_ml
 	unset ml; ml=$(L4DIR_ABS)/conf/modules.list;             \
-	   [ -n "$(MODULES_LIST)" ] && ml=$(MODULES_LIST)
+	if [ -n "$(MODULES_LIST)" ]; then                        \
+	  ml=$(MODULES_LIST);                                    \
+	  for dir in $(OBJ_BASE)/assets/modlist; do              \
+	    if [ -f "$${dir}/$(MODULES_LIST)" ]; then            \
+	      ml="$${dir}/$(MODULES_LIST)"; break;               \
+	    fi                                                   \
+	  done                                                   \
+	fi
 endef
 define entryselection
 	   unset e;                                              \

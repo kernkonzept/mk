@@ -17,6 +17,7 @@ endef
 
 define src_asset_link
 $1: $(SRC_DIR)/$1
+	$(call create_dir, $$(@D))
 	ln -fs $$< $$@
 endef
 
@@ -50,6 +51,10 @@ TARGET         += $(TARGET_DTB)
 INSTALL_TARGET += $(TARGET)
 DEPS           += $(foreach file,$(TARGET_DTB),$(call BID_dot_fname,$(file)).d)
 $(call register_asset_targets,dtb,$(TARGET_DTB))
+
+$(call install_assets,modlist/$(PKGNAME),$(SRC_ASSETS_MODLIST))
+$(call install_assets,ned/$(PKGNAME),$(SRC_ASSETS_NED))
+$(call install_assets,io/$(PKGNAME),$(SRC_ASSETS_IO))
 
 include $(L4DIR)/mk/install.inc
 

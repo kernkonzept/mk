@@ -428,7 +428,7 @@ sub op_create
 
   if (not defined $entry)
     {
-      my @entries = L4::ModList::get_entries($modules_list);
+      my @entries = L4::ModList::get_entries($modules_list, $searchpath);
 
       if (@entries == 1)
         {
