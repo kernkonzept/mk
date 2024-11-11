@@ -9,7 +9,7 @@ use Getopt::Long;
 use Pod::Usage;
 use File::Basename;
 use File::Temp "tempdir";
-use File::Path "make_path";
+use File::Path qw(make_path remove_tree);
 use List::Util qw(all);
 use Scalar::Util qw(looks_like_number);
 use Time::HiRes "time";
@@ -98,6 +98,12 @@ $ENV{TEST_TMPDIR} = $rundir;
 make_path($logdir, $rundir);
 $L4::TapWrapper::plugintmpdir = "$ENV{TEST_PLUGIN_TMPDIR}/$path$name" if $ENV{TEST_PLUGIN_TMPDIR};
 $L4::TapWrapper::plugintmpdir ||= "$testworkdir/plugins";
+
+END {
+  # On demand: delete plugin dir on exit
+  remove_tree($L4::TapWrapper::plugintmpdir)
+    if $ENV{TEST_PLUGIN_TMPDIR_CLEANUP};
+}
 
 my $logfile       = $ENV{TEST_LOGFILE} || "$logdir/testout.log";
 my $LOG_FD;
