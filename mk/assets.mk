@@ -8,12 +8,26 @@ ROLE = assets.mk
 include $(L4DIR)/mk/Makeconf
 $(GENERAL_D_LOC): $(L4DIR)/mk/assets.mk
 
-define assets_subdir
-  $(1)$(if $(ASSET_TYPE),/$(ASSET_TYPE))
+# Args: dirname, targets
+define register_asset_targets
+  $(foreach t,$(2), \
+    $(eval INSTALLDIR_$(t) ?= $(INSTALLDIR)/$(1)) \
+    $(eval INSTALLDIR_LOCAL_$(t) ?= $(INSTALLDIR_LOCAL)/$(1)))
 endef
 
-INSTALLDIR_ASSETS        ?= $(call assets_subdir,$(DROPS_STDDIR)/assets)
-INSTALLDIR_ASSETS_LOCAL  ?= $(call assets_subdir,$(OBJ_BASE)/assets)
+define src_asset_link
+$1: $(SRC_DIR)/$1
+	ln -fs $$< $$@
+endef
+
+define install_assets
+  $(foreach t,$2,$(eval $(call src_asset_link,$t)))
+  $(call register_asset_targets,$1,$2)
+  $(eval INSTALL_TARGET += $2)
+endef
+
+INSTALLDIR_ASSETS        ?= $(DROPS_STDDIR)/assets
+INSTALLDIR_ASSETS_LOCAL  ?= $(OBJ_BASE)/assets
 INSTALLFILE_ASSETS       ?= $(INSTALL) -m 644 $(1) $(2)
 INSTALLFILE_ASSETS_LOCAL ?= $(LN) -sf $(call absfilename,$(1)) $(2)
 
@@ -31,11 +45,11 @@ include $(L4DIR)/mk/binary.inc
 ifneq ($(SYSTEM),) # if we are a system, really build
 
 # Functionality for device-tree file handling
-ifeq ($(ASSET_TYPE),dtb)
-TARGET_DTB  = $(patsubst %.dts,%.dtb,$(SRC_DTS))
-TARGET     += $(TARGET_DTB)
-DEPS       += $(foreach file,$(TARGET_DTB),$(call BID_dot_fname,$(file)).d)
-endif
+TARGET_DTB      = $(patsubst %.dts,%.dtb,$(SRC_DTS))
+TARGET         += $(TARGET_DTB)
+INSTALL_TARGET += $(TARGET)
+DEPS           += $(foreach file,$(TARGET_DTB),$(call BID_dot_fname,$(file)).d)
+$(call register_asset_targets,dtb,$(TARGET_DTB))
 
 include $(L4DIR)/mk/install.inc
 
