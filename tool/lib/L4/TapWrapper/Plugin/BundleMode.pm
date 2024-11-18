@@ -62,7 +62,9 @@ sub process_mine {
         {
           unless ($hard_terminate_plugin)
             {
-              $self->add_raw_tap_line($_) foreach $self->{SubPlugin}->finalize();
+              my ($tap_lines, $log_lines) = $self->{SubPlugin}->finalize();
+              $self->add_raw_tap_line(@$tap_lines);
+              $self->add_log_line(@$log_lines);
               $self->{block_count}++;
             }
           my ($name, $arg) = L4::TapWrapper::parse_plugin($self->{BundleControl});
