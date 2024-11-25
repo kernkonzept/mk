@@ -62,27 +62,22 @@ sub process_mine
   my $self = shift;
   my $check_data = shift;
   $check_data =~ s/\e\[[\d,;\s]+[A-Za-z]//gi; # strip color escapes
-  my ($path, $data) = $check_data =~ /PATH '(.*)' ZDATA '(.*)'/;
-  if ($data)
-    {
-      print("Plain data dumped.\n");
-      push(@{$self->{sources}}, $path);
-      my $exe_name = $self->__get_name($path);
-      $self->__dump_plain($path, $data, $exe_name);
-      return;
-    }
 
-  ($path, $data) = $check_data =~ /PATH '(.*)' ZSTD '(.*)'/;
-  if ($data)
+  if ($check_data =~ /PATH '(.*)' (ZSTD|ZDATA) '(.+)'/)
     {
-      print("Compressed data dumped.\n");
-      push(@{$self->{sources}}, $path);
-      my $exe_name = $self->__get_name($path);
-      $self->__dump_zstd($path, $data, $exe_name);
-      return;
-    }
+      my ($path, $type, $data) = ($1, $2, $3);
 
-  if ($self->{keep_going})
+      push @{$self->{sources}}, $path;
+
+      my $exe_name = $self->__get_name($path);
+
+      print("Processing $type data.\n");
+
+      my $fn = "__process_$type";
+
+      $self->$fn($path, $data, $exe_name);
+    }
+  elsif ($self->{keep_going})
     {
       $self->{intermittent_fails} += 1;
     }
@@ -90,7 +85,6 @@ sub process_mine
     {
       L4::TapWrapper::fail_test("Broken Data?: '$check_data'");
     }
-  return;
 }
 
 sub start_block {}
@@ -107,6 +101,9 @@ sub process_memory_dump
 
   open (my $fh, '<', $file)
     or die "Could not open memory dump at $file: $!";
+
+  # Will be deleted once $fh is closed;
+  unlink($file);
 
   my $last = 0;
   while (!$last && (my $line = <$fh>))
@@ -169,29 +166,28 @@ sub __lcov_finish
   my $self = shift;
   my $path = shift;
   my $exe_name = shift;
-  system( ($llvm_profdata_cmd, "merge", "--instr",
-      "$self->{coverage_dir}/$exe_name.profraw", "-o",
-      "$self->{coverage_dir}/$exe_name.profdata") );
 
-  my $output = `$llvm_cov_cmd export $path --format=lcov -instr-profile=$self->{coverage_dir}/$exe_name.profdata`;
-  die "$!" if $?;
+  system($llvm_profdata_cmd, "merge", "--instr",
+         "$self->{coverage_dir}/$exe_name.profraw", "-o",
+         "$self->{coverage_dir}/$exe_name.profdata");
 
-  open (my $file, '>', "$self->{coverage_dir}/$exe_name.lcov")
+  open(my $lcov_data_in, "-|",
+       qq($llvm_cov_cmd export $path --format=lcov -instr-profile=$self->{coverage_dir}/$exe_name.profdata))
+    or die "$!";
+
+  open (my $lcov_data_out, '>', "$self->{coverage_dir}/$exe_name.lcov")
     or die "Could not open file: $!";
 
-  for my $line ( split /\n/, $output )
+  while (my $line = <$lcov_data_in>)
     {
-      if ($line =~ /^SF:(.*)$/)
-        {
-          print $file "SF:".realpath($1)."\n";
-        }
-      else
-        {
-          print $file $line . "\n";
-        }
+      $line =~ s/^SF:(.*)$/"SF:".realpath($1)/e;
+      print $lcov_data_out $line;
     }
 
-  close $file;
+  close($lcov_data_in)
+    or die "$llvm_cov_cmd: $!";
+
+  close($lcov_data_out);
 
   unlink "$self->{coverage_dir}/$exe_name.profraw";
   # unlink "$self->{coverage_dir}/$exe_name.profdata";
@@ -199,7 +195,7 @@ sub __lcov_finish
 
 
 # This extracts zstd compressed coverage data into an lcov file
-sub __dump_zstd
+sub __process_ZSTD
 {
   print("\ndecoding ZSTD... \n");
   require Compress::Zstd;
@@ -230,7 +226,7 @@ sub __dump_zstd
 }
 
 # This extracts a single plain base64 coverage data with runlength encoding
-sub __dump_plain
+sub __process_ZDATA
 {
   my $self = shift;
   my $path = shift;
