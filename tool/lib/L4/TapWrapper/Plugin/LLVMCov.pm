@@ -36,6 +36,8 @@ sub new
   $self->{sources} = [];
   $self->{outputs} = {};
   $self->{keep_going} = defined $args->{keep_going};
+  $self->{fail_if_no_data} = !!$args->{fail_if_no_data};
+  $self->{has_data} = 0;
   $self->{intermittent_fails} = 0;
 
   $L4::TapWrapper::wait_for_more = 1;
@@ -138,6 +140,9 @@ sub finalize
   L4::TapWrapper::fail_test("Broken data $self->{intermittent_fails} times")
     if ($self->{intermittent_fails} > 0);
 
+  L4::TapWrapper::fail_test( __PACKAGE__ . ": No coverage data")
+    if $self->{fail_if_no_data} && !$self->{has_data};
+
   return ();
 }
 
@@ -191,6 +196,8 @@ sub __lcov_finish
 
   unlink "$self->{coverage_dir}/$exe_name.profraw";
   # unlink "$self->{coverage_dir}/$exe_name.profdata";
+
+  $self->{has_data} = 1;
 }
 
 
