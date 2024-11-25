@@ -137,7 +137,7 @@ sub grub2_mkisofs($$@)
   system("$mkr --install-modules=vbe --output=/dev/null /dev/null -f >/dev/null 2>&1");
   $is_pc = $? == 0;
 
-  system("$mkr --install-modules=lsefi --output=/dev/null /dev/null -f >/dev/null 2>&1");
+  system("$mkr --install-modules=lsefi,all_video --output=/dev/null /dev/null -f >/dev/null 2>&1");
   $is_efi = $? == 0;
 
   if (not $is_pc and not $is_efi)
@@ -205,6 +205,7 @@ sub grub2_config_prolog(%)
       $s .= "terminal_input serial\n";
     }
   $s .= "set timeout=$opts{timeout}\n" if defined $opts{timeout};
+  $s .= "insmod all_video\n";
 
   $s;
 }
