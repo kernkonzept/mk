@@ -63,3 +63,6 @@ config CPU
 	default "niagara3"    if CPU_SPARC_NIAGARA3
 	default "niagara4"    if CPU_SPARC_NIAGARA4
 
+config BITS
+	int
+	default 32

@@ -34,11 +34,6 @@ config RISCV_ISA_C
 	bool "Emit compressed instructions"
 	default y
 
-config CPU_RISCV_BITS
-	string
-	default "32" if CPU_RISCV_32IMA
-	default "64" if CPU_RISCV_64IMA
-
 config CPU
 	string
 	default "rv32ima" if CPU_RISCV_32IMA && FPU_RISCV_NONE && !RISCV_ISA_C
@@ -62,3 +57,8 @@ config CPU_ABI
 	default "lp64" if CPU_RISCV_64IMA && FPU_RISCV_NONE
 	default "lp64f" if CPU_RISCV_64IMA && FPU_RISCV_SINGLE
 	default "lp64d" if CPU_RISCV_64IMA && FPU_RISCV_DOUBLE
+
+config BITS
+	int
+	default 32 if CPU_RISCV_32IMA
+	default 64 if CPU_RISCV_64IMA

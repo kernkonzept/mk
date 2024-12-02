@@ -2,8 +2,7 @@
 
 CROSS_COMPILE_riscv       = riscv64-linux-gnu-
 ASFLAGS_riscv             = -Wa,--noexecstack
-CPU_BITS_riscv            = $(CONFIG_CPU_RISCV_BITS)
-ELF_BINARY_TYPE_riscv     = elf$(CPU_BITS_riscv)
+ELF_BINARY_TYPE_riscv     = elf$(BITS)
 LD_EMULATION_CHOICE_riscv = $(ELF_BINARY_TYPE_riscv)lriscv
 OFORMAT_riscv             = $(ELF_BINARY_TYPE_riscv)-littleriscv
 BFD_ARCH_riscv            = littleriscv
@@ -27,4 +26,4 @@ SYSTEMS_PLAIN            += riscv-plain
 # until it introduces a flag able to prevent it.
 GCCNOFPU_riscv_f          =
 
-QEMU_ARCH_MAP_riscv       = qemu-system-riscv$(CPU_BITS_riscv)
+QEMU_ARCH_MAP_riscv       = qemu-system-riscv$(BITS)

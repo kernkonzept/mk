@@ -46,6 +46,13 @@ config CPU_ABI
 	default "64" if CPU_MIPS_64R2
 	default "64" if CPU_MIPS_64R6
 
+config BITS
+	int
+	default 32 if CPU_MIPS_32R2
+	default 32 if CPU_MIPS_32R6
+	default 64 if CPU_MIPS_64R2
+	default 64 if CPU_MIPS_64R6
+
 choice
 	prompt "Page Size"
 	default PAGE_SIZE_16KB

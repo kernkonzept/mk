@@ -22,3 +22,7 @@ config CPU
 	string
 	default "armv8a"   if CPU_ARM_ARMV8A
 	default "armv8r"   if CPU_ARM_ARMV8R_AARCH64
+
+config BITS
+	int
+	default 64

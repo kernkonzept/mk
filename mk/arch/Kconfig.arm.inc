@@ -62,3 +62,7 @@ config CPU
 	default "armv6zk"  if CPU_ARM_ARMV6ZK
 	default "armv7a"   if CPU_ARM_ARMV7A
 	default "armv8r"   if CPU_ARM_ARMV8R_AARCH32
+
+config BITS
+	int
+	default 32
