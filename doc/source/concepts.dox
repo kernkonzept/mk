@@ -10,6 +10,7 @@ of the L4Re programming environment from the tutorial.
 \todo All subpages need cleaning. Level of detail here?
 
 - \subpage l4re_concepts_ipc
+- \subpage l4re_concepts_abi
 - \subpage l4re_concepts_naming
 - \subpage l4re_concepts_mapping
 - \subpage l4re_concepts_env_and_start

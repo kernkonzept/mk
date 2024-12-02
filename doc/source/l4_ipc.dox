@@ -295,13 +295,14 @@ are transferred.
 The *buffer registers* and *buffer descriptor register* are
 interpreted by the kernel during the receive phase (if any). Buffer registers
 define *receive items* which are required to receive typed send items (memory,
-I/O ports or object capabilities). To specify a receive item, either
-one or two buffer registers are required:
-  - A *small buffer item* (L4::Ipc::Small_buf) occupying one buffer
+I/O ports or object capabilities). To specify a receive item, up to three buffer
+registers are required:
+  - A *small receive item* (L4::Ipc::Small_buf) occupying one buffer
     register is sufficient to receive one object capability.
-  - A *buffer item* (L4::Ipc::Buf_item) occupying two buffer registers
-    (*message word* and a *flexpage*) is required to receive
-    memory flexpages, I/O ports, or multiple object capabilities.
+  - A *receive item* (L4::Ipc::Rcv_fpage) occupying two or three buffer
+    registers (*message word*, a *flexpage*, and an optional destination task
+    capability index) is required to receive memory flexpages, I/O ports, or
+    multiple object capabilities.
 
 \subsubsection l4re_concepts_descr_bdr IPC Buffer Descriptor Register
 The buffer descriptor register defines indices of buffer registers used to
@@ -334,12 +335,9 @@ Otherwise this register is not touched by the kernel. See
 #l4_ipc_tcr_error_t for a detailed enumeration of all possible error codes
 during an IPC operation.
 
-\internal
-(Change still in review)
-The l4_thread_regs_t::free_marker is set by the kernel to `-1` immediately
+The l4_thread_regs_t::free_marker is set by the kernel to zero immediately
 before a thread is destroyed. This value indicates that the kernel does not
 longer use the UTCB and it can be re-used by other threads.
-\endinternal
 
 The other members of l4_thread_regs_t are never touched by the kernel.
 
@@ -413,7 +411,7 @@ may erroneously associate a capability in one of its receive windows with his
 last IPC partner although it was actually received in an earlier IPC.
 
 However, the kernel indicates if at least one object capability was received or
-not, see #L4::Ipc::Gen_fpage::cap_received().
+not, see #L4::Ipc::Snd_fpage::cap_received().
 
 
 \section l4re_concepts_ipc_examples Examples

@@ -1,0 +1,444 @@
+// vi:set ft=c: -*- Mode: C -*-
+
+/**
+\page l4re_concepts_abi Kernel ABI
+
+This section details the binary representation of the IPC interface of the
+kernel. It accompanies the [L4 Inter-Process Communication
+(IPC)](#l4re_concepts_ipc) section. The details presented here are usually not
+relevant when developing %L4Re applications and can therefore be skipped by many
+readers.
+
+\note The kernel ABI is subject to change. Please use the API instead of relying
+      on particular binary representations.
+
+The following notation is used to indicate how particular data fields are used:
+
+- [in]: The kernel reads and interprets this field.
+- [out]: The kernel writes this field with information provided by the kernel.
+- [cpy]: The kernel copies this field from sender to receiver (without
+  interpretation if [in] is not listed as well).
+
+The above indications may be combined.
+
+
+\section l4re_concepts_abi_capsel Capability selector and flags
+
+See [partner capability selector](#l4re_concepts_descr_capidx) and [IPC
+flags](#l4re_concepts_descr_flags).
+
+The kernel reads and interprets all the fields ([in]).
+
+     MSB      12    11     10 [7]  4     3         2         1         0      bits
+    ┌───────────┬─────────┬─────────┬─────────┬─────────┬─────────┬─────────┐
+    │   [in]    │  [in]   │         │  [in]   │  [in]   │  [in]   │  [in]   │
+    │(see below)│ special │   SBZ   │  reply  │open wait│  recv   │  send   │
+    └───────────┴─────────┴─────────┴─────────┴─────────┴─────────┴─────────┘
+    ┌───────────┬─────────┬─
+    │  cap idx  │    0    │  if special is 0
+    └───────────┴─────────┴─
+    ┌───────────┬─────────┬─
+    │   1...1   │    1    │  if special is 1
+    └───────────┴─────────┴─
+
+- Bits 0…3 [in]: These bits correspond to the flags defined in
+  #l4_syscall_flags_t. The individual bits correspond to #L4_SYSF_REPLY,
+  #L4_SYSF_OPEN_WAIT, #L4_SYSF_RECV, #L4_SYSF_SEND. Note that not all
+  combinations of those bits are defined; see #l4_syscall_flags_t.
+
+- Bits 4…10 [in] `SBZ`: should be zero
+
+- Bit 11 [in] `special`: Set when using #L4_INVALID_CAP, otherwise unset.
+
+- Bits 12…MSB [in]: Capability index if `special` is unset, otherwise all those
+  bits should be one (see #L4_INVALID_CAP, [partner capability
+  selector](#l4re_concepts_descr_capidx) and #l4_cap_idx_t).
+
+
+\section l4re_concepts_abi_label Label
+
+See [IPC label](#l4re_concepts_descr_label).
+
+When IPC is sent via a thread capability, the label is copied to the receiver
+unchanged ([cpy]).
+
+When IPC is sent via an IPC gate, the sent label is ignored and the kernel
+provides the bitwise OR (`|`) of the IPC gate label and the sender’s write and
+special permissions (see #L4_CAP_FPAGE_W and #L4_CAP_FPAGE_S) of the used
+capability ([out]):
+
+     MSB               2         1                 0          bits
+    ┌───────────────────┬─────────────────┬─────────────────┐
+    │       [out]       │      [out]      │      [out]      │
+    │       label       │ label | special │  label | write  │
+    │                   │          right  │          right  │
+    └───────────────────┴─────────────────┴─────────────────┘
+
+
+\section l4re_concepts_abi_msgtag Message tag
+
+See [IPC message tag](#l4re_concepts_descr_msgtag). Note that, for a message tag
+returned by the kernel, if the error flag is set, all other contents of the
+message tag is undefined.
+
+     MSB            16     15         14         13         12     11   [6]    6 5    [6]    0  bits
+    ┌─────────────────┬──────────┬──────────┬──────────┬──────────┬─────────────┬─────────────┐
+    │      [cpy]      │  [out]   │          │ [in,cpy] │ [in,cpy] │  [in,cpy]   │  [in,cpy]   │
+    │     payload     │  error   │   SBZ    │ schedule │ transfer │    items    │    words    │
+    │                 │   flag   │          │   flag   │ FPU flag │             │             │
+    └─────────────────┴──────────┴──────────┴──────────┴──────────┴─────────────┴─────────────┘
+
+- Bits 0…5 [in,cpy] `words`: Number of (untyped) message words in the UTCB’s
+  message registers. See #l4_msgtag_words() and #l4_msgtag_t::words().
+
+- Bits 6…11 [in,cpy] `items`: Number of typed message items in the UTCB’s
+  message registers. See #l4_msgtag_items() and #l4_msgtag_t::items().
+
+- Bit 12 [in,cpy] `transfer FPU flag`: See #L4_MSGTAG_TRANSFER_FPU.
+
+- Bit 13 [in,cpy] `schedule flag`: See #L4_MSGTAG_SCHEDULE.
+
+- Bit 14 `SBZ`: should be zero
+
+- Bit 15 [out] `error`: See #L4_MSGTAG_ERROR, #l4_msgtag_has_error() and
+  #l4_msgtag_t::has_error().
+
+- Bits 16…MSB [cpy] `payload`: Transferred to receiver unchanged; not
+  interpreted by kernel (unless it is the communication partner). For IPC calls
+  or send-only IPC, this is usually the protocol. For replies, this is usually
+  used for return values and server error signaling. See #l4_msgtag_label() and
+  #l4_msgtag_t::label().
+
+
+\section l4re_concepts_abi_timeouts  Timeouts
+
+See [IPC timeouts](#l4re_concepts_descr_timeouts) and #l4_timeout_t.
+
+The kernel reads and interprets all the fields ([in]).
+
+     31     [16]    16 15     [16]     0  bits
+    ┌─────────────────┬─────────────────┐
+    │       [in]      │       [in]      │
+    │  send timeout   │ receive timeout │
+    └─────────────────┴─────────────────┘
+
+A timeout has the following format. There are two special timeout values:
+
+- *Zero timeout:* Only bit 10 is set. See #L4_IPC_TIMEOUT_0.
+
+       15  [5]  11  10   9        [10]        0  bits
+      ┌───────────┬─────┬──────────────────────┐
+      │     0     │  1  │          0           │
+      └───────────┴─────┴──────────────────────┘
+
+- *Infinite timeout:* All bits are unset. See #L4_IPC_TIMEOUT_NEVER.
+
+       15                [16]                 0  bits
+      ┌────────────────────────────────────────┐
+      │                   0                    │
+      └────────────────────────────────────────┘
+
+Otherwise, the timeout is either relative or absolute, which is specified by
+bit 15.
+
+- *Relative timeout:* If bit 15 is unset, the timeout is `mantissa * 2 ^
+  exponent` micro seconds relative to the current time. The `mantissa` must not
+  be zero:
+
+        15   14  [5]  10 9        [10]        0  bits
+      ┌─────┬───────────┬──────────────────────┐
+      │  0  │ exponent  │     mantissa ≠ 0     │
+      └─────┴───────────┴──────────────────────┘
+
+- *Absolute timeout:* If bit 15 is set, an absolute timeout is specified in the
+  UTCB’s buffer registers starting at `buf reg idx` (the particular number of
+  registers depends on the architecture; see #l4_timeout_s):
+
+        15   14       [9]       6 5    [6]    0  bits
+      ┌─────┬────────────────────┬─────────────┐
+      │  1  │         SBZ        │ buf reg idx │
+      └─────┴────────────────────┴─────────────┘
+
+
+\section l4re_concepts_abi_utcb User-level thread control block (UTCB)
+
+See [User-level thread control block (UTCB)](#l4re_concepts_descr_utcb).
+
+         l4_utcb_mr()                        l4_utcb_br()                    l4_utcb_tcr()
+        l4_msg_regs_t                       l4_buf_regs_t                   l4_thread_regs_t
+     ┌─────────────────┐ ┌────────┐ ┌───────────────────────────┐ ┌───────────────────────────────────┐
+     0      [63]      62     63         64     65     [58]    122    123        124     125   [3]   128  words
+    ┌───────────────────┬──────────┬──────────┬──────────────────┬──────────┬──────────┬───────────────┐
+    │                   │ [(out)]  │   [in]   │       [in]       │  [out]   │ [(out)]  │               │
+    │ message registers │   arch   │   BDR    │ buffer registers │  error   │   free   │ thread‐local  │
+    │       (MRs)       │ specific │          │      (BRs)       │   code   │  marker  │ storage (TLS) │
+    └───────────────────┴──────────┴──────────┴──────────────────┴──────────┴──────────┴───────────────┘
+    │                   └────────────────────┐
+    │0   [words]       [2 * items]         62│ words
+    ┌───────────────┬───────────────┬────────┐
+    │     [cpy]     │   [in,out]    │        │
+    │   (untyped)   │    typed      │ unused │
+    │ message words │ message items │        │
+    └───────────────┴───────────────┴────────┘
+
+- Words 0…62 `MRs`: See [IPC Message registers](#l4re_concepts_descr_mrs) and
+  #l4_utcb_mr(). The number of message registers is defined by
+  #L4_UTCB_GENERIC_DATA_SIZE. The actually used message registers are defined by
+  `words` and `items` in the [message tag](#l4re_concepts_abi_msgtag). The
+  layout of a typed message item varies depending on being an input or output
+  value, see [typed message items](#l4re_concepts_abi_items).
+
+- Word 63 [(out)]: Depending on the architecture, this word may be used by the
+  kernel to signify the position of a thread’s UTCB in memory. See
+  architecture-specific implementation of #l4_utcb(). If at all, the kernel
+  writes this word when kernel-user memory is set up as UTCB while binding a
+  thread to a task; see #l4_thread_control_bind(), #L4::Thread::Attr::bind().
+
+- Word 64 [in] `BDR`: See [buffer descriptor
+  register](#l4re_concepts_abi_utcb_bdr).
+
+- Words 65…122 [in] `BRs`: See [IPC Buffer Registers](#l4re_concepts_descr_brs),
+  [receive items](#l4re_concepts_abi_items_receive) and
+  #l4_utcb_br()->[br](#l4_buf_regs_t::br). The number of buffer registers is
+  defined by #L4_UTCB_GENERIC_BUFFERS_SIZE.
+
+- Word 123 [out] `error code`: See [IPC Thread Control
+  Registers](#l4re_concepts_descr_tcrs) and
+  #l4_utcb_tcr()->[error](#l4_thread_regs_t::error).
+
+- Word 124 [(out)] `free marker`: Written by the kernel, but not necessarily
+  during IPC. See [IPC Thread Control Registers](#l4re_concepts_descr_tcrs) and
+  #l4_utcb_tcr()->[free_marker](#l4_thread_regs_t::free_marker).
+
+- Word 125…128 `TLS`: Ignored and left untouched by the kernel. See [IPC Thread
+  Control Registers](#l4re_concepts_descr_tcrs) and
+  #l4_utcb_tcr()->[user](#l4_thread_regs_t::user).
+
+
+\subsection l4re_concepts_abi_utcb_bdr Buffer descriptor register
+
+See [IPC Buffer Descriptor Register](#l4re_concepts_descr_bdr) and
+#l4_utcb_br()->[bdr](#l4_buf_regs_t::bdr).
+
+     MSB      25     24     23  [9]  15 14    [5]     10 9     [5]      5 4     [5]      0  bits
+    ┌───────────┬──────────┬───────────┬────────────────┬────────────────┬────────────────┐
+    │    SBZ    │ inherit  │    SBZ    │ index of first │ index of first │ index of first │
+    │           │ FPU flag │           │ obj cap buffer │   io buffer    │ memory buffer  │
+    └───────────┴──────────┴───────────┴────────────────┴────────────────┴────────────────┘
+
+
+\section l4re_concepts_abi_items Typed message items
+
+The number of words in a typed message item varies depending on the particular
+kind of item. However, for the first word, the following properties are shared:
+
+- *Void item:* If all bits of the first word of a typed message item are zero,
+  then it is a void item.
+
+- *Non-void item:* The first word of a non-void typed message item has the
+  following binary layout:
+
+       MSB                        4  3  2      0  bits
+      ┌────────────────────────────┬───┬────────┐
+      │                            │ t │        │
+      └────────────────────────────┴───┴────────┘
+
+  Bit 3 (`t`) is the type bit. If `t` is set, the item is a map item. Currently,
+  map item is the only supported type. Hence, this bit must be set for all items
+  except for void items.
+
+There are three sub-types of typed message items: *send items*, *receive items*,
+and *return items*; see [Message Items](#l4_msgitem_api).
+
+Many typed items make use of flexpages, therefore, these are described before
+the various kinds of typed items. Note that flexpages are also used outside of
+typed message items, e.g., for #L4::Task::unmap().
+
+
+\subsection l4re_concepts_abi_items_flexpages Flexpages
+
+A flexpage consists of a single word and, except for some special values,
+describes a range in an address space, see [flex pages](#l4_fpage_api).
+
+The general layout is defined as follows:
+
+     MSB                               6 5  [2]  4 3    [4]    0  bits
+    ┌───────────────────────────────────┬─────────┬─────────────┐
+    │                                   │   type  │             │
+    └───────────────────────────────────┴─────────┴─────────────┘
+
+- Bits 4…5 `type`: See #l4_fpage_type() and #L4_fpage_type.
+
+The type #L4_FPAGE_SPECIAL only supports some selected values, which are only
+supported for selected interfaces; see #L4_FPAGE_SPECIAL.
+
+The other types share the same layout:
+
+     MSB            12 11     [6]      6 5  [2]  4 3    [4]    0  bits
+    ┌─────────────────┬─────────────────┬─────────┬─────────────┐
+    │      start      │      order      │   type  │ permissions │
+    └─────────────────┴─────────────────┴─────────┴─────────────┘
+
+- Bits 0…3 `permissions`: See #l4_fpage_rights(), #L4_fpage_rights (memory space)
+  and #L4_cap_fpage_rights (object space). Should be zero for I/O port space.
+- Bits 6…11 `order`: The log₂ size of the flexpage. See #l4_fpage_size.
+- Bits 12…MSB `start`: The starting page number / I/O port number / capability
+  index of the flexpage. Must be aligned to the flexpage size. See
+  #l4_fpage_page(), #l4_fpage_memaddr(), #l4_fpage_ioport() and #l4_fpage_obj().
+
+Also see #l4_fpage() (memory space), #l4_iofpage() (I/O port space) and
+#l4_fpage_obj() (object space).
+
+
+\subsection l4re_concepts_abi_items_send Send items
+
+A send item consists of two words. The second word of a non-void send item is a
+[flexpage](#l4re_concepts_abi_items_flexpages). The type of the flexpage
+determines the interpretation of the `attr` bits in the first word (see below).
+
+If not void, the layout of the first word is defined as follows:
+
+                          first word                         second word
+     MSB     12 11  8 7    4  3    2      1        0                        bits
+    ┌──────────┬─────┬──────┬───┬─────┬───────┬──────────┐┌───────────────┐
+    │ hot_spot │ SBZ │ attr │ 1 │ SBZ │ grant │ compound ││ send flexpage │
+    └──────────┴─────┴──────┴───┴─────┴───────┴──────────┘└───────────────┘
+
+`SBZ` means “should be zero”.
+
+- Bit 0 (`compound`): Compound bit. See #L4_ITEM_CONT and
+  #L4::Ipc::Snd_fpage::is_compound().
+
+- Bit 1 (`grant`): Grant flag. See #L4_ITEM_MAP, #L4_MAP_ITEM_GRANT and
+  #L4::Ipc::Snd_fpage::Map_type.
+
+- Bits 7..4 (`attr`): Attributes. See #L4_obj_fpage_ctl and
+  #l4_fpage_cacheability_opt_t, #L4::Ipc::Snd_fpage::Cacheopt.
+
+- Bits MSB­..12 (`hot_spot`): Send base (also called hot spot). See
+  #L4::Ipc::Snd_fpage::snd_base().
+
+For details, see [IPC Message registers](#l4re_concepts_descr_mrs).
+
+
+\subsection l4re_concepts_abi_items_receive Receive items
+
+A non-void receive item consists of up to three words.
+
+If not void, the general layout of the first word is defined as follows:
+
+     MSB                      4  3      2       1      0    bits
+    ┌──────────────────────────┬───┬────────┬───────┬─────┐
+    │                          │ 1 │ rcv_id │ small │ fwd │
+    └──────────────────────────┴───┴────────┴───────┴─────┘
+
+The `small` and `fwd` bits determine the details of the layout of the whole
+message item.
+
+If `small` is unset, then also `rcv_id` must be unset, and the most
+significant bits should be zero:
+
+    ┌──────────────────────────┬───┬────────┬───────┬─────┐
+    │   SBZ (should be zero)   │ 1 │   0    │   0   │ fwd │
+    └──────────────────────────┴───┴────────┴───────┴─────┘
+
+If `small` is set, the most significant bits are layouted as follows:
+
+     MSB        12 11         4  3      2       1      0    bits
+    ┌─────────────┬────────────┬───┬────────┬───────┬─────┐
+    │ rcv cap idx │    SBZ     │ 1 │ rcv_id │   1   │ fwd │
+    └─────────────┴────────────┴───┴────────┴───────┴─────┘
+
+At most one of `rcv_id` and `fwd` may be set.
+
+The number and meaning of the words in the whole item are determined by the
+`small` and `fwd` bits:
+
+         first word         second word           third word
+     rcv_id small  fwd
+    ─┬─────┬─────┬─────┐┌───────────────────┐
+     │  0  │  0  │  0  ││   rcv flexpage    │
+    ─┴─────┴─────┴─────┘└───────────────────┘            12 11  0
+    ─┬─────┬─────┬─────┐┌───────────────────┐┌─────────────┬─────┐
+     │  0  │  0  │  1  ││   rcv flexpage    ││ fwd cap idx │ SBZ │
+    ─┴─────┴─────┴─────┘└───────────────────┘└─────────────┴─────┘
+    ─┬─────┬─────┬─────┐
+     │ 0/1 │  1  │  0  │
+    ─┴─────┴─────┴─────┘            12 11  0
+    ─┬─────┬─────┬─────┐┌─────────────┬─────┐
+     │  0  │  1  │  1  ││ fwd cap idx │ SBZ │
+    ─┴─────┴─────┴─────┘└─────────────┴─────┘
+
+The meaning of the bits in detail:
+
+- Bit 0 (`fwd`): See #L4_RCV_ITEM_FORWARD_MAPPINGS and
+  #L4::Ipc::Rcv_fpage::forward_mappings(). For `fwd cap idx` see
+  #L4::Ipc::Rcv_fpage::rcv_task().
+
+- Bit 1 (`small`): See #L4_RCV_ITEM_SINGLE_CAP and #L4::Ipc::Small_buf vs.
+  #L4::Ipc::Rcv_fpage.
+
+- Bit 2 (`rcv_id`): See #L4_RCV_ITEM_LOCAL_ID.
+
+
+\subsection l4re_concepts_abi_items_return Return items
+
+A return item always consists of two words. The general layout of a non-void
+return item is defined as follows:
+
+                      first word                       second word
+     MSB     12 11    6 5    4  3  2        1  0                        bits
+    ┌──────────┬───────┬──────┬───┬──────────┬───┐┌───────────────────┐
+    │ hot_spot │ order │ type │ 1 │ rcv_type │ c ││      payload      │
+    └──────────┴───────┴──────┴───┴──────────┴───┘└───────────────────┘
+    └──────────┘              └───┘          └───┘ from send item’s first word
+               └──────────────┘                    from send item’s flexpage
+                                  └──────────┘     initially zero
+
+As indicated above, the `hot_spot`, `1`, and `c` (`compound`) are copied from
+the sender’s send item’s first word, and `order` and `type` are copied from the
+sender’s send item’s flexpage. The `rcv_type` and `payload` are determined by
+what is actually transferred, which is also affected by the `rcv_id` bit in the
+receiver’s receive item. The `rcv_type` determines the content and layout of the
+payload.
+
+There are four cases for `rcv_type`:
+
+`00`: Used if at least one mapping was actually transferred for
+the corresponding send item. The payload is undefined:
+(also see #L4::Ipc::Snd_fpage::cap_received()):
+
+    ┌──────────┬───────┬──────┬───┬──────────┬───┐┌───────────────────┐
+    │ hot_spot │ order │ type │ 1 │    00    │ c ││     undefined     │
+    └──────────┴───────┴──────┴───┴──────────┴───┘└───────────────────┘
+
+`01`: Used if transfer of mappings was attempted, but actually
+nothing was transferred, because nothing was mapped on the sender’s side for
+the corresponding send item. The payload is undefined:
+
+    ┌──────────┬───────┬──────┬───┬──────────┬───┐┌───────────────────┐
+    │ hot_spot │ order │ type │ 1 │    01    │ c ││     undefined     │
+    └──────────┴───────┴──────┴───┴──────────┴───┘└───────────────────┘
+
+`10`: Used if the receive item’s `rcv_id` bit was set and the conditions for
+transferring an IPC gate label were fulfilled. In that case, no mapping is done
+for this item and the payload consists of the bitwise OR (`|`) of the IPC gate
+label and the write and special permissions (see #L4_CAP_FPAGE_W and
+#L4_CAP_FPAGE_S) that would have been mapped (also see
+#L4::Ipc::Snd_fpage::id_received()):
+
+                                                            2 1      0  bits
+    ┌──────────┬───────┬──────┬───┬──────────┬───┐┌──────────┬────────┐
+    │ hot_spot │ order │ type │ 1 │    10    │ c ││   label  │ rights │
+    └──────────┴───────┴──────┴───┴──────────┴───┘└──────────┴────────┘
+
+`11`: Used if the receive item’s `rcv_id` bit was set and the conditions for
+transferring the sender’s flexpage word were fulfilled. In that case, no mapping
+is done for this item and the payload is a copy of the sender’s flexpage word
+(also see #L4::Ipc::Snd_fpage::local_id_received()):
+
+    ┌──────────┬───────┬──────┬───┬──────────┬───┐┌───────────────────┐
+    │ hot_spot │ order │ type │ 1 │    11    │ c ││   send flexpage   │
+    └──────────┴───────┴──────┴───┴──────────┴───┘└───────────────────┘
+
+*/
