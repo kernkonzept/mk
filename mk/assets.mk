@@ -17,8 +17,9 @@ endef
 
 define src_asset_link
 $1: $(SRC_DIR)/$1
-	$(call create_dir, $$(@D))
-	ln -fs $$< $$@
+	@$(INSTALL_MESSAGE)
+	$(VERBOSE)$(call create_dir, $$(@D))
+	$(VERBOSE)ln -fs $$< $$@
 endef
 
 define install_assets
