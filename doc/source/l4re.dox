@@ -30,13 +30,13 @@
  * \example examples/sys/isr/main.c
  * Example of an interrupt service routine.
  *
- * \example examples/clntsrv/server.cc
+ * \example examples/clntsrv/src/server.cc
  * Client/Server example using C++ infrastructure -- Server implementation.
- * \example examples/clntsrv/client.cc
+ * \example examples/clntsrv/src/client.cc
  * Client/Server example using C++ infrastructure -- Client implementation.
- * \example examples/clntsrv/shared.h
+ * \example examples/clntsrv/src/shared.h
  * Client/Server example using C++ infrastructure -- Shared header file.
- * \example examples/clntsrv/clntsrv.cfg
+ * \example examples/clntsrv/configs/clntsrv.cfg
  * Sample configuration file for the client/server example.
  *
  * \example examples/libs/l4re/c/ma+rm.c
