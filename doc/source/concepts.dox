@@ -102,7 +102,7 @@ tasks, threads, and IRQs, can only be accessed through a capability.
 Please refer to the \ref l4_kernel_object_api
 documentation for details. Capabilities are stored in per-task capability
 tables (the object space) and are referenced by capability selectors or
-object flex pages. In a simplified view, a capability selector is a natural
+object flexpages. In a simplified view, a capability selector is a natural
 number indexing into the capability table of the current task.
 
 As a matter of fact, a system designed solely based on capabilities uses
