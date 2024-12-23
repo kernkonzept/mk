@@ -90,7 +90,7 @@ QEMU_OPTIONS       += $(QEMU_OPTIONS-$(ARCH))
 #QEMU_PATH-amd64 = /path/to/qemu-system-x86_64
 #QEMU_PATH       = $(QEMU_PATH-$(ARCH))
 
-# Arm FVP: Specific configuration for 'fvp' target (make fvp E=xxx'):
+# Arm FVP: Specific configuration for 'fvp' target (make fvp E=xxx' PT=arm_fvp_base):
 
 FVP_OPTIONS += -C cluster0.NUM_CORES=1 -C pctl.startup=0.0.*.*
 
