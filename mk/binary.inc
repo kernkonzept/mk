@@ -296,7 +296,7 @@ LDFLAGS       += $(call BID_mode_var,LDFLAGS)
 REQUIRES_LIBS += $(call BID_mode_var,REQUIRES_LIBS)
 REQUIRES_CFLAGS += $(call BID_mode_var,REQUIRES_CFLAGS)
 
-CARCHFLAGS += $(CARCHFLAGS-variant-$(VARIANT))
+$(call add_variant_values,CARCHFLAGS)
 
 LDFLAGS       += $(LDFLAGS-y) $(LDFLAGS_$(ARCH)) $(LDFLAGS_$(ARCH)-y) \
                  $(LDFLAGS_$(OSYSTEM)) $(LDFLAGS_$(OSYSTEM)-y) \
@@ -512,11 +512,11 @@ CFLAGS  += -fno-common
 CFLAGS  += $(CFLAGS_C99)
 CFLAGS  += $(CFLAGS_L4_GENERIC)
 CFLAGS	+= $(call bid_flag_variants,CFLAGS)
-DEFINES += -DSYSTEM_$(subst -,_,$(SYSTEM)) -DARCH_$(ARCH) -DCPUTYPE_$(CPU) -DL4API_$(L4API)
+DEFINES += -DSYSTEM_$(subst -,_,$(subst +,_,$(SYSTEM))) -DARCH_$(ARCH) -DCPUTYPE_$(CPU) -DL4API_$(L4API)
 DEFINES += -D_GNU_SOURCE
 DEFINES-l4api-plain := -DL4_MINIMAL_LIBC
 DEFINES += $(DEFINES-l4api-$(L4API))
-DEFINES += $(DEFINES-variant-$(VARIANT))
+$(call add_variant_values,DEFINES)
 ifdef DEBUG
 ifneq (,$(filter 0 n N, $(DEBUG)))
 DEFINES	+= -DNDEBUG

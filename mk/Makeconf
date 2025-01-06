@@ -31,7 +31,16 @@ VARIANTS_AVAILABLE := $(patsubst $(L4DIR)/mk/variants/%.inc,%,$(wildcard $(L4DIR
 
 include $(foreach v,$(VARIANTS_AVAILABLE),$(L4DIR)/mk/variants/$(v).inc)
 
-$(eval $(BID_DEFINE-variant-$(VARIANT)))
+CHOSEN_VARIANTS := $(subst +, ,$(VARIANT))
+
+# Add variant specific variables to the base variables for all chosen variants
+# This will for example add DEFINES-variant-nofpu to DEFINES if nofpu variant
+# is a chosen variant
+define add_variant_values
+  $(foreach v, $(CHOSEN_VARIANTS), $(eval $(1) += $($(1)-variant-$(v))))
+endef
+
+$(foreach v, $(CHOSEN_VARIANTS), $(eval $(BID_DEFINE-variant-$(v))))
 
 strip_quotes = $(patsubst "%,%,$(patsubst %",%,$(1)))#"
 
