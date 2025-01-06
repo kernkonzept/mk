@@ -85,7 +85,7 @@ sub filter_deps
   @{$n->{$attr}} = @r;
 }
 
-sub add_node($$)
+sub add_node
 {
   my $n = shift;
   my $cluster = shift;
@@ -110,6 +110,40 @@ sub add_node($$)
       my $c = $clusters{$cluster};
       $c->{nodes}->{$name} = $n;
       $n->{cluster} = $c;
+    }
+
+  # It is possible to define variants only for certain subdirectories. In this
+  # case, we create a new node for the subdirectory by copying the current one
+  # and changing the variant.
+  my %new_nodes;
+  my @variants = ();
+  foreach my $variant (@{$n->{variants}})
+    {
+      # Check if variant has a special path given in square brackets. If that
+      # is the case, we want the variant only to be present for this path.
+      # Otherwise, we keep the variant for the current node.
+      if ($variant =~ /(.*)\[(.*)\]/)
+        {
+          push(@{$new_nodes{$2}}, $1);
+        }
+      else
+        {
+          push(@variants, $variant);
+        }
+    }
+  # replace variants with filtered list of variants
+  $n->{variants} = ();
+  push(@{$n->{variants}}, @variants);
+  foreach my $node_name (keys %new_nodes)
+    {
+      # (shallow) copy node and change name and variants
+      # We want that the node behaves exactly like the one we copied from. We
+      # are okay with changes propagating except when it comes to the name and
+      # the variants, which we assign new values to.
+      my $node_copy = bless {%$n}, ref $n;
+      $node_copy->{name} = "$node_copy->{name}/$node_name";
+      $node_copy->{variants} = $new_nodes{$node_name};
+      add_node($node_copy, undef);
     }
 
   $provided{$_} = $n foreach (@{$n->{provides}});
