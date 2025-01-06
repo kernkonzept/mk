@@ -593,7 +593,7 @@ diag::
 	@printf $(EMPHSTART)"Diagnostics:"$(EMPHSTOP)
 	@DIAGS=( $$(find $(OBJ_DIR) -name '*.diag') );  \
 	if [[ "$${#DIAGS[@]}" -eq 0 ]] ; then \
-	  echo "<None>";
+	  echo "<None>"; \
 	else \
 	  $(DIAG_DISPLAY_CMD) "$${DIAGS[@]}"; \
 	fi
