@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # vim:set ft=make:
 #
-# DROPS (Dresden Realtime OPerating System) Component
+# L4Re Buildsystem
 #
 # Makefile-Include for install-rules
 #

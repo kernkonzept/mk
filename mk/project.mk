@@ -1,3 +1,6 @@
+#
+# L4Re Buildsystem
+#
 include $(L4DIR)/mk/Makeconf
 
 ifneq ($(S),)

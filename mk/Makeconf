@@ -1,6 +1,8 @@
 # -*- Makefile -*-
 # vim:set ft=make:
 #
+# L4Re Buildsystem
+#
 # Make configuration file
 #
 # This file is included by all Makefile-templates. This file defines macros

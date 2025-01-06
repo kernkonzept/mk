@@ -1,7 +1,7 @@
 # -*- Makefile -*-
 # vim:set ft=make:
 #
-# DROPS (Dresden Realtime OPerating System) Component
+# L4Re Buildsystem
 #
 # Makefile-include to extract variables from Makefile-compatible files
 #

@@ -1,4 +1,7 @@
 # vi:ft=make
+#
+# L4Re Buildsystem
+#
 # This makefile contains the generator for our basic pattern rules.
 # These generators allow easy instantiation of own rule sets.
 

@@ -1,4 +1,7 @@
 # -*- Makefile -*-
+#
+# L4Re Buildsystem
+#
 
 ifeq ($(origin _L4DIR_MK_ASSETS_MK),undefined)
 _L4DIR_MK_ASSETS_MK=y

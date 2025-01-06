@@ -1,6 +1,8 @@
 # Makefile snippet to generate l4defs.inc file
 # vim:set ft=make:
 #
+# L4Re Buildsystem
+#
 
 PKGDIR = .
 SYSTEMS = $(BUILD_ARCH)-$(BUILD_ABI)

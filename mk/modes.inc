@@ -1,6 +1,8 @@
 # -*- Makefile -*-
 # vim:et:ts=8:ft=make:
 #
+# L4Re Buildsystem
+#
 # Makefile-Include for defining modes
 
 LIBC_INCLUDE   = $(BID_NOSTDINC)                                   \

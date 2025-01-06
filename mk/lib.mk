@@ -1,6 +1,6 @@
 # -*- Makefile -*-
 #
-# DROPS (Dresden Realtime OPerating System) Component
+# L4Re Buildsystem
 #
 # Makefile-Template for library directories
 #
