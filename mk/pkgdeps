@@ -18,6 +18,7 @@ my %clusters;
 my %config;
 my %build_only_deps;
 my %modifications;
+my %variant_deps;
 
 my $pcfiledir_for_aliases;
 
@@ -410,6 +411,19 @@ sub modification_variants
   return @modification_variants;
 }
 
+sub extra_deps
+{
+  my $variant = shift;
+
+  my %extra_deps;
+  my @single_variants = split(/\+/, $variant);
+  foreach my $single_variant (@single_variants)
+    {
+      $extra_deps{$_} = 1 foreach @{$variant_deps{$single_variant}};
+    }
+  return keys %extra_deps;
+}
+
 sub generate_dep_makefile
 {
   scan_files_dirs(shift, 1, @_);
@@ -431,7 +445,11 @@ sub generate_dep_makefile
       # In case we have modification variants, we add them to each variant
       # before saving the list of variants for later printout.
       my @node_variants = modification_variants($n->{variants}, $modifications{$n->{name}});
-      push(@{$variants{$_}}, $n->{name}) foreach @node_variants;
+      foreach (@node_variants)
+        {
+          push(@{$variants{$_}}, $n->{name});
+          push(@{$n->{requires}},extra_deps($_));
+        }
 
       my $d = generate_single_dep('requires', $n, $ignore_missing, \$error_count);
       $d |=  generate_single_dep('optional', $n, 1, \$error_count);
@@ -1162,6 +1180,23 @@ while (1)
             $modifications{$pkg} = () unless exists $modifications{$pkg};
             push(@{$modifications{$pkg}}, $variant);
             die "Missing -ME to end Modification variant scope."
+              unless defined $ARGV[0];
+          }
+        shift;
+      }
+    # The `-D <variant> <dependencies ...> -DE` option can be provided to the
+    # pkgdep utility to add `<dependencies ...>` as additional dependencies to
+    # all nodes with variant `<variant>`.
+    elsif ($ARGV[0] eq '-D')
+      {
+        shift;
+        my $variant = shift;
+
+        while ($ARGV[0] ne '-DE')
+          {
+            my $dep = shift;
+            push(@{$variant_deps{$variant}}, $dep);
+            die "Missing -DE to end variant dependency scope."
               unless defined $ARGV[0];
           }
         shift;
