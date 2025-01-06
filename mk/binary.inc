@@ -35,22 +35,15 @@ BID_OBJ_Makefile ?= Makefile
 include $(OBJ_BASE)/.Package.deps
 
 # Building variants:
-# progs build 'std', except the prog tells us otherwise
-ifeq ($(ROLE),prog.mk)
-  VARIANTS ?= std
-endif
-# tests build 'std', except the test tells us otherwise
-ifeq ($(ROLE),test.mk)
-  VARIANTS ?= std
-endif
-ifeq ($(ROLE),assets.mk)
-  VARIANTS ?= std
-endif
-# libs build std (default) and variants required by other packages
-# package may override default by setting VARIANTS
-ifeq ($(ROLE),lib.mk)
-  VARIANTS ?= std
-  VARIANTS += $(VARIANTS_$(PKGDIR_ABS:$(L4DIR_ABS)/%=%))
+ifeq ($(filter-out lib.mk prog.mk test.mk assets.mk, $(ROLE)),)
+  VARIANTS_lib.mk = std
+  # If there is a variants variable for the src dir, we use it. Otherwise, we
+  # fall back to the pkgdir one. If there is neither, use std.
+  SRC_VARIANTS    += $(VARIANTS_$(SRC_DIR:$(L4DIR_ABS)/%=%))
+  PKGDIR_VARIANTS  = $(VARIANTS_$(PKGDIR_ABS:$(L4DIR_ABS)/%=%))
+  VARIANTS         = $(or $(SRC_VARIANTS), $(PKGDIR_VARIANTS), std)
+  VARIANTS        += $(VARIANTS_$(ROLE))
+  VARIANTS        := $(sort $(VARIANTS))
 endif
 
 $(if $(VARIANTS),,$(error No variants defined))
