@@ -32,8 +32,9 @@ BID_DCOLON_TARGETS := all clean cleanall mrproper install scrub DROPSCONF_CONFIG
 #        there's a better way?)
 ifneq ($(if $(B)$(BID_SANDBOX_IN_PROGRESS),,$(SANDBOX_ENABLE)),)
 
-.PHONY: $(MAKECMDGOALS) do-all-make-targets
+.PHONY: $(MAKECMDGOALS)
 
+.PHONY: do-all-make-targets
 do-all-make-targets:
 	$(VERBOSE)BID_SANDBOX_IN_PROGRESS=1 \
 	   $(L4DIR)/tool/bin/sandbox \
@@ -49,6 +50,7 @@ $(filter-out $(BID_DCOLON_TARGETS),$(MAKECMDGOALS)):  do-all-make-targets
 $(filter     $(BID_DCOLON_TARGETS),$(MAKECMDGOALS)):: do-all-make-targets
 
 else
+.PHONY: all
 all::
 
 #####################
@@ -199,17 +201,17 @@ install-dirs += doc
 all:: doc
 endif
 
+.PHONY: tool
 tool:
 	$(VERBOSE)if [ -r $@/Makefile ]; then $(MAKE) -C $@; fi
 
+.PHONY: doc
 doc:
 	$(VERBOSE)if [ -r doc/source/Makefile ]; then $(MAKE) -C doc/source; fi
 
 BID_POST_CONT_HOOK := $(MAKE) regen_l4defs
 
-.PHONY: all clean cleanall clean-test-scripts install doc
-.PHONY: $(BUILD_DIRS) doc check_build_tools cont cleanfast
-
+.PHONY: cleanfast
 cleanfast:
 	$(VERBOSE)if [ -f $(OBJ_BASE)/include/generated/autoconf.h ]; then \
 	            cp -a $(OBJ_BASE)/include/generated/autoconf.h         \
@@ -226,12 +228,15 @@ cleanfast:
 	               $(OBJ_BASE)/include/generated/autoconf.h; \
 	          fi
 
+.PHONY: cleanall
 cleanall::
 	$(VERBOSE)rm -f *~
 
+.PHONY: clean-test-scripts
 clean-test-scripts:
 	$(VERBOSE)$(RM) -r $(OBJ_BASE)/test/t
 
+.PHONY: clean cleanall install
 clean cleanall install::
 	$(VERBOSE)set -e; for i in $($@-dirs) ; do                     \
 	            if [ -r $$i/Makefile -o -r $$i/GNUmakefile ]; then \
@@ -241,6 +246,7 @@ l4defs_file  = $(OBJ_BASE)/l4defs$(if $(filter std,$(1)),,-$(1)).$(2).inc
 
 L4DEFS_FILES = $(foreach v,std $(VARIANTS_AVAILABLE),$(call l4defs_file,$(v),mk) $(call l4defs_file,$(v),sh) $(call l4defs_file,$(v),pl))
 
+.PHONY: l4defs
 l4defs: $(L4DEFS_FILES)
 
 generate_l4defs_files_step = \
@@ -271,11 +277,13 @@ $(firstword $(L4DEFS_FILES)): $(OBJ_DIR)/.Package.deps pkg/l4re-core \
 
 $(wordlist 2,$(words $(L4DEFS_FILES)),$(L4DEFS_FILES)): $(firstword $(L4DEFS_FILES))
 
+.PHONY: regen_l4defs
 regen_l4defs:
 	+$(VERBOSE)$(foreach v,std $(VARIANTS_AVAILABLE),$(call generate_l4defs_files,$(v));)
 
 COMPILE_COMMANDS_JSON = compile_commands.json
 
+.PHONY: $(COMPILE_COMMANDS_JSON)
 $(COMPILE_COMMANDS_JSON):
 	$(GEN_MESSAGE)
 	$(VERBOSE)$(L4DIR)/tool/bin/gen_ccj $(OBJ_DIR) $@
@@ -283,6 +291,7 @@ $(COMPILE_COMMANDS_JSON):
 # Automatically regenerate compile_commands.json if the file is already
 # there and if we build the build-directory the compile_commands.json file
 # was originally created from.
+.PHONY: regen_compile_commands_json
 regen_compile_commands_json:
 	$(VERBOSE)if [ -e "$(COMPILE_COMMANDS_JSON)" ]; then               \
 	  if grep -qF "$(OBJ_DIR)" $(COMPILE_COMMANDS_JSON); then          \
@@ -295,6 +304,7 @@ regen_compile_commands_json:
 # L4Re-specific cross-compiler
 SYSROOT_LIBS = libgcc libgcc_eh libgcc_s libc libpthread librt libdl libld-l4 libm libc_nonshared.p libmount
 OUTPUT_FORMAT = $(CC) $(CFLAGS) -Wl,--verbose 2>&1 | $(SED) -n '/OUTPUT_FORMAT/,/)/p'
+.PHONY: sysroot
 sysroot: $(foreach p,ldso libc_backends libc,pkg/l4re-core/$(p))
 	$(GEN_MESSAGE)
 	$(VERBOSE)$(RM) -r $(OBJ_DIR)/sysroot
@@ -320,7 +330,6 @@ sysroot: $(foreach p,ldso libc_backends libc,pkg/l4re-core/$(p))
 	$(VERBOSE)echo "GROUP ( libc.so.1 libc_nonshared.a AS_NEEDED ( libld-l4.so.1 ) )" >> $(OBJ_DIR)/sysroot/usr/lib/libc.so
 
 
-.PHONY: l4defs regen_l4defs compile_commands.json regen_compile_commands_json
 endif # empty $(S)
 
 #####################
@@ -395,6 +404,7 @@ ifeq ($(filter y 1,$(DISABLE_CC_CHECK)),)
 override DISABLE_CC_CHECK :=
 endif
 
+.PHONY: checkconf
 checkconf:
 	$(VERBOSE)if [ -n "$(GCCDIR)" -a ! -e $(GCCDIR)/include/stddef.h ]; then \
 	  $(ECHO); \
@@ -441,8 +451,6 @@ endif
 
 # caching of some variables. Others are determined directly.
 # The contents of the variables to cache is already defined in mk/Makeconf.
-.PHONY: Makeconf.bid.local-helper Makeconf.bid.local-internal-names \
-        libgendep checkconf
 CC := $(if $(filter sparc,$(ARCH)),$(if $(call GCCIS_sparc_leon_f),sparc-elf-gcc,$(CC)),$(CC))
 LD := $(if $(filter sparc,$(ARCH)),$(if $(call GCCIS_sparc_leon_f),sparc-elf-ld,$(LD)),$(LD))
 add_if_f = $(if $($(1)_f),$(1))
@@ -450,6 +458,7 @@ add_if_f = $(if $($(1)_f),$(1))
 $(OBJ_BASE)/include/l4/bid_config.h:
 	$(if $(wildcard $@),,$(file >$@,#include <generated/autoconf.h>))
 
+.PHONY: Makeconf.bid.local-helper
 Makeconf.bid.local-helper: $(OBJ_BASE)/include/l4/bid_config.h
 	$(VERBOSE)echo BUILD_SYSTEMS="$(strip $(ARCH)_$(CPU)-plain            \
 	               $(ARCH)_$(CPU)-$(BUILD_ABI))" >> $(DROPSCONF_CONFIG_MK)
@@ -526,6 +535,7 @@ define determine_emulation_lld_ld =
           >> $(DROPSCONF_CONFIG_MK)
 endef
 
+.PHONY: Makeconf.bid.local-internal-names
 Makeconf.bid.local-internal-names:
 ifneq ($(CONFIG_INT_CPP_NAME_SWITCH),)
 	$(VERBOSE)set -e; X="$(OBJ_BASE)/tmp.$$$$$$RANDOM.c" ;               \
@@ -553,6 +563,7 @@ endif
 	             $(determine_emulation_lld_ld),\
 	             $(determine_emulation_gnu_ld))
 
+.PHONY: libgendep
 libgendep:
 	$(VERBOSE)if [ ! -r tool/gendep/Makefile ]; then    \
 	            echo "=== l4/tool/gendep missing! ==="; \
@@ -566,6 +577,7 @@ BUILD_TOOLS += $(foreach dir,$(DIRS_FOR_BUILD_TOOLS_CHECKS), \
                          $(if $(wildcard $(L4DIR)/$(dir)),   \
                               $(BUILD_TOOLS_$(dir))))
 
+.PHONY: check_build_tools
 check_build_tools:
 	@unset mis;                                                \
 	for i in $(sort $(BUILD_TOOLS)); do                        \
@@ -658,6 +670,7 @@ QEMU_KERNEL_FILE          ?= $(or $(QEMU_KERNEL_FILE-$(QEMU_KERNEL_TYPE)) \
 
 FASTBOOT_BOOT_CMD    ?= fastboot boot
 
+.PHONY: check_and_adjust_ram_base
 check_and_adjust_ram_base:
 	$(VERBOSE)if [ -z "$(PLATFORM_RAM_BASE)" ]; then          \
 	  echo "ERROR: Platform \"$(PLATFORM_TYPE)\" not known."; \
@@ -675,10 +688,12 @@ check_and_adjust_ram_base:
 	  $(call switch_ram_base_func,$(PLATFORM_RAM_BASE)); \
 	fi
 
+.PHONY: listentries
 listentries:
 	$(VERBOSE)$(set_ml); $(common_envvars) \
 	  L4DIR=$(L4DIR) $(L4DIR)/tool/bin/entry-selector list $$ml
 
+.PHONY: shellcodeentry
 shellcodeentry:
 	$(VERBOSE)$(entryselection);                                      \
 	 SHELLCODE="$(SHELLCODE)" $(common_envvars) $(tool_envvars)       \
@@ -693,6 +708,7 @@ define link_unless_same
 endef
 
 define imagebuilder_goal
+.PHONY: $1
 $1:
 	$(if $(CHECK_FOR_ARCH_$1),$$(call check_for_arch,$(CHECK_FOR_ARCH_$1))) \
 	+$$(VERBOSE)$$(entryselection);                       \
@@ -714,18 +730,22 @@ $(foreach g,efiimage elfimage rawimage uimage,$(eval $(call imagebuilder_goal,$g
 CHECK_FOR_ARCH_fvp = arm arm64
 $(foreach g,qemu fvp,$(eval $(call imagebuilder_goal,$g,y)))
 
+.PHONY: itb
 itb: check_and_adjust_ram_base
 	$(call genimage,BOOTSTRAP_DO_ITB=y)
 	$(VERBOSE)$(if $(POST_IMAGE_CMD),$(call POST_IMAGE_CMD,$(IMAGES_DIR)/bootstrap.itb))
 
+.PHONY: fastboot fastboot_rawimage
 fastboot fastboot_rawimage: rawimage
 	$(VERBOSE)$(FASTBOOT_BOOT_CMD) \
 	  $(if $(FASTBOOT_IMAGE),$(FASTBOOT_IMAGE),$(IMAGES_DIR)/bootstrap.raw)
 
+.PHONY: fastboot_uimage
 fastboot_uimage: uimage
 	$(VERBOSE)$(FASTBOOT_BOOT_CMD) \
 	  $(if $(FASTBOOT_IMAGE),$(FASTBOOT_IMAGE),$(IMAGES_DIR)/bootstrap.uimage)
 
+.PHONY: vbox
 vbox: $(if $(VBOX_ISOTARGET),$(VBOX_ISOTARGET),grub2iso)
 	$(call check_for_arch,x86 amd64)
 	$(VERBOSE)if [ -z "$(VBOX_VM)" ]; then                                 \
@@ -738,6 +758,7 @@ vbox: $(if $(VBOX_ISOTARGET),$(VBOX_ISOTARGET),grub2iso)
 	    --boot d                            \
 	    $(VBOX_OPTIONS)
 
+.PHONY: kexec
 kexec:
 	$(VERBOSE)$(entryselection);                        \
 	 $(tool_envvars) $(common_envvars)                  \
@@ -759,12 +780,15 @@ define geniso
 	  && $(LN) -f $$ISONAME $(IMAGES_DIR)/.current.iso
 endef
 
+.PHONY: grub1iso
 grub1iso:
 	$(call geniso,1)
 
+.PHONY: grub2iso
 grub2iso:
 	$(call geniso,2)
 
+.PHONY: grub2efiiso
 grub2efiiso: efiimage
 	$(call check_for_arch,x86 amd64)
 	$(VERBOSE)$(entryselection);                                         \
@@ -775,6 +799,7 @@ grub2efiiso: efiimage
 	      $$EFINAME $$ISONAME "$$e"                                      \
 	  && $(LN) -f $$ISONAME $(IMAGES_DIR)/.current.iso
 
+.PHONY: exportpack
 exportpack: $(if $(filter $(ARCH),x86 amd64),,$(QEMU_KERNEL_TYPE))
 	$(if $(EXPORTPACKTARGETDIR),, \
 	  @echo Need to specific target directory as EXPORTPACKTARGETDIR=dir; exit 1)
@@ -790,6 +815,7 @@ exportpack: $(if $(filter $(ARCH),x86 amd64),,$(QEMU_KERNEL_TYPE))
 	                                  --grubentrytitle="$(GRUB_ENTRY_TITLE)" \
 	                                   $$ml $$TARGETDIR $$e;
 
+.PHONY: help
 help::
 	@echo
 	@echo "Image generation targets:"
@@ -812,6 +838,7 @@ help::
 	@echo " Add 'E=name' to directly select the entry without using the menu."
 	@echo " Modules are defined in conf/modules.list."
 
+.PHONY: listplatforms
 listplatforms: $(KCONFIG_FILE).platforms.list
 	$(VERBOSE)sed -nE "s/^\[$(BUILD_ARCH)\](.*)/\1/p" $(KCONFIG_FILE).platforms.list | sort -b
 
@@ -819,14 +846,12 @@ listplatforms: $(KCONFIG_FILE).platforms.list
 listexternals:
 	@printf "%s\n" $(file <$(OBJ_BASE)/.Package.deps.ext_pkgs)
 
-.PHONY: elfimage rawimage uimage qemu vbox switch_ram_base \
-        grub1iso grub2iso listentries shellcodeentry exportpack \
-        fastboot fastboot_rawimage fastboot_uimage \
-	check_and_adjust_ram_base listplatforms itb fvp
 
+.PHONY: switch_ram_base
 switch_ram_base:
 	$(VERBOSE)$(call switch_ram_base_func,$(RAM_BASE))
 
+.PHONY: check_base_dir
 check_base_dir:
 	@if [ -z "$(CHECK_BASE_DIR)" ]; then                                  \
 	  echo "Need to set CHECK_BASE_DIR variable";                         \
@@ -863,8 +888,10 @@ checkbuild.%: $(CHECK_BASE_DIR)/config.%/.config.all $(CHECK_BASE_DIR)/config.%/
 	fi
 	$(if $(CHECK_REMOVE_OBJDIR),rm -rf $(<D))
 
+.PHONY: checkbuild
 checkbuild: $(if $(USE_CONFIGS),$(addprefix checkbuild.,$(USE_CONFIGS)),$(patsubst mk/defconfig/config.%, checkbuild.%, $(wildcard mk/defconfig/config.*)))
 
+.PHONY: report
 report:
 	@echo -e $(EMPHSTART)"============================================================="$(EMPHSTOP)
 	@echo -e $(EMPHSTART)" Note, this report might disclose private information"$(EMPHSTOP)
