@@ -1,3 +1,4 @@
+# vi:se ft=kconfig:
 # Common symbols for arm and arm64
 
 config CPU_ARMV6PLUS
