@@ -326,7 +326,7 @@ DROPSCONF_CONFIG_MK_POST_HOOK:: check_build_tools $(OBJ_DIR)/Makefile
 	$(VERBOSE)$(MAKE) libgendep
 	$(VERBOSE)$(MAKE) Makeconf.bid.local-helper || \
 	    (rm -f $(DROPSCONF_CONFIG_MK) $(CONFIG_MK_REAL) $(CONFIG_MK_INDEP); false)
-	$(VEROBSE)$(LN) -snf $(L4DIR_ABS) $(OBJ_BASE)/source
+	$(VERBOSE)$(LN) -snf $(L4DIR_ABS) $(OBJ_BASE)/source
 	$(VERBOSE)$(MAKE) checkconf
 
 $(KCONFIG_FILE).defines: FORCE
