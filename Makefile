@@ -150,7 +150,9 @@ PKGDEPS_IGNORE_MISSING :=
 export DROPS_STDDIR
 
 # after having abspath, we can export BID_ROOT_CONF
-ifneq ($(filter config oldconfig olddefconfig silentoldconfig gconfig nconfig xconfig, $(MAKECMDGOALS)),)
+_CONFIG_TARGETS = config oldconfig olddefconfig silentoldconfig gconfig \
+                  nconfig xconfig
+ifneq ($(filter $(_CONFIG_TARGETS), $(MAKECMDGOALS)),)
 export BID_ROOT_CONF=$(abspath $(OBJ_BASE))/.config.all
 endif
 endif
@@ -316,8 +318,9 @@ regen_compile_commands_json:
 # L4Re-specific cross-compiler
 SYSROOT_LIBS = libgcc libgcc_eh libgcc_s libc libpthread librt libdl libld-l4 libm libc_nonshared.p libmount
 OUTPUT_FORMAT = $(CC) $(CFLAGS) -Wl,--verbose 2>&1 | $(SED) -n '/OUTPUT_FORMAT/,/)/p'
+SYSROOT_PACKAGES = $(addprefix pkg/l4re-core/,ldso libc_backends libc)
 .PHONY: sysroot
-sysroot: $(foreach p,ldso libc_backends libc,pkg/l4re-core/$(p))
+sysroot: $(SYSROOT_PACKAGES)
 	$(GEN_MESSAGE)
 	$(VERBOSE)$(RM) -r $(OBJ_DIR)/sysroot
 	$(VERBOSE)$(MKDIR) $(OBJ_DIR)/sysroot/usr/include/l4
@@ -377,8 +380,9 @@ KCONFIG_PLATFORMS := $(wildcard $(L4DIR)/mk/platforms/*.conf $(L4DIR)/conf/platf
 # $(KCONFIG_FILE_DEPS).platforms from the previous generation of it.
 KCONFIG_FILE_PLATFORMS_DEPS_CURRENT = $(KCONFIG_PLATFORMS) Makefile $(L4DIR)/tool/bin/gen_kconfig_includes
 
-$(addprefix $(KCONFIG_FILE)%,platform_types platforms platforms.list): \
-            $(KCONFIG_FILE_PLATFORMS_DEPS_CURRENT)
+KCONFIG_FILES = $(addprefix $(KCONFIG_FILE)%,              \
+                  platform_types platforms platforms.list)
+$(KCONFIG_FILES): $(KCONFIG_FILE_PLATFORMS_DEPS_CURRENT)
 	$(file >$(KCONFIG_FILE_DEPS).platforms,$@: $(KCONFIG_FILE_PLATFORMS_DEPS_CURRENT))
 	$(foreach f,$(KCONFIG_FILE_PLATFORMS_DEPS_CURRENT),$(file >>$(KCONFIG_FILE_DEPS).platforms,$(f):))
 	$(VERBOSE)MAKE="$(MAKE)"; $(L4DIR)/tool/bin/gen_kconfig_includes $(KCONFIG_FILE) $(KCONFIG_PLATFORMS)
