@@ -366,11 +366,13 @@ sub generate_single_dep
   print "# $a $tag ".join(' ', @{$n->{$tag}})."\n";
   print ".PHONY: $a\n" if $n->{alias};
   print "$a:";
+  my @pdeps;
   foreach (sort @{$n->{$tag}})
     {
       if (defined $provided{$_} and not $provided{$_}->{disabled})
         {
           print " $provided{$_}->{name}";
+          push @pdeps, $_;
         }
       elsif (not $ignore_missing and not defined $n->{disabled})
         {
@@ -378,6 +380,8 @@ sub generate_single_dep
           $$error_count++;
         }
     }
+  print "\nDEPS_$a +=";
+  print " $_ \$(DEPS_" . $provided{$_}->{name} . ")" foreach (sort @pdeps);
   print "\n";
   return 1;
 }
@@ -431,6 +435,8 @@ sub generate_dep_makefile
 
       my $d = generate_single_dep('requires', $n, $ignore_missing, \$error_count);
       $d |=  generate_single_dep('optional', $n, 1, \$error_count);
+      # Also add provides to catch internal dependencies
+      print "DEPS_$n->{name} += " . join(" ", sort(@{$n->{provides}})) . "\n";
       delete $p{$a} if $d;
     }
 

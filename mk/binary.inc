@@ -358,7 +358,15 @@ BID_LINK_DEPS = $(call BID_dot_fname,$1).d $(call BID_link_deps_file,$1)
 
 ifeq ($(BID_MISSING_PCS),)
  ifneq ($(SYSTEM),)
-  ifneq ($(REQUIRES_LIBS),)
+  ifneq ($(strip $(REQUIRES_LIBS)),)
+   ifneq ($(filter-out $(sort $(DEPS_$(PKGDIR_ABS:$(L4DIR_ABS)/%=%))),$(REQUIRES_LIBS)),)
+     MY_DEPS      := $(sort $(DEPS_$(PKGDIR_ABS:$(L4DIR_ABS)/%=%)))
+     MISSING_DEPS := $(filter-out $(MY_DEPS),$(REQUIRES_LIBS))
+     SRC_MAKEFILE := $(firstword $(filter $(SRC_DIR)%,$(MAKEFILE_LIST)))
+     #RL_DEBUG_INFO   := : PD[$(PKGDIR_ABS)] L4D[$(L4DIR_ABS)] D:[$(MY_DEPS)] RL:[$(REQUIRES_LIBS)] M:[$(MISSING_DEPS)]
+     TEXT         := $(shell echo -e "\n\033[31m$(SRC_MAKEFILE): '$(MISSING_DEPS)' in REQUIRES_LIBS in Makefile but not in Control file requires$(RL_DEBUG_INFO)\033[0m")
+     $(if $(filter-out l4defs.gen.dir,$(notdir $(PKGDIR_ABS))),$(error $(TEXT)))
+   endif
    REQUIRES_LIBS_LIST := $(strip $(call BID_PKG_CONFIG,$(OBJ_BASE),--libs,$(REQUIRES_LIBS)))
    # error handling
    ifneq ($(call BID_PKG_CONFIG_FAILED,$(REQUIRES_LIBS_LIST)),)
