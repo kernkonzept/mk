@@ -405,11 +405,6 @@ ifeq ($(BID_MISSING_PCS),)
     $(if $(text2),$(info $(shell echo -e "\033[31m$(text2)\033[0m")))
     $(if $(BID_MISSING_PCS),$(info $(text)),$(error $(text)))
    endif
-
-   # some sanity check
-   ifneq ($(filter libl4re-vfs,$(REQUIRES_LIBS)),)
-     $(error Never include 'libl4re-vfs'!)
-   endif
   endif
 
   BID_PKG_CONFIG_CFLAGS := $(call BID_PKG_CONFIG,$(OBJ_BASE),--cflags, $(REQUIRES_CFLAGS) $(REQUIRES_LIBS))
