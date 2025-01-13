@@ -52,41 +52,7 @@ choice
 
 # ARCH_PLATFORMS
 
-config PLATFORM_TYPE_custom
-	bool "Custom platform"
-	help
-	  Define your own platform, alternatively define the following
-	  in conf/platforms/yourname.conf:
-	    PLATFORM_RAM_BASE    = 0
-	    PLATFORM_RAM_SIZE_MB = 64
-
-
 endchoice
-
-if PLATFORM_TYPE_custom
-
-menu "Custom Platform Definition"
-
-config PLATFORM_TYPE
-	string "Name of your platform"
-
-config PLATFORM_RAM_BASE
-	hex "Start of RAM"
-	default 0x0
-	help
-	  Hexadecimal physical address where RAM memory starts on the
-	  platform.
-
-config PLATFORM_RAM_SIZE_MB
-	int "RAM-Memory available on the platform in MB"
-	default 128
-
-config PLATFORM_UART_NR
-	int "Select UART to use"
-	default 0
-
-endmenu # Custom platform
-endif
 
 source "Kconfig.generated.platform_types"
 source "Kconfig.generated.pkgs"
