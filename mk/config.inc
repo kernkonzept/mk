@@ -167,7 +167,7 @@ DROPSCONF_CONFIG_MK_POST_HOOK::
 #
 clean::
 
-ifeq ($(S),)
+ifeq ($(SUBDIRS_TO_BUILD),)
 cleanall::
 	$(VERBOSE)$(RM) -r $(KCONFIG_OBJ_DIR)
 

@@ -27,10 +27,25 @@ export BID_GLOBAL_MAKE := y
 # Hack, see project.mk
 BID_DCOLON_TARGETS := all clean cleanall mrproper install scrub DROPSCONF_CONFIG_MK_POST_HOOK olddefconfig oldconfig config
 
+# only use "BUILDDIR_TO_CREATE" from this point on
+ifneq ($(strip $(B)),)
+  BUILDDIR_TO_CREATE := $(B)
+endif
+
+# only use "SUBDIRS_TO_BUILD" from this point on
+ifneq ($(strip $(S)),)
+  SUBDIRS_TO_BUILD := $(S)
+endif
+
+# only use "CUSTOM_CONFIG_TEMPLATE" from this point on
+ifneq ($(strip $(T)),)
+  CUSTOM_CONFIG_TEMPLATE := $(T)
+endif
+
 # This goes very early
 # TODO: should be done in mk/Makeconf to catch all make invocations (maybe
 #        there's a better way?)
-ifneq ($(if $(B)$(BID_SANDBOX_IN_PROGRESS),,$(SANDBOX_ENABLE)),)
+ifneq ($(if $(BUILDDIR_TO_CREATE)$(BID_SANDBOX_IN_PROGRESS),,$(SANDBOX_ENABLE)),)
 
 .PHONY: $(MAKECMDGOALS)
 
@@ -99,7 +114,7 @@ IGNORE_MAKECONF_INCLUDE=1
 endif
 endif
 
-ifneq ($(B)$(BUILDDIR_TO_CREATE),)
+ifneq ($(BUILDDIR_TO_CREATE),)
 IGNORE_MAKECONF_INCLUDE=1
 endif
 
@@ -143,31 +158,28 @@ endif
 #####################
 # rules follow
 
-ifneq ($(strip $(B)),)
-BUILDDIR_TO_CREATE := $(B)
-endif
-
 ifneq ($(strip $(BUILDDIR_TO_CREATE)),)
 
 # Use custom default configuration file if T is specified
-ifneq ($(T),)
-  DEFCONFIG_CANDIDATE=$(TEMPLDIR)/config.$(T)
+ifneq ($(CUSTOM_CONFIG_TEMPLATE),)
+  DEFCONFIG_CANDIDATE=$(TEMPLDIR)/config.$(CUSTOM_CONFIG_TEMPLATE)
   ifneq ($(wildcard $(DEFCONFIG_CANDIDATE)),)
     DEFCONFIG=$(DEFCONFIG_CANDIDATE)
   else
-    $(error ERROR: Default configuration file $(DEFCONFIG_CANDIDATE) (derived from T=$(T)) not found)
+    $(error ERROR: Default configuration file $(DEFCONFIG_CANDIDATE) (derived from T=$(CUSTOM_CONFIG_TEMPLATE)) not found)
   endif
 endif
 
 all::
 	@echo "Creating build directory \"$(BUILDDIR_TO_CREATE)\"..."
-	@if [ -e $(BUILDDIR_TO_CREATE) ]; then \
-	   echo "Already exists, aborting.";   \
-	   exit 1;                             \
+	@if [ -e $(BUILDDIR_TO_CREATE) ]; then          \
+	   echo "Already exists, aborting.";            \
+	   exit 1;                                      \
 	fi
 	@mkdir -p $(BUILDDIR_TO_CREATE)
 	@cp $(DEFCONFIG) $(BUILDDIR_TO_CREATE)/.kconfig
-	@echo CONFIG_PLATFORM_TYPE_$(PT)=y >> $(BUILDDIR_TO_CREATE)/.kconfig
+	@echo CONFIG_PLATFORM_TYPE_$(PLATFORM_TYPE)=y   \
+	    >> $(BUILDDIR_TO_CREATE)/.kconfig
 ifneq ($(DEFCONFIG_OVERLAY),)
 	@cat $(DEFCONFIG_OVERLAY) >> $(BUILDDIR_TO_CREATE)/.kconfig
 endif
@@ -176,7 +188,7 @@ endif
 	@echo "done."
 else
 
-all:: $(BUILD_DIRS) $(if $(S),,l4defs regen_compile_commands_json)
+all:: $(BUILD_DIRS) $(if $(SUBDIRS_TO_BUILD),,l4defs regen_compile_commands_json)
 
 endif
 
@@ -185,7 +197,7 @@ endif
 # The following targets do work without explicit subdirs
 # ('S=...') only.
 #
-ifeq ($(S),)
+ifeq ($(SUBDIRS_TO_BUILD),)
 
 # some special cases for dependencies follow:
 # L4Linux depends on the availability of the l4defs

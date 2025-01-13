@@ -3,10 +3,10 @@
 #
 include $(L4DIR)/mk/Makeconf
 
-ifneq ($(S),)
+ifneq ($(SUBDIRS_TO_BUILD),)
 # handle explicit subdir builds here
 
-ALL_SUBDIRS   := $(subst :, ,$(subst $(BID_COMMA), ,$(S)))
+ALL_SUBDIRS   := $(subst :, ,$(subst $(BID_COMMA), ,$(SUBDIRS_TO_BUILD)))
 
 BID_DCOLON_TARGETS := all clean cleanall install scrub DROPSCONF_CONFIG_MK_POST_HOOK
 
