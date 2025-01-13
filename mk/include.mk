@@ -22,7 +22,7 @@ ifeq ($(origin TARGET),undefined)
 # use POSIX -print here
 TARGET_CMD		= (cd $(INCSRC_DIR) \
                             && find . -name '*.[ih]' -print \
-                            $(if $(EXTRA_TARGET),&& echo $(EXTRA_TARGET)))
+                            $(if $(EXTRA_TARGET),&& echo '$(EXTRA_TARGET)'))
 else
 TARGET_CMD		= echo $(TARGET)
 endif
@@ -49,12 +49,15 @@ installscript = perl -e '                                                     \
   $$notify=1;                                                                 \
   while(<>) {                                                                 \
     foreach (split) {                                                         \
-      s|^\./||; $$src=$$_;                                                    \
+      s|^\./||;                                                               \
+      my ($$src, $$srcorig) = $$_ =~ m/^(.*?)<(.*)/g;                         \
+      $$srcorig = $$src = $$_ if not defined $$srcorig;                       \
+      s|<.*$$||;                                                              \
       if(s|^ARCH-([^/]*)/L4API-([^/]*)/([^ ]*)$$|\1/\2/$(INSTALL_INC_PREFIX)/\3| ||\
 	 s|^ARCH-([^/]*)/([^ ]*)$$|\1/$(INSTALL_INC_PREFIX)/\2| ||            \
 	 s|^L4API-([^/]*)/([^ ]*)$$|\1/$(INSTALL_INC_PREFIX)/\2| ||           \
 	 s|^(/.*/)?(\S*)$$|$(INSTALL_INC_PREFIX)/\2|) {                       \
-	    $$src="$$srcdir/$$src" if $$src !~ /^\//;                         \
+	    $$src="$$srcdir/$$srcorig" if $$srcorig !~ /^\//;                 \
 	    $$dstdir=$$dst="$(if $(1),$(INSTALLDIR_LOCAL),$(INSTALLDIR))/$$_";\
 	    $$dstdir=~s|/[^/]*$$||;                                           \
 	    -d $$dstdir || system("install","-$(if $(VERBOSE),,v)d",$$dstdir) && exit 1;        \

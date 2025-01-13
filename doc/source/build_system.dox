@@ -205,10 +205,22 @@ where the Makefile resides.
 List of header files to install. If left undefined, then `INCSRC_DIR` will
 be scanned for files with suffix `.h` or `.i`.
 
+Supports the specification of special filenames to allow for different source
+and target filenames to be installed. The syntax is `TARGET<SRC`, where a
+filename including the path of `SRC` is installed as `TARGET`. An example is
+
+  `libfoo.h<contrib/libfoo_linux.h`
+
+which installs the header from the contrib directory under the name without that
+contrib directory and without the platform specific suffix.
+
 \par `EXTRA_TARGET`
 
 When TARGET is undefined, then add these files to the headers found by
 scanning the source directory. Has no effect if `TARGET` has been defined.
+
+The filenames specified allow for the same rule specifications as supported by
+`TARGET`.
 
 \par `CONTRIB_HEADERS`
 
