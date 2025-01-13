@@ -1,5 +1,24 @@
 #! /usr/bin/env perl
 
+=head1 pkgfind
+
+This tool finds l4re packages in the provided source dir by looking for a
+`Control` file and sorting out those that are marked 'obsolete' or 'broken'
+by a respective file.
+
+Args:
+
+
+=over
+
+=item 1: source dir to locate packages in
+
+=item 2: max search depth
+
+=back
+
+=cut
+
 use strict;
 use File::Spec::Functions;
 
