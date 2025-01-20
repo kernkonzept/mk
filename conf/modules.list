@@ -90,7 +90,7 @@ module x86-fb.cfg
 module l4re
 module ned
 module io
-module x86-legacy.devs
+module io/x86-legacy.devs
 module x86-fb.io
 module fb-drv
 module mag
@@ -112,7 +112,7 @@ module ned
 module io
 module fb-drv
 module mag
-module x86-legacy.devs
+module io/x86-legacy.devs
 module l4lx-x86.io
 module[uncompress] vmlinuz
 module[perl] "ramdisk-$ENV{ARCH}.rd"
