@@ -411,6 +411,9 @@ checkcc   = $(call check_compiler_opt,$(1),$(2),$(CC),c)
 checkcxx  = $(call check_compiler_opt,$(1),$(2),$(CXX),c++)
 checkdtc  = $(shell if $(DTC) $(1) --version /dev/null > /dev/null 2>&1; \
                     then echo "$(1)"; fi)
+checkcc_nowarn = $(if $(shell $(filter-out $(CCACHE),$(CC)) $(CARCHFLAGS) \
+                   $(CCXX_FLAGS) $(check_compiler_flags) -W$(1) -c -o /dev/null \
+                   -x c /dev/null >/dev/null 2>&1 || echo X),,-Wno-$(1))
 checkcxx_nowarn = $(if $(shell $(filter-out $(CCACHE),$(CXX)) $(CARCHFLAGS) \
                     $(CCXX_FLAGS) $(check_compiler_flags) -W$(1) -c -o /dev/null \
                     -x c++ /dev/null >/dev/null 2>&1 || echo X),,-Wno-$(1))
@@ -487,6 +490,8 @@ GCCSTACKPROTALLOPT_f = $(call checkcc,-fstack-protector-all)
 GCCWNONOEXCEPTTYPE_f = $(call checkcxx_nowarn,noexcept-type)
 GCCWNOPSABI_f   = $(call checkcxx_nowarn,psabi)
 GCCWNOUNUSEDPRIVATEFIELD_f = $(call checkcxx_nowarn,unused-private-field)
+GCCWNOUNTERMINATEDSTRINGINITIALIZATION_f = $(call checkcc_nowarn,$\
+                                             unterminated-string-initialization)
 GCCWNOC99DESIGNATOR_f = $(call checkcxx_nowarn,c99-designator)
 GCCARMV5TEFPOPT_arm_f = $(call checkcc,-march=armv5te+fp,-march=armv5te)
 GCCARMV6FPOPT_arm_f = $(call checkcc,-march=armv6+fp,-march=armv6)

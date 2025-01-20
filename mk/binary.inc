@@ -562,8 +562,12 @@ CXXFLAGS_EARLY += $(if $(filter 1-9 1-10,$(BID_COMPILER_IS_GCC)-$(GCCVERSION)),-
 
 CXXFLAGS+= $(if $(CONFIG_BID_GCC_OMIT_FP),-fomit-frame-pointer,-fno-omit-frame-pointer)
 CXXFLAGS+= $(if $(CONFIG_BID_LD_EMIT_UNWIND),-funwind-tables,-fno-unwind-tables)
-CXXFLAGS+= $(OPTS) $(filter-out $(foreach w,-Wbad-function-cast -Wstrict-prototypes -Wmissing-prototypes,\
-                                            $(w) $(patsubst -W%,-Wno-%,$(w))),\
+CXXFLAGS+= $(OPTS) $(filter-out $(foreach w,$\
+                                  -Wbad-function-cast $\
+                                  -Wstrict-prototypes $\
+                                  -Wmissing-prototypes $\
+                                  -Wunterminated-string-initialization,$\
+                                  $(w) $(patsubst -W%,-Wno-%,$(w))),$\
                                 $(WARNINGS))
 CXXFLAGS+= $(GCCWNONOEXCEPTTYPE) $(GCCWNOPSABI) $(GCCWNOUNUSEDPRIVATEFIELD) \
 	   $(GCCWNOC99DESIGNATOR)
