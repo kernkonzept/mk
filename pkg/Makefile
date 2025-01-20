@@ -24,14 +24,11 @@ endif
 # default make action is "all" - build all packages
 #
 
-.PHONY: all ptest
+.PHONY: all
 .PHONY: rm-old-links
 
 PURGE_INC_MESSAGE =echo "=== Purging pending links in $(L4DIR)/include ==="
 PURGE_LIB_MESSAGE =echo "=== Purging pending links in $(L4DIR)/lib ==="
-UPDATE_MESSAGE    =echo -e $(EMPHSTART)"=== Updating \"$(1)\" ==="$(EMPHSTOP)
-DIFF_MESSAGE      =echo -e $(EMPHSTART)"=== Diffing \"$(1)\" ==="$(EMPHSTOP)
-PTEST_MESSAGE     =echo "=== Testing Package \"$(1)\" ==="
 
 # Check package dependencies.
 #   CHECK_PKGS: if undefined, check all packages,
@@ -91,21 +88,6 @@ $(PKGDIR_OBJ)/depobj.dot: FORCE
 	@$(GEN_MESSAGE)
 	$(VERBOSE)$(L4DIR)/tool/bin/pkgdepsobj $(L4DIR_ABS) $(OBJ_BASE) $@
 
-ptest:
-	$(VERBOSE)set -e; \
-	for d in $(BUILD_SUBDIRS); do \
-	  if [ -n "$$(find $$d -type d -name $@)" ]; then \
-	    $(call PTEST_MESSAGE,$(BID_DOLLARQUOTE)$$d); \
-	    PWD=$(PWD)/$$d $(MAKE) -C $$d $@; \
-	  fi; \
-	done
-
-TAGS:
-	$(ETAGS)
-
-tags:
-	$(CTAGS)
-
 .PHONY: TAGS tags depsrcgraph depobjgraph depgraph depcheck
 .PHONY: $(foreach ext, .bin .lib .include .idl .headers,addsuffix $(ext), $(BUILD_SUBDIRS))
 
@@ -126,8 +108,6 @@ rm-old-links:
 	    -exec rm $(if $(VERBOSE),,-v) '{}' ';'
 
 # global defines
-
-.PHONY: kernels
 
 help::
 	@echo "Specify one of the following targets:"
