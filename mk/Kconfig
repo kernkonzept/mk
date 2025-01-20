@@ -87,14 +87,6 @@ config LEX
 	string
 	default "flex"
 
-config CTAGS
-	string
-	default "ctags"
-
-config ETAGS
-	string
-	default "etags"
-
 config BID_OPTIMIZE_SIZE
 	bool "Optimize for size (-Os)"
 	help
