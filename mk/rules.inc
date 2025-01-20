@@ -5,6 +5,8 @@
 # This makefile contains the generator for our basic pattern rules.
 # These generators allow easy instantiation of own rule sets.
 
+include $(L4DIR)/mk/util.mk
+
 # variables for instantiating make rules.
 # for C++ compile (CXX) use $(CXX), $(INT_CXX_NAME), and $(CXXFLAGS)
 BID_CXX_COMPILER = CXX
@@ -22,10 +24,6 @@ BID_AS_COMPILER_INT_NAME = INT_CPP_NAME
 BID_ADAC_COMPILER = ADAC
 BID_ADAC_COMPILER_INT_NAME = INT_ADAC_NAME
 
-# Create the directory for placing build results in.
-# Only call out to mkdir if target directory does not exist.
-# The semicolon ensures that this can be used in a statement sequence.
-BID_MAKE_RULE_CREATE_SUBDIR = $(if $(wildcard $(@D)),,$(MKDIR) $(@D);)
 
 # Template for our make rules.
 # arg1: the target or target pattern (e.g., %.o)
@@ -44,7 +42,7 @@ BID_MAKE_RULE_CREATE_SUBDIR = $(if $(wildcard $(@D)),,$(MKDIR) $(@D);)
 define BID_MAKE_RULE_template_gendep
 $(1): $(2) $(GENERAL_D_LOC)
 	@$$(COMP_MESSAGE)
-	$$(VERBOSE)$$(BID_MAKE_RULE_CREATE_SUBDIR)
+	$$(VERBOSE)$$(call lessfork_mkdir,$$(@D))
 	$$(VERBOSE)$$(if $$(BID_OBJ_SRC_$$@),$$(call \
 	  MAKEDEP,$$($(BID_$(3)_COMPILER_INT_NAME))) $$($(BID_$(3)_COMPILER)) \
 	  -c $$(DEPEND_FLAG) $$(CPPFLAGS) $$($(3)FLAGS_EARLY) $$($(3)FLAGS) $(4) $$< \
@@ -70,7 +68,7 @@ endif
 define BID_call_compiler_default
   $(if $(buildinfo_missing)$(prereqs_changed)$(call BID_cmp_str_ne,$1,$(savedcmd_$@)), \
       $(call COMP_MESSAGE,$(bid_trace));                                      \
-      $(BID_MAKE_RULE_CREATE_SUBDIR)                                          \
+      $(call lessfork_mkdir,$(@D))                                            \
       set +o pipefail;                                                        \
       $1 || exit 1;                                                           \
       $(FIXDEP) $(call BID_dot_fname,$@).d                                    \
@@ -78,9 +76,9 @@ define BID_call_compiler_default
       $(RM) $(call BID_dot_fname,$@).d)
 endef
 
-BID_call_compiler_F = $(call COMP_MESSAGE); $(BID_MAKE_RULE_CREATE_SUBDIR) $1
+BID_call_compiler_F = $(call COMP_MESSAGE); $(call lessfork_mkdir,$(@D)) $1
 
-BID_call_compiler_ADAC = $(call COMP_MESSAGE); $(BID_MAKE_RULE_CREATE_SUBDIR) $1
+BID_call_compiler_ADAC = $(call COMP_MESSAGE); $(call lessfork_mkdir,$(@D)) $1
 
 # Arg and further descriptions: See BID_MAKE_RULE_template_gendep
 #
@@ -173,7 +171,7 @@ endef
 define BID_GENERATE_I_MAKE_RULE
 $(1): $(2) FORCE
 	@$$(COMP_MESSAGE)
-	$$(VERBOSE)$$(BID_MAKE_RULE_CREATE_SUBDIR)
+	$$(VERBOSE)$$(call lessfork_mkdir,$$(@D))
 	$$(VERBOSE)$(3) -E -H -dD $$(CPPFLAGS) $(4) $$(abspath $$<) -o $$@
 	$$(VERBOSE)$$(if $$(DO_SHOW_RESULT_FILE),$$(PAGER) $$@)
 endef
@@ -185,6 +183,6 @@ endef
 define BID_GENERATE_S_MAKE_RULE
 %.S: $(1) FORCE
 	@$$(COMP_MESSAGE)
-	$$(VERBOSE)$$(BID_MAKE_RULE_CREATE_SUBDIR)
+	$$(VERBOSE)$$(call lessfork_mkdir,$$(@D))
 	$$(VERBOSE)$(2) -S $(3) $(CPPFLAGS) $$(abspath $$<) -fverbose-asm -o $$@
 endef

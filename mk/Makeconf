@@ -14,6 +14,8 @@
 ifeq ($(origin _L4DIR_MK_MAKECONF),undefined)
 _L4DIR_MK_MAKECONF=y
 
+include $(L4DIR)/mk/util.mk
+
 MAKEFLAGS        += --no-print-directory -Rr
 
 # the default target is all
@@ -40,8 +42,6 @@ define variant_values
 endef
 
 $(foreach v, $(CHOSEN_VARIANTS), $(eval $(BID_DEFINE-variant-$(v))))
-
-strip_quotes = $(patsubst "%,%,$(patsubst %",%,$(1)))#"
 
 ARCH = $(BUILD_ARCH)
 
@@ -153,10 +153,6 @@ PAGER		?= less
 DISASM_CMD      ?= $(OBJDUMP) -lCSd $(1) | $(PAGER)
 IMAGES_DIR      ?= $(OBJ_BASE)/images
 
-# Tools to find packages in projects
-BID_PRJ_DIR_MAX_DEPTH ?= 4
-find_prj_dirs = $(shell $(L4DIR)/mk/pkgfind $(1) $(BID_PRJ_DIR_MAX_DEPTH))
-
 # QEMU defaults
 QEMU_ARCH_MAP_$(ARCH) ?= qemu-system-$(ARCH)
 QEMU_PATH             ?= $(QEMU_ARCH_MAP_$(ARCH))
@@ -166,54 +162,9 @@ FVP_PLAT_MAP_arm_fvp_base   ?= FVP_Base_RevC-2xAEMvA
 FVP_PLAT_MAP_arm_fvp_base_r ?= FVP_BaseR_AEMv8R
 FVP_PATH                    ?= $(FVP_PLAT_MAP_$(PLATFORM_TYPE))
 
-# functions that are handy
-# DEPRECATED
-# This function only exists for backwards compatibility.
-# Please use abspath directly instead of this indirection.
-# Note: We need the backslash after the warning for the function to still work.
-#       Otherwise there would be a line break.
-define absfilename
-  $(warning DEPRECATED: using absfilename in a Makefile is deprecated. Please use abspath directly.) \
-  $(abspath $(1))
-endef
-
-findfile	= $(firstword $(wildcard $(addsuffix /$(1),$(2))) $(1)_NOT_FOUND)
-is_dir          = $(shell test -d '$(1)' && echo yes)
-define create_dir
-  $(if $(wildcard $(1)),true $(1) exists,$(INSTALL) -d $(1))
-endef
-
-# Generate the dotted name of a file name
-# 1: filename
-BID_dot_fname = $(dir $1).$(notdir $1)
-
-# Compare two strings, return something if they are unequal
-# 1: string
-# 2: string
-BID_cmp_str_ne = $(filter-out _$(subst $(BID_SPACE),_SPC_,$1),_$(subst $(BID_SPACE),_SPC_,$2))
-
 # Subdirs where libs and binaries are put into
 BID_install_subdir_base = $(ARCH)_$(CPU)/$(L4API)
 BID_install_subdir_var  = $(subst -,/,$(SYSTEM))
-
-# Strip binary $(1) to $(2) and set target file mode to $(3)
-define copy_stripped_binary
-  $(call create_dir,$(dir $(2))/.debug); \
-  ln -sf $(abspath $(1)) $(dir $(2))/.debug/$(1); \
-  $(OBJCOPY) --strip-unneeded --add-gnu-debuglink=$(1) \
-             $(1) $(2) >/dev/null 2>&1 \
-    || ln -sf $(abspath $(1)) $(2); \
-  chmod $(3) $(2)
-endef
-
-# Move $(2) to $(1) if content of both files differ
-define move_if_changed
-  if test ! -r "$(1)" || ! cmp -s $(1) $(2); then \
-    mv $(2) $(1); \
-  else \
-    rm $(2); \
-  fi
-endef
 
 ifneq ($(PT),)
   PLATFORM_TYPE := $(PT)
@@ -358,19 +309,6 @@ MAKECONFLOCAL ?= Makeconf.local
 
 DROPS_STDDIR	?= /home/drops
 
-# a nasty workaround for make-3.79/make-3.80. The former needs an additional
-# $$ for $-quotation when calling a function.
-BID_IDENT	= $(1)
-ifeq ($(call BID_IDENT,$$),)
-BID_DOLLARQUOTE	= $$
-endif
-BID_COMMA  := ,
-BID_POUND  := \#
-BID_EMPTY  :=
-BID_SPACE  := $(BID_EMPTY) $(BID_EMPTY)
-BID_SQUOTE := '
-BID_DQUOTE := "
-
 QEMU_OPTIONS          ?= -serial stdio $(QEMU_OPTIONS_$(ARCH))
 
 ifneq ($(PL),)
@@ -425,6 +363,32 @@ BID_ASM_FILE_EXTENSIONS ?= .S
 BID_ASM_CPP_FILE_EXTENSIONS ?= .S
 
 # macros used here and in packages
+
+# check if the current architecture is in the provided list of allowed
+# architectures and exit with an error if not.
+# 1: list of allowed architectures
+define check_for_arch
+  $(if $(filter $(ARCH),$1),,
+    $(error ERROR: Architecture '$(ARCH)' is not supported for target $@))
+endef
+
+# Get all variants of a variable
+# This contains specific versions of this variable for
+#  - architecture
+#  - original system
+#  - target
+#  - target directory
+# As well es their `-y` variants
+#
+# 1: variable name
+define bid_flag_variants
+  $($(1)-y) $($(1)_$(ARCH)) $($(1)_$(ARCH)-y)                           \
+  $($(1)_$(OSYSTEM)) $($(1)_$(OSYSTEM)-y)                               \
+  $($(1)_$@) $($(1)_$@-y) $($(1)_$@_$(OSYSTEM)) $($(1)_$@_$(OSYSTEM)-y) \
+  $($(1)_$(@D)) $($(1)_$<) $($(1)_$(@D)/$(<F))                          \
+  $($(1)_$(<F)) $($(1)_$(<F)_$(OSYSTEM)) $($(1)_$(<F)_$(OSYSTEM)-y)     \
+  $($(1)_$(<D)) $(call variant_values,$(1))
+endef
 
 # 1: argument to validate and return if it works
 # 2: return if argument does not work with compiler
@@ -504,8 +468,6 @@ GNATPATCHVERSION   = $(word 3,$(subst ., ,$(GNATVERSION)))
 GCCDIR_f_clang = $(shell $(callcc) -print-resource-dir)
 GCCDIR_f_gcc = $(shell $(callcc) -print-search-dirs | sed -ne 's+^install: \(.*[^/][^/]*\)/+\1+p' )
 GCCDIR_f = $(GCCDIR_f_$(BID_COMPILER_TYPE_f))
-
-check_path_absolute = $(if $(patsubst /%,,$(2)),$(error Path $(1)=$(2) is not absolute),$(2))
 
 LDVERSION_f     = $(shell $(callld) -v | sed -e \
 		    $(if $(filter LLD,$(shell $(callld) -v)),\

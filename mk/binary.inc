@@ -27,6 +27,8 @@
 # Clean-rules are defined here.
 #
 
+include $(L4DIR)/mk/util.mk
+
 $(GENERAL_D_LOC): $(L4DIR)/mk/binary.inc $(L4DIR)/mk/modes.inc $(L4DIR)/mk/rules.inc
 
 # our default Makefile-name in the OBJ-Subdirs
@@ -442,13 +444,6 @@ endif
 $(if $(filter x86 arm arm64 amd64 mips sparc ppc32,$(SYSTEMS)), $(error Please appends "-plain" to each architecture in SYSTEMS ))
 
 LDFLAGS += $(if $(CONFIG_BID_LD_EMIT_UNWIND),--eh-frame-hdr,)
-
-bid_flag_variants = $($(1)-y) $($(1)_$(ARCH)) $($(1)_$(ARCH)-y) \
-                    $($(1)_$(OSYSTEM)) $($(1)_$(OSYSTEM)-y) \
-                    $($(1)_$@) $($(1)_$@-y) $($(1)_$@_$(OSYSTEM)) $($(1)_$@_$(OSYSTEM)-y) \
-                    $($(1)_$(@D)) $($(1)_$<) $($(1)_$(@D)/$(<F)) \
-                    $($(1)_$(<F)) $($(1)_$(<F)_$(OSYSTEM)) $($(1)_$(<F)_$(OSYSTEM)-y) \
-                    $($(1)_$(<D)) $(call variant_values,$(1))
 
 OPTS_DEBUG-$(CONFIG_BID_DEBUG_INFO) = -g
 OPTS_DEBUG       ?= $(OPTS_DEBUG-y)

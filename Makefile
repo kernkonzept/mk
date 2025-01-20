@@ -4,6 +4,8 @@
 
 L4DIR         ?= .
 
+include $(L4DIR)/mk/util.mk
+
 PRJ_SUBDIRS   := pkg tests $(wildcard l4linux)
 BUILD_DIRS    := tool
 install-dirs  := tool pkg
@@ -618,11 +620,6 @@ define entryselection
 	   fi
 endef
 
-# 1: list of allowed architectures
-define check_for_arch
-	$(if $(filter $(ARCH),$1),,$(error ERROR: Architecture '$(ARCH)' is not supported for target $@))
-endef
-
 define genimage
 	+$(VERBOSE)$(entryselection);                                                 \
 	$(MKDIR) $(IMAGES_DIR);                                                       \
@@ -869,40 +866,18 @@ checkbuild.%: $(CHECK_BASE_DIR)/config.%/.config.all $(CHECK_BASE_DIR)/config.%/
 
 checkbuild: $(if $(USE_CONFIGS),$(addprefix checkbuild.,$(USE_CONFIGS)),$(patsubst mk/defconfig/config.%, checkbuild.%, $(wildcard mk/defconfig/config.*)))
 
-# Print version info for a command
-#  $1: command
-#  $2: (optional, default = -v) argument to get version
-#  $3: (optional, default = none) redirects
-define _ver_fun
-	 @echo "$1 $(or $2,-v):"
-	 @$1 $(or $2,-v) $3 || true
-	 @echo
-
-endef
-
-# Print version info for command contained in variable, incl. variable name
-#  Arguments: see _ver_fun
-define _ver_fun_var
-	@echo -n "$1: "
-	$(call _ver_fun,$($1),$2,$3)
-endef
-
-# Variants of the above two to print multiple
-_ver_fun_vars=$(foreach v,$1,$(call _ver_fun_var,$v,$2,$3))
-_ver_funs=$(foreach v,$1,$(call _ver_fun,$v,$2,$3))
-
 report:
 	@echo -e $(EMPHSTART)"============================================================="$(EMPHSTOP)
 	@echo -e $(EMPHSTART)" Note, this report might disclose private information"$(EMPHSTOP)
 	@echo -e $(EMPHSTART)" Please review (and edit) before making it public"$(EMPHSTOP)
 	@echo -e $(EMPHSTART)"============================================================="$(EMPHSTOP)
 	@echo
-	$(call _ver_fun,make)
-	$(call _ver_fun_vars,CC CXX HOST_CC HOST_CXX,-v, 2>&1)
-	$(call _ver_fun_var,LD)
-	$(call _ver_funs,perl)
-	$(call _ver_funs,python python2 python3,-V)
-	$(call _ver_funs,svn git doxygen,--version)
+	$(call ver_fun,make)
+	$(call ver_fun_vars,CC CXX HOST_CC HOST_CXX,-v, 2>&1)
+	$(call ver_fun_var,LD)
+	$(call ver_funs,perl)
+	$(call ver_funs,python python2 python3,-V)
+	$(call ver_funs,svn git doxygen,--version)
 	@echo "Shell is:"
 	@ls -la /bin/sh || true
 	@echo
