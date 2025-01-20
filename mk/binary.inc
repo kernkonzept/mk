@@ -858,13 +858,13 @@ $(if $(BID_ALLOW_CPP_AS_CPLUSPLUS_FILE),$(eval $(call BID_GENERATE_S_MAKE_RULE,%
 
 %.c:	%.y
 	@$(GEN_MESSAGE)
-	$(VERBOSE)$(CONFIG_YACC) $(YFLAGS) $(call absfilename,$<)
+	$(VERBOSE)$(CONFIG_YACC) $(YFLAGS) $(abspath $<)
 	$(VERBOSE)mv -f y.tab.c $@
 	$(VERBOSE)if [ -f y.tab.h ]; then mv -f y.tab.h $(@:.c=.h); fi
 
 %.c:	%.l
 	@$(COMP_MESSAGE)
-	$(VERBOSE)$(CONFIG_LEX) -o$@ $(call absfilename,$<)
+	$(VERBOSE)$(CONFIG_LEX) -o$@ $(abspath $<)
 
 %.dpi:	%.dpe
 	@$(GEN_MESSAGE)

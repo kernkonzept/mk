@@ -34,7 +34,7 @@ endef
 INSTALLDIR_ASSETS        ?= $(DROPS_STDDIR)/assets
 INSTALLDIR_ASSETS_LOCAL  ?= $(OBJ_BASE)/assets
 INSTALLFILE_ASSETS       ?= $(INSTALL) -m 644 $(1) $(2)
-INSTALLFILE_ASSETS_LOCAL ?= $(LN) -sf $(call absfilename,$(1)) $(2)
+INSTALLFILE_ASSETS_LOCAL ?= $(LN) -sf $(abspath $(1)) $(2)
 
 INSTALLFILE               = $(INSTALLFILE_ASSETS)
 INSTALLDIR                = $(INSTALLDIR_ASSETS)

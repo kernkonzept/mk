@@ -154,7 +154,16 @@ FVP_PLAT_MAP_arm_fvp_base_r ?= FVP_BaseR_AEMv8R
 FVP_PATH                    ?= $(FVP_PLAT_MAP_$(PLATFORM_TYPE))
 
 # functions that are handy
-absfilename     = $(abspath $(1))
+# DEPRECATED
+# This function only exists for backwards compatibility.
+# Please use abspath directly instead of this indirection.
+# Note: We need the backslash after the warning for the function to still work.
+#       Otherwise there would be a line break.
+define absfilename
+  $(warning DEPRECATED: using absfilename in a Makefile is deprecated. Please use abspath directly.) \
+  $(abspath $(1))
+endef
+
 findfile	= $(firstword $(wildcard $(addsuffix /$(1),$(2))) $(1)_NOT_FOUND)
 is_dir          = $(shell test -d '$(1)' && echo yes)
 define create_dir
@@ -177,10 +186,10 @@ BID_install_subdir_var  = $(subst -,/,$(SYSTEM))
 # Strip binary $(1) to $(2) and set target file mode to $(3)
 define copy_stripped_binary
   $(call create_dir,$(dir $(2))/.debug); \
-  ln -sf $(call absfilename,$(1)) $(dir $(2))/.debug/$(1); \
+  ln -sf $(abspath $(1)) $(dir $(2))/.debug/$(1); \
   $(OBJCOPY) --strip-unneeded --add-gnu-debuglink=$(1) \
              $(1) $(2) >/dev/null 2>&1 \
-    || ln -sf $(call absfilename,$(1)) $(2); \
+    || ln -sf $(abspath $(1)) $(2); \
   chmod $(3) $(2)
 endef
 
@@ -207,7 +216,7 @@ ifeq ($(O)$(OBJ_BASE),)
 else
  ifneq ($(O),)
   ifeq ($(filter-out undefined environment,$(origin OBJ_BASE)),)
-   OBJ_BASE := $(call absfilename, $(O))
+   OBJ_BASE := $(abspath $(O))
    export OBJ_BASE
    # prevent passing O to sub-makes, because it may be a relative path
    # not valid there
@@ -218,24 +227,24 @@ else
 endif
 
 ifeq ($(origin L4DIR_ABS),undefined)
-L4DIR_ABS      := $(call absfilename,$(L4DIR))
+L4DIR_ABS      := $(abspath $(L4DIR))
 endif
 ifeq ($(origin PKGDIR_ABS),undefined)
-PKGDIR_ABS     := $(call absfilename,$(PKGDIR))
+PKGDIR_ABS     := $(abspath $(PKGDIR))
 endif
 ifeq ($(origin SRC_DIR),undefined)
 SRC_DIR        := $(shell $(PWDCMD))
 endif
 ifeq ($(origin SRC_BASE_ABS),undefined)
 SRC_BASE     ?= $(L4DIR)
-SRC_BASE_ABS := $(call absfilename,$(SRC_BASE))
+SRC_BASE_ABS := $(abspath $(SRC_BASE))
 export SRC_BASE_ABS
 endif
 ifeq ($(origin OBJ_DIR),undefined)
 OBJ_DIR        := $(subst $(SRC_BASE_ABS),$(OBJ_BASE),$(SRC_DIR))
 endif
 ifeq ($(origin PKGDIR_OBJ),undefined)
-PKGDIR_OBJ     := $(call absfilename,$(OBJ_DIR)/$(PKGDIR))
+PKGDIR_OBJ     := $(abspath $(OBJ_DIR)/$(PKGDIR))
 endif
 
 # if PKGDIR is not in L4DIR, we have an external package, so make up some
@@ -272,7 +281,7 @@ VPATH_SRC_BASE ?= $(SRC_DIR)
 # Makeconf.local handling
 # dont use -include here, as we have special build conditions in $(L4DIR)/
 ifeq ($(origin BID_ROOT_CONF),undefined)
-BID_ROOT_CONF := $(call absfilename, $(OBJ_BASE))/.config.all
+BID_ROOT_CONF := $(abspath $(OBJ_BASE))/.config.all
 endif
 ifeq ($(wildcard $(BID_ROOT_CONF)),)
  ifeq ($(BID_IGN_ROOT_CONF),)
@@ -365,8 +374,8 @@ include $(L4DIR)/mk/config.inc
 ifeq ($(origin BID_LIBGENDEP_PATHS), undefined)
  ifeq ($(HOST_SYSTEM),linux)
    BID_LIBGENDEP_PATHS_fn = \
-     $(firstword $(wildcard $(call absfilename, $(OBJ_BASE)/tool/gendep$(1) \
-                                                $(DROPS_STDDIR)/tool/lib$(1))))
+     $(firstword $(wildcard $(abspath $(OBJ_BASE)/tool/gendep$(1) \
+                                      $(DROPS_STDDIR)/tool/lib$(1))))
    BID_LIBGENDEP_PATHS := \
      $(call BID_LIBGENDEP_PATHS_fn,/64):$(call \
             BID_LIBGENDEP_PATHS_fn,/32):$(call BID_LIBGENDEP_PATHS_fn)
@@ -374,8 +383,8 @@ ifeq ($(origin BID_LIBGENDEP_PATHS), undefined)
 
  ifeq ($(HOST_SYSTEM),darwin)
    BID_LIBGENDEP_PATHS := \
-     $(firstword $(wildcard $(call absfilename, $(OBJ_BASE)/tool/gendep \
-                                                $(DROPS_STDDIR)/tool/lib)))
+     $(firstword $(wildcard $(abspath $(OBJ_BASE)/tool/gendep \
+                                      $(DROPS_STDDIR)/tool/lib)))
  endif
 endif
 
@@ -737,8 +746,8 @@ endif
 # addfileheader-rule: allows "make addfileheader main.c server.c"-like
 # commands and automatically inserts the path within the package
 # options may be passed with $(ADDFILEHEADER_OPTIONS)
-ADDFILEHEADER_PREFIX = $(patsubst $(call absfilename,$(PKGDIR)/)%,\
-				  $(PKGNAME)/%,$(call absfilename,./))
+ADDFILEHEADER_PREFIX = $(patsubst $(abspath $(PKGDIR)/)%,\
+				  $(PKGNAME)/%,$(abspath ./))
 ADDFILEHEADER_FILES = $(filter-out addfileheader,$(MAKECMDGOALS))
 addfileheader:
 	addfileheader $(ADDFILEHEADER_OPTIONS) -p $(ADDFILEHEADER_PREFIX) $(ADDFILEHEADER_FILES)

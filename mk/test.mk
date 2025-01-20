@@ -79,7 +79,7 @@ non_env_var = $(if $(findstring environment,$(origin $1)),,$($1))
 targetvar = $(or $(call non_env_var,$(1)_$(2)),$(call non_env_var,$(1)))
 
 # This is the same as INSTALLFILE_LIB_LOCAL
-INSTALLFILE_TEST_LOCAL = $(LN) -sf $(call absfilename,$(1)) $(2)
+INSTALLFILE_TEST_LOCAL = $(LN) -sf $(abspath $(1)) $(2)
 DEFAULT_TEST_STARTER = $(L4DIR)/tool/bin/default-test-starter
 
 $(TEST_SCRIPTS):%.t: $(GENERAL_D_LOC)

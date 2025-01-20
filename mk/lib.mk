@@ -35,7 +35,7 @@ INSTALLFILE_LIB         ?= $(if $(call do_strip,$(1)),                      \
                                 $(INSTALL) -m 644 $(1) $(2))
 INSTALLFILE_LIB_LOCAL   ?= $(if $(call do_strip,$(1)),                      \
                                 $(call copy_stripped_binary,$(1),$(2),644), \
-                                $(LN) -sf $(call absfilename,$(1)) $(2))
+                                $(LN) -sf $(abspath $(1)) $(2))
 
 INSTALLFILE		= $(INSTALLFILE_LIB)
 INSTALLDIR		= $(INSTALLDIR_LIB)

@@ -160,7 +160,7 @@ define BID_GENERATE_I_MAKE_RULE
 $(1): $(2) FORCE
 	@$$(COMP_MESSAGE)
 	$$(VERBOSE)$$(BID_MAKE_RULE_CREATE_SUBDIR)
-	$$(VERBOSE)$(3) -E -H -dD $$(CPPFLAGS) $(4) $$(call absfilename,$$<) -o $$@
+	$$(VERBOSE)$(3) -E -H -dD $$(CPPFLAGS) $(4) $$(abspath $$<) -o $$@
 	$$(VERBOSE)$$(if $$(DO_SHOW_RESULT_FILE),$$(PAGER) $$@)
 endef
 
@@ -172,5 +172,5 @@ define BID_GENERATE_S_MAKE_RULE
 %.S: $(1) FORCE
 	@$$(COMP_MESSAGE)
 	$$(VERBOSE)$$(BID_MAKE_RULE_CREATE_SUBDIR)
-	$$(VERBOSE)$(2) -S $(3) $(CPPFLAGS) $$(call absfilename,$$<) -fverbose-asm -o $$@
+	$$(VERBOSE)$(2) -S $(3) $(CPPFLAGS) $$(abspath $$<) -fverbose-asm -o $$@
 endef

@@ -121,9 +121,9 @@ endif
 PKGDEPS_IGNORE_MISSING :=
 export DROPS_STDDIR
 
-# after having absfilename, we can export BID_ROOT_CONF
+# after having abspath, we can export BID_ROOT_CONF
 ifneq ($(filter config oldconfig olddefconfig silentoldconfig gconfig nconfig xconfig, $(MAKECMDGOALS)),)
-export BID_ROOT_CONF=$(call absfilename,$(OBJ_BASE))/.config.all
+export BID_ROOT_CONF=$(abspath $(OBJ_BASE))/.config.all
 endif
 endif
 
@@ -473,8 +473,8 @@ Makeconf.bid.local-helper:
 	$(VERBOSE)echo -e "# Automatically generated. Don't edit\n" >$(CONFIG_MK_REAL).tmp2
 	$(VERBOSE)grep -v $(addprefix -e ^,$$ # $(CONFIG_MK_INDEPOPTS) $(CONFIG_MK_PLATFORM_OPTS)) \
 	          <$(CONFIG_MK_REAL).tmp >>$(CONFIG_MK_REAL).tmp2
-	$(VERBOSE)echo -e 'include $(call absfilename,$(CONFIG_MK_INDEP))' >>$(CONFIG_MK_REAL).tmp2
-	$(VERBOSE)echo -e 'include $(call absfilename,$(CONFIG_MK_PLATFORM))' >>$(CONFIG_MK_REAL).tmp2
+	$(VERBOSE)echo -e 'include $(abspath $(CONFIG_MK_INDEP))' >>$(CONFIG_MK_REAL).tmp2
+	$(VERBOSE)echo -e 'include $(abspath $(CONFIG_MK_PLATFORM))' >>$(CONFIG_MK_REAL).tmp2
 	$(VERBOSE)if [ -e "$(CONFIG_MK_REAL)" ]; then \
 	            diff --brief -I ^COLOR_TERMINAL $(CONFIG_MK_REAL) $(CONFIG_MK_REAL).tmp2 || \
 	            mv $(CONFIG_MK_REAL).tmp2 $(CONFIG_MK_REAL); \

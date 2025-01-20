@@ -151,7 +151,7 @@ DROPSCONF_CONFIG_MK_POST_HOOK::
 #
 #$(DROPSCONF_LXDIALOG):
 #	$(VERBOSE)install -d $(@D)
-#	$(VERBOSE)PWD=$(call absfilename,$(L4DIR)/tool/config) $(MAKE) -C $(L4DIR)/tool/config
+#	$(VERBOSE)PWD=$(abspath $(L4DIR)/tool/config) $(MAKE) -C $(L4DIR)/tool/config
 #
 clean::
 
