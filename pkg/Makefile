@@ -23,13 +23,6 @@ endif
 #####################
 # default make action is "all" - build all packages
 #
-# We build all l4env headers (idl+includes), then all l4env libs, then the
-# l4env servers and examples. Then we build the other headers
-# (idl+includes), the other libs, the other servers and examples. We use
-# dependencies for this, witch might allow parallel build processes.
-#
-
-examples: $(filter-out examples,$(BUILD_SUBDIRS))
 
 .PHONY: all ptest
 .PHONY: rm-old-links

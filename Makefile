@@ -179,9 +179,6 @@ ifeq ($(S),)
 l4linux: l4defs
 l4linux/l4-build: l4defs
 
-# hack for examples, they virtually depend on anything else
-pkg/examples: $(filter-out pkg/examples,$(BUILD_SUBDIRS))
-
 # some more dependencies
 tool: $(DROPSCONF_CONFIG_MK)
 $(BUILD_SUBDIRS):  $(DROPSCONF_CONFIG_MK) tool
