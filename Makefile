@@ -245,7 +245,7 @@ l4defs: $(L4DEFS_FILES)
 
 generate_l4defs_files_step = \
 	tmpdir=$(OBJ_BASE)/l4defs.gen.dir &&                 \
-	mkdir -p $$tmpdir &&                                           \
+	$(MKDIR) $$tmpdir &&                                                    \
 	echo "L4DIR = $(L4DIR_ABS)"                      > $$tmpdir/Makefile && \
 	echo "OBJ_BASE = $(OBJ_BASE)"                   >> $$tmpdir/Makefile && \
 	echo "L4_BUILDDIR = $(OBJ_BASE)"                >> $$tmpdir/Makefile && \
@@ -298,7 +298,6 @@ OUTPUT_FORMAT = $(CC) $(CFLAGS) -Wl,--verbose 2>&1 | $(SED) -n '/OUTPUT_FORMAT/,
 sysroot: $(foreach p,ldso libc_backends libc,pkg/l4re-core/$(p))
 	$(GEN_MESSAGE)
 	$(VERBOSE)$(RM) -r $(OBJ_DIR)/sysroot
-	$(VERBOSE)$(MKDIR) $(OBJ_DIR)/sysroot
 	$(VERBOSE)$(MKDIR) $(OBJ_DIR)/sysroot/usr/include/l4
 	$(VERBOSE)$(MKDIR) $(OBJ_DIR)/sysroot/usr/include/l4-arch/l4
 	$(VERBOSE)$(MKDIR) $(OBJ_DIR)/sysroot/usr/lib

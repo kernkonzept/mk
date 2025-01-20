@@ -325,13 +325,8 @@ REQUIRES_CFLAGS += $(call BID_mode_var,REQUIRES_CFLAGS)
 
 CARCHFLAGS    += $(call variant_values,CARCHFLAGS)
 
-LDFLAGS       += $(LDFLAGS-y) $(LDFLAGS_$(ARCH)) $(LDFLAGS_$(ARCH)-y) \
-                 $(LDFLAGS_$(OSYSTEM)) $(LDFLAGS_$(OSYSTEM)-y) \
-                 $(LDFLAGS_$@) $(LDFLAGS_$@-y) $(LDFLAGS_$@_$(OSYSTEM)) $(LDFLAGS_$@_$(OSYSTEM)-y) \
-                 $(LDFLAGS_$(<F)_$(OSYSTEM)) $(LDFLAGS_$(<F)_$(OSYSTEM)-y)
-REQUIRES_LIBS += $(REQUIRES_LIBS-y) \
-                 $(REQUIRES_LIBS_$(ARCH)) $(REQUIRES_LIBS_$(ARCH)-y) \
-                 $(REQUIRES_LIBS_$(OSYSTEM)) $(REQUIRES_LIBS_$(OSYSTEM)-y)
+LDFLAGS       += $(call bid_flag_variants,LDFLAGS)
+REQUIRES_LIBS += $(call bid_flag_variants,REQUIRES_LIBS)
 
 # ---------------------------------
 
