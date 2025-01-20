@@ -628,15 +628,6 @@ ALLOBJS  = $(OBJS) $(foreach target,$(TARGET) $(TARGET_$(OSYSTEM)),\
 ALLDPI = $(sort $(foreach obj,$(ALLOBJS),$(patsubst %.dpe,%.dpi,\
 		$(DPE_$(obj:.o=.c)))))
 
-# adjust obj path in case an absolute path name is given,
-# for that to work we also need to explicitly list .o to .source relations
-# arg: 1 - file path
-gen_obj_path = $(foreach f,$(1),$(if $(filter /%,$(f)),$(OBJ_BASE)$(patsubst $(SRC_BASE)/%,/%,$(f)),$(f)))
-
-# check for absolute paths
-# arg: 1 - list of paths
-check_path = $(foreach f,$(1),$(if $(filter /%,$(f)),$(error Given paths must be relative.),$(f)))
-
 # convert list of c++ files names to .o files
 # arg: 1 - list of files
 #      2 - infix between the basename and the .o

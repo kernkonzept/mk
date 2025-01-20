@@ -154,7 +154,6 @@ FVP_PLAT_MAP_arm_fvp_base_r ?= FVP_BaseR_AEMv8R
 FVP_PATH                    ?= $(FVP_PLAT_MAP_$(PLATFORM_TYPE))
 
 # functions that are handy
-absfilename_target_dir_needs_to_exist = $(foreach w,$(1),$(addsuffix /$(notdir $(w)),$(shell cd $(dir $(w)) 2>/dev/null&&$(PWDCMD))))
 absfilename     = $(abspath $(1))
 findfile	= $(firstword $(wildcard $(addsuffix /$(1),$(2))) $(1)_NOT_FOUND)
 is_dir          = $(shell test -d '$(1)' && echo yes)
