@@ -156,11 +156,19 @@ endif
 
 DEPS	+= $(foreach file,$(TARGET), $(call BID_LINK_DEPS,$(file)))
 
-$(filter-out $(LINK_INCR) %.so %.o.a %.o.pr.a, $(TARGET)):%.a: $(OBJS) $(GENERAL_D_LOC)
+$(filter-out $(LINK_INCR) %.so %.ofl %.o.a %.o.pr.a, $(TARGET)):%.a: $(OBJS) $(GENERAL_D_LOC)
 	@$(AR_MESSAGE)
 	$(VERBOSE)$(call create_dir,$(@D))
 	$(VERBOSE)$(RM) $@
-	$(VERBOSE)$(AR) crs$(if $(filter %.thin.a,$@),T) $@ $(OBJS)
+	$(VERBOSE)$(AR) crs$(if $(filter %.thin.a,$@),T) $@ \
+	  $(foreach o,$(OBJS),$(if $(filter %.ofl,$o),$(file <$o),$o))
+	@$(BUILT_MESSAGE)
+
+# Object File List - just a list of object file paths for later static linking
+$(filter %.ofl, $(TARGET)):%.ofl: $(OBJS) $(GENERAL_D_LOC)
+	@$(AR_MESSAGE)
+	$(VERBOSE)$(call create_dir,$(@D))
+	$(VERBOSE)printf '%s ' $(realpath $(OBJS)) > $@
 	@$(BUILT_MESSAGE)
 
 # shared lib
