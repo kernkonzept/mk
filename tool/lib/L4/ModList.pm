@@ -468,9 +468,9 @@ sub get_module_entry($$$)
   my %scanned;
   foreach my $m (@mods)
     {
-      print STDERR "file: $m->{command}\n" if 0;
+      print STDERR "file: $m->{file}\n" if 0;
       next if exists $m->{opts}{"no-shlib-scan"};
-      $shlibs{$_} = 1 foreach (get_shared_libs(search_file($m->{command},
+      $shlibs{$_} = 1 foreach (get_shared_libs(search_file($m->{file},
                                                            $module_path)));
       $scanned{$m->{command}} = 1;
     }
