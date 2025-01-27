@@ -18,6 +18,9 @@ BID_F_COMPILER_INT_NAME = FC
 # for AS compile (AS) use $(CC), $(INT_CPP_NAME), and $(ASFLAGS)
 BID_AS_COMPILER = CC
 BID_AS_COMPILER_INT_NAME = INT_CPP_NAME
+# for Ada compile use $(ADAC), $(INT_ADAC_NAME), and $(ADAFLAGS)
+BID_ADAC_COMPILER = ADAC
+BID_ADAC_COMPILER_INT_NAME = INT_ADAC_NAME
 
 # Create the directory for placing build results in.
 # Only call out to mkdir if target directory does not exist.
@@ -77,6 +80,8 @@ endef
 
 BID_call_compiler_F = $(call COMP_MESSAGE); $(BID_MAKE_RULE_CREATE_SUBDIR) $1
 
+BID_call_compiler_ADAC = $(call COMP_MESSAGE); $(BID_MAKE_RULE_CREATE_SUBDIR) $1
+
 # Arg and further descriptions: See BID_MAKE_RULE_template_gendep
 #
 # BID_call_compiler_default works only for gcc/clang as gfortran generates
@@ -93,9 +98,10 @@ $1: $2 $(if $(BID_call_compiler_$3),$(GENERAL_D_LOC),FORCE)
 		        BID_call_compiler_$3,\
 	                BID_call_compiler_default),$\
 	              $$($(BID_$(3)_COMPILER)) \
-	              $$(strip -c $$(DEPFLAGS) $$(DEPFLAGS_$(3)) $$(CPPFLAGS) \
+		      -c $(if $(filter y Y 1,$(NO_CPP_$(3))),,$$(strip \
+	                      $$(DEPFLAGS) $$(DEPFLAGS_$(3)) $$(CPPFLAGS))) \
 	              $$($(3)FLAGS_EARLY) $$($(3)FLAGS) $(4) $$< -o $$@ \
-	              $$($(3)_COLLECT_REDIR))))
+	              $$($(3)_COLLECT_REDIR)))
 endef
 
 # which template rule do we really use
@@ -139,6 +145,14 @@ endef
 #
 define BID_GENERATE_F_MAKE_RULES
   $(call BID_GENERATE_DEFAULT_MAKE_RULES,%,%.$(1),F)
+endef
+
+#
+# Generate the ADA set of make rules.
+# prerequisites: %.<arg1> (usually %.adb or %.ads)
+# targets: %.o
+define BID_GENERATE_ADA_MAKE_RULES
+  $(call BID_MAKE_RULE_template,%.o %.i,%.$(1),ADAC)
 endef
 
 #

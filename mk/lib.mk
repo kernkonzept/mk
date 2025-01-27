@@ -93,6 +93,25 @@ LDSCRIPT_INCR ?= /dev/null
 # install.inc eventually defines rules for every target
 include $(L4DIR)/mk/install.inc
 
+# Ada needs the binder file, if we bind the ada lib.
+# Request binding by setting ADA_BIND_LIB=y. The binder file will correspond to
+# the name of the target and the expectation is that there was an ALI file with
+# the target name. It is expected that the entry object of libfoo is called foo
+# The binder file is added to the objects of the target.
+ifneq ($(strip $(SRC_ADA)$(foreach t,$(TARGET),$(SRC_ADA_$(t)))),)
+ifneq ($(ADA_BIND_LIB),)
+$(foreach t,$(TARGET),$(if $(SRC_ADA_$(t))$(SRC_ADA),\
+            $(eval OBJS_$(t) += b~$(basename $(t)).o)\
+            $(eval $(t): b~$(basename $(t)).o)))
+
+b~lib%.o: %.ali
+	@$(call COMP_MESSAGE, from $(<F))
+	$(VERBOSE)$(ADAC) $(ADACFLAGS) -g -z -b $* -bargs -L$* -n
+	$(VERBOSE)$(ADAC) -g -c b~$*
+	$(VERBOSE)mv b~$*.o b~lib$*.o
+endif
+endif
+
 ifeq ($(NOTARGETSTOINSTALL),)
 PC_LIBS     ?= $(sort $(patsubst lib%.so,-l%,$(TARGET_SHARED) \
                       $(patsubst lib%.a,-l%,$(TARGET_STANDARD))))

@@ -59,6 +59,18 @@ $(call GENERATE_PER_TARGET_RULES,$(TARGET_PROFILE),.pr)
 
 TARGET	+= $(TARGET_$(OSYSTEM)) $(TARGET_PROFILE)
 
+# Ada needs the binder file for programs to be runnable
+ifneq ($(strip $(SRC_ADA)$(foreach t,$(TARGET),$(SRC_ADA_$(t)))),)
+  $(foreach t,$(TARGET),$(if $(SRC_ADA_$(t))$(SRC_ADA),\
+              $(eval OBJS_$(t) += b~$(t).o)\
+              $(eval $(t): b~$(t).o)))
+
+b~%.o: %.adb %.ali
+	@$(call COMP_MESSAGE, from $(<F))
+	$(VERBOSE)$(ADAC) $(ADACFLAGS) $(ADABINDFLAGS) -g -b $* -bargs -E
+	$(VERBOSE)$(ADAC) -g -c b~$*
+endif
+
 # define some variables different for lib.mk and prog.mk
 ifeq ($(MODE),shared)
 LDFLAGS += $(LDFLAGS_DYNAMIC_LINKER)

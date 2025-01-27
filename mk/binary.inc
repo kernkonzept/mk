@@ -84,6 +84,13 @@ ifneq ($(strip $(SRC_F)$(foreach t,$(TARGET),$(SRC_F_$(t)))),)
   endif
 endif
 
+ifneq ($(strip $(SRC_ADA)$(foreach t,$(TARGET),$(SRC_ADA_$(t)))),)
+  ifeq ($(GNATVERSION),)
+    $(info $(shell echo -e "\033[32mAda compiler (gnatmake) missing, skipping directory '$(SRC_DIR)'.033[0m"))
+    SYSTEMS =
+  endif
+endif
+
 ifneq ($(BID_MISSING_PCS),)
   # clear SYSTEMS to prevent building anything
   SYSTEMS =
@@ -164,7 +171,7 @@ $(foreach sys,$(TARGET_SYSTEMS),$(OBJ_DIR)/OBJ-$(sys)/$(BID_OBJ_Makefile)):$(OBJ
 	@echo 'CPU=$(call SYSTEM_TO_CPU,$*)'>>$@
 	@echo 'L4API=$(call SYSTEM_TO_L4API,$*)'>>$@
 	@echo 'VARIANT=$(call SYSTEM_TO_VARIANT,$*)'>>$@
-	@for ext in .c .cc .cpp $(FORTRAN_FILE_EXTENSIONS) $(BID_ASM_FILE_EXTENSIONS) .y .l .ld .dpe .dts; \
+	@for ext in .c .cc .cpp $(FORTRAN_FILE_EXTENSIONS) $(BID_ASM_FILE_EXTENSIONS) $(ADA_FILE_EXTENSIONS) .y .l .ld .dpe .dts; \
 	  do echo "vpath %$$ext $(VPATH_SRC_BASE)">>$@ ; done
 	@echo '.general.d: $(SRC_DIR)/$(if $(wildcard Make.rules),Make.rules,Makefile)'>>$@
 	@echo 'include $$(OBJ_BASE)/include/config/auto.conf'>>$@
@@ -211,6 +218,27 @@ else
 # we have a system defined in $(SYSTEM), we are in an OBJ- dir
 #
 ###############################################################
+
+
+# In Ada we need to generate the ada library information file, which also
+# potentially needs to be installed. If installation is wished provide the
+# target path as ADA_ALI_INSTALL_PATH and ali files will be symlinked there.
+ifneq ($(strip $(SRC_ADA)$(foreach t,$(TARGET),$(SRC_ADA_$(t)))),)
+ADAINSTALL=$(if $(ADA_ALI_INSTALL_PATH),\
+                $(MKDIR) -p $(ADA_ALI_INSTALL_PATH); \
+                $(LN) -fs $(abspath $*.ali) $(ADA_ALI_INSTALL_PATH))
+
+define adarule=
+%.o %.ali &: %$(1)
+	@$$(call COMP_MESSAGE, from $(<F))
+	$(VERBOSE)$$(MKDIR) $$(@D)
+	$(VERBOSE)$$(ADAC) $$(ADACFLAGS) -c $$< -o $$*.o
+	$(VERBOSE)$$(ADAINSTALL)
+endef
+
+$(foreach ext,$(ADA_FILE_EXTENSIONS),$(eval $(call adarule,$(ext))))
+endif
+
 
 all::		$(TARGET)
 
@@ -446,6 +474,7 @@ ifeq ($(MODE),host)
 override CROSS_COMPILE =
 override CC            = $(HOST_CC)
 override CXX           = $(HOST_CXX)
+override ADAC          = $(HOST_ADAC)
 else
 # no architecture specific flags in host mode
 LDFLAGS      += $(LDFLAGS_$(ARCH))
@@ -613,6 +642,12 @@ FFLAGS  += $(OPTS)
 FFLAGS  += $(filter-out $(GCCPREFIXOPT),$(CFLAGS_L4_GENERIC))
 FFLAGS  += $(call bid_flag_variants,FFLAGS)
 
+ifneq ($(MODE),host)
+ADACFLAGS += -nostdinc -I$(OBJ_BASE)/include/contrib/ada/adainclude/
+ADACFLAGS += --RTS=$(OBJ_BASE)/include/contrib/ada
+endif
+NO_CPP_ADAC = y
+
 NOPICFLAGS += $(if $(CONFIG_BID_PIE),-fPIE)
 PICFLAGS += -fPIC -U__PIC__ -D__PIC__=1
 
@@ -666,6 +701,11 @@ get_target_var = $(strip                                                 \
 #      2 - infix between the basename and the .o
 convert_f_to_o_file = $(foreach e,$(FORTRAN_FILE_EXTENSIONS),$(patsubst %$e,%$(2).o,$(filter %$e,$(1))))
 
+# convert list of Ada file names to .o files
+# arg: 1 - list of files
+#      2 - infix between the basename and the .o
+convert_ada_to_o_file = $(foreach e,$(ADA_FILE_EXTENSIONS),$(patsubst %$e,%$(2).o,$(filter %$e,$(1))))
+
 convert_asm_to_o_file = $(foreach e,$(BID_ASM_FILE_EXTENSIONS),$(patsubst %$e,%$(2).o,$(filter %$e,$(1))))
 
 #
@@ -677,6 +717,7 @@ gen_SRC_CC_obj = $(call convert_cc_to_o_file,$(1),$(2))
 gen_SRC_C_obj  = $(1:.c=$(2).o)
 gen_SRC_S_obj  = $(call convert_asm_to_o_file,$(1),$(2))
 gen_SRC_F_obj  = $(call convert_f_to_o_file,$(1),$(2))
+gen_SRC_ADA_obj  = $(call convert_ada_to_o_file,$(1),$(2))
 gen_SRC_DATA_obj = $(addsuffix .bin.o,$1)
 
 #
@@ -721,7 +762,7 @@ endef
 #
 # All supported SRC_<x> variables
 #
-BID_SRC_VARS ?= S C CC F DATA
+BID_SRC_VARS ?= S C CC F ADA DATA
 
 #
 # Generate per target/source/object variables for all sources
@@ -841,6 +882,8 @@ $(if $(BID_ALLOW_CPP_AS_CPLUSPLUS_FILE),$(eval $(call BID_GENERATE_CXX_MAKE_RULE
 $(eval $(call BID_GENERATE_C_MAKE_RULES,c))
 # generate rules to compile %.f90 files to %.o, %.s.o etc
 $(foreach e,$(FORTRAN_FILE_EXTENSIONS),$(eval $(call BID_GENERATE_F_MAKE_RULES,$(subst .,,$e))))
+# generate rules to compile %.adb/%.ads files to %.o, %.s.o etc
+$(foreach e,$(ADA_FILE_EXTENSIONS),$(eval $(call BID_GENERATE_ADA_MAKE_RULES,$(subst .,,$e))))
 # generate rules to compile %.S files to %.o, %.s.o etc
 $(foreach e,$(BID_ASM_FILE_EXTENSIONS),$(eval $(call BID_GENERATE_ASM_MAKE_RULES,$(subst .,,$e))))
 
@@ -850,7 +893,7 @@ define reset_implicit_rule =
 	
 endef
 
-$(foreach e,.c .cc .cpp $(BID_ASM_FILE_EXTENSIONS) $(FORTRAN_FILE_EXTENSIONS),$(eval $(call reset_implicit_rule,$e)))
+$(foreach e,.c .cc .cpp $(BID_ASM_FILE_EXTENSIONS) $(FORTRAN_FILE_EXTENSIONS) $(ADA_FILE_EXTENSIONS),$(eval $(call reset_implicit_rule,$e)))
 
 $(eval $(call BID_GENERATE_I_MAKE_RULE,%.i,%.c,$(CC),$(CFLAGS) $(call BID_mode_var,NOPICFLAGS)))
 $(eval $(call BID_GENERATE_I_MAKE_RULE,%.s.i,%.c,$(CC),$(CFLAGS) $(PICFLAGS)))
@@ -915,7 +958,7 @@ clean cleanall::
 	$(file >$@.in,\
 		$(strip $(filter-out $(KEEP_ON_CLEAN),\
 		$(wildcard *.dpi) $(wildcard *.o) $(wildcard *.i) \
-		$(wildcard *.S) \
+		$(wildcard *.S) $(wildcard *.ali) \
 		$(wildcard $(filter-out -%, $(ALLOBJS) $(DEL_ON_CLEAN))))))
 	$(VERBOSE)xargs -a $@.in $(RM)
 	$(VERBOSE)$(RM) $@.in

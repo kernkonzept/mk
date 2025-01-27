@@ -104,6 +104,8 @@ $(call dv,CXX)   = $(if $(USE_CCACHE),$(CCACHE) )$(if $(CLANG),$(call \
                      clang-bin-tgt,$(CLANG),clang++),$(CROSS_COMPILE)g++)
 $(call dv,CPP)   = $(if $(CLANG),$(call \
                      clang-bin-tgt,$(CLANG),clang-cpp),$(CROSS_COMPILE)cpp)
+$(call dv,ADAC)  = $(CROSS_COMPILE)gnatmake -q
+HOST_ADAC        = gnatmake -q
 
 CP		?= cp
 
@@ -411,6 +413,9 @@ MAKEDEP=$(LD_GENDEP_PREFIX) \
 # We recognize the following Fortran file extensions.
 FORTRAN_FILE_EXTENSIONS = .f .F .f90 .F90 .f95 .F95
 
+# We recognize the following Ada file extensions.
+ADA_FILE_EXTENSIONS = .adb .ads
+
 # We recognize the following file extensions for assembly.
 BID_ASM_FILE_EXTENSIONS ?= .S
 BID_ASM_CPP_FILE_EXTENSIONS ?= .S
@@ -485,6 +490,12 @@ GCCPATCHLEVEL_f    = $(call get_cc_version_part, $(GCCPATCHLEVEL_ID_f))
 GCCVERSION_f_gcc   = $(GCCMAJORVERSION_f)$(if $(filter $(GCCMAJORVERSION_f),1 2 3 4),.$(GCCMINORVERSION_f))
 GCCVERSION_f_clang = $(GCCMAJORVERSION_f)
 GCCVERSION_f       = $(GCCVERSION_f_$(BID_COMPILER_TYPE_f))
+GNATVERSION_f      = $(shell LC_ALL=C $(ADAC) --version 2>/dev/null | sed -ne 's/GNATMAKE //p')
+HOST_GNATVERSION_f = $(shell LC_ALL=C $(HOST_ADAC) --version 2>/dev/null | sed -ne 's/GNATMAKE //p')
+GNATMAJORVERSION   = $(word 1,$(subst ., ,$(GNATVERSION)))
+HOST_GNATMAJORVERSION = $(word 1,$(subst ., ,$(HOST_GNATVERSION)))
+GNATMINORVERSION   = $(word 2,$(subst ., ,$(GNATVERSION)))
+GNATPATCHVERSION   = $(word 3,$(subst ., ,$(GNATVERSION)))
 
 GCCDIR_f_clang = $(shell $(callcc) -print-resource-dir)
 GCCDIR_f_gcc = $(shell $(callcc) -print-search-dirs | sed -ne 's+^install: \(.*[^/][^/]*\)/+\1+p' )
