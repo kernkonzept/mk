@@ -34,12 +34,13 @@ sub new_node
   return $n
 }
 
-sub filter_requires
+sub filter_deps
 {
   my $n = shift;
+  my $attr = shift;
 
   my @r;
-  foreach my $e (@{$n->{requires}})
+  foreach my $e (@{$n->{$attr}})
     {
       if ($e =~ /(\S+)\[(.+)\]$/)
         {
@@ -80,7 +81,7 @@ sub filter_requires
         }
     }
 
-  @{$n->{requires}} = @r;
+  @{$n->{$attr}} = @r;
 }
 
 sub add_node($$)
@@ -88,7 +89,8 @@ sub add_node($$)
   my $n = shift;
   my $cluster = shift;
 
-  filter_requires($n);
+  filter_deps($n,'requires');
+  filter_deps($n,'optional');
 
   my $name = $n->{name};
   $nodes{$name} = $n;
