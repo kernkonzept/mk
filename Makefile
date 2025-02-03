@@ -306,8 +306,10 @@ sysroot: $(foreach p,ldso libc_backends uclibc,pkg/l4re-core/$(p))
 	                    $(OBJ_DIR)/sysroot/usr/include/l4/
 	$(VERBOSE)$(CP) -Lr $(OBJ_DIR)/include/uclibc/* $(OBJ_DIR)/sysroot/usr/include/
 	$(VERBOSE)$(CP) -Lr $(OBJ_DIR)/lib/$(BUILD_ARCH)_$(CPU)/std/plain/crt* $(OBJ_DIR)/sysroot/usr/lib
-	$(VERBOSE)$(CP) -Lr $(wildcard $(foreach l,$(SYSROOT_LIBS),$(OBJ_DIR)/lib/$(BUILD_ARCH)_$(CPU)/std/l4f/$(l).a $(OBJ_DIR)/lib/$(BUILD_ARCH)_$(CPU)/std/l4f/$(l).so)) \
+	$(VERBOSE)$(CP) -Lr $(wildcard $(addprefix $(OBJ_DIR)/lib/$(BUILD_ARCH)_$(CPU)/std/l4f/,$(SYSROOT_LIBS:=.a))) \
 	                    $(OBJ_DIR)/sysroot/usr/lib
+	$(VERBOSE)$(CP) -d  $(wildcard $(addprefix $(OBJ_DIR)/lib/$(BUILD_ARCH)_$(CPU)/std/l4f/,$(SYSROOT_LIBS:=.so*))) \
+                            $(OBJ_DIR)/sysroot/usr/lib
 	$(VERBOSE)mv $(OBJ_DIR)/sysroot/usr/lib/libc_nonshared.p.a  $(OBJ_DIR)/sysroot/usr/lib/libc_nonshared.a
 
 
