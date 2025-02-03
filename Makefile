@@ -290,6 +290,7 @@ regen_compile_commands_json:
 # Build a typical sysroot for use with external tooling such as a
 # L4Re-specific cross-compiler
 SYSROOT_LIBS = libgcc libgcc_eh libgcc_s libc libpthread librt libdl libld-l4 libm libc_nonshared.p libmount
+OUTPUT_FORMAT = $(CC) $(CFLAGS) -Wl,--verbose 2>&1 | $(SED) -n '/OUTPUT_FORMAT/,/)/p'
 sysroot: $(foreach p,ldso libc_backends uclibc,pkg/l4re-core/$(p))
 	$(GEN_MESSAGE)
 	$(VERBOSE)$(RM) -r $(OBJ_DIR)/sysroot
@@ -311,6 +312,9 @@ sysroot: $(foreach p,ldso libc_backends uclibc,pkg/l4re-core/$(p))
 	$(VERBOSE)$(CP) -d  $(wildcard $(addprefix $(OBJ_DIR)/lib/$(BUILD_ARCH)_$(CPU)/std/l4f/,$(SYSROOT_LIBS:=.so*))) \
                             $(OBJ_DIR)/sysroot/usr/lib
 	$(VERBOSE)mv $(OBJ_DIR)/sysroot/usr/lib/libc_nonshared.p.a  $(OBJ_DIR)/sysroot/usr/lib/libc_nonshared.a
+	$(VERBOSE)$(RM) $(OBJ_DIR)/sysroot/usr/lib/libc.so
+	$(VERBOSE)$(OUTPUT_FORMAT) > $(OBJ_DIR)/sysroot/usr/lib/libc.so
+	$(VERBOSE)echo "GROUP ( libc.so.1 libc_nonshared.a AS_NEEDED ( libld-l4.so.1 ) )" >> $(OBJ_DIR)/sysroot/usr/lib/libc.so
 
 
 .PHONY: l4defs regen_l4defs compile_commands.json regen_compile_commands_json
