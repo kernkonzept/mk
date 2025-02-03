@@ -508,13 +508,21 @@ else
   GCCSTACKPROTECTOROPT = $(GCCNOSTACKPROTOPT)
 endif # stack protector
 
+# We need relocation to RAM_BASE if:
+#  - requested explicitly (RELOC_PHYS)
+#  - otherwise, only if _none_ of the following things applies:
+#    - we compile for an MMU system
+#    - all binaries are PIE
+#    - the current binary can be PIE and this is enabled
+default_reloc_phys = $(if $(CONFIG_MMU)$(CONFIG_BID_PIE_ALL)$(and $(CONFIG_BID_PIE_VOLUNTARY),$(BID_CAN_PIE)),$(RELOC_PHYS),y)
+
 default_reloc_base = $(if $(NO_DEFAULT_RELOC),,\
                           $(firstword $(DEFAULT_RELOC_$(1)) \
                                       $(DEFAULT_RELOC_$(ARCH)) \
                                       $(DEFAULT_RELOC) \
                                       0x01000000))
 default_reloc = $(if $(call default_reloc_base,$(1)),\
-                     $(if $(if $(CONFIG_MMU),$(RELOC_PHYS),y), \
+                     $(if $(default_reloc_phys), \
 		          $(shell printf "0x%x" $$(($(RAM_BASE) + $(call default_reloc_base,$(1))))), \
 			  $(call default_reloc_base,$(1))))
 
