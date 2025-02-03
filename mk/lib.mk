@@ -120,7 +120,7 @@ PC_FILENAME  ?= $(PKGNAME)
 PC_FILENAMES ?= $(PC_FILENAME)
 PC_FILES     := $(if $(filter std,$(VARIANT)),$(foreach pcfile,$(PC_FILENAMES),$(OBJ_BASE)/pc/$(pcfile).pc))
 
-PC_LIBS_PIC ?= $(patsubst lib%.p.a,-l%.p,$(filter %.p.a,$(TARGET_PIC)))
+PC_LIBS_PIC ?= $(patsubst lib%.p.a,-l%.p,$(TARGET_PIC))
 
 # 1: basename
 # 2: pcfilename
