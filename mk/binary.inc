@@ -230,7 +230,7 @@ ADAINSTALL=$(if $(ADA_ALI_INSTALL_PATH),\
 
 define adarule=
 %.o %.ali &: %$(1)
-	@$$(call COMP_MESSAGE, from $(<F))
+	@$$(call COMP_MESSAGE, from $$(<F))
 	$(VERBOSE)$$(MKDIR) $$(@D)
 	$(VERBOSE)$$(ADAC) $$(ADACFLAGS) -c $$< -o $$*.o
 	$(VERBOSE)$$(ADAINSTALL)
