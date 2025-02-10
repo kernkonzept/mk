@@ -4,6 +4,8 @@ use warnings;
 use strict;
 use 5.010;
 
+use POSIX;
+
 use vars qw(@ISA @EXPORT);
 @ISA    = qw(Exporter);
 @EXPORT = qw(kill_ps_tree);
@@ -107,6 +109,48 @@ sub kill_ps_tree
     }
   kill 'SIGTERM', $pid;
   waitpid $pid, 0;
+}
+
+# Connect one fd pair to STDIN/STDOUT
+# STDIN -> fdout
+# fdin -> STDOUT
+sub do_interactive
+{
+  my ($fdin,$fdout) = @_;
+
+  my $fdno_stdin = fileno(STDIN);
+
+  # Disable canonical mode (part of which is line buffering)
+  my $termios = POSIX::Termios->new;
+  $termios->getattr($fdno_stdin);
+  my $old_lflag = $termios->getlflag;
+  $termios->setlflag($old_lflag & ~(POSIX::ICANON | POSIX::ECHO));
+  $termios->setattr($fdno_stdin, &POSIX::TCSADRAIN);
+
+  my $rin = '';
+  vec($rin,   $fdno_stdin, 1) = 1;
+  vec($rin, fileno($fdin), 1) = 1;
+  # Do interactive stuff
+  while (1) {
+    if (my $ret = select(my $rout = $rin, undef, undef, undef)) {
+      my $buf;
+      if ($ret == -1) {
+        print STDERR "Select error: $!";
+        last;
+      } elsif (vec($rout, $fdno_stdin, 1)) {
+        last if sysread(STDIN, $buf, 128) == 0;
+        last if $buf =~ /\x03/; # Catch Ctrl-C
+        syswrite($fdout, $buf);
+      } elsif(vec($rout, fileno($fdin), 1)) {
+        last if sysread($fdin, $buf, 128) == 0;
+        syswrite(STDOUT, $buf);
+      }
+    }
+  }
+
+  # Enable canonical mode again (part of which is line buffering)
+  $termios->setlflag($old_lflag);
+  $termios->setattr($fdno_stdin, &POSIX::TCSADRAIN);
 }
 
 1;

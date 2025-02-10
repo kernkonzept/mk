@@ -23,6 +23,7 @@ my $nowrapper = 0;
 my $max_lines_read = $ENV{MAX_LINES_READ} || 100000;
 my $test_timestamps = !!$ENV{TEST_TIMESTAMPS};
 my $jdb_system_report_on_timeout = !!$ENV{TEST_JDB_SYSTEM_REPORT_ON_TIMEOUT};
+my $enter_jdb_on_timeout = !!$ENV{TEST_ENTER_JDB_ON_TIMEOUT};
 Getopt::Long::Configure ("bundling");
 GetOptions(
   'help|h'  => \$help,
@@ -57,6 +58,7 @@ GetOptions(
   'max-lines-read=i'=> sub { $max_lines_read = 0+ $_[1]; },
   'timestamps'      => sub { $test_timestamps = 1; },
   'jdb-system-report-on-timeout' => \$jdb_system_report_on_timeout,
+  'enter-jdb-on-timeout' => \$enter_jdb_on_timeout,
   'introspection-tests' => sub { $ENV{INTROSPECTION_TESTS} = 1; },
   'exclude-filters=s' => sub { $ENV{TEST_EXCLUDE_FILTERS} .= " $_[1]"; }
 ) or pod2usage(-verbose => 99, -sections => "OPTIONS");
@@ -72,7 +74,7 @@ if ($nowrapper)
     exit($? == 69 ? 0 : $?);
   }
 
-if ($jdb_system_report_on_timeout)
+if ($jdb_system_report_on_timeout || $enter_jdb_on_timeout)
   {
     # Ensure serial_esc present in Kernel args, but don't overwrite others
     $ENV{KERNEL_ARGS} //= "";
@@ -188,9 +190,7 @@ my $hard_timeout = 0+ ($ENV{TEST_HARD_TIMEOUT} || 0);
 if ($hard_timeout)
   {
     $SIG{ALRM} = sub {
-      trigger_jdb_system_report() if $jdb_system_report_on_timeout;
-
-      L4::TapWrapper::fail_test("Test did not finish within the hard timeout of $hard_timeout seconds");
+      on_test_abort("Test did not finish within the hard timeout of $hard_timeout seconds");
     };
     alarm $hard_timeout;
   }
@@ -214,7 +214,7 @@ if ($ENV{TEST_GTEST_SHUFFLE} && not all { $_ } L4::TapWrapper::plugin_features('
      $ENV{TEST_GTEST_SHUFFLE} = 0;
   }
 
-if ($jdb_system_report_on_timeout)
+if ($jdb_system_report_on_timeout || $enter_jdb_on_timeout)
   {
     # If we're supposed to dump the system report we need
     # a dedicated pipe to the child processes stdin...
@@ -283,6 +283,21 @@ sub trigger_jdb_system_report {
     }
 }
 
+sub on_test_abort {
+  my $reason = shift;
+
+  trigger_jdb_system_report() if $jdb_system_report_on_timeout;
+
+  if ($enter_jdb_on_timeout) {
+    print $test_proc_input "\033";
+    print "TIMEOUT($reason)\n";
+
+    L4::TapWrapper::Util::do_interactive($test_proc, $test_proc_input);
+  }
+
+  L4::TapWrapper::fail_test($reason);
+}
+
 # Returns read line or undef in case of a timeout
 sub readline_timeout
 {
@@ -343,9 +358,7 @@ sub readline_timeout
     # display the lines received from the test later.
     my $test_lines_read = $lines_read;
 
-    trigger_jdb_system_report() if $jdb_system_report_on_timeout;
-
-    L4::TapWrapper::fail_test("Stopping test prematurely after $test_lines_read lines read.")
+    on_test_abort("Stopping test prematurely after $test_lines_read lines read.")
   }
 
   return $outline;
@@ -375,9 +388,7 @@ if (!$test_eof)
         my $msg = "Test timed out after $timeout seconds.";
         $msg .= defined($exp) ? " Was expecting: $exp" : "";
 
-        trigger_jdb_system_report() if $jdb_system_report_on_timeout;
-
-        L4::TapWrapper::fail_test($msg)
+        on_test_abort($msg)
       }
 
     waitpid $L4::TapWrapper::pid, 0;
@@ -464,6 +475,9 @@ $TEST_SCRIPT [options]
   --jdb-system-report-on-timeout
                    When a test runs into a timeout, tap-wrapper shall try to
                    interact with JDB to dump its system report.
+
+  --enter-jdb-on-timeout
+                   Instead of terminating a test on timeout, try to open JDB.
 
  Options for gtest test applications:
   --verbose,-v     Run test in verbose mode. Repeat for increased verbosity.
