@@ -29,13 +29,22 @@ INSTALLDIR_LIB		?= $(DROPS_STDDIR)/lib/$(subst -,/,$(SYSTEM))
 INSTALLDIR_LIB_LOCAL	?= $(OBJ_BASE)/lib/$(subst -,/,$(SYSTEM))
 endif
 
+
+SOVERSION_MAJOR=$(firstword $(subst ., ,$(SOVERSION)))
+SOVERSION_FULL=$(firstword $(SOVERSION))
+SOLINK=$(if $(SOVERSION_FULL), \
+            && mv $@ $@.$(SOVERSION_FULL) \
+            && $(LN) -rsf $@.$(SOVERSION_FULL) $@ \
+            $(if $(filter-out $(SOVERSION_MAJOR),$(SOVERSION_FULL)),\
+              && $(LN) -rsf $@.$(SOVERSION_FULL) $@.$(SOVERSION_MAJOR)))
+
 do_strip=$(and $(CONFIG_BID_STRIP_BINARIES),$(filter %.so,$(1)))
 INSTALLFILE_LIB         ?= $(if $(call do_strip,$(1)),                      \
                                 $(call copy_stripped_binary,$(1),$(2),644), \
-                                $(INSTALL) -m 644 $(1) $(2))
+                                $(INSTALL) -m 644 $(1) $(2))$(SOLINK)
 INSTALLFILE_LIB_LOCAL   ?= $(if $(call do_strip,$(1)),                      \
                                 $(call copy_stripped_binary,$(1),$(2),644), \
-                                $(LN) -sf $(abspath $(1)) $(2))
+                                $(LN) -sf $(abspath $(1)) $(2))$(SOLINK)
 
 INSTALLFILE		= $(INSTALLFILE_LIB)
 INSTALLDIR		= $(INSTALLDIR_LIB)
@@ -86,6 +95,7 @@ LDFLAGS += $(addprefix -L, $(L4LIBDIR))
 LDFLAGS += $(LIBCLIBDIR)
 LDFLAGS_SO += -shared $(call BID_mode_var,LDFLAGS_SO)
 
+SOVERSION += $(call bid_flag_variants,SOVERSION)
 
 LDSCRIPT       = $(LDS_so)
 LDSCRIPT_INCR ?= /dev/null
@@ -176,7 +186,8 @@ $(filter %.so, $(TARGET)):%.so: $(OBJS) $(LIBDEPS) $(GENERAL_D_LOC)
 	@$(LINK_SHARED_MESSAGE)
 	$(VERBOSE)$(call create_dir,$(@D))
 	$(VERBOSE)$(call MAKEDEP,$(LD)) $(BID_LINK) -MD -MF $(call BID_link_deps_file,$@) -o $@ $(LDFLAGS_SO) \
-	  $(LDFLAGS) $(OBJS) $(addprefix -PC,$(REQUIRES_LIBS))
+	  $(LDFLAGS) $(OBJS) $(addprefix -PC,$(REQUIRES_LIBS)) \
+	  $(if $(strip $(SOVERSION)),-soname=$@.$(SOVERSION_MAJOR))
 	@$(BUILT_MESSAGE)
 
 # build an object file (which looks like a lib to a later link-call), which
