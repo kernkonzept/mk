@@ -126,7 +126,7 @@ $(OBJ_DIR)/% $(OBJ_DIR)/%/html:$(SRC_DIR)/%.cfg $(SRC_DIR)/search.js.reduce_keyT
 	          fi   >> $@.flags
 	$(VERBOSE)cd $(L4DIR)/pkg && \
 	  for f in $(ALL_SUBDIRS); \
-	    do [ ! -e $(L4DIR)/pkg/$$f/doc/files.cfg ] || sed -e "s,%PKGDIR%,$(L4DIR)/pkg/$$f,g" $(L4DIR)/pkg/$$f/doc/files.cfg || true; done >> $@.flags
+	    do [ ! -e $(L4DIR)/pkg/$$f/doc/files.cfg ] || sed -e "s,%PKGDIR%,$(L4DIR)/pkg/$$f,g" $(L4DIR)/pkg/$$f/doc/files.cfg || true; echo; done >> $@.flags
 	$(VERBOSE)cd $(OBJ_BASE)/include && L4DIR=$(L4DIR) $(DOXYGEN) $@.flags
 	$(VERBOSE)patch --forward --unified  \
 	    $(OBJ_DIR)/$(call OUTPUTDIR,$<)/html/search/search.js  \
