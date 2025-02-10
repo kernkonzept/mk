@@ -10,7 +10,7 @@ include $(L4DIR)/mk/Makeconf
 
 ifeq ($(PKGDIR),.)
 TARGET ?= $(patsubst %/Makefile,%,$(wildcard $(addsuffix /Makefile, \
-	include src lib server examples doc)))
+	include src lib server examples doc assets)))
 $(if $(wildcard include/Makefile), lib server examples: include)
 $(if $(wildcard lib/Makefile), server examples: lib)
 else
