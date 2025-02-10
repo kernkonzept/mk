@@ -282,7 +282,7 @@ regen_compile_commands_json:
 
 # Build a typical sysroot for use with external tooling such as a
 # L4Re-specific cross-compiler
-SYSROOT_LIBS = libgcc libgcc_eh libgcc_s libc librt libdl libld-l4 libm_support libc_nonshared.p libmount
+SYSROOT_LIBS = libgcc libgcc_eh libgcc_s libc libpthread librt libdl libld-l4 libm_support libc_nonshared.p libmount
 sysroot: $(foreach p,ldso libc_backends uclibc,pkg/l4re-core/$(p))
 	$(GEN_MESSAGE)
 	$(VERBOSE)$(RM) -r $(OBJ_DIR)/sysroot
