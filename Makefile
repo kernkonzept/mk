@@ -282,7 +282,7 @@ regen_compile_commands_json:
 
 # Build a typical sysroot for use with external tooling such as a
 # L4Re-specific cross-compiler
-SYSROOT_LIBS = libgcc libgcc_eh libgcc_s libc libpthread librt libdl libld-l4 libm_support libc_nonshared.p libmount
+SYSROOT_LIBS = libgcc libgcc_eh libgcc_s libc libpthread librt libdl libld-l4 libm libc_nonshared.p libmount
 sysroot: $(foreach p,ldso libc_backends uclibc,pkg/l4re-core/$(p))
 	$(GEN_MESSAGE)
 	$(VERBOSE)$(RM) -r $(OBJ_DIR)/sysroot
@@ -302,8 +302,6 @@ sysroot: $(foreach p,ldso libc_backends uclibc,pkg/l4re-core/$(p))
 	$(VERBOSE)$(CP) -Lr $(wildcard $(foreach l,$(SYSROOT_LIBS),$(OBJ_DIR)/lib/$(BUILD_ARCH)_$(CPU)/std/l4f/$(l).a $(OBJ_DIR)/lib/$(BUILD_ARCH)_$(CPU)/std/l4f/$(l).so)) \
 	                    $(OBJ_DIR)/sysroot/usr/lib
 	$(VERBOSE)mv $(OBJ_DIR)/sysroot/usr/lib/libc_nonshared.p.a  $(OBJ_DIR)/sysroot/usr/lib/libc_nonshared.a
-	$(VERBOSE)mv $(OBJ_DIR)/sysroot/usr/lib/libm_support.a  $(OBJ_DIR)/sysroot/usr/lib/libm.a
-	$(VERBOSE)mv $(OBJ_DIR)/sysroot/usr/lib/libm_support.so $(OBJ_DIR)/sysroot/usr/lib/libm.so
 
 
 .PHONY: l4defs regen_l4defs compile_commands.json regen_compile_commands_json
