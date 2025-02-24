@@ -317,7 +317,7 @@ LDFLAGS       += $(call BID_mode_var,LDFLAGS)
 REQUIRES_LIBS += $(call BID_mode_var,REQUIRES_LIBS)
 REQUIRES_CFLAGS += $(call BID_mode_var,REQUIRES_CFLAGS)
 
-$(call add_variant_values,CARCHFLAGS)
+CARCHFLAGS    += $(call variant_values,CARCHFLAGS)
 
 LDFLAGS       += $(LDFLAGS-y) $(LDFLAGS_$(ARCH)) $(LDFLAGS_$(ARCH)-y) \
                  $(LDFLAGS_$(OSYSTEM)) $(LDFLAGS_$(OSYSTEM)-y) \
@@ -549,7 +549,7 @@ DEFINES += -DSYSTEM_$(subst -,_,$(subst +,_,$(SYSTEM))) -DARCH_$(ARCH) -DCPUTYPE
 DEFINES += -D_GNU_SOURCE
 DEFINES-l4api-plain := -DL4_MINIMAL_LIBC
 DEFINES += $(DEFINES-l4api-$(L4API))
-$(call add_variant_values,DEFINES)
+DEFINES += $(call variant_values,DEFINES)
 ifdef DEBUG
 ifneq (,$(filter 0 n N, $(DEBUG)))
 DEFINES	+= -DNDEBUG
