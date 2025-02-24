@@ -443,7 +443,7 @@ bid_flag_variants = $($(1)-y) $($(1)_$(ARCH)) $($(1)_$(ARCH)-y) \
                     $($(1)_$@) $($(1)_$@-y) $($(1)_$@_$(OSYSTEM)) $($(1)_$@_$(OSYSTEM)-y) \
                     $($(1)_$(@D)) $($(1)_$<) $($(1)_$(@D)/$(<F)) \
                     $($(1)_$(<F)) $($(1)_$(<F)_$(OSYSTEM)) $($(1)_$(<F)_$(OSYSTEM)-y) \
-                    $($(1)_$(<D))
+                    $($(1)_$(<D)) $(call variant_values,$(1))
 
 OPTS_DEBUG-$(CONFIG_BID_DEBUG_INFO) = -g
 OPTS_DEBUG       ?= $(OPTS_DEBUG-y)
@@ -549,7 +549,6 @@ DEFINES += -DSYSTEM_$(subst -,_,$(subst +,_,$(SYSTEM))) -DARCH_$(ARCH) -DCPUTYPE
 DEFINES += -D_GNU_SOURCE
 DEFINES-l4api-plain := -DL4_MINIMAL_LIBC
 DEFINES += $(DEFINES-l4api-$(L4API))
-DEFINES += $(call variant_values,DEFINES)
 ifdef DEBUG
 ifneq (,$(filter 0 n N, $(DEBUG)))
 DEFINES	+= -DNDEBUG
