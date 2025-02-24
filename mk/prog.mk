@@ -71,6 +71,9 @@ b~%.o: %.adb %.ali
 	$(VERBOSE)$(ADAC) -g -c b~$*
 endif
 
+# Now that the list of targets is final, the variant hooks can be called.
+$(foreach v,$(CHOSEN_VARIANTS),$(eval $(PROG_TARGET_HOOK-variant-$(v))))
+
 # define some variables different for lib.mk and prog.mk
 ifeq ($(MODE),shared)
 LDFLAGS += $(LDFLAGS_DYNAMIC_LINKER)
