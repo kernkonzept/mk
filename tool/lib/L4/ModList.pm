@@ -573,6 +573,7 @@ sub handle_remote_file
 
       (my $lpath = $file) =~ s,[\s/:~],_,g;
       $lpath = "$output_dir/$lpath";
+      rmdir $lpath; # Remove possibly empty dir left after transmission problem
 
       if ($fetch_file)
         {
@@ -592,6 +593,7 @@ sub handle_remote_file
 
       (my $lpath = $url) =~ s,[\s/:~],_,g;
       $lpath = "$output_dir/$lpath";
+      rmdir $lpath; # Remove possibly empty dir left after transmission problem
 
       if ($fetch_file)
         {
