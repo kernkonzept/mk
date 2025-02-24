@@ -68,13 +68,16 @@ ALIASES_DIRS = $(wildcard $(L4DIR)/mk/aliases.d) \
                $(wildcard $(addsuffix /aliases.d,$(shell find $(SRC_DIR) -maxdepth $(BID_PRJ_DIR_MAX_DEPTH) -type d -name prj-config)))
 
 # all package config files go here
-PKGCONF_DIR  = $(OBJ_BASE)/pc
+PKGCONF_DIR    = $(OBJ_BASE)/pc
+
+PKGDEPS_FLAGS += $(call variant_values, PKGDEPS_FLAGS)
 
 # the default command for generating package dependencies
 PKGDEPS_CMD  = $(L4DIR)/mk/pkgdeps $(PKGDEPS_IGNORE_MISSING) \
                      -P $(PKGCONF_DIR) \
                      $(addprefix -A ,$(ALIASES_DIRS)) \
-                     $(if $(wildcard $(OBJ_BASE)/.kconfig),-C $(OBJ_BASE)/.kconfig)
+                     $(if $(wildcard $(OBJ_BASE)/.kconfig),-C $(OBJ_BASE)/.kconfig) \
+                     $(PKGDEPS_FLAGS)
 PKGDEPS_IGNORE_MISSING := -I
 
 PKG_MESSAGE       =echo "=== Building package \"$(basename $@)\" ==="
