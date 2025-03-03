@@ -40,8 +40,14 @@ sub new
   $self->{has_data} = 0;
   $self->{intermittent_fails} = 0;
 
-  $L4::TapWrapper::wait_for_more = 1;
   bless $self, $type;
+
+  # Inhibit until first chunk of data
+  $self->inhibit_exit();
+
+  # Once we're not inhibiting anymore, we "wait for more" which means we use a
+  # smaller timeout once all other plugins are finished.
+  $L4::TapWrapper::wait_for_more = 1;
 
   my $tmpdir = $self->tmpdir();
   L4::TapWrapper::fail_test("Workdir not set. Coverage requires this")
@@ -78,6 +84,10 @@ sub process_mine
       my $fn = "__process_$type";
 
       $self->$fn($path, $data, $exe_name);
+
+      # First chunk received. Stop inhibiting. "wait_for_more" still let's us
+      # wait a little while for more data
+      $self->permit_exit();
     }
   elsif ($self->{keep_going})
     {
