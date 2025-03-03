@@ -430,7 +430,11 @@ endif
 CC := $(if $(filter sparc,$(ARCH)),$(if $(call GCCIS_sparc_leon_f),sparc-elf-gcc,$(CC)),$(CC))
 LD := $(if $(filter sparc,$(ARCH)),$(if $(call GCCIS_sparc_leon_f),sparc-elf-ld,$(LD)),$(LD))
 add_if_f = $(if $($(1)_f),$(1))
-Makeconf.bid.local-helper:
+
+$(OBJ_BASE)/include/l4/bid_config.h:
+	$(if $(wildcard $@),,$(file >$@,#include <generated/autoconf.h>))
+
+Makeconf.bid.local-helper: $(OBJ_BASE)/include/l4/bid_config.h
 	$(VERBOSE)echo BUILD_SYSTEMS="$(strip $(ARCH)_$(CPU)-plain            \
 	               $(ARCH)_$(CPU)-$(BUILD_ABI))" >> $(DROPSCONF_CONFIG_MK)
 	$(VERBOSE)$(foreach v, BID_COMPILER_TYPE BID_LD_TYPE \
@@ -458,7 +462,6 @@ Makeconf.bid.local-helper:
 	              $(call add_if_f,GCCIS_$(ARCH)_leon), \
 	            echo $(v)=$(call $(v)_f,$(ARCH)) \
 	            >>$(DROPSCONF_CONFIG_MK);)
-	$(VERBOSE)echo '#include <generated/autoconf.h>' >$(OBJ_BASE)/include/l4/bid_config.h
 	$(VERBOSE)$(foreach v, LD_GENDEP_PREFIX, echo $v=$($(v)) >>$(DROPSCONF_CONFIG_MK);)
 	$(VERBOSE)echo "HOST_SYSTEM=$(HOST_SYSTEM)" >>$(DROPSCONF_CONFIG_MK)
 	$(VERBOSE)# we need to call make again, because HOST_SYSTEM (set above) must be
