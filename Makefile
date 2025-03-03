@@ -795,6 +795,9 @@ help::
 listplatforms: $(KCONFIG_FILE).platforms.list
 	$(VERBOSE)sed -nE "s/^\[$(BUILD_ARCH)\](.*)/\1/p" $(KCONFIG_FILE).platforms.list | sort -b
 
+.PHONY: listexternals
+listexternals:
+	@printf "%s\n" $(file <$(OBJ_BASE)/.Package.deps.ext_pkgs)
 
 .PHONY: elfimage rawimage uimage qemu vbox switch_ram_base \
         grub1iso grub2iso listentries shellcodeentry exportpack \
@@ -998,6 +1001,7 @@ endif
 	@echo "                     the kernel build directory)."
 	@echo "                     Use make's -jX parameter to run tests in parallel."
 	@echo "  listplatforms    - List available platforms."
+	@echo "  listexternals    - List all registered external packages."
 
 MAKE_J = $(patsubst -j%,%,$(filter -j%,$(MAKEFLAGS)))
 

@@ -30,6 +30,18 @@ ifeq ($(ALL_SUBDIRS),)
     ALL_SUBDIRS := $(call find_prj_dirs, $(SRC_DIR))
   else
     ALL_SUBDIRS := $(foreach d, $(PRJ_SUBDIRS), $(addprefix $d/,$(call find_prj_dirs, $(SRC_DIR)/$(d))))
+    EXT_SUBDIRS := $(file <$(OBJ_BASE)/.Package.deps.ext_pkgs)
+    EXT_REMOVAL := $(foreach d,$(EXT_SUBDIRS),$(if $(realpath $d),,$d))
+    ALL_SUBDIRS += $(filter-out $(EXT_REMOVAL),$(EXT_SUBDIRS))
+    REMOVE_EXTERNALS ?= y
+    ifneq ($(if $(filter y,$(REMOVE_EXTERNALS)),$(EXT_REMOVAL)),)
+      remove_entry = $(file >$1,$(filter-out $2,$(file <$1)))
+      $(foreach d,$(EXT_REMOVAL), \
+        $(info Removing vanished external package: $d) \
+        $(call remove_entry,$(OBJ_BASE)/.Package.deps.ext_pkgs,$d) \
+        $(shell $(RM) -r $(OBJ_BASE)/ext-pkg/$(d:/%=%)))
+      $(shell [[ -d $(OBJ_BASE)/ext-pkg ]] && find $(OBJ_BASE)/ext-pkg -type d -empty -delete)
+    endif
   endif
 endif
 
@@ -81,6 +93,7 @@ PKGDEPS_CMD  = $(L4DIR)/mk/pkgdeps $(PKGDEPS_IGNORE_MISSING) \
 PKGDEPS_IGNORE_MISSING := -I
 
 PKG_MESSAGE       =echo "=== Building package \"$(basename $@)\" ==="
+EXT_PKG_MESSAGE   =echo "=== Building external package \"$(basename $@)\" ==="
 DOC_MESSAGE       =echo "=== Creating documentation for package \"$(1)\" ==="
 INST_MESSAGE      =echo "=== Installing Package \"$(1)\" ==="
 
@@ -116,6 +129,7 @@ $(OBJ_DIR)/.Package.deps.pkgs: FORCE
 
 # deps on disappearing aliases.d-files are not handled...
 $(OBJ_DIR)/.Package.deps: $(L4DIR)/mk/pkgdeps $(OBJ_DIR)/.Package.deps.pkgs \
+                          $(wildcard $(OBJ_DIR)/.Package.deps.ext_pkgs) \
                           $(if $(filter update up,$(MAKECMDGOALS)),,Makefile) \
                           $(wildcard $(foreach d,$(ALIASES_DIRS),$(d)/*)) \
                           $(wildcard $(foreach d,$(BUILD_SUBDIRS),$(d)/Control)) \
@@ -128,7 +142,13 @@ $(foreach v,$(VARIANTS_AVAILABLE),$(eval $(call variant_package_deps_rule,$(v)))
 
 include $(OBJ_DIR)/.Package.deps
 
-$(ALL_SUBDIRS):%:%/Makefile BID_cont_reset $(FIXDEP)
+# External packages
+$(filter /%,$(ALL_SUBDIRS)):%:%/Makefile BID_cont_reset $(FIXDEP)
+	@$(EXT_PKG_MESSAGE)
+	$(VERBOSE)PWD=$@ $(MAKE) -C $@ all L4DIR=$(L4DIR_ABS)
+	$(VERBOSE)$(BID_SAVE_STATE)
+
+$(filter-out /%,$(ALL_SUBDIRS)):%:%/Makefile BID_cont_reset $(FIXDEP)
 	@$(PKG_MESSAGE)
 	$(VERBOSE)PWD=$(PWD)/$@ $(MAKE) -C $@ all
 	$(VERBOSE)$(BID_SAVE_STATE)

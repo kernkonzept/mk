@@ -384,9 +384,12 @@ sub scan_files_dirs
 
   foreach my $pkg (@subdirs)
     {
+      my $scanpath = "$base/$pkg";
+      # Absolute paths are external packages. Do not at the base to them
+      $scanpath = $pkg if $pkg =~ /^\//;
       $pkgs{$pkg} = 1;
       my $n = new_node({ name => $pkg, pkg => 1 });
-      scan_for_provided_pkg_configs($n, "$base/$pkg", $pkg, $scan_all);
+      scan_for_provided_pkg_configs($n, "$scanpath", $pkg, $scan_all);
       add_node($n, undef);
     }
 }
@@ -496,6 +499,7 @@ sub generate_dep_makefile
   foreach (keys %clusters)
     {
       next unless $_;
+      next if /^\//; # Do not recurse for absolute paths for external packages
       my $nodes = $clusters{$_}->{nodes};
       my $clustername = $_;
       while ($clustername =~ /(.*)\/([^\/]*)/)

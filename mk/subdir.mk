@@ -18,6 +18,21 @@ TARGET ?= $(patsubst %/Makefile,%,$(wildcard $(addsuffix /Makefile, \
 	src lib server examples doc)))
 endif
 
+is_in_tree := $(filter-out $(PKGDIR_ABS),$(PKGDIR_ABS:$(L4DIR_ABS)/%=%))
+write_once = $(file >$1,$(sort $2 $(file <$1)))
+ifeq ($(is_in_tree),)
+ifneq ($(wildcard Control),)
+register:
+	@echo -e $(EMPHSTART)Registering $(PKGDIR_ABS) for $(OBJ_BASE)$(EMPHSTOP)
+	$(call write_once,$(OBJ_BASE)/.Package.deps.ext_pkgs,$(PKGDIR_ABS))
+	$(MAKE) -C $(OBJ_BASE)
+else
+register:
+	$(error Only external packages with a Control file may be registered)
+endif
+endif
+
+
 TARGET += $(if $(CONFIG_BID_BUILD_TESTS),$(TARGET_test))
 
 SUBDIR_TARGET	:= $(if $(filter doc,$(MAKECMDGOALS)),$(TARGET),    \
@@ -61,6 +76,8 @@ help::
 	@echo "  scrub          - call scrub recursively"
 	@echo "  clean          - call clean recursively"
 	@echo "  cleanall       - call cleanall recursively"
+	$(if $(is_in_tree),,\
+	@echo "  register       - register external package into the buildtree")
 	@echo "  install        - build subdirs, install recursively then"
 	@echo "  oldconfig      - call oldconfig recursively"
 	@echo "  txtconfig      - call txtconfig recursively"
