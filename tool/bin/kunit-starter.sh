@@ -13,7 +13,7 @@ Usage:
 
 Parameters:
   --test=      Path to the kernel test binary.
-  --obj_base=  Path of the L4Re build directory. If this script is executed
+  --obj-base=  Path of the L4Re build directory. If this script is executed
                from an L4Re build directory, this option can be omitted.
   -v           Print information during script execution (forwarded to the
                test starter).
