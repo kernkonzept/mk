@@ -958,6 +958,9 @@ report:
 	@echo "OBJ_BASE:  $(OBJ_BASE)"
 	@echo "OBJ_DIR:   $(OBJ_DIR)"
 	@echo
+	@echo "BUILDDIR_SEARCHPATH:"
+	@sed -e 's/:/\n/g' -e 's/^/  - /mg' <<< "$(BUILDDIR_SEARCHPATH)"
+	@echo
 	@echo Configuration:
 	@for i in $(OBJ_DIR)/.config.all $(OBJ_DIR)/.kconfig   \
 	          $(OBJ_DIR)/Makeconf.local                    \
