@@ -54,7 +54,7 @@ $(call target_dir_local,$(1))/$(1):$(1)
 		if [ ! $$< -ef $$@ -a $$< -nt $$@ ]; then \
 		  $(if $(INSTALL_LOCAL_MESSAGE),$(INSTALL_LOCAL_MESSAGE);) \
 		  $(INSTALL) -d $$(dir $$@); \
-		  $(call INSTALLFILE_LOCAL,$$<,$$@); \
+		  $$(call INSTALLFILE_LOCAL,$$<,$$@); \
 		fi)
 endef
 
@@ -65,7 +65,7 @@ define install_rule
 $(call target_dir,$(1))/$(1):$(1)
 	@$(INSTALL_MESSAGE)
 	$(VERBOSE)$(if $(INSTALLFILE),$(call create_dir,$$(dir $$@)))
-	$(VERBOSE)$(call INSTALLFILE,$$<,$$@)
+	$(VERBOSE)$$(call INSTALLFILE,$$<,$$@)
 endef
 
 $(foreach t,$(INSTALL_TARGET),$(eval $(call install_rule,$(t))))
