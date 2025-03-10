@@ -37,14 +37,15 @@ include $(L4DIR)/mk/Makeconf
 $(GENERAL_D_LOC): $(L4DIR)/mk/include.mk
 -include $(DEPSVAR)
 
-do_link = if (readlink($$dst) ne $$src) {                                     \
-            if ($$notify eq 1) {                                              \
+do_link = my $$rl = readlink($$dst);                                          \
+          if (!defined $$rl || $$rl ne $$src) {                               \
+            if ($$notify == 1) {                                              \
               $$notify=0; $(if $(VERBOSE),print "  ... Updating symlinks\n";,)\
             }                                                                 \
             system("ln","-sf$(if $(VERBOSE),,v)",$$src,$$dst) && exit 1;      \
           }
 do_inst = system("install","-$(if $(VERBOSE),,v)m","644",$$src,$$dst) && exit 1;
-installscript = perl -e '                                                     \
+installscript = perl -W -e '                                                  \
   chomp($$srcdir="$(INCSRC_DIR)");                                            \
   $$notify=1;                                                                 \
   while(<>) {                                                                 \
@@ -53,16 +54,16 @@ installscript = perl -e '                                                     \
       my ($$src, $$srcorig) = $$_ =~ m/^(.*?)<(.*)/g;                         \
       $$srcorig = $$src = $$_ if not defined $$srcorig;                       \
       s|<.*$$||;                                                              \
-      if(s|^ARCH-([^/]*)/L4API-([^/]*)/([^ ]*)$$|\1/\2/$(INSTALL_INC_PREFIX)/\3| ||\
-	 s|^ARCH-([^/]*)/([^ ]*)$$|\1/$(INSTALL_INC_PREFIX)/\2| ||            \
-	 s|^L4API-([^/]*)/([^ ]*)$$|\1/$(INSTALL_INC_PREFIX)/\2| ||           \
-	 s|^(/.*/)?(\S*)$$|$(INSTALL_INC_PREFIX)/\2|) {                       \
-	    $$src="$$srcdir/$$srcorig" if $$srcorig !~ /^\//;                 \
-	    $$dstdir=$$dst="$(if $(1),$(INSTALLDIR_LOCAL),$(INSTALLDIR))/$$_";\
-	    $$dstdir=~s|/[^/]*$$||;                                           \
-	    -d $$dstdir || system("install","-$(if $(VERBOSE),,v)d",$$dstdir) && exit 1;        \
-	    $(if $(1),$(do_link),$(do_inst))                                  \
-	  }                                                                   \
+      if(s|^ARCH-([^/]*)/L4API-([^/]*)/([^ ]*)$$|$$1/$$2/$(INSTALL_INC_PREFIX)/$$3| ||\
+         s|^ARCH-([^/]*)/([^ ]*)$$|$$1/$(INSTALL_INC_PREFIX)/$$2| ||          \
+         s|^L4API-([^/]*)/([^ ]*)$$|$$1/$(INSTALL_INC_PREFIX)/$$2| ||         \
+         s|^(/.*/)?(\S*)$$|$(INSTALL_INC_PREFIX)/$$2|) {                      \
+            $$src="$$srcdir/$$srcorig" if $$srcorig !~ /^\//;                 \
+            $$dstdir=$$dst="$(if $(1),$(INSTALLDIR_LOCAL),$(INSTALLDIR))/$$_";\
+            $$dstdir=~s|/[^/]*$$||;                                           \
+            -d $$dstdir || system("install","-$(if $(VERBOSE),,v)d",$$dstdir) && exit 1;        \
+            $(if $(1),$(do_link),$(do_inst))                                  \
+          }                                                                   \
     }                                                                         \
   }'
 
