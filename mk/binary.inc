@@ -504,10 +504,9 @@ endif # stack protector
 #    - the current binary can be PIE and this is enabled
 default_reloc_phys = $(if $(CONFIG_MMU)$(CONFIG_BID_PIE_ALL)$(and $(CONFIG_BID_PIE_VOLUNTARY),$(BID_CAN_PIE)),$(RELOC_PHYS),y)
 
-default_reloc_base = $(if $(NO_DEFAULT_RELOC),,\
-                          $(firstword $(DEFAULT_RELOC_$(1)) \
-                                      $(DEFAULT_RELOC_$(ARCH)) \
-                                      $(DEFAULT_RELOC)))
+default_reloc_base = $(if $(NO_DEFAULT_RELOC),,$(firstword $(DEFAULT_RELOC_$(1)) \
+                                                           $(DEFAULT_RELOC_$(ARCH)) \
+                                                           $(DEFAULT_RELOC)))
 default_reloc = $(if $(call default_reloc_base,$(1)),\
                      $(if $(default_reloc_phys), \
 		          $(shell printf "0x%x" $$(($(RAM_BASE) + $(call default_reloc_base,$(1))))), \
