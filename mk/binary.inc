@@ -507,8 +507,7 @@ default_reloc_phys = $(if $(CONFIG_MMU)$(CONFIG_BID_PIE_ALL)$(and $(CONFIG_BID_P
 default_reloc_base = $(if $(NO_DEFAULT_RELOC),,\
                           $(firstword $(DEFAULT_RELOC_$(1)) \
                                       $(DEFAULT_RELOC_$(ARCH)) \
-                                      $(DEFAULT_RELOC) \
-                                      0x01000000))
+                                      $(DEFAULT_RELOC)))
 default_reloc = $(if $(call default_reloc_base,$(1)),\
                      $(if $(default_reloc_phys), \
 		          $(shell printf "0x%x" $$(($(RAM_BASE) + $(call default_reloc_base,$(1))))), \
