@@ -263,6 +263,8 @@ ifeq ($(origin PKGDIR_OBJ),undefined)
 PKGDIR_OBJ     := $(abspath $(OBJ_DIR)/$(PKGDIR))
 endif
 
+PKGDIR_REL     := $(patsubst pkg/%,%,$(patsubst $(L4DIR_ABS)/%,%,$(PKGDIR_ABS)))
+
 # if PKGDIR is not in L4DIR, we have an external package, so make up some
 # build-dir for it
 ifneq ($(patsubst $(L4DIR_ABS)/%,,$(PKGDIR_ABS)),)
@@ -735,7 +737,7 @@ ifeq ($(CONFIG_BID_COLORED_PHASES),y)
   endif
 endif
 
-BID_MESSAGE_TAG            ?= $(PKGNAME_DIRNAME)$(if $(filter-out std,$(VARIANT)), - $(VARIANT))
+BID_MESSAGE_TAG            ?= $(PKGDIR_REL)$(if $(filter-out std,$(VARIANT)), - $(VARIANT))
 
 AR_MESSAGE                 ?= echo -e "  [$(BID_MESSAGE_TAG)] ==> Archiving into $@"
 BUILD_MESSAGE              ?= echo -e "  [$(BID_MESSAGE_TAG)] ... Building $(if $(filter $(GENERAL_D_LOC),$@),Dependencies,$@)"
