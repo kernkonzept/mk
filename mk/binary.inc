@@ -35,6 +35,9 @@ BID_OBJ_Makefile ?= Makefile
 include $(OBJ_BASE)/.Package.deps
 
 # Building variants:
+ifeq ($(ROLE),prog.mk)
+  VARIANTS ?= std
+else
 ifeq ($(filter-out lib.mk prog.mk test.mk assets.mk, $(ROLE)),)
   VARIANTS_lib.mk = std
   # If there is a variants variable for the src dir, we use it. Otherwise, we
@@ -44,6 +47,7 @@ ifeq ($(filter-out lib.mk prog.mk test.mk assets.mk, $(ROLE)),)
   VARIANTS         = $(or $(SRC_VARIANTS), $(PKGDIR_VARIANTS), std)
   VARIANTS        += $(VARIANTS_$(ROLE))
   VARIANTS        := $(sort $(VARIANTS))
+endif
 endif
 
 $(if $(VARIANTS),,$(error No variants defined))
