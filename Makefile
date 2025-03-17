@@ -635,14 +635,17 @@ define switch_ram_base_func
 	echo "RAM_BASE_SWITCH_OK := yes"                                    >> $(OBJ_BASE)/Makeconf.ram_base
 endef
 
-QEMU_KERNEL_TYPE          ?= elfimage
-QEMU_KERNEL_FILE-elfimage  = $(IMAGES_DIR)/bootstrap.elf
-QEMU_KERNEL_FILE-uimage    = $(IMAGES_DIR)/bootstrap.uimage
-QEMU_KERNEL_FILE-itb       = $(IMAGES_DIR)/bootstrap.itb
-QEMU_KERNEL_FILE-rawimage  = $(IMAGES_DIR)/bootstrap.raw
-QEMU_KERNEL_FILE          ?= $(QEMU_KERNEL_FILE-$(QEMU_KERNEL_TYPE))
 
-FVP_KERNEL_FILE	 = $(IMAGES_DIR)/bootstrap.elf
+IMAGE_SUFFIX_efiimage = efi
+IMAGE_SUFFIX_elfimage = elf
+IMAGE_SUFFIX_rawimage = raw
+IMAGE_SUFFIX = $(or $(IMAGE_SUFFIX_$1),$1)
+
+TARGET_IMAGE = $(or $(BOOTSTRAP_OUTPUT_DIR) $(IMAGES_DIR))/bootstrap$(if $2,_$2).$(call IMAGE_SUFFIX,$1)
+
+QEMU_KERNEL_TYPE          ?= elfimage
+QEMU_KERNEL_FILE          ?= $(or $(QEMU_KERNEL_FILE-$(QEMU_KERNEL_TYPE)) \
+                                  $(call TARGET_IMAGE,$(QEMU_KERNEL_TYPE))
 
 FASTBOOT_BOOT_CMD    ?= fastboot boot
 
@@ -678,9 +681,9 @@ $1:
 	+$$(VERBOSE)$$(entryselection);                       \
 	$$(MKDIR) $$(IMAGES_DIR);                             \
 	MODULES_LIST=$$$$ml ENTRY=$$$$e E= $$(common_envvars) $$(tool_envvars) \
-		$(if $(2),,TARGET_IMAGE=$$(IMAGES_DIR)/bootstrap_$$$$e.$1) \
+	    $(if $(2),,TARGET_IMAGE=$(strip $(call TARGET_IMAGE,$1,$$$$e))) \
 		$$(L4DIR)/tool/imagebuilder/$1 && \
-    $(if $(2),true,ln -snf bootstrap_$$$$e.$1 $(IMAGES_DIR)/bootstrap.$1)
+    $(if $(2),true,ln -snf $(notdir $(call TARGET_IMAGE,$1,$$$$e)) $(call TARGET_IMAGE,$1))
 endef
 
 # touches images dir
