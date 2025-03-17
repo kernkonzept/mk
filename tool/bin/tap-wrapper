@@ -24,6 +24,7 @@ my $max_lines_read = $ENV{MAX_LINES_READ} || 100000;
 my $test_timestamps = !!$ENV{TEST_TIMESTAMPS};
 my $jdb_system_report_on_timeout = !!$ENV{TEST_JDB_SYSTEM_REPORT_ON_TIMEOUT};
 my $enter_jdb_on_timeout = !!$ENV{TEST_ENTER_JDB_ON_TIMEOUT};
+my $attach_string;
 
 my $additional_test_args = "";
 
@@ -62,6 +63,7 @@ GetOptions(
   'timestamps'      => sub { $test_timestamps = 1; },
   'jdb-system-report-on-timeout' => \$jdb_system_report_on_timeout,
   'enter-jdb-on-timeout' => \$enter_jdb_on_timeout,
+  'attach' => \$attach_string,
   'introspection-tests' => sub { $ENV{INTROSPECTION_TESTS} = 1; },
   'exclude-filters=s' => sub { $ENV{TEST_EXCLUDE_FILTERS} .= " $_[1]"; }
 ) or pod2usage(-verbose => 99, -sections => "OPTIONS");
@@ -382,6 +384,13 @@ my $test_current_read;
 while ($test_current_read = readline_timeout($test_proc, $L4::TapWrapper::timeout))
   {
     $test_lastline = $test_current_read;
+
+    if (defined($attach_string) && $test_current_read =~ qr/\Q$attach_string\E/)
+      {
+        L4::TapWrapper::Util::do_interactive($test_proc, $test_proc_input);
+        last;
+      }
+
     last if ($test_eof = L4::TapWrapper::process_input($test_lastline)) && ! $L4::TapWrapper::wait_for_more;
     $L4::TapWrapper::timeout = 6 if $test_eof; # Drop timeout for coverage dumps
   }
@@ -484,6 +493,10 @@ $TEST_SCRIPT [options]
 
   --enter-jdb-on-timeout
                    Instead of terminating a test on timeout, try to open JDB.
+
+  --attach <str>
+                   When str is found in one line of output, attach user to input
+                   stream.
 
  Options for gtest test applications:
   --verbose,-v     Run test in verbose mode. Repeat for increased verbosity.
