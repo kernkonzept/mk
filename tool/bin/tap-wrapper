@@ -64,6 +64,9 @@ GetOptions(
   'jdb-system-report-on-timeout' => \$jdb_system_report_on_timeout,
   'enter-jdb-on-timeout' => \$enter_jdb_on_timeout,
   'attach' => \$attach_string,
+  'break-on-failure' => sub { $additional_test_args .= " --gtest_break_on_failure";
+                              $attach_string = "ATKINS_ASSERT_KDEBUG";
+                            },
   'introspection-tests' => sub { $ENV{INTROSPECTION_TESTS} = 1; },
   'exclude-filters=s' => sub { $ENV{TEST_EXCLUDE_FILTERS} .= " $_[1]"; }
 ) or pod2usage(-verbose => 99, -sections => "OPTIONS");
@@ -497,6 +500,12 @@ $TEST_SCRIPT [options]
   --attach <str>
                    When str is found in one line of output, attach user to input
                    stream.
+
+  --break-on-failure
+                   Tell atkins to enter JDB on test fail and let tap-wrapper switch
+                   to interactive mode when it does.
+
+                   Implies --attach "ATKINS_ASSERT_KDEBUG".
 
  Options for gtest test applications:
   --verbose,-v     Run test in verbose mode. Repeat for increased verbosity.
