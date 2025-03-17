@@ -507,10 +507,15 @@ default_reloc_phys = $(if $(CONFIG_MMU)$(CONFIG_BID_PIE_ALL)$(and $(CONFIG_BID_P
 default_reloc_base = $(if $(NO_DEFAULT_RELOC),,$(firstword $(DEFAULT_RELOC_$(1)) \
                                                            $(DEFAULT_RELOC_$(ARCH)) \
                                                            $(DEFAULT_RELOC)))
+
+# The default relocation is directly used by the bootstrap Make.rules.
 default_reloc = $(if $(call default_reloc_base,$(1)),\
                      $(if $(default_reloc_phys), \
 		          $(shell printf "0x%x" $$(($(RAM_BASE) + $(call default_reloc_base,$(1))))), \
 			  $(call default_reloc_base,$(1))))
+
+# Default relocation should not be applied for PIE binaries!
+apply_default_reloc = $(if $(CONFIG_BID_PIE_ALL)$(and $(CONFIG_BID_PIE_VOLUNTARY),$(BID_CAN_PIE)),,$(call default_reloc,$(1)))
 
 default_heap_size = $(if $(if $(NO_DEFAULT_RELOC),,$(CONFIG_BID_STATIC_HEAP)),\
                          $(firstword $(DEFAULT_HEAP_SIZE_$(1)) \
@@ -836,7 +841,7 @@ define gen_target_vars_and_deps
   $(foreach src,$(call get_target_var,SRC_C,$(1))            \
                 $(call get_target_var,SRC_CC,$(1)),          \
                 $(call gen_src_to_dpe_deps,$(src)))          \
-  $(if $(call default_reloc,$(1)),$(eval $(call make_per_target_reloc,$(1)))) \
+  $(if $(call apply_default_reloc,$(1)),$(eval $(call make_per_target_reloc,$(1)))) \
   $(if $(call default_heap_size,$(1)),$(eval $(call make_per_target_heap_size,$(1))))
   $(if $(call default_stack_size,$(1)),$(eval $(call make_per_target_stack_size,$(1))))
 endef
