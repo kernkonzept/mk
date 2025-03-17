@@ -24,10 +24,13 @@ my $max_lines_read = $ENV{MAX_LINES_READ} || 100000;
 my $test_timestamps = !!$ENV{TEST_TIMESTAMPS};
 my $jdb_system_report_on_timeout = !!$ENV{TEST_JDB_SYSTEM_REPORT_ON_TIMEOUT};
 my $enter_jdb_on_timeout = !!$ENV{TEST_ENTER_JDB_ON_TIMEOUT};
+
+my $additional_test_args = "";
+
 Getopt::Long::Configure ("bundling");
 GetOptions(
   'help|h'  => \$help,
-  'debug|d' => sub { $ENV{TEST_ARGS} .= ' -vvv';
+  'debug|d' => sub { $additional_test_args .= ' -vvv';
                      $ENV{TEST_KUNIT_VERBOSE} = 1;
                      $ENV{TEST_KUNIT_DEBUG} = 1;
 
@@ -36,12 +39,12 @@ GetOptions(
                      $ENV{KERNEL_ARGS} .= ' -serial_esc' if $ENV{KERNEL_ARGS} !~ /-serial_esc/;
                      $nowrapper = 1;
                    },
-  'verbose|v'       => sub { $ENV{TEST_ARGS} .= ' -v';
+  'verbose|v'       => sub { $additional_test_args .= ' -v';
                              $ENV{TEST_KUNIT_VERBOSE} = 1 },
-  'record|r'        => sub { $ENV{TEST_ARGS} .= ' -r';
+  'record|r'        => sub { $additional_test_args .= ' -r';
                              $ENV{TEST_KUNIT_RECORD} = 1;
                            },
-  'only|o=s'        => sub { $ENV{TEST_ARGS} .= " --gtest_filter=*$_[1]"; },
+  'only|o=s'        => sub { $additional_test_args .= " --gtest_filter=*$_[1]"; },
   'shuffle:i'       => \&gtest_shuffle_seed,
   'no-wrapper|W'    => \$nowrapper,
   'fiasco-args|f=s' => sub { $ENV{KERNEL_ARGS} = $_[1]; },
@@ -62,6 +65,8 @@ GetOptions(
   'introspection-tests' => sub { $ENV{INTROSPECTION_TESTS} = 1; },
   'exclude-filters=s' => sub { $ENV{TEST_EXCLUDE_FILTERS} .= " $_[1]"; }
 ) or pod2usage(-verbose => 99, -sections => "OPTIONS");
+
+$ENV{TEST_ARGS} .= $additional_test_args;
 
 pod2usage(-verbose => 99,
           -sections => "SYNOPSIS|OPTIONS|DESCRIPTION|HARDWARE CONFIGURATION"
