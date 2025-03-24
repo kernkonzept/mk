@@ -269,8 +269,7 @@ sub check_modules
       $saw[$ds{mods}[$i]{flags} & 7]++;
     }
 
-  return "No kernel found" if not defined $saw[1];
-  return "Only one kernel allowed" if $saw[1] > 1;
+  return "Only one kernel allowed" if defined $saw[1] && $saw[1] > 1;
   return "Only one sigma0 allowed" if defined $saw[2] && $saw[2] > 1;
   return "Only one roottask allowed" if defined $saw[3] && $saw[3] > 1;
 
