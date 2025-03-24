@@ -359,7 +359,7 @@ sub create_image
 
   my $tmpdir;
 
-  undef ${$d}{mods};
+  $d->{mods} = [];
   foreach my $mod (@{$entry{mods}})
     {
       L4::ModList::fetch_remote_file($mod->{file});
