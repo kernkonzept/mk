@@ -645,7 +645,7 @@ TARGET_IMAGE = $(or $(BOOTSTRAP_OUTPUT_DIR) $(IMAGES_DIR))/bootstrap$(if $2,_$2)
 
 QEMU_KERNEL_TYPE          ?= elfimage
 QEMU_KERNEL_FILE          ?= $(or $(QEMU_KERNEL_FILE-$(QEMU_KERNEL_TYPE)) \
-                                  $(call TARGET_IMAGE,$(QEMU_KERNEL_TYPE))
+                                  $(call TARGET_IMAGE,$(QEMU_KERNEL_TYPE)))
 
 FASTBOOT_BOOT_CMD    ?= fastboot boot
 
