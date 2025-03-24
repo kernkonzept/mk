@@ -141,7 +141,7 @@ else
     if ($L4::TapWrapper::harness_active) # Running under prove
       {
         # Redirect all printing to the logfile
-        open(STDOUT, '>&', $LOG_FD);
+        open(STDOUT, '>', '/dev/null');
         open(STDERR, '>&', $LOG_FD);
 
         # What evil lies behind STDIN is not human. (°_°')
