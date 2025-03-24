@@ -177,7 +177,9 @@ help::
 # special switch not to include DROPSCONF_CONFIG_MK
 ifeq ($(DROPSCONF_DONTINC_MK),)
 # do not prebuild the config file on "make config"
-ifeq ($(filter config oldconfig syncconfig txtconfig help scrub clean cleanall mrproper $(DROPSCONF_CONFIG_MK),$(MAKECMDGOALS)),)
+ifeq ($(filter config oldconfig olddefconfig xconfig gconfig syncconfig
+               txtconfig help scrub clean cleanall mrproper \
+               $(DROPSCONF_CONFIG_MK),$(MAKECMDGOALS)),)
 $(info INCLUDING $(DROPSCONF_CONFIG_MK) config.inc)
 -include $(DROPSCONF_CONFIG_MK)
 endif
