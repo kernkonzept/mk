@@ -66,8 +66,6 @@ sub finalize()
   my $self = shift;
 
   my $tool = "$ENV{L4DIR}/$self->{args}{tool}";
-  open(my $fh, '-|', "$tool " . $self->tmpdir())
-    or L4::TapWrapper::fail_test("Could not start external tool '$tool'");
 
   my $pid = open3(my $chld_stdin, my $chld_stdout, my $chld_stderr = gensym, $tool, $self->tmpdir());
   close($chld_stdin);
