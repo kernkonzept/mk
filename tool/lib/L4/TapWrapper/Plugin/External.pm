@@ -98,15 +98,18 @@ sub finalize()
         }
     }
 
+  waitpid($pid, 0);
+  my $ecode = $? >> 8;
+
   # /(?<=\n)/ means split after \n and keep the \n.
   my @stdout_lines = split /(?<=\n)/, $stdout_text;
   my @stderr_lines = split /(?<=\n)/, $stderr_text;
 
   $self->add_log_line(@stderr_lines);
 
-  if ($? != 0)
+  if ($ecode != 0)
     {
-      $self->add_tap_line(0, "External ['$tool']: Exited with code $?");
+      $self->add_tap_line(0, "External ['$tool']: Exited with code $ecode");
     }
   else
     {
