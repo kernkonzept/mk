@@ -111,6 +111,10 @@ sub finalize()
     {
       $self->add_tap_line(0, "External ['$tool']: Exited with code $ecode");
       $self->add_raw_tap_line("1..1");
+
+      $self->add_log_line("### External ['$tool']: Exited with code $ecode\n");
+      $self->add_log_line("### STDOUT:\n");
+      $self->add_log_line(@stdout_lines);
     }
   else
     {
