@@ -110,6 +110,7 @@ sub finalize()
   if ($ecode != 0)
     {
       $self->add_tap_line(0, "External ['$tool']: Exited with code $ecode");
+      $self->add_raw_tap_line("1..1");
     }
   else
     {
