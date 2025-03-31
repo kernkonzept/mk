@@ -394,8 +394,18 @@ while ($test_current_read = readline_timeout($test_proc, $L4::TapWrapper::timeou
         last;
       }
 
-    last if ($test_eof = L4::TapWrapper::process_input($test_lastline)) && ! $L4::TapWrapper::wait_for_more;
-    $L4::TapWrapper::timeout = 6 if $test_eof; # Drop timeout for coverage dumps
+    $test_eof = L4::TapWrapper::process_input($test_lastline);
+
+    if ($test_eof)
+      {
+        my $wfm = L4::TapWrapper::calculate_wait_for_more();
+        last unless $wfm > 0;
+        $L4::TapWrapper::timeout = $wfm;
+      }
+    else
+      {
+        $L4::TapWrapper::timeout = $timeout;
+      }
   }
 
 if (!$test_eof)

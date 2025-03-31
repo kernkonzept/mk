@@ -123,6 +123,17 @@ sub process_input
   return 0;
 }
 
+sub calculate_wait_for_more {
+  # Backwards compatibility
+  my $max_wfm_time = $wait_for_more ? 6 : 0;
+  for my $plugin ( @_plugins )
+    {
+      my $wfm_time = $plugin->wait_for_more();
+      $max_wfm_time = $wfm_time if $wfm_time > $max_wfm_time;
+    }
+  return $max_wfm_time;
+}
+
 sub finalize {
   # tell test runner to finish up
   # signals aren't passed to whole children tree - kill explicit
@@ -349,6 +360,7 @@ since the concept is ambiguous in the presence of multiple plugins.
 
 =item C<wait_for_more>
 
+(Deprecated: Please use wait_for_more in Plugin class)
 A boolean variable indicating if, after all plugins signaled that the no longer
 block exiting, we should wait for more data. Plugins that expect data of
 undetermined amount after others have finished processing should set this to 1.

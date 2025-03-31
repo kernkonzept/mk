@@ -11,6 +11,7 @@ sub new {
   $self->{tap_lines} = [];
   $self->{log_lines} = [];
   $self->{features} = { 'shuffling_support' => 1 };
+  $self->{wait_for_more} = 0;
   return bless $self, $type;
 }
 
@@ -75,6 +76,12 @@ sub process_mine {}
 # Inhibit exiting the test, used if more data expected by plugin
 sub inhibit_exit { shift->{inhibit_exit} = 1; }
 sub permit_exit  { shift->{inhibit_exit} = 0; }
+
+sub wait_for_more {
+  my ($self, $set) = @_;
+  $self->{wait_for_more} = $set if defined $set;
+  return $self->{wait_for_more};
+}
 
 1;
 
@@ -149,6 +156,17 @@ unless C<has_tag> returns a B<true> value.
 
 The default implementation is empty, indicating that there are no block markers
 for the plugin.
+
+=item C<wait_for_more>
+
+Getter/Setter for $self->{wait_for_more}. Call with defined argument to set.
+Returns value always. Can be overwritten by a plugin to calculate time span
+adhoc.
+
+Wait_for_more describes a mechanism where Plugins can set a grace period in
+seconds, how long tap-wrapper is supposed to stay listening for output after all
+plugins signalled they're finished. The actual grace period results from the
+maximum value among all the time spans the plugins have set.
 
 =item C<finalize>
 
