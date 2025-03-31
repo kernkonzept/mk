@@ -90,8 +90,8 @@ $(TEST_SCRIPTS):%.t: $(GENERAL_D_LOC)
 	$(VERBOSE)$(foreach v,$(testvars_conf), echo ': $${$(v):=$(call targetvar,$(v),$(notdir $*))}' >> $@;)
 	$(VERBOSE)$(foreach v,$(testvars_append), echo '$(v)="$${$(v):+$${$(v)} }$(subst ",\",$(call targetvar,$(v),$(notdir $*)))"' >> $@;)
 	$(if $(call targetvar,TEST_TAP_PLUGINS,$(*F)),\
-		$(VERBOSE)echo 'TEST_TAP_PLUGINS="$${TEST_TAP_PLUGINS:+$${TEST_TAP_PLUGINS} }$(call targetvar,TEST_TAP_PLUGINS,$(*F))"' >> $@,\
-		$(VERBOSE)echo 'TEST_TAP_PLUGINS="$${TEST_TAP_PLUGINS:+$${TEST_TAP_PLUGINS} }$(if $(call targetvar,TEST_EXPECTED,$(*F)),OutputMatching:file=$(call targetvar,TEST_EXPECTED,$(*F)),BundleMode TAPOutput)"' >> $@)
+		$(VERBOSE)echo 'TEST_TAP_PLUGINS="$(call targetvar,TEST_TAP_PLUGINS,$(*F)) $$TEST_TAP_PLUGINS"' >> $@,\
+		$(VERBOSE)echo 'TEST_TAP_PLUGINS="$(if $(call targetvar,TEST_EXPECTED,$(*F)),OutputMatching:file=$(call targetvar,TEST_EXPECTED,$(*F)),BundleMode TAPOutput) $$TEST_TAP_PLUGINS"' >> $@)
 	$(VERBOSE)echo ': $${BID_L4_TEST_HARNESS_ACTIVE:=1}' >> $@
 	$(VERBOSE)echo 'TEST_TESTFILE="$$0"' >> $@
 	$(VERBOSE)echo ': $${TEST_STARTER:=$(DEFAULT_TEST_STARTER)}' >> $@

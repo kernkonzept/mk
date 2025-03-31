@@ -185,7 +185,7 @@ if ($ENV{INTROSPECTION_TESTS})
 
 if ($ENV{TEST_TAP_PLUGINS})
   {
-    foreach (split(' ', $ENV{TEST_TAP_PLUGINS}))
+    foreach ($ENV{TEST_TAP_PLUGINS} =~ m/\S+/g)
       {
         my ($name, $args) = L4::TapWrapper::parse_plugin($_);
         L4::TapWrapper::load_plugin($name, $args);
