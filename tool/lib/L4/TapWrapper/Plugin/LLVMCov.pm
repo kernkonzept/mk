@@ -42,12 +42,6 @@ sub new
 
   bless $self, $type;
 
-  # Inhibit until first chunk of data
-  $self->inhibit_exit();
-
-  # Once we're not inhibiting anymore, we "wait for more" which means we use a
-  # smaller timeout once all other plugins are finished.
-  $L4::TapWrapper::wait_for_more = 1;
 
   my $tmpdir = $self->tmpdir();
   L4::TapWrapper::fail_test("Workdir not set. Coverage requires this")
@@ -58,8 +52,25 @@ sub new
 
   if ($ENV{COVERAGE_MEMBUF})
     {
+      # Expecting coverage data via a memory dump done by the simulator.
+
       $self->{memdump_file} = $ENV{COVERAGE_DUMP_FILE} // "${tmpdir}/_memdump";
       $ENV{COVERAGE_DUMP_FILE} = $self->{memdump_file};
+
+      # Use a large time span, since we expect the simulator to shutdown anyway
+      # after the memory dump.
+      $self->wait_for_more(300);
+    }
+  else
+    {
+      # Expecting coverage data via serial output
+
+      # Inhibit until first chunk of data
+      $self->inhibit_exit();
+
+      # Once we're not inhibiting anymore, we "wait for more" which means we use a
+      # smaller timeout once all other plugins are finished.
+      $self->wait_for_more(6);
     }
 
   return $self;
