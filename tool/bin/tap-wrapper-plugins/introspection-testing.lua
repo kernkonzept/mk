@@ -669,8 +669,8 @@ function process_input(id, input)
                   .. input.info, 2)
     end
   elseif input.tag == 'KernelObjects' then
-
-    local tag, dump = parse_dump(helper.decode_kernel_objects(input.text))
+    local tag, dump
+      = parse_dump(helper.decode_kernel_objects(plugin, input.text))
     sandbox:insert_dump(tag, dump)
   else
     tap:comment('WARNING: Unsupported tag ' .. input.tag, 2)
@@ -692,7 +692,7 @@ if not lfs.attributes(dir) then
   tap:abort(plugin, 'valid path as first argument')
 end
 
-local ids, input = helper.load_snippets(dir)
+local ids, input = helper.load_snippets(plugin, dir)
 
 for _, id in ipairs(ids) do
   process_input(id, input[id])

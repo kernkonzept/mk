@@ -58,12 +58,12 @@ end
 local abstract = nil
 
 -- decode all KernelObject files and get the filename of the abstract test
-local ids, snippets = helper.load_snippets(dir)
+local ids, snippets = helper.load_snippets(plugin, dir)
 for _, id in pairs(ids) do
   local input = snippets[id]
   if input.tag == 'KernelObjects' then
     local path = dir .. '/' .. input.filename .. '.decoded'
-    local objects = helper.decode_kernel_objects(input.text)
+    local objects = helper.decode_kernel_objects(plugin, input.text)
     -- the current parser implementation for kernel objects requires a newline
     -- at the end of the last input
     objects = objects .. '\n'

@@ -13,7 +13,11 @@ local function sanitize(str)
             :gsub('\r\n', '\n')
 end
 
-local function load_snippets(dir)
+---@param plugin string
+---@param dir string
+---@return ids table
+---@return input table
+local function load_snippets(plugin, dir)
   local input = {}
   local ids = {}
   for file in lfs.dir(dir) do
@@ -24,17 +28,19 @@ local function load_snippets(dir)
         info = nil
       end
       if not i then
-        tap:abort('input filename "' .. tostring(file) ..
+        tap:abort(plugin, 'input filename "' .. tostring(file) ..
               '" does not adhere to the plugin interface')
       end
 
       local f = io.open(dir .. '/' .. file, 'r')
-      if not f then tap:abort('failed to open file ' .. dir .. '/' .. file) end
+      if not f then
+          tap:abort(plugin, 'failed to open file ' .. dir .. '/' .. file)
+      end
       local text = sanitize(f:read('a'))
       f:close()
 
       if input[i] ~= nil then
-        tap:abort('duplicate file id '.. i)
+        tap:abort(plugin, 'duplicate file id '.. i)
       end
 
       input[i] = {filename = file, tag = tag, info = info, text = text}
@@ -89,18 +95,20 @@ local function uudecode(str)
   return decoded
 end
 
+---@param plugin string
 ---@param objects string
-local function decode_kernel_objects(objects)
+---@return string
+local function decode_kernel_objects(plugin, objects)
   local two_lines = '^[^\n]+\n[^\n]+\n'
 
   -- Heuristically check if object list is compressed and encoded (see kernel
   -- config option CONFIG_JDB_GZIP). If so, then decode and decompress.
   if objects:find(two_lines .. 'begin ') then
     local headers = objects:match(two_lines)
-    if not headers then tap:abort('extract object dump headers') end
+    if not headers then tap:abort(plugin, 'extract object dump headers') end
 
     local body = gunzip(uudecode(objects:gsub(two_lines, '')))
-    if not body then tap:abort('decode object dump body') end
+    if not body then tap:abort(plugin, 'decode object dump body') end
     objects = headers .. body
   end
 
