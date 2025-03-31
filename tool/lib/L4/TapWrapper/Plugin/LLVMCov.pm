@@ -158,13 +158,18 @@ sub finalize
       print $sources_file $ln."\n";
     }
 
-  L4::TapWrapper::fail_test("Broken data $self->{intermittent_fails} times")
-    if ($self->{intermittent_fails} > 0);
+  if ($self->{intermittent_fails} > 0)
+    {
+      $self->add_tap_line(0, "Broken data $self->{intermittent_fails} times");
+      $self->add_raw_tap_line("1..1");
+    }
+  elsif ($self->{fail_if_no_data} && !$self->{has_data})
+    {
+      $self->add_tap_line(0, __PACKAGE__ . ": No coverage data");
+      $self->add_raw_tap_line("1..1");
+    }
 
-  L4::TapWrapper::fail_test( __PACKAGE__ . ": No coverage data")
-    if $self->{fail_if_no_data} && !$self->{has_data};
-
-  return ();
+  return $self->SUPER::finalize();
 }
 
 sub __get_name
