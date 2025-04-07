@@ -641,7 +641,7 @@ IMAGE_SUFFIX_elfimage = elf
 IMAGE_SUFFIX_rawimage = raw
 IMAGE_SUFFIX = $(or $(IMAGE_SUFFIX_$1),$1)
 
-TARGET_IMAGE = $(or $(BOOTSTRAP_OUTPUT_DIR) $(IMAGES_DIR))/bootstrap$(if $2,_$2).$(call IMAGE_SUFFIX,$1)
+TARGET_IMAGE = $(or $(BOOTSTRAP_OUTPUT_DIR),$(IMAGES_DIR))/bootstrap$(if $2,_$2).$(call IMAGE_SUFFIX,$1)
 
 QEMU_KERNEL_TYPE          ?= elfimage
 QEMU_KERNEL_FILE          ?= $(or $(QEMU_KERNEL_FILE-$(QEMU_KERNEL_TYPE)) \
