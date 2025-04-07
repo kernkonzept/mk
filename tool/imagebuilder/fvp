@@ -34,4 +34,4 @@ printf " '%s'" "${optlist[@]}"
 
 # We need to override the stdout buffering, otherwise tap-wrapper won't see
 # the last couple of lines.
-exec stdbuf -oL "$MAKECONF_FVP_PATH" "${optlist[@]}"
+exec stdbuf -o0 "$MAKECONF_FVP_PATH" "${optlist[@]}"
