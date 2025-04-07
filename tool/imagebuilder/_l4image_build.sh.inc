@@ -1,3 +1,4 @@
+# vim:se ft=bash:
 # Abstract: This script builds a bootstrap image using the l4image tool. First
 # it runs _platform_rebuild.pl in order to ensure the present bootstrap image
 # matches platform, ram base and efi support. Then it utilizes the l4image tool
