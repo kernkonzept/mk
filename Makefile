@@ -683,7 +683,7 @@ $1:
 	MODULES_LIST=$$$$ml ENTRY=$$$$e E= $$(common_envvars) $$(tool_envvars) \
 	    $(if $(2),,TARGET_IMAGE=$(strip $(call TARGET_IMAGE,$1,$$$$e))) \
 		$$(L4DIR)/tool/imagebuilder/$1 && \
-    $(if $(2),true,ln -snf $(notdir $(call TARGET_IMAGE,$1,$$$$e)) $(call TARGET_IMAGE,$1))
+	$(if $(2),true,ln -snf $(notdir $(call TARGET_IMAGE,$1,$$$$e)) $(call TARGET_IMAGE,$1))
 endef
 
 # touches images dir
