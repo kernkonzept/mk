@@ -99,12 +99,25 @@ sub kill_ps_tree
 
   return unless $pid > 1;
 
-  while (my @pids = get_ps_tree($pid))
+  my %pid_attempts;
+  my %pid_ignored;
+
+  while (my @pids = grep { !$pid_ignored{$_} } get_ps_tree($pid))
     {
       my $innerpid = $pids[-1];
-      if ($innerpid)
+      my $attempt = $pid_attempts{$innerpid}++;
+
+      if ($attempt <= 9)
         {
           kill 'SIGTERM', $innerpid;
+
+          # "sleep" for 100ms
+          select(undef, undef, undef, 0.1);
+        }
+      else
+        {
+          kill 'SIGKILL', $innerpid;
+          $pid_ignored{$innerpid} = 1;
         }
     }
   kill 'SIGTERM', $pid;
