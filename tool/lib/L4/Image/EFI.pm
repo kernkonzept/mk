@@ -287,6 +287,45 @@ sub calculate_size_from_sections
   return ($size_code, $size_data, $size_bss);
 }
 
+sub sanity_check_sections
+{
+  my ($self) = @_;
+
+  my @sorted_sections = sort { $a->{virt_addr} <=> $b->{virt_addr} } @{$self->{sections}};
+
+  my $error = 0;
+
+  for (my $i = 0; $i < @sorted_sections - 1; $i++)
+    {
+      my $section = $sorted_sections[$i];
+      my $next = $sorted_sections[$i+1];
+
+      printf "Checking %s[0x%08x:0x%08x] and %s[0x%08x:0x%08x]\n",
+        $section->{name},
+        $section->{virt_addr},
+        $section->{virt_size},
+        $next->{name},
+        $next->{virt_addr},
+        $next->{virt_size}
+        if 0;
+
+      # Check overlap with next section
+      if ($section->{virt_addr} + $section->{virt_size} > $next->{virt_addr})
+        {
+          printf "Warning: Section overlap between %s[0x%08x:0x%08x] and %s[0x%08x:0x%08x]\n",
+            $section->{name},
+            $section->{virt_addr},
+            $section->{virt_size},
+            $next->{name},
+            $next->{virt_addr},
+            $next->{virt_size};
+          $error = 1;
+        }
+    }
+
+  die "Fatal" if $error;
+}
+
 sub _find_section_by_vaddr
 {
   my $self = shift;
@@ -421,6 +460,8 @@ sub objcpy_finalize
 
   # Write section table
   filepos_set($ofd, $self->{section_table_offset});
+
+  $self->sanity_check_sections();
 
   for my $section (@{$self->{sections}})
     {
