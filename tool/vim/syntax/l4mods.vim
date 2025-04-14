@@ -16,7 +16,7 @@ setlocal iskeyword+=[
 setlocal iskeyword+=]
 syn keyword l4modsStatement       modaddr module bin bin-nostrip data data-nostrip kernel sigma0
 syn keyword l4modsStatement       roottask moe default-kernel default-sigma0 default-roottask default-bootstrap
-syn keyword l4modsStatement       module-group bootstrap initrd set
+syn keyword l4modsStatement       module-group bootstrap initrd set searchpath
 syn region  l4modsModuleWithArgs  start="module\[" end="\]"
 syn keyword l4modsStatement       perl: glob: shell:
 syn keyword l4modsStatementTitle  entry title group contained
