@@ -107,7 +107,7 @@ my $make_pe_data_dir = L4::Image::Struct->define(
 );
 
 my $make_section_entry = L4::Image::Struct->define(
-  "Section entry", 40, "Z8LLLLLLSSL",
+  "Section entry", 40, "a8LLLLLLSSL",
   "name",
   "virt_size",
   "virt_addr",
