@@ -120,6 +120,11 @@ my $make_section_entry = L4::Image::Struct->define(
   "flags"
 );
 
+my $make_coff_string_table_header = L4::Image::Struct->define(
+  "COFF String Table Header", 4, "L",
+  "size",
+);
+
 use constant {
   MZ_MAGIC => "MZ",
   PE_MAGIC => "PE",
@@ -129,6 +134,7 @@ use constant {
   SECTION_FLAG_CODE => 0x20,
   SECTION_FLAG_DATA => 0x40,
   SECTION_FLAG_BSS => 0x80,
+  SIZE_COFF_SYMBOL => 18,
 };
 
 my @datadir_names = qw(Export Import Resource Exception Certificate BaseRelocation Debug Arch GlobalPtr TLS LoadConfig BoundImport IAT DelayImport CLRRuntimeHeader ReservedZ);
@@ -254,6 +260,29 @@ sub init
     }
 
   $self->{sections} = \@sections;
+
+  if ($pe_header->{ptr_symbol_table} != 0)
+    {
+      # Read COFF string table, as there might be section names inside
+      my $strtab_offset = $pe_header->{ptr_symbol_table} + SIZE_COFF_SYMBOL * $pe_header->{num_symbols};
+
+      filepos_set($fd, $strtab_offset);
+
+      my $strtab_header = $make_coff_string_table_header->();
+      $strtab_header->read($fd);
+      my $size = $strtab_header->{size};
+
+      filepos_set($fd, $strtab_offset);
+      my $strtab;
+
+      check_sysread(sysread($fd, $strtab, $size), $size);
+
+      $self->{coff_string_table} = $strtab;
+    }
+  else
+    {
+      $self->{coff_string_table} = "";
+    }
 }
 
 sub calculate_size_from_sections
@@ -301,7 +330,7 @@ sub sanity_check_sections
       my $next = $sorted_sections[$i+1];
 
       printf "Checking %s[0x%08x:0x%08x] and %s[0x%08x:0x%08x]\n",
-        $section->{name},
+        $self->_resolve_section_name($section),
         $section->{virt_addr},
         $section->{virt_size},
         $next->{name},
@@ -313,7 +342,7 @@ sub sanity_check_sections
       if ($section->{virt_addr} + $section->{virt_size} > $next->{virt_addr})
         {
           printf "Warning: Section overlap between %s[0x%08x:0x%08x] and %s[0x%08x:0x%08x]\n",
-            $section->{name},
+            $self->_resolve_section_name($section),
             $section->{virt_addr},
             $section->{virt_size},
             $next->{name},
@@ -324,6 +353,29 @@ sub sanity_check_sections
     }
 
   die "Fatal" if $error;
+}
+
+sub _resolve_section_name
+{
+  my ($self, $section) = @_;
+
+  # Reference format: '/' + ASCII decimal offset in string table
+  if (substr($section->{name}, 0, 1) eq "/")
+    {
+      my $str_offset = substr($section->{name}, 1);
+      $str_offset =~ s/\0*$//;
+
+      my $offset = int($str_offset);
+
+      my $str = substr($self->{coff_string_table}, $offset);
+      $str =~ s/\0.*$//;
+
+      return '<broken string table reference>' unless $str;
+
+      return $str;
+    }
+
+  return $section->{name};
 }
 
 sub _find_section_by_vaddr
@@ -429,7 +481,7 @@ sub objcpy_finalize
         {
           printf STDERR "WARNING[%s]: Adjusting VirtualAddress of PE section '%s' behind module data.",
             __PACKAGE__,
-            $section->{name};
+            $self->_resolve_section_name($section);
 
           # Probably debug information not required for runtime, so we take
           # the risk of adjusting the VirtualAddress
