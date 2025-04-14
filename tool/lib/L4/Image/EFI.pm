@@ -429,9 +429,9 @@ sub objcpy_finalize
     }
 
   ## Write PE header
-  # As per specification this should be zero
-  $self->{pe_header}{ptr_symbol_table} = 0;
-  $self->{pe_header}{num_symbols} = 0;
+  # Adjust offset of symbol_table if necessary
+  $self->{pe_header}{ptr_symbol_table} += $addr_delta
+    if $self->{pe_header}{ptr_symbol_table} > $module_section->{raw_addr};
 
   filepos_set($ofd, $self->{mz_header}{pe_offset});
   $self->{pe_header}->write($ofd);
