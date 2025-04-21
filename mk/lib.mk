@@ -113,8 +113,8 @@ endif
 endif
 
 ifeq ($(NOTARGETSTOINSTALL),)
-PC_LIBS     ?= $(sort $(patsubst lib%.so,-l%,$(TARGET_SHARED) \
-                      $(patsubst lib%.a,-l%,$(TARGET_STANDARD))))
+PC_LIBS     ?= $(sort $(patsubst lib%.so,-l%,$(TARGET_SHARED)) \
+                      $(patsubst lib%.a,-l%,$(TARGET_STANDARD)))
 
 PC_FILENAME  ?= $(PKGNAME)
 PC_FILENAMES ?= $(PC_FILENAME)
