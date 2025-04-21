@@ -458,23 +458,20 @@ sub vaddr_to_file_offset
   return undef;
 }
 
-# Start to copy this ELF file to a new one, giving the user the possibility to
+# Copy this ELF file to a new one, giving the user the possibility to
 # replace the content of a section.
 #
-# Parameters: $until_vaddr: Virtual address of section to replace
+# Parameters: $section_vaddr: Virtual address of section to replace
 #             $ofn: Name of output file
-# Returns: file handle of output file
+#             $write_cb: Callback that writes new section content to file
+#                        Must be called with output fd as parameter
 #
-# The $ofn file is opened for writing and reading. All sections before the
-# given $until_vaddr virtual address are copied already. The $until_vaddr
-# address must match the beginning of a section exactly. The returned handle
-# can be used to write the new content of that section and then call
-# objcpy_finalize() to copy the remaining sections.
-sub objcpy_start
+sub write_image
 {
   my $self = shift;
-  my $until_vaddr = shift;
+  my $section_vaddr = shift;
   my $ofn = shift;
+  my $write_cb = shift;
 
   # Search for section matching the given virtual address. It is expected that
   # a whole section is replaced!
@@ -483,7 +480,7 @@ sub objcpy_start
   my $size;
   foreach (@{$self->{'shdr'}})
     {
-      if ($_->{'vaddr'} == $until_vaddr) {
+      if ($_->{'vaddr'} == $section_vaddr) {
         $offset = $_->{'offset'};
         $size = $_->{'filesz'};
       }
@@ -494,10 +491,7 @@ sub objcpy_start
   binmode $ofd;
 
   my $ifd = $self->{'fd'};
-  $self->{'ofd'} = $ofd;
-  $self->{'upd_vaddr'} = $until_vaddr;
-  $self->{'upd_file_start'} = $offset;
-  $self->{'upd_file_end'} = $offset + $size;
+  my $upd_file_end = $offset + $size;
 
   # copy initial part
   my $buf;
@@ -505,33 +499,21 @@ sub objcpy_start
   check_sysread(sysread($ifd, $buf, $offset), $offset);
   check_syswrite(syswrite($ofd, $buf), length($buf));
 
-  return $ofd;
-}
-
-# Finish copying of ELF file.
-#
-# The user is expected to have written the new data of the section he wanted to
-# replace. This method will copy the remaining sections and fix the ELF headers
-# to match the new layout.
-sub objcpy_finalize
-{
-  my $self = shift;
-  my $ifd = $self->{'fd'};
-  my $ofd = $self->{'ofd'};
+  # Write module data
+  $write_cb->($ofd);
 
   # Determine new size of patched section
-  my $offset = checked_sysseek($ofd, 0, 2) - $self->{'upd_file_end'};
+  my $delta_size = checked_sysseek($ofd, 0, 2) - $upd_file_end;
 
   # Copy remaining sections and headers
-  my $buf;
-  filepos_set($ifd, $self->{'upd_file_end'});
+  filepos_set($ifd, $upd_file_end);
   my $r = sysread($ifd, $buf, 0x7fffffff);
   die "Read failed: $!" unless defined $r;
   check_syswrite(syswrite($ofd, $buf), length($buf));
 
   # Fix headers. The Elf object will take ownership of the file handle.
   my $out_elf = L4::Image::Elf->new_fd($ofd);
-  $out_elf->patch($self->{'upd_file_start'}, $offset);
+  $out_elf->patch($offset, $delta_size);
   $out_elf->dispose();
 }
 

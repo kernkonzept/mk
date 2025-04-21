@@ -601,51 +601,56 @@ sub process_image
       $ofn = $opts->{outimagefile} if defined $opts->{outimagefile};
       my $tmp_ofn = $ofn . ".tmp";
 
-      my $ofd = $img->objcpy_start($_module_data_start, $tmp_ofn);
-      my $module_start_pos = filepos_get($ofd);
-      my %offsets = export_modules($ofd, %d);
-      my $module_end_pos = filepos_get($ofd);
+      my $ofd = $img->write_image(
+        $_module_data_start,
+        $tmp_ofn,
+        sub {
+          my $ofd = shift;
 
-      write_image_info($ofd, $image_info_file_pos,
-                       $_module_data_start - $_start,  %offsets);
+          my $module_start_pos = filepos_get($ofd);
+          my %offsets = export_modules($ofd, %d);
+          my $module_end_pos = filepos_get($ofd);
 
-      # Update optional pointer to _module_data_end
-      if (($d{arch} eq 'arm' or $d{arch} eq 'arm64')
-          and $bin_addr_end_bin)
-        {
-          my $_module_data_end = $_module_data_start + $module_end_pos -
-                                 $module_start_pos;
-          filepos_set($ofd, $img->vaddr_to_file_offset($bin_addr_end_bin));
-          check_syswrite(syswrite($ofd, pack("Q<", $_module_data_end)), 8);
+          write_image_info($ofd, $image_info_file_pos,
+                           $_module_data_start - $_start,  %offsets);
 
-          if ($d{arch} eq 'arm')
+          # Update optional pointer to _module_data_end
+          if (($d{arch} eq 'arm' or $d{arch} eq 'arm64')
+              and $bin_addr_end_bin)
             {
-              filepos_set($ofd, 0);
-              check_sysread(sysread($ofd, $buf, 14 * 4), 14 * 4);
+              my $_module_data_end = $_module_data_start + $module_end_pos -
+                                      $module_start_pos;
+              filepos_set($ofd, $img->vaddr_to_file_offset($bin_addr_end_bin));
+              check_syswrite(syswrite($ofd, pack("Q<", $_module_data_end)), 8);
 
-              my ($nop0, $nop1, $nop2, $nop3, $nop4, $nop5, $nop6, $nop7,
-                  $b_insn, $magic1, $start, $end, $magic2, $magic3)
-               = unpack("(L14)<", substr($buf, 0, 14 * 4));
-
-              if (   $nop0 == $nop1
-                  && $nop0 == $nop2
-                  && $nop0 == $nop3
-                  && $nop0 == $nop4
-                  && $nop0 == $nop5
-                  && $nop0 == $nop6
-                  && $nop0 == $nop7
-                  && $magic1 == 0x016f2818
-                  && $magic2 == 0x04030201
-                  && $magic3 == 0x45454545)
+              if ($d{arch} eq 'arm')
                 {
-                  # Found vmlinuz signature, patch end of binary
-                  filepos_set($ofd, 11 * 4);
-                  check_syswrite(syswrite($ofd, pack("L<", $bin_addr_end_bin), 4), 4);
+                  filepos_set($ofd, 0);
+                  check_sysread(sysread($ofd, $buf, 14 * 4), 14 * 4);
+
+                  my ($nop0, $nop1, $nop2, $nop3, $nop4, $nop5, $nop6, $nop7,
+                      $b_insn, $magic1, $start, $end, $magic2, $magic3)
+                  = unpack("(L14)<", substr($buf, 0, 14 * 4));
+
+                  if (   $nop0 == $nop1
+                      && $nop0 == $nop2
+                      && $nop0 == $nop3
+                      && $nop0 == $nop4
+                      && $nop0 == $nop5
+                      && $nop0 == $nop6
+                      && $nop0 == $nop7
+                      && $magic1 == 0x016f2818
+                      && $magic2 == 0x04030201
+                      && $magic3 == 0x45454545)
+                      {
+                      # Found vmlinuz signature, patch end of binary
+                      filepos_set($ofd, 11 * 4);
+                      check_syswrite(syswrite($ofd, pack("L<", $bin_addr_end_bin), 4), 4);
+                    }
                 }
             }
-        }
+        });
 
-      $img->objcpy_finalize();
       $img->dispose();
       if (exists $img->{'wrapper-img'})
         {
@@ -653,19 +658,26 @@ sub process_image
           my $tmp_ofn_outer = $tmp_ofn . ".outer";
           my $outer = $img->{'wrapper-img'};
           printf "Patching from outer vaddr: 0x%x\n", $outer->{'inner-vaddr'} if 0;
-          my $outer_fd = $outer->objcpy_start($outer->{'inner-vaddr'}, $tmp_ofn_outer);
 
-          open(my $inner_fd, $tmp_ofn) || die "Cannot open $tmp_ofn for reading: $!";
-          unlink $tmp_ofn;
+          $outer->write_image(
+            $outer->{'inner-vaddr'},
+            $tmp_ofn_outer,
+            sub {
+              my $outer_fd = shift;
 
-          binmode $inner_fd;
-          my $len;
-          while ($len = sysread($inner_fd, my $buf, 4096))
-            {
-              syswrite($outer_fd, $buf, $len);
+              open(my $inner_fd, $tmp_ofn) || die "Cannot open $tmp_ofn for reading: $!";
+              unlink $tmp_ofn;
+
+              binmode $inner_fd;
+              my $len;
+              while ($len = sysread($inner_fd, my $buf, 4096))
+                {
+                  syswrite($outer_fd, $buf, $len);
+                }
+              unlink $inner_fd;
             }
+          );
 
-          $outer->objcpy_finalize();
           $outer->dispose();
           rename($tmp_ofn_outer, $ofn) || error("Could not rename output file!");
         }

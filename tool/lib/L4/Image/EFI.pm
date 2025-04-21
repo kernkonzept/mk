@@ -404,11 +404,12 @@ sub vaddr_to_file_offset
   return $vaddr - $section->{virt_addr} + $section->{raw_addr};
 }
 
-sub objcpy_start
+sub write_image
 {
   my $self = shift;
-  my $until_vaddr = shift;
+  my $vaddr = shift;
   my $ofn = shift;
+  my $write_cb = shift;
   my $ifd = $self->{fd};
 
   open(my $ofd, "+>$ofn") || error("Could not open '$ofn': $!");
@@ -416,8 +417,8 @@ sub objcpy_start
   $self->{ofd} = $ofd;
 
   # Find module section and file offset of vaddr
-  my $module_section = $self->_find_section_by_vaddr($until_vaddr);
-  my $offset = $until_vaddr - $module_section->{virt_addr} + $module_section->{raw_addr};
+  my $module_section = $self->_find_section_by_vaddr($vaddr);
+  my $offset = $vaddr - $module_section->{virt_addr} + $module_section->{raw_addr};
   $self->{_module_section} = $module_section;
 
   # just copy everything until vaddr first, alter header later
@@ -426,18 +427,9 @@ sub objcpy_start
   check_sysread(sysread($ifd, $buf, $offset), $offset);
   check_syswrite(syswrite($ofd, $buf), length($buf));
 
-  return $ofd;
-}
+  # Write module data
+  $write_cb->($ofd);
 
-sub objcpy_finalize
-{
-  my $self = shift;
-  my $ofd = $self->{ofd};
-  my $ifd = $self->{fd};
-
-  my $buf;
-
-  my $module_section = $self->{_module_section};
   my $end_of_modules = checked_sysseek($ofd,0,2);
 
   # Calculate new section size of current section

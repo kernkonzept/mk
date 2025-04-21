@@ -42,18 +42,18 @@ sub vaddr_to_file_offset
   return $vaddr - $self->{'start_of_binary'};
 }
 
-sub objcpy_start
+sub write_image
 {
   my $self = shift;
-  my $until_vaddr = shift;
+  my $vaddr = shift;
   my $ofn = shift;
+  my $write_cb = shift;
 
-  my $offset = $self->vaddr_to_file_offset($until_vaddr);
+  my $offset = $self->vaddr_to_file_offset($vaddr);
   open(my $ofd, "+>$ofn") || error("Could not open '$ofn': $!");
   binmode $ofd;
 
   my $ifd = $self->{'fd'};
-  $self->{'ofd'} = $ofd;
 
   # copy initial part
   my $buf;
@@ -61,13 +61,10 @@ sub objcpy_start
   check_sysread(sysread($ifd, $buf, $offset), $offset);
   check_syswrite(syswrite($ofd, $buf), length($buf));
 
-  return $ofd;
-}
+  # write module data
+  $write_cb->($ofd);
 
-sub objcpy_finalize
-{
-  my $self = shift;
-  close($self->{'ofd'});
+  close($ofd);
 }
 
 1;

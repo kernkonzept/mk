@@ -21,8 +21,7 @@ use constant {
 
 sub uimage_header_update
 {
-  my $self = shift;
-  my $fd = $self->{'ofd'};
+  my ($self, $fd) = @_;
   my $buf;
 
   filepos_set($fd, 0);
@@ -122,18 +121,18 @@ sub vaddr_to_file_offset
   return $vaddr - $self->{'start_of_binary'} + UIMAGE_HEADER_SIZE;
 }
 
-sub objcpy_start
+sub write_image
 {
   my $self = shift;
   my $until_vaddr = shift;
   my $ofn = shift;
+  my $write_cb = shift;
 
   my $offset = $self->vaddr_to_file_offset($until_vaddr);
   open(my $ofd, "+>$ofn") || error("Could not open '$ofn': $!");
   binmode $ofd;
 
   my $ifd = $self->{'fd'};
-  $self->{'ofd'} = $ofd;
 
   # copy initial part
   my $buf;
@@ -141,15 +140,11 @@ sub objcpy_start
   check_sysread(sysread($ifd, $buf, $offset), $offset);
   check_syswrite(syswrite($ofd, $buf), length($buf));
 
-  return $ofd;
-}
+  # Write new module data
+  $write_cb->($ofd);
 
-sub objcpy_finalize
-{
-  my $self = shift;
-
-  $self->uimage_header_update();
-  close($self->{'ofd'});
+  $self->uimage_header_update($ofd);
+  close($ofd);
 }
 
 1;
