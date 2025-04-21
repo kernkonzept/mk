@@ -203,6 +203,8 @@ sub update_module
   my $m_name = shift;
   my $m_type = shift;
   my $m_cmdline = shift;
+  my $cross_compile_prefix = $ENV{CROSS_COMPILE} || '';
+  my $prog_objcopy         = $ENV{OBJCOPY} || "${cross_compile_prefix}objcopy";
 
   return "File '$m_file' does not exist" unless -e $m_file;
 
@@ -231,8 +233,39 @@ sub update_module
   $md5->addfile($ff);
   close $ff;
   $d->{md5sum_uncompr} = $md5->hexdigest;
-  $d->{size_uncompressed} = -s $m_file;
+  $d->{size_orig} = -s $m_file;
 
+  unless (exists $m_opts->{nostrip})
+    {
+      open(my $fd, '<:raw', "$m_file") || die("Could not open '$m_file': $!");
+
+      my $buf;
+      my $r = sysread($fd, $buf, 0x3c);
+      die "Unable to read $m_file: $!" if !defined $r;
+      close($fd);
+
+      if ($r == 0x3c && substr($buf, 0x38, 4) eq "\x41\x52\x4d\x64")
+        {
+          # Linux AARCH64 kernel image. 'objcopy -S' would remove the AArch64
+          # header. The resulting PE image format isn't supported by Uvmm.
+          $m_opts->{nostrip} = 1;
+        }
+      else
+        {
+          my ($tfh, $tfilename) = tempfile(UNLINK => 1);
+          system("$prog_objcopy -S $m_file $tfilename 2> /dev/null");
+          if ($? == 0)
+            {
+              $d->{size_stripped} = -s "$tfilename";
+              undef $d->{size_stripped} if $d->{size_orig} == $d->{size_stripped};
+
+              $m_file = $tfilename;
+              $d->{filepath} = $m_file;
+            }
+        }
+    }
+
+  $d->{size_uncompressed} = -s $m_file;
   if (exists $m_opts->{compress} and ($m_opts->{compress} // "gz") ne "none")
     {
       return "Unknown compression method: " . ($m_opts->{compress} // "gz")

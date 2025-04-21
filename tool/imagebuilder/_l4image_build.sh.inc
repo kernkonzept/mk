@@ -13,12 +13,14 @@ MAKECONF="${OBJ_BASE}/source/tool/bin/makeconf"
 # Sets MAKECONF_{ARCH|CPU|...}
 source <("$MAKECONF" "$OBJ_BASE" \
                      ARCH CPU \
+                     OBJCOPY \
                      QEMU_PATH QEMU_OPTIONS \
                      MODULE_SEARCH_PATH BUILDDIR_SEARCHPATH)
 
 # Detect selected system
 : ${ARCH:=${MAKECONF_ARCH}}
 : ${CPU:=${MAKECONF_CPU}}
+: ${OBJCOPY:=${MAKECONF_OBJCOPY}}; export OBJCOPY
 L4_SYSTEM="${ARCH}_${CPU}"
 
 # Select base image and target image

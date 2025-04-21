@@ -431,7 +431,6 @@ sub create_image
                                                         $search_path);
         }
 
-      $info{size_orig} = -s $info{path};
       $info{modname} = sprintf "mod%02d", $idx++;
 
       # This is a hard override. Alt: =// only overrides if not explicitly set
@@ -454,8 +453,9 @@ sub create_image
       error($filled_mod{error}) if $filled_mod{error};
       push @{${$d}{mods}}, \%filled_mod;
 
-      #TODO: Stripping not implemented in l4image
       $info{size_stripped} = $filled_mod{size_stripped};
+      $info{size_orig} = $filled_mod{size_orig};
+      $info{nostrip} = 1 if exists $mod->{opts}{nostrip};
       $info{size_compressed} = $filled_mod{size} if $compr ne "none";
       $output_formatter{module}->(%info) if $verbose;
     }
