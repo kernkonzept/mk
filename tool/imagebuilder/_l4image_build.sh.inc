@@ -45,7 +45,7 @@ mkdir -p "$(dirname "$TARGET_IMAGE")"
 L4IMAGE_SEARCHPATH="${MODULE_SEARCH_PATH}:${SEARCHPATH}:${MAKECONF_MODULE_SEARCH_PATH}:${MAKECONF_BUILDDIR_SEARCHPATH}"
 
 # Create a new image
-$L4IMAGE -i "$BASE_IMAGE" -o "$TARGET_IMAGE" create \
+$L4IMAGE -i "$BASE_IMAGE" -o "$TARGET_IMAGE" --verbose create \
      --entry "${ENTRY}" \
      --modules-list-file "${MODULES_LIST}" \
      --search-path "$L4IMAGE_SEARCHPATH" \

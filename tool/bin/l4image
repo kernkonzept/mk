@@ -337,6 +337,41 @@ sub op_cat
   error("Unable to run 'cat' command on file") if $?;
 }
 
+sub round_kb($)
+{
+  return ($_[0] + 1023) / 1024;
+}
+
+sub default_mod_merge_text(%)
+{
+  my %d = @_;
+  my $size_str = '';
+
+  $size_str .= sprintf " =s> %dkB", round_kb($d{size_stripped})
+    if $d{size_stripped};
+  $size_str .= sprintf " =c> %dkB", round_kb($d{size_compressed})
+    if $d{size_compressed};
+  my $nostrip_str = $d{nostrip} ? " (not stripped)" : "";
+
+  print "$d{modname}: $d{path} ",
+        "[".int(round_kb($d{size_orig}))."kB$size_str]$nostrip_str\n";
+}
+
+sub default_output_begin
+{
+  my %entry = @_;
+  print "Merging images:\n" if exists $entry{mods};
+}
+
+sub default_output_end
+{}
+
+my %output_formatter = (
+  begin  => \&default_output_begin,
+  module => \&default_mod_merge_text,
+  end    => \&default_output_end,
+);
+
 sub create_image
 {
   my $d = shift;
@@ -360,11 +395,25 @@ sub create_image
   my $tmpdir;
 
   $d->{mods} = [];
+
+  if ($ENV{L4IMAGE_CREATE_OUTPUT_FORMATTER})
+    {
+      my $f = $ENV{L4IMAGE_CREATE_OUTPUT_FORMATTER};
+      die "No such file '$f'" unless -e $f;
+      my $n = do $f;
+      die "Error: $@" if $@;
+      die "Could not do file '$f': $!" unless defined $n;
+      my %n = %$n;
+      $output_formatter{$_} = $n{$_} foreach (keys %n);
+    }
+
+  $output_formatter{begin}->(%entry) if $verbose;
+  my $idx = 0;
   foreach my $mod (@{$entry{mods}})
     {
       L4::ModList::fetch_remote_file($mod->{file});
 
-      my $f;
+      my %info;
       if (exists($mod->{opts}{uncompress}))
         {
           printf("Warning: Will compress entry with uncompress flag!")
@@ -372,19 +421,18 @@ sub create_image
 
           $tmpdir = tempdir('XXXXXXXX', CLEANUP => 1, TMPDIR => 1)
             unless defined $tmpdir;
-          $f = L4::ModList::get_file_uncompressed_or_die(
-            $mod->{file},
-            $search_path,
-            $tmpdir
-          );
+          $info{path} = L4::ModList::get_file_uncompressed_or_die($mod->{file},
+                                                                  $search_path,
+                                                                  $tmpdir);
         }
       else
         {
-          $f = L4::ModList::search_file_or_die(
-            $mod->{file},
-            $search_path
-          );
+          $info{path} = L4::ModList::search_file_or_die($mod->{file},
+                                                        $search_path);
         }
+
+      $info{size_orig} = -s $info{path};
+      $info{modname} = sprintf "mod%02d", $idx++;
 
       # This is a hard override. Alt: =// only overrides if not explicitly set
       $mod->{opts}{compress} = $compress_all if defined $compress_all;
@@ -396,7 +444,7 @@ sub create_image
 
 
       my %filled_mod = L4::Image::fill_module(
-        $f,
+        $info{path},
         $mod->{opts},
         $mod->{command},
         $mod->{type},
@@ -405,7 +453,14 @@ sub create_image
 
       error($filled_mod{error}) if $filled_mod{error};
       push @{${$d}{mods}}, \%filled_mod;
+
+      #TODO: Stripping not implemented in l4image
+      $info{size_stripped} = $filled_mod{size_stripped};
+      $info{size_compressed} = $filled_mod{size} if $compr ne "none";
+      $output_formatter{module}->(%info) if $verbose;
     }
+
+  $output_formatter{end}->() if $verbose;
 
   ${$d}{num_mods} = scalar @{${$d}{mods}};
   ${$d}{mbi_cmdline} = $entry{bootstrap}{cmdline};
