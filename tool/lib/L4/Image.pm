@@ -613,13 +613,14 @@ sub process_image
           my $outer_fd = $outer->objcpy_start($outer->{'inner-vaddr'}, $tmp_ofn_outer);
 
           open(my $inner_fd, $tmp_ofn) || die "Cannot open $tmp_ofn for reading: $!";
+          unlink $tmp_ofn;
+
           binmode $inner_fd;
           my $len;
           while ($len = sysread($inner_fd, my $buf, 4096))
             {
               syswrite($outer_fd, $buf, $len);
             }
-          unlink $inner_fd;
 
           $outer->objcpy_finalize();
           $outer->dispose();
