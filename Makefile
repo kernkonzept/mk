@@ -53,7 +53,10 @@ all::
 DROPSCONF               = y
 TEMPLDIR	       := mk/defconfig
 DFL_TEMPLATE           := amd64
+$(if $(filter-out undefined,$(origin DROPSCONF_DEFCONFIG)), \
+     $(info Please do not use DROPSCONF_DEFCONFIG anymore, use DEFCONFIG instead))
 DROPSCONF_DEFCONFIG    ?= $(TEMPLDIR)/config.$(DFL_TEMPLATE)
+DEFCONFIG              ?= $(DROPSCONF_CONFIG)
 KCONFIG_FILE            = $(OBJ_BASE)/Kconfig.generated
 KCONFIG_FILE_DEPS       = $(OBJ_BASE)/.Kconfig.generated.d
 KCONFIG_FILE_SRC        = $(L4DIR)/mk/Kconfig
@@ -142,11 +145,11 @@ ifneq ($(strip $(BUILDDIR_TO_CREATE)),)
 
 # Use custom default configuration file if T is specified
 ifneq ($(T),)
-  DROPSCONF_DEFCONFIG_CANDIDATE=$(TEMPLDIR)/config.$(T)
-  ifneq ($(wildcard $(DROPSCONF_DEFCONFIG_CANDIDATE)),)
-    DROPSCONF_DEFCONFIG=$(DROPSCONF_DEFCONFIG_CANDIDATE)
+  DEFCONFIG_CANDIDATE=$(TEMPLDIR)/config.$(T)
+  ifneq ($(wildcard $(DEFCONFIG_CANDIDATE)),)
+    DEFCONFIG=$(DEFCONFIG_CANDIDATE)
   else
-    $(error ERROR: Default configuration file $(DROPSCONF_DEFCONFIG_CANDIDATE) (derived from T=$(T)) not found)
+    $(error ERROR: Default configuration file $(DEFCONFIG_CANDIDATE) (derived from T=$(T)) not found)
   endif
 endif
 
@@ -157,10 +160,10 @@ all::
 	   exit 1;                             \
 	fi
 	@mkdir -p $(BUILDDIR_TO_CREATE)
-	@cp $(DROPSCONF_DEFCONFIG) $(BUILDDIR_TO_CREATE)/.kconfig
+	@cp $(DEFCONFIG) $(BUILDDIR_TO_CREATE)/.kconfig
 	@echo CONFIG_PLATFORM_TYPE_$(PT)=y >> $(BUILDDIR_TO_CREATE)/.kconfig
-ifneq ($(DROPSCONF_DEFCONFIG_OVERLAY),)
-	@cat $(DROPSCONF_DEFCONFIG_OVERLAY) >> $(BUILDDIR_TO_CREATE)/.kconfig
+ifneq ($(DEFCONFIG_OVERLAY),)
+	@cat $(DEFCONFIG_OVERLAY) >> $(BUILDDIR_TO_CREATE)/.kconfig
 endif
 	@$(MAKE) B= BUILDDIR_TO_CREATE= O=$(BUILDDIR_TO_CREATE) olddefconfig \
 	  || ( $(RM) -r $(BUILDDIR_TO_CREATE) ; exit 1 )
