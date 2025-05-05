@@ -77,7 +77,13 @@ MAKECONFS_ADD    = $(call strip_quotes,$(CONFIG_MAKECONFS_ADD))
 CARCHFLAGS       = $(CARCHFLAGS_$(ARCH)) $(CARCHFLAGS_$(ARCH)_$(CPU))
 CCXX_FLAGS       = $(CCXX_FLAGS_$(BUILD_ARCH))
 
-dv               = $(if $(filter-out default undefined,$(origin $(1))),$(1)-default,$(1))
+error_on_env_vars = $(if $(filter environment,$(origin $1)), \
+                         $(error '$1' specified in environment. \
+                         Please use a Makeconf.local file for \
+                         specifying tool overrides explicitly))
+
+dv               = $(call error_on_env_vars,$1)$\
+                   $(if $(filter-out default undefined,$(origin $(1))),$(1)-default,$(1))
 
 $(call dv,AR)	 = $(CROSS_COMPILE)ar
 $(call dv,AS)	 = $(CROSS_COMPILE)as
