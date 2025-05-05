@@ -678,11 +678,16 @@ shellcodeentry:
 	 SHELLCODE="$(SHELLCODE)" $(common_envvars) $(tool_envvars)       \
 	  $(L4DIR)/tool/bin/shell-entry $$ml "$$e"
 
+IMAGE_NR_FILE=$(OBJ_BASE)/.image_nr
+increment_image_nr = $(shell nr=$$(($$(cat $(IMAGE_NR_FILE) 2>/dev/null) + 1)); \
+                             echo $${nr}; echo $${nr} >$(IMAGE_NR_FILE))
+
 define imagebuilder_goal
 $1:
 	$(if $(CHECK_FOR_ARCH_$1),$$(call check_for_arch,$(CHECK_FOR_ARCH_$1))) \
 	+$$(VERBOSE)$$(entryselection);                       \
 	$$(MKDIR) $$(IMAGES_DIR);                             \
+	L4IMAGE_EXTRA_OPTS="--set-attr l4i:sequence $$(call increment_image_nr)" \
 	MODULES_LIST=$$$$ml ENTRY=$$$$e E= $$(common_envvars) $$(tool_envvars) \
 	    $(if $(2),,TARGET_IMAGE=$(strip $(call TARGET_IMAGE,$1,$$$$e))) \
 		$$(L4DIR)/tool/imagebuilder/$1 && \

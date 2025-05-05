@@ -51,7 +51,8 @@ $L4IMAGE -i "$BASE_IMAGE" -o "$TARGET_IMAGE" --verbose create \
      --entry "${ENTRY}" \
      --modules-list-file "${MODULES_LIST}" \
      --search-path "$L4IMAGE_SEARCHPATH" \
-     --set-attr "l4i:QEMUcmd" "${MAKECONF_QEMU_PATH} ${MAKECONF_QEMU_OPTIONS} -kernel \$L4IMAGE_FILE"
+     --set-attr "l4i:QEMUcmd" "${MAKECONF_QEMU_PATH} ${MAKECONF_QEMU_OPTIONS} -kernel \$L4IMAGE_FILE" \
+     ${L4IMAGE_EXTRA_OPTS}
 ret=$?
 
 if [[ $ret -eq 0 ]] ; then
