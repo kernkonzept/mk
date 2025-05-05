@@ -206,4 +206,4 @@ module ipcbench_server
 module ipcbench_parallel
 module syscallbench
 module syscallbench_parallel
-module ../pkg/ipcbench/conf/ipcbench.cfg
+module ned/ipcbench/ipcbench.cfg
