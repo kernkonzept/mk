@@ -56,7 +56,7 @@ DFL_TEMPLATE           := amd64
 $(if $(filter-out undefined,$(origin DROPSCONF_DEFCONFIG)), \
      $(info Please do not use DROPSCONF_DEFCONFIG anymore, use DEFCONFIG instead))
 DROPSCONF_DEFCONFIG    ?= $(TEMPLDIR)/config.$(DFL_TEMPLATE)
-DEFCONFIG              ?= $(DROPSCONF_CONFIG)
+DEFCONFIG              ?= $(DROPSCONF_DEFCONFIG)
 KCONFIG_FILE            = $(OBJ_BASE)/Kconfig.generated
 KCONFIG_FILE_DEPS       = $(OBJ_BASE)/.Kconfig.generated.d
 KCONFIG_FILE_SRC        = $(L4DIR)/mk/Kconfig
