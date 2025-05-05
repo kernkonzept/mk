@@ -9,7 +9,7 @@ if [[ -z "${ARCH}" ]]; then
     ARCH=${MAKECONF_ARCH}
 fi
 
-if [[ "${ARCH}" == "amd64" || "${ARCH}" == "x86" ]] ; then
+if [[ ( "${ARCH}" == "amd64" || "${ARCH}" == "x86" ) && -z "${QEMU_IMAGE_TYPE}" ]] ; then
     source <("$MAKECONF" "$OBJ_BASE" QEMU_PATH QEMU_OPTIONS MODULE_SEARCH_PATH BUILDDIR_SEARCHPATH)
     export QEMU="$MAKECONF_QEMU_PATH"
     export QEMU_OPTIONS="$MAKECONF_QEMU_OPTIONS"
