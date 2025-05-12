@@ -195,6 +195,20 @@ sub fill_module
   return %d;
 }
 
+sub _md5_file
+{
+  my ($filename) = @_;
+
+  open(my $fd, '<:raw', $filename)
+   or die "Failed to calculate md5 sum of '$filename': $!";
+
+  my $md5 = Digest::MD5->new;
+  $md5->addfile($fd);
+  close $fd;
+
+  return $md5->hexdigest;
+}
+
 sub update_module
 {
   my $d = shift;
@@ -223,16 +237,6 @@ sub update_module
     }
   $d->{attrs} = \%attrs;
 
-  my $md5 = Digest::MD5->new;
-  my $ff;
-  if (!open($ff, $m_file))
-    {
-      return "Failed to open '$m_file': $!";
-    }
-  binmode $ff;
-  $md5->addfile($ff);
-  close $ff;
-  $d->{md5sum_uncompr} = $md5->hexdigest;
   $d->{size_orig} = -s $m_file;
 
   unless (exists $m_opts->{nostrip})
@@ -265,27 +269,25 @@ sub update_module
         }
     }
 
+  $d->{md5sum_uncompr} = _md5_file($m_file);
+
   $d->{size_uncompressed} = -s $m_file;
   if (exists $m_opts->{compress} and ($m_opts->{compress} // "gz") ne "none")
     {
       return "Unknown compression method: " . ($m_opts->{compress} // "gz")
         if ($m_opts->{compress} // "gz") ne "gz";
-      $md5->reset();
       my ($tfh, $tfilename) = tempfile(UNLINK => 1);
       gzip ${m_file} => $tfilename
         or return "Compression failed: $GzipError\n";
       $d->{filepath} = $tfilename;
 
-      if (!open($ff, $m_file))
-        {
-          return "Failed to open '$m_file': $!";
-        }
-      binmode $ff;
-      $md5->addfile($ff);
-      close $ff;
+      $d->{md5sum_compr} = _md5_file($m_file);
+    }
+  else
+    {
+      $d->{md5sum_compr} = $d->{md5sum_uncompr};
     }
 
-  $d->{md5sum_compr}   = $md5->hexdigest;
   $d->{size} = -s $d->{filepath};
 
   return undef;
