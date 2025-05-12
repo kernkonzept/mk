@@ -644,7 +644,9 @@ IMAGE_SUFFIX_elfimage = elf
 IMAGE_SUFFIX_rawimage = raw
 IMAGE_SUFFIX = $(or $(IMAGE_SUFFIX_$1),$1)
 
-TARGET_IMAGE = $(or $(BOOTSTRAP_OUTPUT_DIR),$(IMAGES_DIR))/bootstrap$(if $2,_$2).$(call IMAGE_SUFFIX,$1)
+IMAGE_BASENAME ?= bootstrap
+BOOTSTRAP_OUTPUT_DIR ?= $(IMAGES_DIR)
+TARGET_IMAGE = $(BOOTSTRAP_OUTPUT_DIR)/$(IMAGE_BASENAME)$(if $2,_$2).$(call IMAGE_SUFFIX,$1)
 
 QEMU_KERNEL_TYPE          ?= elfimage
 QEMU_KERNEL_FILE          ?= $(or $(QEMU_KERNEL_FILE-$(QEMU_KERNEL_TYPE)) \
@@ -682,6 +684,10 @@ IMAGE_NR_FILE=$(OBJ_BASE)/.image_nr
 increment_image_nr = $(shell nr=$$(($$(cat $(IMAGE_NR_FILE) 2>/dev/null) + 1)); \
                              echo $${nr}; echo $${nr} >$(IMAGE_NR_FILE))
 
+define link_unless_same
+  $(if $(filter $(abspath $1),$(abspath $2)),true,ln -snf $(notdir $1) $2)
+endef
+
 define imagebuilder_goal
 $1:
 	$(if $(CHECK_FOR_ARCH_$1),$$(call check_for_arch,$(CHECK_FOR_ARCH_$1))) \
@@ -691,7 +697,8 @@ $1:
 	MODULES_LIST=$$$$ml ENTRY=$$$$e E= $$(common_envvars) $$(tool_envvars) \
 	    $(if $(2),,TARGET_IMAGE=$(strip $(call TARGET_IMAGE,$1,$$$$e))) \
 		$$(L4DIR)/tool/imagebuilder/$1 && \
-	$(if $(2),true,ln -snf $(notdir $(call TARGET_IMAGE,$1,$$$$e)) $(call TARGET_IMAGE,$1))
+	$(if $(2),true,$(call link_unless_same,$(call TARGET_IMAGE,$1,$$$$e),\
+	                                       $(call TARGET_IMAGE,$1)))
 endef
 
 # touches images dir
