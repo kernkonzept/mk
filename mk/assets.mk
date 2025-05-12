@@ -59,6 +59,7 @@ $(call register_asset_targets,dtb,$(TARGET_DTB))
 $(call install_assets,modlist/$(PKGNAME),$(SRC_ASSETS_MODLIST))
 $(call install_assets,ned/$(PKGNAME),$(SRC_ASSETS_NED))
 $(call install_assets,io/,$(SRC_ASSETS_IO))
+$(call install_assets,misc/$(PKGNAME),$(SRC_ASSETS_MISC))
 
 include $(L4DIR)/mk/install.inc
 
