@@ -39,6 +39,11 @@
 # DROPSCONF_TOOL_TXT	- the configuration tool
 # DROPSCONF_TOOL_OLD	- helper for recreating the config header file
 
+MAKECONFIGGOALS := config menuconfig textconfig oldconfig olddefconfig xconfig \
+                   gconfig nconfig randconfig allyesconfig allnoconfig \
+                   savedefconfig txtconfig
+
+.PHONY: $(MAKECONFIGGOALS)
 
 KCONFIG_OBJ_DIR  = $(OBJ_BASE)/scripts/kconfig
 
@@ -101,9 +106,16 @@ oldconfig olddefconfig xconfig gconfig nconfig randconfig allyesconfig allnoconf
 	$(VERBOSE)+$(kconfig_call) $@ syncconfig
 	@$(MAKE) $(DROPSCONF_CONFIG_MK)
 
-$(DROPSCONF_CONFIG) syncconfig: $(DROPSCONF_CONFIG_DEPS) | $(DIRS_FOR_CONFIG)
+syncconfig: $(DROPSCONF_CONFIG_DEPS) | $(DIRS_FOR_CONFIG)
 	$(VERBOSE)+$(kconfig_call) syncconfig
-	
+
+$(DROPSCONF_CONFIG): $(DROPSCONF_CONFIG_DEPS) | $(DIRS_FOR_CONFIG)
+ifeq ($(filter $(MAKECONFIGGOALS),$(MAKECMDGOALS)),)
+	$(VERBOSE)+$(kconfig_call) syncconfig
+else
+	@true
+endif
+
 .PHONY: genfixdep
 # script_basic: only fixdep for now
 # config-build=1: Force doing config things and not Linux build system things
@@ -177,8 +189,7 @@ help::
 # special switch not to include DROPSCONF_CONFIG_MK
 ifeq ($(DROPSCONF_DONTINC_MK),)
 # do not prebuild the config file on "make config"
-ifeq ($(filter config oldconfig olddefconfig xconfig gconfig syncconfig
-               txtconfig help scrub clean cleanall mrproper \
+ifeq ($(filter $(MAKECONFIGGOALS) help scrub clean cleanall mrproper \
                $(DROPSCONF_CONFIG_MK),$(MAKECMDGOALS)),)
 $(info INCLUDING $(DROPSCONF_CONFIG_MK) config.inc)
 -include $(DROPSCONF_CONFIG_MK)
@@ -189,7 +200,3 @@ endif
 else
 config txtconfig oldconfig olddefconfig syncconfig::
 endif
-
-.PHONY: config oldconfig olddefconfig syncconfig txtconfig menuconfig \
-        xconfig gconfig nconfig randconfig allyesconfig allnoconfig \
-        savedefconfig
