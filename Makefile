@@ -853,7 +853,7 @@ $(CHECK_BASE_DIR)/config.%/.kconfig: $(TEMPLDIR)/config.% checkbuild_prepare.% M
 
 $(CHECK_BASE_DIR)/config.%/.config.all: $(CHECK_BASE_DIR)/config.%/.kconfig FORCE
 	rm -rf $(@D)/pc
-	$(MAKE) -j 1 O=$(@D) olddefconfig $(call BID_CHECKBUILD_LOG_REDIR_f, $*)
+	$(MAKE) O=$(@D) olddefconfig $(call BID_CHECKBUILD_LOG_REDIR_f, $*)
 
 checkbuild.%: $(CHECK_BASE_DIR)/config.%/.config.all $(CHECK_BASE_DIR)/config.%/.kconfig check_base_dir
 	$(MAKE) O=$(<D) BID_CHECKBUILD=1 report $(call BID_CHECKBUILD_LOG_REDIR_f, $*)
