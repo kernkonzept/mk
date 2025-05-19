@@ -849,7 +849,7 @@ checkbuild_prepare.%:
 $(CHECK_BASE_DIR)/config.%/.kconfig: $(TEMPLDIR)/config.% checkbuild_prepare.% Makefile
 	mkdir -p $(@D)
 	cp $< $@
-	tool/kconfig/scripts/config --file $@ -d BID_DEBUG_INFO
+	$(if $(CHECK_CI_BUILDCHECK),tool/kconfig/scripts/config --file $@ -d BID_DEBUG_INFO,:)
 
 $(CHECK_BASE_DIR)/config.%/.config.all: $(CHECK_BASE_DIR)/config.%/.kconfig FORCE
 	rm -rf $(@D)/pc
