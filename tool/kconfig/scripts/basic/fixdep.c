@@ -172,7 +172,7 @@ static void use_config(const char *m, int slen)
 		return;
 
 	/* Print out a dependency path from a symbol name. */
-	printf("    $(wildcard include/config/%.*s) \\\n", slen, m);
+	printf("    $(wildcard $(OBJ_BASE)/include/config/%.*s) \\\n", slen, m);
 }
 
 /* test if s ends in sub */
