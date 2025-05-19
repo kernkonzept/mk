@@ -93,17 +93,20 @@ $(DIRS_FOR_CONFIG):
 DROPSCONF_CONFIG_DEPS = $(KCONFIG_FILE) $(KCONFIG_FILE).defines
 
 menuconfig config: $(DROPSCONF_CONFIG_DEPS) | $(DIRS_FOR_CONFIG)
-	$(VERBOSE)+$(kconfig_call) menuconfig syncconfig
+	$(VERBOSE)+$(kconfig_call) menuconfig
+	$(VERBOSE)+$(kconfig_call) syncconfig
 	$(VERBOSE)test ! -r $(DROPSCONF_CONFIG) -o \
 		! $(DROPSCONF_CONFIG) -nt $(DROPSCONF_CONFIG_MK) || \
 		$(MAKE) $(DROPSCONF_CONFIG_MK)
 
 textconfig: $(DROPSCONF_CONFIG_DEPS) | $(DIRS_FOR_CONFIG)
-	$(VERBOSE)+$(kconfig_call) config syncconfig
+	$(VERBOSE)+$(kconfig_call) config
+	$(VERBOSE)+$(kconfig_call) syncconfig
 	@$(MAKE) $(DROPSCONF_CONFIG_MK)
 
 oldconfig olddefconfig xconfig gconfig nconfig randconfig allyesconfig allnoconfig savedefconfig: $(DROPSCONF_CONFIG_DEPS) | $(DIRS_FOR_CONFIG)
-	$(VERBOSE)+$(kconfig_call) $@ syncconfig
+	$(VERBOSE)+$(kconfig_call) $@
+	$(VERBOSE)+$(kconfig_call) syncconfig
 	@$(MAKE) $(DROPSCONF_CONFIG_MK)
 
 syncconfig: $(DROPSCONF_CONFIG_DEPS) | $(DIRS_FOR_CONFIG)
