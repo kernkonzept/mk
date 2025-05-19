@@ -844,9 +844,10 @@ BID_CHECKBUILD_LOG_REDIR_f = $(if $(BID_CHECKBUILD_LOG), 1>>$(BID_CHECKBUILD_LOG
 checkbuild_prepare.%:
 	$(if $(CHECK_INCREMENTAL),,rm -rf $(CHECK_BASE_DIR)/$(patsubst checkbuild_prepare.%,config.%,$@))
 
-$(CHECK_BASE_DIR)/config.%/.kconfig: $(TEMPLDIR)/config.% checkbuild_prepare.%
+$(CHECK_BASE_DIR)/config.%/.kconfig: $(TEMPLDIR)/config.% checkbuild_prepare.% Makefile
 	mkdir -p $(@D)
 	cp $< $@
+	tool/kconfig/scripts/config --file $@ -d BID_DEBUG_INFO
 
 $(CHECK_BASE_DIR)/config.%/.config.all: $(CHECK_BASE_DIR)/config.%/.kconfig FORCE
 	rm -rf $(@D)/pc
