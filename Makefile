@@ -20,6 +20,8 @@ CMDS_WITHOUT_OBJDIR := help checkbuild checkbuild.% check_build_tools
 CMDS_PROJECT_MK     := all clean cleanall install scrub cont doc help sysroot \
                        $(wildcard $(MAKECMDGOALS))
 
+export BID_GLOBAL_MAKE := y
+
 # Hack, see project.mk
 BID_DCOLON_TARGETS := all clean cleanall mrproper install scrub DROPSCONF_CONFIG_MK_POST_HOOK olddefconfig oldconfig config
 
