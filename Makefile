@@ -703,9 +703,9 @@ $1:
 	$$(MKDIR) $$(IMAGES_DIR);                             \
 	L4IMAGE_EXTRA_OPTS="--set-attr l4i:sequence $$(call increment_image_nr)" \
 	MODULES_LIST=$$$$ml ENTRY=$$$$e E= $$(common_envvars) $$(tool_envvars) \
-	    $(if $(2),,TARGET_IMAGE=$(strip $(call TARGET_IMAGE,$1,$$$$e))) \
+	    $(if $(2),,TARGET_IMAGE=$(strip $(call TARGET_IMAGE,$1,$$$${e}))) \
 		$$(L4DIR)/tool/imagebuilder/$1 && \
-	$(if $(2),true,$(call link_unless_same,$(call TARGET_IMAGE,$1,$$$$e),\
+	$(if $(2),true,$(call link_unless_same,$(call TARGET_IMAGE,$1,$$$${e}),\
 	                                       $(call TARGET_IMAGE,$1)))
 endef
 
