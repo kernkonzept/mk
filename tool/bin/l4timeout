@@ -1,0 +1,19 @@
+#!/usr/bin/env perl
+
+die "Usage: $0 <time in us>\n" if @ARGV == 0;
+
+foreach my $us (@ARGV)
+  {
+    my $e = 0;
+    my $m = $us;
+
+    while ($m > ((1 << 10) - 1))
+    {
+      $m >>= 1;
+      $e++;
+    }
+
+    my $to = $m * (1 << $e);
+
+    print "timeout=${us}us man=$m exp=$e (to=${to}us)\n";
+  }
