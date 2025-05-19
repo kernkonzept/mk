@@ -130,10 +130,9 @@ $(OBJ_DIR)/.Package.deps.pkgs: FORCE
 # deps on disappearing aliases.d-files are not handled...
 $(OBJ_DIR)/.Package.deps: $(L4DIR)/mk/pkgdeps $(OBJ_DIR)/.Package.deps.pkgs \
                           $(wildcard $(OBJ_DIR)/.Package.deps.ext_pkgs) \
-                          $(if $(filter update up,$(MAKECMDGOALS)),,Makefile) \
-                          $(wildcard $(foreach d,$(ALIASES_DIRS),$(d)/*)) \
-                          $(wildcard $(foreach d,$(BUILD_SUBDIRS),$(d)/Control)) \
-                          $(PKGCONF_DIR) \
+                          $(wildcard $(addsuffix /*,$(ALIASES_DIRS))) \
+                          $(wildcard $(addsuffix /Control,$(BUILD_SUBDIRS))) \
+                          $(PKGCONF_DIR) Makefile \
                           $(wildcard $(OBJ_BASE)/.kconfig)
 	$(VERBOSE)$(PKGDEPS_CMD) generate $(SRC_DIR) $(ALL_SUBDIRS) > $@.tmp
 	$(VERBOSE)$(call move_if_changed,$@,$@.tmp)
