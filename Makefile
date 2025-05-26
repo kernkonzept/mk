@@ -726,6 +726,10 @@ define link_unless_same
   $(if $(filter $(abspath $1),$(abspath $2)),true,ln -snf $(notdir $1) $2)
 endef
 
+EFI_IMAGE_STANDARD_NAME-amd64 := bootx64.efi
+EFI_IMAGE_STANDARD_NAME-x86   := bootia32.efi
+EFI_IMAGE_STANDARD_NAME-arm64 := bootaa64.efi
+
 define imagebuilder_goal
 .PHONY: $1
 $1:
@@ -738,7 +742,10 @@ $1:
 		$$(L4DIR)/tool/imagebuilder/$1 && \
 	$(if $(2),true,$(call link_unless_same,$(call TARGET_IMAGE,$1,$$$${e}),\
 	                                       $(call TARGET_IMAGE,$1))) && \
-	$(if $(2),true,$(or $(call POST_IMAGE_CMD, $(call TARGET_IMAGE,$1)), true))
+	$(if $(2),true,$(or $(call POST_IMAGE_CMD, $(call TARGET_IMAGE,$1)), true)) && \
+	$$(VERBOSE)$(if $(filter efiimage,$1), \
+	  $(call link_unless_same,$(call TARGET_IMAGE,$1,$$$${e}),\
+	                          $(IMAGES_DIR)/$(EFI_IMAGE_STANDARD_NAME-$(ARCH))),:)
 endef
 
 # touches images dir
