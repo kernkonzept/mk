@@ -73,8 +73,10 @@ link_args_ld_part2_gnu_ld =
 # linker arguments part II -- specific to LLVM ld
 # - use `-T <script>` rather than `-dT <script>`
 # - use `--image-base=...` rather than `-Ttext-segment=...`
+# - allow `--undefined-version` for compatibility with GNU ld
 link_args_ld_part2_llvm_lld =
   %(link_pass_opts) %:foreach(%%{: -L%%*} %(l4libdir)) %{L*}
+  %{-undefined-version}
   %{-image-base*}
   %{!r:%{!T:-T %:search(main_%{static:stat;static-pie:pie;shared:rel;:dyn}.ld
                         %(libdir));T}}
