@@ -404,7 +404,7 @@ sub write_attrs
     {
       my @packval = qw/C S< L< Q</;
       my $key_len = length($key);
-      my $val = $kvs{$key} || '';
+      my $val = $kvs{$key} // '';
       my $val_len = length($val);
       my $key_field_exp = field_len($key_len);
       my $val_field_exp = field_len($val_len);
