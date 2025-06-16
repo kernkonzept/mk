@@ -139,7 +139,6 @@ MKFLAGS		+=$(MKFLAGS_$@)
 NM		?= $(CROSS_COMPILE)nm
 OBJCOPY		?= $(CROSS_COMPILE)objcopy
 OBJDUMP		?= $(CROSS_COMPILE)objdump
-PWDCMD		= pwd -P
 RANLIB		?= $(CROSS_COMPILE)ranlib
 $(call dv,RM)   = rm -f
 SCRUB		= $(RM) $(wildcard *.old) $(wildcard *~) $(wildcard *.bak) \
@@ -248,7 +247,7 @@ ifeq ($(origin PKGDIR_ABS),undefined)
 PKGDIR_ABS     := $(abspath $(PKGDIR))
 endif
 ifeq ($(origin SRC_DIR),undefined)
-SRC_DIR        := $(shell $(PWDCMD))
+SRC_DIR        := $(CURDIR)
 endif
 ifeq ($(origin SRC_BASE_ABS),undefined)
 SRC_BASE     ?= $(L4DIR)
@@ -616,16 +615,16 @@ ifeq ($(SYSTEM),)
 ifneq ($(SUBDIRS),)
 .PHONY: $(SUBDIRS)
 $(SUBDIRS):
-	$(VERBOSE)PWD=$(PWD)/$@ $(MAKE) -C $@ all
+	$(VERBOSE)$(MAKE) -C $@ all
 
 # we know that SUBDIRS isn't empty, hence we can avoid the dir-test
 scrub clean cleanall::
 	$(VERBOSE)set -e; $(foreach i,$(SUBDIRS), \
-		PWD=$(PWD)/$(i) $(MAKE) -C $(i) $@ $(MKFLAGS) $(MKFLAGS_$(i));)
+		$(MAKE) -C $(i) $@ $(MKFLAGS) $(MKFLAGS_$(i));)
 
 install:: $(SUBDIRS)
 	$(VERBOSE)set -e; $(foreach i,$(SUBDIRS), \
-		PWD=$(PWD)/$(i) $(MAKE) -C $(i) $@ $(MKFLAGS) $(MKFLAGS_$(i));)
+		$(MAKE) -C $(i) $@ $(MKFLAGS) $(MKFLAGS_$(i));)
 
 DIAG_DISPLAY_CMD := cat
 diag::
@@ -820,7 +819,7 @@ define build_obj_redir_Makefile
 	$(VERBOSE)echo 'OBJ := $(OBJ_BASE)'                                   >> $(1)
 	$(VERBOSE)echo '.PHONY: $$(MAKECMDGOALS) do-all-make-goals'           >> $(1)
 	$(VERBOSE)echo 'do-all-make-goals:'                                   >> $(1)
-	$(VERBOSE)echo '	@PWD=$$(SRC) $$(MAKE) -C $$(SRC) O=$$(OBJ) $$(MAKECMDGOALS)'>> $(1)
+	$(VERBOSE)echo '	@$$(MAKE) -C $$(SRC) O=$$(OBJ) $$(MAKECMDGOALS)'>> $(1)
 	$(VERBOSE)echo '$$(MAKECMDGOALS): do-all-make-goals'                  >> $(1)
 endef
 

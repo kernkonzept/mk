@@ -189,12 +189,12 @@ pre-obj::
 all:: $(foreach arch,$(TARGET_SYSTEMS), $(OBJ_DIR)/OBJ-$(arch))
 .PHONY: $(foreach arch,$(TARGET_SYSTEMS), $(OBJ_DIR)/OBJ-$(arch))
 $(foreach arch,$(TARGET_SYSTEMS), $(OBJ_DIR)/OBJ-$(arch)):%:%/$(BID_OBJ_Makefile) pre-obj
-	$(VERBOSE)PWD=$@ $(MAKE) $(PL_j) -C $@ -f $(BID_OBJ_Makefile)
+	$(VERBOSE)$(MAKE) $(PL_j) -C $@ -f $(BID_OBJ_Makefile)
 
 
 foreach_objdir = $(if $(wildcard $(OBJ_DIR)/OBJ-*), $(VERBOSE)set -e ; \
 		     for d in $(wildcard $(OBJ_DIR)/OBJ-*) ; do \
-		       PWD=$$d $(MAKE) -C $$d -f $(BID_OBJ_Makefile) $(1); \
+		       $(MAKE) -C $$d -f $(BID_OBJ_Makefile) $(1); \
 		     done, @true)
 
 %.i %.s.i:: export DO_SHOW_RESULT_FILE=y

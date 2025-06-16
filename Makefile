@@ -37,8 +37,8 @@ do-all-make-targets:
 	   $(L4DIR)/tool/bin/sandbox \
 	              --sys-dir "$(or $(SANDBOX_SYSDIR),/)" \
 	              --dir-rw "$(OBJ_DIR)" \
-	              --dir-ro "$(if $(L4DIR_ABS),$(L4DIR_ABS),$(PWD))" \
-	              --cmd "$(MAKE) -C $(PWD) $(MAKECMDGOALS) O=$(OBJ_DIR)"
+	              --dir-ro "$(if $(L4DIR_ABS),$(L4DIR_ABS),$(CURDIR))" \
+	              --cmd "$(MAKE) -C $(CURDIR) $(MAKECMDGOALS) O=$(OBJ_DIR)"
 
 BID_IGN_ROOT_CONF=y
 include $(L4DIR)/mk/Makeconf
@@ -198,10 +198,10 @@ all:: doc
 endif
 
 tool:
-	$(VERBOSE)if [ -r $@/Makefile ]; then PWD=$(PWD)/$@ $(MAKE) -C $@; fi
+	$(VERBOSE)if [ -r $@/Makefile ]; then $(MAKE) -C $@; fi
 
 doc:
-	$(VERBOSE)if [ -r doc/source/Makefile ]; then PWD=$(PWD)/doc/source $(MAKE) -C doc/source; fi
+	$(VERBOSE)if [ -r doc/source/Makefile ]; then $(MAKE) -C doc/source; fi
 
 BID_POST_CONT_HOOK := $(MAKE) regen_l4defs
 
@@ -233,7 +233,7 @@ clean-test-scripts:
 clean cleanall install::
 	$(VERBOSE)set -e; for i in $($@-dirs) ; do                     \
 	            if [ -r $$i/Makefile -o -r $$i/GNUmakefile ]; then \
-	              PWD=$(PWD)/$$i $(MAKE) -C $$i $@; fi; done
+	              $(MAKE) -C $$i $@; fi; done
 
 l4defs_file  = $(OBJ_BASE)/l4defs$(if $(filter std,$(1)),,-$(1)).$(2).inc
 
@@ -252,7 +252,7 @@ generate_l4defs_files_step = \
 	echo "VARIANT = $(2)"                           >> $$tmpdir/Makefile && \
 	echo "BUILD_MESSAGE ="                          >> $$tmpdir/Makefile && \
 	cat $(L4DIR)/mk/export_defs.inc                 >> $$tmpdir/Makefile && \
-	PWD=$$tmpdir $(MAKE) -C $$tmpdir -f $$tmpdir/Makefile          \
+	$(MAKE) -C $$tmpdir -f $$tmpdir/Makefile          \
 	  CALLED_FOR=$(1) L4DEF_FILE_MK=$(call l4defs_file,$(2),mk) L4DEF_FILE_SH=$(call l4defs_file,$(2),sh) L4DEF_FILE_PL=$(call l4defs_file,$(2),pl) && \
 	$(RM) -r $$tmpdir
 
@@ -557,7 +557,7 @@ libgendep:
 	            echo "=== l4/tool/gendep missing! ==="; \
 	            exit 1;                                 \
 		  fi
-	$(VERBOSE)PWD=$(PWD)/tool/gendep $(MAKE) -C tool/gendep
+	$(VERBOSE)$(MAKE) -C tool/gendep
 
 DIRS_FOR_BUILD_TOOLS_CHECKS = $(patsubst BUILD_TOOLS_%,%,    \
                                          $(filter BUILD_TOOLS_%,$(.VARIABLES)))
@@ -626,7 +626,7 @@ endef
 define genimage
 	+$(VERBOSE)$(entryselection);                                                 \
 	$(MKDIR) $(IMAGES_DIR);                                                       \
-	PWD=$(PWD)/pkg/bootstrap/server/src $(common_envvars)                         \
+	$(common_envvars)                                                             \
 	    QEMU_BINARY_NAME=$(if $(QEMU_PATH),$(QEMU_PATH),$(QEMU_ARCH_MAP_$(ARCH))) \
 	    $(MAKE) -C pkg/bootstrap/server/src ENTRY="$$e"                           \
 	            BOOTSTRAP_MODULES_LIST=$$ml $(1)                                  \

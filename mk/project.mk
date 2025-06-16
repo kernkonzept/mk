@@ -144,25 +144,25 @@ include $(OBJ_DIR)/.Package.deps
 # External packages
 $(filter /%,$(ALL_SUBDIRS)):%:%/Makefile BID_cont_reset $(FIXDEP)
 	@$(EXT_PKG_MESSAGE)
-	$(VERBOSE)PWD=$@ $(MAKE) -C $@ all L4DIR=$(L4DIR_ABS)
+	$(VERBOSE)$(MAKE) -C $@ all L4DIR=$(L4DIR_ABS)
 	$(VERBOSE)$(BID_SAVE_STATE)
 
 $(filter-out /%,$(ALL_SUBDIRS)):%:%/Makefile BID_cont_reset $(FIXDEP)
 	@$(PKG_MESSAGE)
-	$(VERBOSE)PWD=$(PWD)/$@ $(MAKE) -C $@ all
+	$(VERBOSE)$(MAKE) -C $@ all
 	$(VERBOSE)$(BID_SAVE_STATE)
 
 install::
 	$(VERBOSE)set -e; for i in $(BUILD_SUBDIRS); do \
 	  $(call INST_MESSAGE,$(BID_DOLLARQUOTE)$$i); \
-	  PWD=$(PWD)/$$i $(MAKE) -C $$i $@; \
+	  $(MAKE) -C $$i $@; \
 	done
 
 clean cleanall:: BID_cont_reset
 	$(VERBOSE)$(RM) $(UPDATE_LOG)
 	$(VERBOSE)for i in $(BUILD_SUBDIRS) $(OBSOLETE_SUBDIRS); do \
 	  echo "=== Cleaning in package  \"$$i\" ==="; \
-	  if [ -r $$i/Makefile ] ; then PWD=$(PWD)/$$i $(MAKE) -C $$i $@; fi ; \
+	  if [ -r $$i/Makefile ] ; then $(MAKE) -C $$i $@; fi ; \
 	done
 
 # disable the 'doc' target:
@@ -171,9 +171,9 @@ clean cleanall:: BID_cont_reset
 ifeq (a,b)
 doc:
 	$(VERBOSE)set -e; for i in $(BUILD_SUBDIRS); do \
-	  if [ -e $(PWD)/$$i/doc ]; then                \
+	  if [ -e $(CURDIR)/$$i/doc ]; then             \
 	  $(call DOC_MESSAGE,$(BID_DOLLARQUOTE)$$i);    \
-	  PWD=$(PWD)/$$i $(MAKE) -C $$i $@;             \
+	  $(MAKE) -C $$i $@;                            \
 	  fi;                                           \
 	done
 endif

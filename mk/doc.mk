@@ -23,7 +23,7 @@ ifeq ($(IN_OBJ_DIR),)
 ##################################################################
 
 all install clean cleanall help:: $(OBJ_DIR)/Makefile.build
-	$(VERBOSE)PWD=$(OBJ_DIR) $(MAKE) -C $(OBJ_DIR) O=$(OBJ_BASE) -f Makefile.build $@
+	$(VERBOSE)$(MAKE) -C $(OBJ_DIR) O=$(OBJ_BASE) -f Makefile.build $@
 
 
 $(OBJ_DIR)/Makefile.build: $(SRC_DIR)/Makefile
@@ -134,7 +134,7 @@ $(OBJ_DIR)/% $(OBJ_DIR)/%/html:$(SRC_DIR)/%.cfg $(SRC_DIR)/search.js.reduce_keyT
 	  || true
 	$(VERBOSE)for file in $(ADD_FILES_TO_HTML); do cp $$file $@/html; done
 	$(VERBOSE)( [ -r $@/latex/Makefile ] && \
-	   echo | PWD=$@/latex $(MAKE) -C $@/latex ) || true
+	   echo | $(MAKE) -C $@/latex ) || true
 	$(VERBOSE)if [ -d $@ ] ; then touch $@ ; fi
 
 # Installation rules follow
