@@ -102,7 +102,7 @@ config BID_DEBUG_INFO
 
 choice
 	prompt "Position independent executables"
-	depends on BUILD_ARCH_amd64 || BUILD_ARCH_arm || BUILD_ARCH_arm64
+	depends on (BUILD_ARCH_amd64 || BUILD_ARCH_arm || BUILD_ARCH_arm64) && L4_LIBC_UCLIBC
 	default BID_PIE_VOLUNTARY
 
 config BID_PIE_NONE

@@ -6,9 +6,9 @@
 # Makefile-Include for defining modes
 
 LIBC_INCLUDE   = $(BID_NOSTDINC)                                   \
-                 -I$(OBJ_BASE)/include/uclibc                      \
+                 -I$(OBJ_BASE)/include/$(CONFIG_L4_LIBC)           \
                  $(if $(CONFIG_USE_DROPS_STDDIR),                  \
-                  -I$(DROPS_STDDIR)/include/uclibc)                \
+                  -I$(DROPS_STDDIR)/include/$(CONFIG_L4_LIBC))     \
                  $(I_GCCINCDIR)
 
 LIBCXX_INCLUDE = -I$(OBJ_BASE)/include/contrib/libstdc++-v3        \
