@@ -32,19 +32,19 @@ endif
 
 SOVERSION_MAJOR=$(firstword $(subst ., ,$(SOVERSION)))
 SOVERSION_FULL=$(firstword $(SOVERSION))
-SOLINK=$(if $(SOVERSION_FULL), \
-            && mv $@ $@.$(SOVERSION_FULL) \
-            && $(LN) -rsf $@.$(SOVERSION_FULL) $@ \
+solink=$(if $(SOVERSION_FULL), \
+            && mv $1 $1.$(SOVERSION_FULL) \
+            && $(LN) -rsf $1.$(SOVERSION_FULL) $1 \
             $(if $(filter-out $(SOVERSION_MAJOR),$(SOVERSION_FULL)),\
-              && $(LN) -rsf $@.$(SOVERSION_FULL) $@.$(SOVERSION_MAJOR)))
+              && $(LN) -rsf $1.$(SOVERSION_FULL) $1.$(SOVERSION_MAJOR)))
 
 do_strip=$(and $(CONFIG_BID_STRIP_BINARIES),$(filter %.so,$(1)))
 INSTALLFILE_LIB         ?= $(if $(call do_strip,$(1)),                      \
                                 $(call copy_stripped_binary,$(1),$(2),644), \
-                                $(INSTALL) -m 644 $(1) $(2))$(SOLINK)
+                                $(INSTALL) -m 644 $(1) $(2))$(call solink,$2)
 INSTALLFILE_LIB_LOCAL   ?= $(if $(call do_strip,$(1)),                      \
                                 $(call copy_stripped_binary,$(1),$(2),644), \
-                                $(LN) -sf $(abspath $(1)) $(2))$(SOLINK)
+                                $(LN) -sf $(abspath $(1)) $(2))$(call solink,$2)
 
 INSTALLFILE		= $(INSTALLFILE_LIB)
 INSTALLDIR		= $(INSTALLDIR_LIB)
