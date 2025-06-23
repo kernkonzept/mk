@@ -4,12 +4,20 @@ L4IMAGE="${OBJ_BASE}/source/tool/bin/l4image"
 MAKECONF="${OBJ_BASE}/source/tool/bin/makeconf"
 
 # Sets MAKECONF_ARCH
-if [[ -z "${ARCH}" ]]; then
-    . <("$MAKECONF" "$OBJ_BASE" ARCH)
+if [[ -z "${ARCH}" || -z "${CPU}" ]]; then
+    . <("$MAKECONF" "$OBJ_BASE" ARCH CPU)
     ARCH=${MAKECONF_ARCH}
+    CPU=${MAKECONF_CPU}
 fi
 
+L4_SYSTEM="${ARCH}_${CPU}"
+
 if [[ ( "${ARCH}" == "amd64" || "${ARCH}" == "x86" ) && -z "${QEMU_IMAGE_TYPE}" ]] ; then
+
+    # Trigger rebuild on binary "bootstrap" if necessary
+    BOOTSTRAP_BIN="${OBJ_BASE}/bin/${L4_SYSTEM}/plain/bootstrap"
+    "$(dirname $0)/_platform_rebuild.pl" "$BOOTSTRAP_BIN" || exit 1
+
     source <("$MAKECONF" "$OBJ_BASE" QEMU_PATH QEMU_OPTIONS MODULE_SEARCH_PATH BUILDDIR_SEARCHPATH)
     export QEMU="$MAKECONF_QEMU_PATH"
     export QEMU_OPTIONS="$MAKECONF_QEMU_OPTIONS"
