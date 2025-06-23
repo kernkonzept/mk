@@ -50,7 +50,6 @@ else
 define local_install_rule
 $(call target_dir_local,$(1))/$(1):$(1)
 	@$(if $(INSTALLFILE_LOCAL), \
-		f="$$@"; \
 		if [ ! $$< -ef $$@ -a $$< -nt $$@ ]; then \
 		  $(if $(INSTALL_LOCAL_MESSAGE),$(INSTALL_LOCAL_MESSAGE);) \
 		  $(INSTALL) -d $$(dir $$@); \
