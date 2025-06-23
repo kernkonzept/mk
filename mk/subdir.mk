@@ -46,22 +46,22 @@ server: include
 
 clean cleanall scrub::
 	$(VERBOSE)set -e; $(foreach d,$(TARGET), test -f $d/broken || \
-	    if [ -f $d/Makefile ] ; then $(MAKE) -C $d $@ $(MKFLAGS) $(MKFLAGS_$(d)); fi; )
+	    if [ -f $d/Makefile ] ; then $(MAKE) -C $d $@; fi; )
 
 install oldconfig txtconfig relink::
 	$(VERBOSE)set -e; $(foreach d,$(TARGET), test -f $d/broken -o -f $d/obsolete || \
-	    if [ -f $d/Makefile ] ; then $(MAKE) -C $d $@ $(MKFLAGS) $(MKFLAGS_$(d)); fi; )
+	    if [ -f $d/Makefile ] ; then $(MAKE) -C $d $@; fi; )
 
 # first the subdir-targets (this is where "all" will be built, e.g. in lib
 # or server).
 $(SUBDIR_TARGET): %:
 	$(VERBOSE)test -f $@/broken -o -f $@/obsolete ||		\
-	    if [ -f $@/Makefile ] ; then $(MAKE) -C $@ $(MKFLAGS) ; fi
+	    if [ -f $@/Makefile ] ; then $(MAKE) -C $@ ; fi
 # Second, the rules for going down into sub-pkgs with "lib" and "server"
 # targets. Going down into sub-pkgs.
 	$(if $(SUBDIRS),$(if $(filter $@,include lib server examples doc),\
 		$(VERBOSE)set -e; for s in $(SUBDIRS); do \
-			$(MAKE) -C $$s $@ $(MKFLAGS); done ))
+			$(MAKE) -C $$s $@; done ))
 
 idl include lib server examples doc:
 

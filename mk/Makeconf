@@ -135,7 +135,6 @@ PDFLATEX	= pdflatex
 GREP		= GREP_OPTIONS= grep
 LN		= ln
 MKDIR		= mkdir -p
-MKFLAGS		+=$(MKFLAGS_$@)
 NM		?= $(CROSS_COMPILE)nm
 OBJCOPY		?= $(CROSS_COMPILE)objcopy
 OBJDUMP		?= $(CROSS_COMPILE)objdump
@@ -620,11 +619,11 @@ $(SUBDIRS):
 # we know that SUBDIRS isn't empty, hence we can avoid the dir-test
 scrub clean cleanall::
 	$(VERBOSE)set -e; $(foreach i,$(SUBDIRS), \
-		$(MAKE) -C $(i) $@ $(MKFLAGS) $(MKFLAGS_$(i));)
+		$(MAKE) -C $(i) $@;)
 
 install:: $(SUBDIRS)
 	$(VERBOSE)set -e; $(foreach i,$(SUBDIRS), \
-		$(MAKE) -C $(i) $@ $(MKFLAGS) $(MKFLAGS_$(i));)
+		$(MAKE) -C $(i) $@;)
 
 DIAG_DISPLAY_CMD := cat
 diag::
