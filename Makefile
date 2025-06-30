@@ -293,7 +293,7 @@ regen_compile_commands_json:
 # L4Re-specific cross-compiler
 SYSROOT_LIBS = libgcc libgcc_eh libgcc_s libc libpthread librt libdl libld-l4 libm libc_nonshared.p libmount
 OUTPUT_FORMAT = $(CC) $(CFLAGS) -Wl,--verbose 2>&1 | $(SED) -n '/OUTPUT_FORMAT/,/)/p'
-sysroot: $(foreach p,ldso libc_backends uclibc,pkg/l4re-core/$(p))
+sysroot: $(foreach p,ldso libc_backends libc,pkg/l4re-core/$(p))
 	$(GEN_MESSAGE)
 	$(VERBOSE)$(RM) -r $(OBJ_DIR)/sysroot
 	$(VERBOSE)$(MKDIR) $(OBJ_DIR)/sysroot
