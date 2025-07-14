@@ -856,10 +856,11 @@ $(CHECK_BASE_DIR)/config.%/.config.all: $(CHECK_BASE_DIR)/config.%/.kconfig FORC
 	$(MAKE) O=$(@D) olddefconfig $(call BID_CHECKBUILD_LOG_REDIR_f, $*)
 
 checkbuild.%: $(CHECK_BASE_DIR)/config.%/.config.all $(CHECK_BASE_DIR)/config.%/.kconfig check_base_dir
+	$(VERBOSE)touch $(<D)/.startbuild
 	$(MAKE) O=$(<D) BID_CHECKBUILD=1 report $(call BID_CHECKBUILD_LOG_REDIR_f, $*)
 	$(MAKE) O=$(<D) BID_CHECKBUILD=1 tool $(call BID_CHECKBUILD_LOG_REDIR_f, $*)
 	$(MAKE) O=$(<D) BID_CHECKBUILD=1 USE_CCACHE=$(strip $(USE_CCACHE)) BID_MESSAGE_TAG='$$(PKGNAME_DIRNAME)$$(if $$(filter-out std,$$(VARIANT)), - $$(VARIANT)) | $$(BUILD_ARCH)' $(CHECK_MAKE_ARGS) $(call BID_CHECKBUILD_LOG_REDIR_f, $*)
-	$(VERBOSE)if [ -e $(<D)/ext-pkg ]; then \
+	$(VERBOSE)if [[ $(<D)/ext-pkg -nt $(<D)/.startbuild ]]; then \
 	  echo "$(<D)/ext-pkg created. That must not happen in checkbuild."; \
 	  exit 1; \
 	fi
