@@ -307,7 +307,7 @@ sysroot: $(foreach p,ldso libc_backends libc,pkg/l4re-core/$(p))
 	          $(OBJ_DIR)/sysroot/usr/include/l4-arch/
 	$(VERBOSE)$(CP) -Lr $(OBJ_DIR)/include/l4/{crtn,cxx,l4re_vfs,libc_backends,re,sys,util,bid_config.h} \
 	                    $(OBJ_DIR)/sysroot/usr/include/l4/
-	$(VERBOSE)$(CP) -Lr $(OBJ_DIR)/include/uclibc/* $(OBJ_DIR)/sysroot/usr/include/
+	$(VERBOSE)$(CP) -Lr $(OBJ_DIR)/include/uclibc-ng/* $(OBJ_DIR)/sysroot/usr/include/
 	$(VERBOSE)$(CP) -Lr $(OBJ_DIR)/lib/$(BUILD_ARCH)_$(CPU)/std/plain/crt* $(OBJ_DIR)/sysroot/usr/lib
 	$(VERBOSE)$(CP) -Lr $(wildcard $(addprefix $(OBJ_DIR)/lib/$(BUILD_ARCH)_$(CPU)/std/l4f/,$(SYSROOT_LIBS:=.a))) \
 	                    $(OBJ_DIR)/sysroot/usr/lib
