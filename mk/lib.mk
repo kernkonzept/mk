@@ -168,7 +168,7 @@ DEPS	+= $(foreach file,$(TARGET), $(call BID_LINK_DEPS,$(file)))
 
 $(filter-out $(LINK_INCR) %.so %.ofl %.o.a %.o.pr.a, $(TARGET)):%.a: $(OBJS) $(GENERAL_D_LOC)
 	@$(AR_MESSAGE)
-	$(VERBOSE)$(call create_dir,$(@D))
+	$(VERBOSE)$(MKDIR) $(@D)
 	$(VERBOSE)$(RM) $@
 	$(VERBOSE)$(AR) crs$(if $(filter %.thin.a,$@),T) $@ \
 	  $(foreach o,$(OBJS),$(if $(filter %.ofl,$o),$(file <$o),$o))
@@ -177,14 +177,14 @@ $(filter-out $(LINK_INCR) %.so %.ofl %.o.a %.o.pr.a, $(TARGET)):%.a: $(OBJS) $(G
 # Object File List - just a list of object file paths for later static linking
 $(filter %.ofl, $(TARGET)):%.ofl: $(OBJS) $(GENERAL_D_LOC)
 	@$(AR_MESSAGE)
-	$(VERBOSE)$(call create_dir,$(@D))
+	$(VERBOSE)$(MKDIR) $(@D)
 	$(VERBOSE)printf '%s ' $(realpath $(OBJS)) > $@
 	@$(BUILT_MESSAGE)
 
 # shared lib
 $(filter %.so, $(TARGET)):%.so: $(OBJS) $(LIBDEPS) $(GENERAL_D_LOC)
 	@$(LINK_SHARED_MESSAGE)
-	$(VERBOSE)$(call create_dir,$(@D))
+	$(VERBOSE)$(MKDIR) $(@D)
 	$(VERBOSE)$(call MAKEDEP,$(LD)) $(BID_LINK) -MD -MF $(call BID_link_deps_file,$@) -o $@ $(LDFLAGS_SO) \
 	  $(LDFLAGS) $(OBJS) $(addprefix -PC,$(REQUIRES_LIBS)) \
 	  $(if $(strip $(SOVERSION)),-soname=$@.$(SOVERSION_MAJOR))
@@ -196,7 +196,7 @@ $(filter %.so, $(TARGET)):%.so: $(OBJS) $(LIBDEPS) $(GENERAL_D_LOC)
 LINK_INCR_TARGETS = $(filter $(LINK_INCR) %.o.a %.o.pr.a, $(TARGET))
 $(LINK_INCR_TARGETS):%.a: $(OBJS) $(LIBDEPS) $(foreach x,$(LINK_INCR_TARGETS),$(LINK_INCR_ONLYGLOBSYMFILE_$(x)))
 	@$(LINK_PARTIAL_MESSAGE)
-	$(VERBOSE)$(call create_dir,$(@D))
+	$(VERBOSE)$(MKDIR) $(@D)
 	$(VERBOSE)$(call MAKEDEP,$(LD)) $(LD) \
 	   -T $(LDSCRIPT_INCR) \
 	   -o $@ -r $(OBJS) $(LDFLAGS)

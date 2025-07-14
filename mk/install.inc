@@ -39,7 +39,7 @@ install:: $(EXTRA_INSTALL_GOALS)
 ifeq ($(ROLE),prog.mk)
 $(foreach f,$(INSTALL_TARGET),$(INSTALLDIR_LOCAL)/$(f)):$(INSTALLDIR_LOCAL)/%:%
 	@$(INSTALL_LOCAL_MESSAGE)
-	$(VERBOSE)$(if $(INSTALLFILE_LOCAL),$(call create_dir,$(dir $@)))
+	$(VERBOSE)$(if $(INSTALLFILE_LOCAL),$(MKDIR) $(dir $@))
 	$(VERBOSE)$(call INSTALLFILE_LOCAL,$<,$@)
 else
 # with others, we symlink
@@ -63,7 +63,7 @@ endif
 define install_rule
 $(call target_dir,$(1))/$(1):$(1)
 	@$(INSTALL_MESSAGE)
-	$(VERBOSE)$(if $(INSTALLFILE),$(call create_dir,$$(dir $$@)))
+	$(VERBOSE)$(if $(INSTALLFILE),$(MKDIR) $$(dir $$@))
 	$(VERBOSE)$$(call INSTALLFILE,$$<,$$@)
 endef
 

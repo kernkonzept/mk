@@ -84,11 +84,11 @@ find_prj_dirs = $(shell $(L4DIR)/mk/pkgfind $(1) $(BID_PRJ_DIR_MAX_DEPTH))
 lessfork_mkdir = $(if $(wildcard $(1)),,$(MKDIR) $(1);)
 
 # Create a directory.
-# This function should be used with high priority, since it does not fork in
-# case the directory already exists.
+# DEPRECATED: If you consider using this: Don't. This just exists for backwards
+# compatibility.
 # 1: directory name
 define create_dir
-  $(if $(wildcard $(1)),true $(1) exists,mkdir -p $(1))
+  mkdir -p $(1)
 endef
 
 # Strip binary $(1) to $(2) and set target file mode to $(3)
