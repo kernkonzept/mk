@@ -735,7 +735,7 @@ $1:
 		$$(L4DIR)/tool/imagebuilder/$1 && \
 	$(if $(2),true,$(call link_unless_same,$(call TARGET_IMAGE,$1,$$$${e}),\
 	                                       $(call TARGET_IMAGE,$1))) && \
-	$(if $(2),,$(or $(call POST_IMAGE_CMD, $(call TARGET_IMAGE,$1)), true))
+	$(if $(2),true,$(or $(call POST_IMAGE_CMD, $(call TARGET_IMAGE,$1)), true))
 endef
 
 # touches images dir
