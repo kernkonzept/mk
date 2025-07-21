@@ -929,7 +929,7 @@ $(if $(BID_ALLOW_CPP_AS_CPLUSPLUS_FILE),$(eval $(call BID_GENERATE_S_MAKE_RULE,%
 %.dtb: %.dts $(GENERAL_D_LOC)
 	@$(BUILD_MESSAGE)
 	$(VERBOSE)$(MKDIR) $(@D)
-	$(VERBOSE)$(CPP) $(CFLAGS) -undef $(addprefix -I, $(PRIVATE_INCDIR)) -x assembler-with-cpp -Wp,-MD,$(@D)/.$(@F).d,-MT$@,-MP -nostdinc -o $@.pre $<
+	$(VERBOSE)$(CPP) $(CPPFLAGS) -undef $(addprefix -I, $(PRIVATE_INCDIR)) -x assembler-with-cpp -Wp,-MD,$(@D)/.$(@F).d,-MT$@,-MP -nostdinc -o $@.pre $<
 	$(VERBOSE)$(DTC) $(DTC_FLAGS) $(addprefix -i , $(PRIVATE_INCDIR)) -i $(dir $<) -d $(call BID_dot_fname,$@).d-x -O dtb -b 0 -o $@ $@.pre
 	$(VERBOSE)$(SED) -e "s|$@.pre|$<|" $(call BID_dot_fname,$@).d-x | \
 		perl -ne 'print "$$_\n"; if (/^.*:\s*(.*)$$/) { print "$$_:\n" foreach (split(/ /,$$1)); }' >> $(@D)/.$(@F).d
