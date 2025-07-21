@@ -401,12 +401,8 @@ checkcc   = $(call check_compiler_opt,$(1),$(2),$(CC),c)
 checkcxx  = $(call check_compiler_opt,$(1),$(2),$(CXX),c++)
 checkdtc  = $(shell if $(DTC) $(1) --version /dev/null > /dev/null 2>&1; \
                     then echo "$(1)"; fi)
-checkcc_nowarn = $(if $(shell $(filter-out $(CCACHE),$(CC)) $(CARCHFLAGS) \
-                   $(CCXX_FLAGS) $(check_compiler_flags) -W$(1) -c -o /dev/null \
-                   -x c /dev/null >/dev/null 2>&1 || echo X),,-Wno-$(1))
-checkcxx_nowarn = $(if $(shell $(filter-out $(CCACHE),$(CXX)) $(CARCHFLAGS) \
-                    $(CCXX_FLAGS) $(check_compiler_flags) -W$(1) -c -o /dev/null \
-                    -x c++ /dev/null >/dev/null 2>&1 || echo X),,-Wno-$(1))
+checkcc_nowarn  = $(if $(call checkcc,-W$(1),),-Wno-$(1))
+checkcxx_nowarn = $(if $(call checkcxx,-W$(1),),-Wno-$(1))
 checkld   = $(shell if $(callld) -v "$1" > /dev/null 2>&1; \
              then echo "$(1)"; else echo "$(2)"; fi)
 
