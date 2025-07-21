@@ -929,7 +929,6 @@ $(if $(BID_ALLOW_CPP_AS_CPLUSPLUS_FILE),$(eval $(call BID_GENERATE_S_MAKE_RULE,%
 define device_tree_rule
 %.$(2): %.$(1) $(GENERAL_D_LOC)
 	@$$(BUILD_MESSAGE)
-	$(VERBOSE)$(MKDIR) $$(@D)
 	$(VERBOSE)$(CPP) $(CPPFLAGS) -undef $$(addprefix -I, $(PRIVATE_INCDIR)) -x assembler-with-cpp -Wp,-MD,$$(@D)/.$$(@F).d,-MT$$@,-MP -nostdinc -o $$@.pre $$<
 	$(VERBOSE)$(DTC) $(DTC_FLAGS) $$(addprefix -i , $(PRIVATE_INCDIR)) -i $$(dir $$<) -d $(call BID_dot_fname,$$@).d-x -O dtb -b 0 -o $$@ $$@.pre
 	$(VERBOSE)$(SED) -e "s|$$@.pre|$$<|" $(call BID_dot_fname,$$@).d-x | \
