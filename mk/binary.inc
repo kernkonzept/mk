@@ -920,10 +920,10 @@ define device_tree_rule
 %.$(2): %.$(1) $(GENERAL_D_LOC)
 	@$$(BUILD_MESSAGE)
 	$(VERBOSE)$(CPP) $(CPPFLAGS) -undef $$(addprefix -I, $(PRIVATE_INCDIR)) -x assembler-with-cpp -Wp,-MD,$$(@D)/.$$(@F).d,-MT$$@,-MP -nostdinc -o $$@.pre $$<
-	$(VERBOSE)$(DTC) $(DTC_FLAGS) $$(addprefix -i , $(PRIVATE_INCDIR)) -i $$(dir $$<) -d $(call BID_dot_fname,$$@).d-x -O dtb -b 0 -o $$@ $$@.pre
-	$(VERBOSE)$(SED) -e "s|$$@.pre|$$<|" $(call BID_dot_fname,$$@).d-x | \
+	$(VERBOSE)$(DTC) $(DTC_FLAGS) $$(addprefix -i , $(PRIVATE_INCDIR)) -i $$(dir $$<) -d $$(call BID_dot_fname,$$@).d-x -O dtb -b 0 -o $$@ $$@.pre
+	$(VERBOSE)$(SED) -e "s|$$@.pre|$$<|" $$(call BID_dot_fname,$$@).d-x | \
 		perl -ne 'print "$$$$_\n"; if (/^.*:\s*(.*)$$$$/) { print "$$$$_:\n" foreach (split(/ /,$$$$1)); }' >> $$(@D)/.$$(@F).d
-	$(VERBOSE)$(RM) $(call BID_dot_fname,$$@).d-x $$@.pre
+	$(VERBOSE)$(RM) $$(call BID_dot_fname,$$@).d-x $$@.pre
 endef
 
 $(eval $(call device_tree_rule,dts,dtb))
