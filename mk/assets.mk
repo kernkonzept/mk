@@ -51,10 +51,12 @@ ifneq ($(SYSTEM),) # if we are a system, really build
 
 # Functionality for device-tree file handling
 TARGET_DTB      = $(patsubst %.dts,%.dtb,$(SRC_DTS))
-TARGET         += $(TARGET_DTB)
+TARGET_DTBO     = $(patsubst %.dtso,%.dtbo,$(SRC_DTS))
+TARGET         += $(TARGET_DTB) $(TARGET_DTBO)
 INSTALL_TARGET += $(TARGET)
-DEPS           += $(foreach file,$(TARGET_DTB),$(call BID_dot_fname,$(file)).d)
+DEPS           += $(foreach file,$(TARGET_DTB) $(TARGET_DTBO),$(call BID_dot_fname,$(file)).d)
 $(call register_asset_targets,dtb,$(TARGET_DTB))
+$(call register_asset_targets,dtbo,$(TARGET_DTBO))
 
 $(call install_assets,modlist/$(PKGNAME),$(SRC_ASSETS_MODLIST))
 $(call install_assets,ned/$(PKGNAME),$(SRC_ASSETS_NED))

@@ -168,7 +168,7 @@ $(foreach sys,$(TARGET_SYSTEMS),$(OBJ_DIR)/OBJ-$(sys)/$(BID_OBJ_Makefile)):$(OBJ
 	@echo 'CPU=$(call SYSTEM_TO_CPU,$*)'>>$@
 	@echo 'L4API=$(call SYSTEM_TO_L4API,$*)'>>$@
 	@echo 'VARIANT=$(call SYSTEM_TO_VARIANT,$*)'>>$@
-	@for ext in .c .cc .cpp $(FORTRAN_FILE_EXTENSIONS) $(BID_ASM_FILE_EXTENSIONS) $(ADA_FILE_EXTENSIONS) .y .l .ld .dpe .dts; \
+	@for ext in .c .cc .cpp $(FORTRAN_FILE_EXTENSIONS) $(BID_ASM_FILE_EXTENSIONS) $(ADA_FILE_EXTENSIONS) .y .l .ld .dpe .dts .dtso; \
 	  do echo "vpath %$$ext $(VPATH_SRC_BASE)">>$@ ; done
 	@echo '.general.d: $(SRC_DIR)/$(if $(wildcard Make.rules),Make.rules,Makefile)'>>$@
 	@echo 'include $$(OBJ_BASE)/include/config/auto.conf'>>$@
@@ -926,14 +926,20 @@ $(if $(BID_ALLOW_CPP_AS_CPLUSPLUS_FILE),$(eval $(call BID_GENERATE_S_MAKE_RULE,%
 	@$(GEN_MESSAGE)
 	$(VERBOSE)$(call MAKEDEP,perl) $(GEN_DOPECODE) $< >$@
 
-%.dtb: %.dts $(GENERAL_D_LOC)
-	@$(BUILD_MESSAGE)
-	$(VERBOSE)$(MKDIR) $(@D)
-	$(VERBOSE)$(CPP) $(CPPFLAGS) -undef $(addprefix -I, $(PRIVATE_INCDIR)) -x assembler-with-cpp -Wp,-MD,$(@D)/.$(@F).d,-MT$@,-MP -nostdinc -o $@.pre $<
-	$(VERBOSE)$(DTC) $(DTC_FLAGS) $(addprefix -i , $(PRIVATE_INCDIR)) -i $(dir $<) -d $(call BID_dot_fname,$@).d-x -O dtb -b 0 -o $@ $@.pre
-	$(VERBOSE)$(SED) -e "s|$@.pre|$<|" $(call BID_dot_fname,$@).d-x | \
-		perl -ne 'print "$$_\n"; if (/^.*:\s*(.*)$$/) { print "$$_:\n" foreach (split(/ /,$$1)); }' >> $(@D)/.$(@F).d
-	$(VERBOSE)$(RM) $(call BID_dot_fname,$@).d-x $@.pre
+define device_tree_rule
+%.$(2): %.$(1) $(GENERAL_D_LOC)
+	@$$(BUILD_MESSAGE)
+	$(VERBOSE)$(MKDIR) $$(@D)
+	$(VERBOSE)$(CPP) $(CPPFLAGS) -undef $$(addprefix -I, $(PRIVATE_INCDIR)) -x assembler-with-cpp -Wp,-MD,$$(@D)/.$$(@F).d,-MT$$@,-MP -nostdinc -o $$@.pre $$<
+	$(VERBOSE)$(DTC) $(DTC_FLAGS) $$(addprefix -i , $(PRIVATE_INCDIR)) -i $$(dir $$<) -d $(call BID_dot_fname,$$@).d-x -O dtb -b 0 -o $$@ $$@.pre
+	$(VERBOSE)$(SED) -e "s|$$@.pre|$$<|" $(call BID_dot_fname,$$@).d-x | \
+		perl -ne 'print "$$$$_\n"; if (/^.*:\s*(.*)$$$$/) { print "$$$$_:\n" foreach (split(/ /,$$$$1)); }' >> $$(@D)/.$$(@F).d
+	$(VERBOSE)$(RM) $(call BID_dot_fname,$$@).d-x $$@.pre
+endef
+
+$(eval $(call device_tree_rule,dts,dtb))
+$(eval $(call device_tree_rule,dtso,dtbo))
+
 
 define bin_to_asm_recipe
 	echo -e ".section .rodata, \"a\"\n"    \
