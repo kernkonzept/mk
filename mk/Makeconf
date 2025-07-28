@@ -737,15 +737,6 @@ addfileheader:
 
 .PHONY: FORCE
 
-#
-# Common functions
-#
-
-define newline
-
-
-endef
-
 # 1: name
 # 2: output file
 # 3: inc path (one only)

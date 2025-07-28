@@ -29,6 +29,10 @@ BID_EMPTY  :=
 BID_SPACE  := $(BID_EMPTY) $(BID_EMPTY)
 BID_SQUOTE := '
 BID_DQUOTE := "
+define newline
+
+
+endef
 
 
 # Strings #
