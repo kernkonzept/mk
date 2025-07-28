@@ -610,7 +610,7 @@ sub process_image
 
               my ($nop0, $nop1, $nop2, $nop3, $nop4, $nop5, $nop6, $nop7,
                   $b_insn, $magic1, $start, $end, $magic2, $magic3)
-               = unpack("L14<", substr($buf, 0, 14 * 4));
+               = unpack("(L14)<", substr($buf, 0, 14 * 4));
 
               if (   $nop0 == $nop1
                   && $nop0 == $nop2
