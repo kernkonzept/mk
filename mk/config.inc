@@ -110,11 +110,7 @@ syncconfig: $(DROPSCONF_CONFIG_DEPS) | $(DIRS_FOR_CONFIG)
 	$(VERBOSE)+$(kconfig_call) syncconfig
 
 $(DROPSCONF_CONFIG): $(DROPSCONF_CONFIG_DEPS) | $(DIRS_FOR_CONFIG)
-ifeq ($(filter $(MAKECONFIGGOALS),$(MAKECMDGOALS)),)
 	$(VERBOSE)+$(kconfig_call) syncconfig
-else
-	@true
-endif
 
 .PHONY: genfixdep
 # script_basic: only fixdep for now
@@ -137,7 +133,9 @@ genfixdep:
 #	    false ) \
 #	 fi
 
-$(DROPSCONF_CONFIG_MK): $(DROPSCONF_CONFIG)
+_HAS_MAKECONFIGGOAL=$(filter $(MAKECONFIGGOALS),$(MAKECMDGOALS))
+
+$(DROPSCONF_CONFIG_MK): $(if $(_HAS_MAKECONFIGGOAL),,$(DROPSCONF_CONFIG))
 	$(VERBOSE)sed -e "s/\(^[^= ]*=\)'\([^']*\)'/\1\2/" \
 		<$(DROPSCONF_CONFIG) >$@
 	$(VERBOSE)$(MAKE) DROPSCONF_CONFIG_MK_POST_HOOK
