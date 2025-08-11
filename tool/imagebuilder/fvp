@@ -29,8 +29,14 @@ if [[ -n "$COVERAGE_DUMP_FILE" ]]; then
     )
 fi
 
+echo "FVP executable: $MAKECONF_FVP_PATH"
+
 echo -n "FVP options:"
 printf " '%s'" "${optlist[@]}"
+
+echo "FVP --version:"
+:| "$MAKECONF_FVP_PATH" --version
+echo; echo;
 
 # We need to override the stdout buffering, otherwise tap-wrapper won't see
 # the last couple of lines.
