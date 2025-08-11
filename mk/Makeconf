@@ -309,10 +309,10 @@ MAKECONFLOCAL ?= Makeconf.local
 
 define _check_toolpath
  ifneq ($(CONFIGURED_$1),)
-  ifneq ($(CONFIGURED_$1),$(realpath $(shell which $($1))))
+  ifneq ($(CONFIGURED_$1),$(realpath $(shell which $(filter-out $(CCACHE),$($1)))))
    $$(error Configured $1 different than used one:$$(newline)       \
             Configured: $(CONFIGURED_$1)$$(newline)                 \
-            Used:       $(realpath $(shell which $($1)))$$(newline) \
+            Used:       $(realpath $(shell which $(filter-out $(CCACHE),$($1))))$$(newline) \
             ==> Please reconfigure by calling "make oldconfig" in the root source directory with the same compiler set)
   endif
  endif
