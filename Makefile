@@ -316,7 +316,7 @@ regen_compile_commands_json:
 
 # Build a typical sysroot for use with external tooling such as a
 # L4Re-specific cross-compiler
-SYSROOT_LIBS = libgcc libgcc_eh libgcc_s libc libpthread librt libdl libld-l4 libm libc_nonshared.p
+SYSROOT_LIBS = libc libpthread librt libdl libld-l4 libm libc_nonshared.p
 OUTPUT_FORMAT = $(CC) $(CFLAGS) -Wl,--verbose 2>&1 | $(SED) -n '/OUTPUT_FORMAT/,/)/p'
 SYSROOT_PACKAGES = $(addprefix pkg/l4re-core/,ldso libc_backends libc)
 .PHONY: sysroot
