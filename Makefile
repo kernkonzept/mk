@@ -316,7 +316,8 @@ regen_compile_commands_json:
 
 # Build a typical sysroot for use with external tooling such as a
 # L4Re-specific cross-compiler
-SYSROOT_LIBS = libc libpthread librt libdl libld-l4 libm libc_nonshared.p
+SYSROOT_LIB_DIRS  = $(addprefix libc/uclibc-ng/,libc libm librt) ldscripts ldso
+
 OUTPUT_FORMAT = $(CC) $(CFLAGS) -Wl,--verbose 2>&1 | $(SED) -n '/OUTPUT_FORMAT/,/)/p'
 SYSROOT_PACKAGES = $(addprefix pkg/l4re-core/,ldso libc_backends libc)
 .PHONY: sysroot
@@ -334,11 +335,10 @@ sysroot: $(SYSROOT_PACKAGES)
 	$(VERBOSE)$(CP) -Lr $(OBJ_DIR)/include/l4/{crtn,cxx,l4re_vfs,libc_backends,re,sys,util,bid_config.h} \
 	                    $(OBJ_DIR)/sysroot/usr/include/l4/
 	$(VERBOSE)$(CP) -Lr $(OBJ_DIR)/include/uclibc-ng/* $(OBJ_DIR)/sysroot/usr/include/
-	$(VERBOSE)$(CP) -Lr $(OBJ_DIR)/lib/$(BUILD_ARCH)_$(CPU)/std/plain/crt* $(OBJ_DIR)/sysroot/usr/lib
-	$(VERBOSE)$(CP) -Lr $(wildcard $(addprefix $(OBJ_DIR)/lib/$(BUILD_ARCH)_$(CPU)/std/l4f/,$(SYSROOT_LIBS:=.a))) \
-	                    $(OBJ_DIR)/sysroot/usr/lib
-	$(VERBOSE)$(CP) -d  $(wildcard $(addprefix $(OBJ_DIR)/lib/$(BUILD_ARCH)_$(CPU)/std/l4f/,$(SYSROOT_LIBS:=.so*))) \
-                            $(OBJ_DIR)/sysroot/usr/lib
+	$(VERBOSE)$(MAKE) S='$(addprefix pkg/l4re-core/,$(SYSROOT_LIB_DIRS))' LD_SCRIPTS='' install \
+	                    INSTALLDIR_LIB=$(OBJ_DIR)/sysroot/usr/lib INSTALLDIR_INC=$(OBJ_DIR)/sysroot/usr/include
+	$(VERBOSE)$(MAKE) S=pkg/l4re-core/libc/uclibc-ng/libpthread/src TARGET=libpthread.a install \
+	                    INSTALLDIR_LIB=$(OBJ_DIR)/sysroot/usr/lib INSTALLDIR_INC=$(OBJ_DIR)/sysroot/usr/include
 	$(VERBOSE)mv $(OBJ_DIR)/sysroot/usr/lib/libc_nonshared.p.a  $(OBJ_DIR)/sysroot/usr/lib/libc_nonshared.a
 	$(VERBOSE)$(RM) $(OBJ_DIR)/sysroot/usr/lib/libc.so
 	$(VERBOSE)$(OUTPUT_FORMAT) > $(OBJ_DIR)/sysroot/usr/lib/libc.so
