@@ -669,9 +669,8 @@ ALLDPI = $(sort $(foreach obj,$(ALLOBJS),$(patsubst %.dpe,%.dpi,\
 # convert list of c++ files names to .o files
 # arg: 1 - list of files
 #      2 - infix between the basename and the .o
-convert_cc_to_o_file = $(patsubst %.cc,%$(2).o, $(filter %.cc,$(1)))     \
-                       $(if $(BID_ALLOW_CPP_AS_CPLUSPLUS_FILE),          \
-		         $(patsubst %.cpp,%$(2).o,$(filter %.cpp,$(1))))
+convert_cc_to_o_file = $(patsubst %.cc,%$(2).o, $(filter %.cc,$(1)))  \
+                       $(patsubst %.cpp,%$(2).o,$(filter %.cpp,$(1)))
 
 #
 # Get the combined contents of generic and target-specific variables.
@@ -872,7 +871,7 @@ include $(L4DIR)/mk/rules.inc
 # generate rules to compile %.cc files to %.o, %.s.o etc
 $(eval $(call BID_GENERATE_CXX_MAKE_RULES,cc))
 # generate rules to compile %.cpp files to %.o, %.s.o etc
-$(if $(BID_ALLOW_CPP_AS_CPLUSPLUS_FILE),$(eval $(call BID_GENERATE_CXX_MAKE_RULES,cpp)))
+$(eval $(call BID_GENERATE_CXX_MAKE_RULES,cpp))
 # generate rules to compile %.c files to %.o, %.s.o etc
 $(eval $(call BID_GENERATE_C_MAKE_RULES,c))
 # generate rules to compile %.f90 files to %.o, %.s.o etc
@@ -894,13 +893,13 @@ $(eval $(call BID_GENERATE_I_MAKE_RULE,%.i,%.c,$(CC),$(CFLAGS) $(call BID_mode_v
 $(eval $(call BID_GENERATE_I_MAKE_RULE,%.s.i,%.c,$(CC),$(CFLAGS) $(PICFLAGS)))
 $(eval $(call BID_GENERATE_I_MAKE_RULE,%.i,%.cc,$(CXX),$(CXXFLAGS) $(call BID_mode_var,NOPICFLAGS)))
 $(eval $(call BID_GENERATE_I_MAKE_RULE,%.s.i,%.cc,$(CXX),$(CXXFLAGS) $(PICFLAGS)))
-$(if $(BID_ALLOW_CPP_AS_CPLUSPLUS_FILE),$(eval $(call BID_GENERATE_I_MAKE_RULE,%.i,%.cpp,$(CXX),$(CXXFLAGS) $(call BID_mode_var,NOPICFLAGS))))
-$(if $(BID_ALLOW_CPP_AS_CPLUSPLUS_FILE),$(eval $(call BID_GENERATE_I_MAKE_RULE,%.s.i,%.cpp,$(CXX),$(CXXFLAGS) $(PICFLAGS))))
+$(eval $(call BID_GENERATE_I_MAKE_RULE,%.i,%.cpp,$(CXX),$(CXXFLAGS) $(call BID_mode_var,NOPICFLAGS)))
+$(eval $(call BID_GENERATE_I_MAKE_RULE,%.s.i,%.cpp,$(CXX),$(CXXFLAGS) $(PICFLAGS)))
 $(eval $(call BID_GENERATE_I_MAKE_RULE,%.i,%.S,$(CC),$(ASFLAGS)))
 
 $(eval $(call BID_GENERATE_S_MAKE_RULE,%.c,$(CC),$(CFLAGS)))
 $(eval $(call BID_GENERATE_S_MAKE_RULE,%.cc,$(CC),$(CXXFLAGS)))
-$(if $(BID_ALLOW_CPP_AS_CPLUSPLUS_FILE),$(eval $(call BID_GENERATE_S_MAKE_RULE,%.cpp,$(CC),$(CXXFLAGS))))
+$(eval $(call BID_GENERATE_S_MAKE_RULE,%.cpp,$(CC),$(CXXFLAGS)))
 
 %.c:	%.y
 	@$(GEN_MESSAGE)
