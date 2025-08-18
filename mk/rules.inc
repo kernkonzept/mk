@@ -76,9 +76,19 @@ define BID_call_compiler_default
       $(RM) $(call BID_dot_fname,$@).d)
 endef
 
-BID_call_compiler_F = $(call COMP_MESSAGE); $(call lessfork_mkdir,$(@D)) $1
+define BID_call_compiler_plain
+  $(call COMP_MESSAGE); $(call lessfork_mkdir,$(@D)) $1
+endef
 
-BID_call_compiler_ADAC = $(call COMP_MESSAGE); $(call lessfork_mkdir,$(@D)) $1
+define _asm_has_cpp
+  $(filter $(addprefix %,$(BID_ASM_CPP_FILE_EXTENSIONS)),$1)
+endef
+
+BID_call_compiler_F    = $(BID_call_compiler_plain)
+BID_call_compiler_ADAC = $(BID_call_compiler_plain)
+BID_call_compiler_AS   = $(if $(call _asm_has_cpp,$<),     \
+                              $(BID_call_compiler_default),\
+                              $(BID_call_compiler_plain))
 
 # Arg and further descriptions: See BID_MAKE_RULE_template_gendep
 #
