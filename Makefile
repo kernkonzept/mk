@@ -190,7 +190,7 @@ endif
 	@echo "done."
 else
 
-all:: $(BUILD_DIRS) $(if $(SUBDIRS_TO_BUILD),,l4defs regen_compile_commands_json)
+all:: $(BUILD_DIRS) $(if $(SUBDIRS_TO_BUILD),,l4defs regen_compile_commands_json cleanup_include_dir)
 
 endif
 
@@ -313,6 +313,10 @@ regen_compile_commands_json:
 	    $(L4DIR)/tool/bin/gen_ccj $(OBJ_DIR) $(COMPILE_COMMANDS_JSON); \
 	  fi;                                                              \
 	fi
+
+.PHONY: cleanup_include_dir
+cleanup_include_dir:
+	$(VERBOSE)find $(INSTALLDIR_LOCAL) -xtype l | xargs $(RM)
 
 # Build a typical sysroot for use with external tooling such as a
 # L4Re-specific cross-compiler
