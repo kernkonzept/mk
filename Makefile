@@ -504,7 +504,7 @@ Makeconf.bid.local-helper: $(OBJ_BASE)/include/l4/bid_config.h
 	            echo $(v)=$(call $(v)_f,$(ARCH)) \
 	            >>$(DROPSCONF_CONFIG_MK);)
 	$(VERBOSE)$(foreach v,CC CXX,\
-	            echo CONFIGURED_$v=$(realpath $(shell which $(filter-out $(CCACHE),$($v)))) \
+	            echo CONFIGURED_$v=$(realpath $(shell which $(firstword $(filter-out $(CCACHE),$($v))))) \
 	            >>$(DROPSCONF_CONFIG_MK);)
 	$(VERBOSE)$(foreach v, LD_GENDEP_PREFIX, echo $v=$($(v)) >>$(DROPSCONF_CONFIG_MK);)
 	$(VERBOSE)echo "HOST_SYSTEM=$(HOST_SYSTEM)" >>$(DROPSCONF_CONFIG_MK)
