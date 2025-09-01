@@ -620,7 +620,7 @@ ifeq ($(BID_COLLECT_DIAGNOSTICS),json)
 ifneq ($(strip $(DIAGNOSTICS_JSON)),)
   CXXFLAGS += $(DIAGNOSTICS_JSON)
   CFLAGS   += $(DIAGNOSTICS_JSON)
-  CXX_COLLECT_REDIR  = |& sed '/^\[\]/d' | tee $$@.diag && ( [[ -s $$@.diag ]] || rm $$@.diag )
+  CXX_COLLECT_REDIR  = |& sed '/^\[\]/d' | tee $@.diag && ( [[ -s $@.diag ]] || rm $@.diag )
 else
   $(error JSON diagnostics not supported by compiler)
 endif
