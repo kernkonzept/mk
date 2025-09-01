@@ -599,15 +599,6 @@ install:: $(SUBDIRS)
 	$(VERBOSE)set -e; $(foreach i,$(SUBDIRS), \
 		$(MAKE) -C $(i) $@;)
 
-DIAG_DISPLAY_CMD := cat
-diag::
-	@printf $(EMPHSTART)"Diagnostics:"$(EMPHSTOP)
-	@DIAGS=( $$(find $(OBJ_DIR) -name '*.diag') );  \
-	if [[ "$${#DIAGS[@]}" -eq 0 ]] ; then \
-	  echo "<None>"; \
-	else \
-	  $(DIAG_DISPLAY_CMD) "$${DIAGS[@]}"; \
-	fi
 
 endif
 
@@ -620,6 +611,23 @@ else
 # we are within an OBJ-*/ dir, create dummy target
 $(SUBDIRS):
 endif
+
+# Diagnostics
+ifeq ($(SUBDIRS_TO_BUILD),)
+DIAG_SEARCH_PATHS = $(OBJ_DIR)
+else
+DIAG_SEARCH_PATHS = $(addprefix $(OBJ_DIR)/,$(SUBDIRS_TO_BUILD))
+endif
+
+DIAG_DISPLAY_CMD := cat
+diag::
+	@printf $(EMPHSTART)"Diagnostics:\n"$(EMPHSTOP)
+	@DIAGS=( $$(find $(DIAG_SEARCH_PATHS) -name '*.diag') );  \
+	if [[ "$${#DIAGS[@]}" -eq 0 ]] ; then \
+	  echo "<None>"; \
+	else \
+	  $(DIAG_DISPLAY_CMD) "$${DIAGS[@]}"; \
+	fi
 
 #
 # Dependency section
