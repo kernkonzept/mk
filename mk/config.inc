@@ -48,7 +48,7 @@ MAKECONFIGGOALS := config menuconfig textconfig oldconfig olddefconfig xconfig \
 KCONFIG_OBJ_DIR  = $(OBJ_BASE)/scripts/kconfig
 
 kconfig_call = $(MAKE) -C $(L4DIR)/tool/kconfig O=$(OBJ_BASE) \
-               Kconfig=$(KCONFIG_FILE) \
+	       KBUILD_KCONFIG=$(KCONFIG_FILE) \
 	       KCONFIG_AUTOHEADER=include/generated/autoconf.h \
 	       KCONFIG_CONFIG=.kconfig \
 	       KCONFIG_AUTOCONFIG=include/config/auto.conf \
