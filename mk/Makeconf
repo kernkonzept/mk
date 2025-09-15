@@ -669,7 +669,7 @@ $(GENERAL_D_LOC): $(L4DIR)/mk/Makeconf $(FIXDEP) $(EXTRA_GENERAL_D_DEP)
 $(GENERAL_D_LOC): | $(dir $(GENERAL_D_LOC))
 	@$(BUILD_MESSAGE)
 	$(file >$@.in,$(filter-out %.cmd,$(DEPS)))
-	$(DEPEND_VERBOSE)xargs -a $@.in $(RM)
+	$(DEPEND_VERBOSE)cat $@.in | xargs $(RM)
 	$(DEPEND_VERBOSE)$(RM) $@.in
 	$(DEPEND_VERBOSE)echo '$@: $(SRC_DIR)/Makefile ' > $@
 	$(DEPEND_VERBOSE)$(call BID_DEPEND_GENERAL_D_COND,\
