@@ -9,6 +9,7 @@ use vars qw(@ISA @EXPORT);
 
 my $cross_compile_prefix = $ENV{CROSS_COMPILE} || '';
 my $prog_objdump         = $ENV{OBJDUMP} || "${cross_compile_prefix}objdump";
+my $prog_readelf         = $ENV{READELF} || "${cross_compile_prefix}readelf";
 
 
 my @internal_searchpaths;
@@ -259,6 +260,18 @@ sub get_shared_libs
       while(<$obj>)
         {
           push @shlibs, $1 if /^\s+NEEDED\s+(.+)$/;
+        }
+    }
+
+  if (open(my $obj, "$prog_readelf -l $binary 2>&1 |"))
+    {
+      while(<$obj>)
+        {
+          if (/^\s+\[Requesting program interpreter:[^\[]+\/(.+)\]$/)
+            {
+              my $ld = $1;
+              push @shlibs, $ld unless grep(/^$ld$/, @shlibs);
+            }
         }
     }
 
