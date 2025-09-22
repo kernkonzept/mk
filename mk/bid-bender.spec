@@ -100,7 +100,7 @@ link_args_ld_part3 =
 ld = %(check_linker) %:exec(%(linker) %(link_args_ld_part1)
      %(link_args_ld_part2_gnu_ld) %(link_args_ld_part3))
 
-# executed when called with '-t lld' (L4 linker with ld)
+# executed when called with '-t lld' (L4 linker with lld)
 lld = %(check_linker) %:exec(%(linker) %(link_args_ld_part1)
       %(link_args_ld_part2_llvm_lld) %(link_args_ld_part3))
 
