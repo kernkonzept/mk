@@ -62,7 +62,7 @@ if [[ $ret -eq 0 ]] ; then
 fi
 
 if [[ $ret -eq 0 && -n "$POST_IMAGE_CMD" ]]; then
-    make -f <(echo -e '.PHONY: p\np:\n\t$(call POST_IMAGE_CMD,$(TARGET_IMAGE))') -C "${OBJ_BASE}" TARGET_IMAGE=$TARGET_IMAGE; ret=$?
+    $MAKE -f <(echo -e '.PHONY: p\np:\n\t$(call POST_IMAGE_CMD,$(TARGET_IMAGE))') -C "${OBJ_BASE}" TARGET_IMAGE=$TARGET_IMAGE; ret=$?
 fi
 
 exit $ret

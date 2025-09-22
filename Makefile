@@ -22,6 +22,8 @@ CMDS_WITHOUT_OBJDIR := help checkbuild checkbuild.% check_build_tools
 CMDS_PROJECT_MK     := all clean cleanall install scrub cont doc help sysroot \
                        $(wildcard $(MAKECMDGOALS))
 
+export MAKE
+
 export BID_GLOBAL_MAKE := y
 
 # Hack, see project.mk

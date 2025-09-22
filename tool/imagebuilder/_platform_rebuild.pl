@@ -68,11 +68,11 @@ if ($rebuild)
     delete @ENV{qw(E ENTRY MODULES_LIST MAKEFLAGS L4DIR PKGDIR)};
 
     # Updates rambase
-    system("make","-C",$ENV{OBJ_BASE},"check_and_adjust_ram_base") == 0
+    system($ENV{MAKE},"-C",$ENV{OBJ_BASE},"check_and_adjust_ram_base") == 0
       or die "check_and_adjust_ram_base failed";
 
     # Try bootstrap again, because check_and_adjust_ram_base might not have done it.
-    system("make","-C",$ENV{OBJ_BASE} . "/pkg/bootstrap", "E=", "ENTRY=") == 0
+    system($ENV{MAKE},"-C",$ENV{OBJ_BASE} . "/pkg/bootstrap", "E=", "ENTRY=") == 0
         or die "bootstrap failed";
   }
 
