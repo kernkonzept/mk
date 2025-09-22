@@ -564,6 +564,7 @@ endef
 
 .PHONY: Makeconf.bid.local-internal-names
 Makeconf.bid.local-internal-names:
+ifeq ($(HOST_SYSTEM),linux)
 ifneq ($(CONFIG_INT_CPP_NAME_SWITCH),)
 	$(VERBOSE)set -e; X="$(OBJ_BASE)/tmp.$$$$$$RANDOM.c" ;               \
 	          echo 'int main(void){}'>$$X ;                              \
@@ -582,6 +583,7 @@ ifneq ($(CONFIG_INT_CPP_NAME_SWITCH),)
 	           >>$(DROPSCONF_CONFIG_MK);                           \
 	          rm -f $$X $$X.{o,out};
 endif
+endif # Host system is Linux
 ifneq ($(CONFIG_INT_LD_NAME_SWITCH),)
 	$(VERBOSE)set -e; echo INT_LD_NAME=$$($(callld) 2>&1 \
 	          | perl -p -e 's,^(.+/)?([^:]+):.+,$$2,') >> $(DROPSCONF_CONFIG_MK)
