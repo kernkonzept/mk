@@ -960,7 +960,7 @@ clean cleanall::
 		$(wildcard *.dpi) $(wildcard *.o) $(wildcard *.i) \
 		$(wildcard *.S) $(wildcard *.ali) \
 		$(wildcard $(filter-out -%, $(ALLOBJS) $(DEL_ON_CLEAN))))))
-	$(VERBOSE)xargs -a $@.in $(RM)
+	$(VERBOSE)cat $@.in | xargs $(RM)
 	$(VERBOSE)$(RM) $@.in
 
 # clean: delete all temporary editor files, objects, binaries
