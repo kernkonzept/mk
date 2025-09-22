@@ -316,7 +316,8 @@ regen_compile_commands_json:
 
 .PHONY: cleanup_include_dir
 cleanup_include_dir:
-	$(VERBOSE)find $(INSTALLDIR_LOCAL) -xtype l | xargs $(RM)
+	$(VERBOSE)find $(or $(INSTALLDIR_INC_LOCAL),$(OBJ_BASE)/include) \
+	               -xtype l | xargs $(RM)
 
 # Build a typical sysroot for use with external tooling such as a
 # L4Re-specific cross-compiler
