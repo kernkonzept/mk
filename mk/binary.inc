@@ -369,10 +369,20 @@ BID_LINK = $(L4DIR)/tool/bin/l4-bender $(if $(VERBOSE),,--trace-exec) \
 	   $(bid_bender_default_vars) -Dlinker="$(LD)" \
            --spec=$(L4DIR)/mk/bid-bender.spec --
 
-# linker for host mode and l4linux mode
+# linker for host mode
 BID_LINK_MODE_host = $(L4DIR)/tool/bin/l4-bender $(if $(VERBOSE),,--trace-exec) \
                      -t host-ld $(bid_bender_default_vars) -Dlinker="$(1)" \
                      --spec=$(L4DIR)/mk/bid-bender.spec --
+#
+# linker for targetsys mode
+BID_LINK_MODE_targetsys = $(L4DIR)/tool/bin/l4-bender $(if $(VERBOSE),,--trace-exec) \
+                          -t host-ld $(bid_bender_default_vars) -Dlinker="$(1)" \
+                          --spec=$(L4DIR)/mk/bid-bender.spec --
+
+# linker for l4linux mode
+BID_LINK_MODE_l4linux = $(L4DIR)/tool/bin/l4-bender $(if $(VERBOSE),,--trace-exec) \
+                        -t l4linux-ld $(bid_bender_default_vars) -Dlinker="$(1)" \
+                        --spec=$(L4DIR)/mk/bid-bender.spec --
 
 BID_link_deps_file = $(call BID_dot_fname,$1).pcs.d
 

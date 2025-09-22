@@ -149,9 +149,9 @@ gcc-ld = %(check_linker) %:exec(%(linker) %(link_args_gcc))
 
 
 ################## GCC pass through for linking host / l4linux mode ###########
-# implementation for modes 'host' and 'l4linux' that use GCC/G++ as linker
-# (we use gcc as linker in that case)
-link_host_mode_args =
+# implementation for mode 'l4linux' that use GCC/G++ as linker (we use gcc
+# as linker in that case)
+link_l4linux_mode_args =
   %(gcc_arg_opts)
   %:read-pc-file(%(pc_file_dir) %{PC*:%*})
   %{o} %{z} %{pie&no-pie} %{v} %{g*} %{-coverage} %{undef}
@@ -162,6 +162,20 @@ link_host_mode_args =
   %{EL&EB} %{m*} %{W*} %{f*}
   %{MD:%(generate_deps)} %:error-unused-options()
 
+# implementation for mode 'host' that use GCC/G++ as linker (we use gcc as
+# linker in that case)
+link_host_mode_args =
+  %(gcc_arg_opts)
+  %:read-pc-file(%(pc_file_dir) %{PC*:%*})
+  %{o} %{z} %{pie&no-pie} %{v} %{g*} %{-coverage} %{undef}
+  %{static} %o
+  %{I*&D*&U*} %{L*&l*&Wl,*&Xlinker*} %<Wl,*
+  %(Libs) %(Link_Libs)
+  %{EL&EB} %{m*} %{W*} %{f*}
+  %{MD:%(generate_deps)} %:error-unused-options()
+
+# executed when called with '-t l4linux-ld', host linker with L4 code.
+l4linux-ld = %(check_linker) %:exec(%(linker) %(link_l4linux_mode_args))
+
 # executed when called with '-t host-ld', host linker.
 host-ld = %(check_linker) %:exec(%(linker) %(link_host_mode_args))
-

@@ -129,14 +129,18 @@ include $(L4DIR)/mk/install.inc
 
 DEPS	+= $(foreach file,$(TARGET), $(call BID_LINK_DEPS,$(file)))
 
-LINK_PROGRAM-C-host-1   := $(CC)
-LINK_PROGRAM-CXX-host-1 := $(CXX)
+LINK_PROGRAM-C-host-1        := $(HOST_CC)
+LINK_PROGRAM-CXX-host-1      := $(HOST_CXX)
+LINK_PROGRAM-C-targetsys-1   := $(CC)
+LINK_PROGRAM-CXX-targetsys-1 := $(CXX)
+LINK_PROGRAM-C-l4linux-1     := $(CC)
+LINK_PROGRAM-CXX-l4linux-1   := $(CXX)
 
 bid_call_if = $(if $(2),$(call $(1),$(2)))
 
-LINK_PROGRAM  := $(call bid_call_if,BID_LINK_MODE_host,$(LINK_PROGRAM-C-host-$(HOST_LINK)))
+LINK_PROGRAM  := $(call bid_call_if,BID_LINK_MODE_$(MODE),$(LINK_PROGRAM-C-$(MODE)-$(HOST_LINK)))
 ifneq ($(SRC_CC),)
-LINK_PROGRAM  := $(call bid_call_if,BID_LINK_MODE_host,$(LINK_PROGRAM-CXX-host-$(HOST_LINK)))
+LINK_PROGRAM  := $(call bid_call_if,BID_LINK_MODE_$(MODE),$(LINK_PROGRAM-CXX-$(MODE)-$(HOST_LINK)))
 endif
 
 ifeq ($(LINK_PROGRAM),)
