@@ -209,7 +209,6 @@ static void __attribute__ ((__noreturn__)) real__Exit (int status)
   f__Exit(status);
 }
 
-void _EXIT(int status) __THROW __attribute__ ((__noreturn__));
 void _EXIT(int status)
 {
   real__Exit (status);
