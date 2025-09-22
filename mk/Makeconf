@@ -120,6 +120,7 @@ CP		?= $(call gnutool,cp)
 DOXYGEN		?= doxygen
 ECHO		?= echo
 ELF_PATCHER     = $(OBJ_BASE)/tool/elf-patcher/elf-patcher
+FIND            = $(call gnutool,find)
 FIXDEP          = $(OBJ_BASE)/scripts/basic/fixdep
 
 GENOFFSETS	= $(L4DIR)/tool/bin/genoffsets.pl
