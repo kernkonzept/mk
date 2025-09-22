@@ -77,6 +77,9 @@ MAKECONFS_ADD    = $(call strip_quotes,$(CONFIG_MAKECONFS_ADD))
 CARCHFLAGS       = $(CARCHFLAGS_$(ARCH)) $(CARCHFLAGS_$(ARCH)_$(CPU))
 CCXX_FLAGS       = $(CCXX_FLAGS_$(BUILD_ARCH))
 
+# Prefix tool with 'g' to get the GNU tool (via Homebrew)
+gnutool          = $(if $(filter darwin,$(HOST_SYSTEM)),g)$(1)
+
 error_on_env_vars = $(if $(filter environment,$(origin $1)), \
                          $(error '$1' specified in environment. \
                          Please use a Makeconf.local file for \
@@ -112,7 +115,7 @@ $(call dv,CPP)   = $(if $(CLANG),$(call \
 $(call dv,ADAC)  = $(CROSS_COMPILE)gnatmake -q
 HOST_ADAC        = gnatmake -q
 
-CP		?= cp
+CP		?= $(call gnutool,cp)
 
 DOXYGEN		?= doxygen
 ECHO		?= echo
@@ -133,7 +136,7 @@ DTC		?= dtc
 LATEX		= latex
 PDFLATEX	= pdflatex
 GREP		= GREP_OPTIONS= grep
-LN		= ln
+LN		= $(call gnutool,ln)
 MKDIR		= mkdir -p
 NM		?= $(CROSS_COMPILE)nm
 OBJCOPY		?= $(CROSS_COMPILE)objcopy
@@ -142,7 +145,7 @@ RANLIB		?= $(CROSS_COMPILE)ranlib
 $(call dv,RM)   = rm -f
 SCRUB		= $(RM) $(wildcard *.old) $(wildcard *~) $(wildcard *.bak) \
 		        $(wildcard \#*\#)
-SED		= sed
+SED		= $(call gnutool,sed)
 SHELL		= bash
 SIZE		?= $(CROSS_COMPILE)size
 STRIP		?= $(CROSS_COMPILE)strip
