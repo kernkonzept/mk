@@ -525,7 +525,8 @@ sub objcpy_finalize
   # Copy remaining sections and headers
   my $buf;
   filepos_set($ifd, $self->{'upd_file_end'});
-  sysread($ifd, $buf, 0xffffffff);
+  my $r = sysread($ifd, $buf, 0x7fffffff);
+  die "Read failed: $!" unless defined $r;
   check_syswrite(syswrite($ofd, $buf), length($buf));
 
   # Fix headers. The Elf object will take ownership of the file handle.
