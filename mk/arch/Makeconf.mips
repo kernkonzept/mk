@@ -11,8 +11,8 @@ L4_KIP_ADDR_mips         ?= 0x7fff0000
 L4_STACK_ADDR_mips       ?= 0x70000000
 CARCHFLAGS_mips          += -march=mips$(CPU) -mabi=$(CPU_ABI)
 CARCHFLAGS_mips          += $(if $(CONFIG_MIPS_LITTLE_ENDIAN),-EL,-EB)
-LDFLAGS_mips             += $(if $(CONFIG_MIPS_LITTLE_ENDIAN),-EL,-EB) \
-                            -z noexecstack
+LDFLAGS_mips             += $(call if_for_target,$(if $(CONFIG_MIPS_LITTLE_ENDIAN),-EL,-EB) \
+                                                 -z noexecstack)
 SYSTEMS_ABI              += mips-l4f
 SYSTEMS_PLAIN            += mips-plain
 

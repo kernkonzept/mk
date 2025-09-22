@@ -384,6 +384,8 @@ BID_ASM_CPP_FILE_EXTENSIONS ?= .S
 
 # macros used here and in packages
 
+if_for_target = $(if $(filter host,$(MODE)),,$(1))
+
 # check if the current architecture is in the provided list of allowed
 # architectures and exit with an error if not.
 # 1: list of allowed architectures

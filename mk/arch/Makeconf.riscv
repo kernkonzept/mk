@@ -17,7 +17,7 @@ RISCV_ZICSR_ZIFENCEI_riscv_f = $(if $(call checkcc,-march=$(CPU)_zicsr_zifencei 
                                                    -mcmodel=medany),_zicsr_zifencei)
 CARCHFLAGS_riscv         += -march=$(CPU)$(RISCV_ZICSR_ZIFENCEI_riscv) \
                             -mabi=$(CPU_ABI) -mcmodel=medany
-LDFLAGS_riscv            += -z noexecstack
+LDFLAGS_riscv            += $(call if_for_target,-z noexecstack)
 
 SYSTEMS_ABI              += riscv-l4f
 SYSTEMS_PLAIN            += riscv-plain
