@@ -448,7 +448,9 @@ endif
 # TEMP-only
 $(if $(filter x86 arm arm64 amd64 mips sparc ppc32,$(SYSTEMS)), $(error Please appends "-plain" to each architecture in SYSTEMS ))
 
+ifneq ($(MODE),host)
 LDFLAGS += $(if $(CONFIG_BID_LD_EMIT_UNWIND),--eh-frame-hdr,)
+endif
 
 OPTS_DEBUG-$(CONFIG_BID_DEBUG_INFO) = -g
 OPTS_DEBUG       ?= $(OPTS_DEBUG-y)
