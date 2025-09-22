@@ -8,9 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#ifndef __FreeBSD__
 #include <endian.h>
-#endif
 
 template< typename T >
 T host_to(int be, long long v, T &t)

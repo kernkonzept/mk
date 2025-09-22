@@ -2,7 +2,7 @@ L4DIR  ?= ../..
 PKGDIR ?= .
 include $(L4DIR)/mk/Makeconf
 
-CFLAGS	= -O3 $(HOST_CPPFLAGS)
+CFLAGS	= -O3 $(HOST_CPPFLAGS) -I$(SRC_DIR)/../include
 TARGET  = elf-patcher
 
 override CXX = $(HOST_CXX)
