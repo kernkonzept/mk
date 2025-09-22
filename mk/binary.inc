@@ -458,9 +458,6 @@ override CROSS_COMPILE =
 override CC            = $(HOST_CC)
 override CXX           = $(HOST_CXX)
 override ADAC          = $(HOST_ADAC)
-else
-# no architecture specific flags in host mode
-LDFLAGS      += $(LDFLAGS_$(ARCH))
 endif
 
 # additional libraries go after the requires-libs-list
