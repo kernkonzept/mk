@@ -475,8 +475,9 @@ CC := $(if $(filter sparc,$(ARCH)),$(if $(call GCCIS_sparc_leon_f),sparc-elf-gcc
 LD := $(if $(filter sparc,$(ARCH)),$(if $(call GCCIS_sparc_leon_f),sparc-elf-ld,$(LD)),$(LD))
 add_if_f = $(if $($(1)_f),$(1))
 
-$(OBJ_BASE)/include/l4/bid_config.h:
-	$(if $(wildcard $@),,$(file >$@,#include <generated/autoconf.h>))
+$(OBJ_BASE)/include/l4/bid_config.h: FORCE
+	$(file >$@.tmp,#include <generated/autoconf.h>)
+	$(call move_if_changed,$@,$@.tmp)
 
 .PHONY: Makeconf.bid.local-helper
 Makeconf.bid.local-helper: $(OBJ_BASE)/include/l4/bid_config.h
