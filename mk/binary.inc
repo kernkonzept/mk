@@ -564,7 +564,11 @@ CPPFLAGS-DEBUG_MODE = \
                             $(OBJ_BASE)/include/l4/util/kprintf.h \
                             $(OBJ_BASE)/include/l4/sys/debugger.h))
 
-CPPFLAGS+= $(DEFINES)
+# See https://gcc.gnu.org/onlinedocs/libstdc++/faq.html#faq.predefined: In some
+# configurations, g++ automatically defines _GNU_SOURCE. To be compatible with
+# common compilers, undefine this globally but enable locally where required.
+# Do this as early as possible.
+CPPFLAGS+= -U_GNU_SOURCE $(DEFINES)
 CPPFLAGS+= $(CPPFLAGS_L4_GENERIC)
 CPPFLAGS+= $(addprefix -I,  $(PRIVATE_INCDIR) $(call bid_flag_variants,PRIVATE_INCDIR))
 CPPFLAGS+= $(if $(CONTRIB_INCDIR),$(addprefix -I$(OBJ_BASE)/include/contrib/,$(CONTRIB_INCDIR)))
