@@ -20,6 +20,7 @@ source <("$MAKECONF" "$OBJ_BASE" \
 # Detect selected system
 : ${ARCH:=${MAKECONF_ARCH}}
 : ${CPU:=${MAKECONF_CPU}}
+: ${MAKE:=make}
 : ${OBJCOPY:=${MAKECONF_OBJCOPY}}; export OBJCOPY
 L4_SYSTEM="${ARCH}_${CPU}"
 

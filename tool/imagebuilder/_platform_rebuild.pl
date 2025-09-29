@@ -28,6 +28,7 @@ my $_platform_type_selected = L4::Makeconf::get($ENV{OBJ_BASE}, "PLATFORM_TYPE")
 my $_ram_base_selected = L4::Makeconf::get($ENV{OBJ_BASE}, "RAM_BASE");
 $_ram_base_selected = L4::Makeconf::get($ENV{OBJ_BASE}, "PLATFORM_RAM_BASE") unless $_ram_base_selected;
 my $_uefi_selected = (defined($ENV{BOOTSTRAP_DO_UEFI}) && $ENV{BOOTSTRAP_DO_UEFI} eq "y") ? "y" : "n";
+my $makecmd = $ENV{MAKE} // "make";
 
 my $rebuild = 1;
 
@@ -68,11 +69,11 @@ if ($rebuild)
     delete @ENV{qw(E ENTRY MODULES_LIST MAKEFLAGS L4DIR PKGDIR)};
 
     # Updates rambase
-    system($ENV{MAKE},"-C",$ENV{OBJ_BASE},"check_and_adjust_ram_base") == 0
+    system($makecmd,"-C",$ENV{OBJ_BASE},"check_and_adjust_ram_base") == 0
       or die "check_and_adjust_ram_base failed";
 
     # Try bootstrap again, because check_and_adjust_ram_base might not have done it.
-    system($ENV{MAKE},"-C",$ENV{OBJ_BASE} . "/pkg/bootstrap", "E=", "ENTRY=") == 0
+    system($makecmd,"-C",$ENV{OBJ_BASE} . "/pkg/bootstrap", "E=", "ENTRY=") == 0
         or die "bootstrap failed";
   }
 
