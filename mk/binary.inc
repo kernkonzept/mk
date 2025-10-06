@@ -600,6 +600,10 @@ CPPFLAGS+= $(call bid_flag_variants,CPPFLAGS)
 
 ifneq ($(MODE),host)
 CPPFLAGS += -include l4/bid_config.h
+# Treat libstdc++-headers as system headers. This includes many warnings about
+# -Wdouble-promotion, -Wfloat-equal, and -Wfloat-conversion. But this will
+# suppress other warnings in these headers as well!
+CXXFLAGS_L4_GENERIC += -D_GLIBCXX_SYSHDR
 CXXFLAGS_L4_GENERIC += $(CARCHFLAGS) $(CCXX_FLAGS)
 CXXFLAGS_L4_GENERIC += $(if $(GCC_HAS_ATOMICS),-DL4_GCC_HAS_ATOMICS)
 CXXFLAGS_L4_GENERIC += $(GCCSTACKPROTECTOROPT)
