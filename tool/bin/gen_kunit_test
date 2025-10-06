@@ -94,6 +94,13 @@ fi
 # Generate .t-file for each found test binary.
 for file in "${utest_bins[@]}"; do
 
+  if ! file ${file}|grep -q "executable"; then
+    echo "How to handle non-executable '${file}'?"
+    echo "Is this file really a binary supposed to run as kernel unit test or "
+    echo "was it accidently placed in ${source_dir}?"
+    exit 4
+  fi
+
   # ##*/ - strip path
   basename=${file##*/}
   out_file=${dest_dir}/${basename}.t
