@@ -101,6 +101,12 @@ ifneq ($(filter l4linux targetsys,$(MODE)),)
   ifneq ($(GCCLIBCAVAIL),y)
     $(info Skipping target in $(SRC_DIR) as the target compiler cannot compile them.)
     SYSTEMS :=
+  else
+    target_cc_for_linux := $(if $(shell $(callcc) -dD -E -x c /dev/null 2>&1 | grep __linux__),y)
+    ifneq ($(target_cc_for_linux),y)
+      $(info Skipping target in $(SRC_DIR) as target compiler does not build for Linux targets.)
+      SYSTEMS :=
+    endif
   endif
 endif
 
