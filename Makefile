@@ -323,7 +323,8 @@ cleanup_include_dir:
 
 # Build a typical sysroot for use with external tooling such as a
 # L4Re-specific cross-compiler
-SYSROOT_LIB_DIRS  = $(addprefix libc/uclibc-ng/,libc libm librt) ldscripts ldso
+SYSROOT_LIB_DIRS  = $(addprefix libc/uclibc-ng/,libc libm librt) \
+                    ldscripts ldso libgcc-crt libgcc_eh
 
 OUTPUT_FORMAT = $(CC) $(CFLAGS) -Wl,--verbose 2>&1 | $(SED) -n '/OUTPUT_FORMAT/,/)/p'
 SYSROOT_PACKAGES = $(addprefix pkg/l4re-core/,ldso libc_backends libc)
