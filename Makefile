@@ -480,7 +480,7 @@ add_if_f = $(if $($(1)_f),$(1))
 
 $(OBJ_BASE)/include/l4/bid_config.h: FORCE
 	$(file >$@.tmp,#include <generated/autoconf.h>)
-	$(call move_if_changed,$@,$@.tmp)
+	$(VERBOSE)$(call move_if_changed,$@,$@.tmp)
 
 .PHONY: Makeconf.bid.local-helper
 Makeconf.bid.local-helper: $(OBJ_BASE)/include/l4/bid_config.h
