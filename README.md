@@ -6,8 +6,7 @@ It also provides the basic directory infrastructure for L4Re.
 # Documentation
 
 This package is part of the L4Re operating system. For documentation and
-build instructions see the
-[L4Re wiki](https://kernkonzept.com/L4Re/guides/l4re).
+build instructions please refer to [l4re.org](https://l4re.org).
 
 Packages for additional parts of the L4Re operating system are located
 in `pkg/` and `test/`. Please refer to the READMEs in each directory for
@@ -15,8 +14,8 @@ additional information about each package.
 
 # Contributions
 
-We welcome contributions. Please see our contributors guide on
-[how to contribute](https://kernkonzept.com/L4Re/contributing/l4re).
+We welcome contributions. Please see the
+[contributors guide](https://l4re.org/contributing/).
 
 # License
 
