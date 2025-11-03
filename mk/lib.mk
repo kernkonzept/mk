@@ -135,10 +135,12 @@ PC_LIBS_PIC ?= $(patsubst lib%.p.a,-l%.p,$(TARGET_PIC))
 # 1: basename
 # 2: pcfilename
 # 3: optional prefix
-get_cont = $(if $($(1)_$(2)),$(3)$($(1)_$(2)),$(if $($(1)),$(3)$($(1))))
+get_cont = $(if $($1_$2),$3$(strip $($1_$2)),$(if $($1),$3$(strip $($1))))
+get_cont_unstripped = $(if $($1_$2),$3$($1_$2),$(if $($1),$3$($1)))
 
 # 1: pcfile
-get_extra = $(call get_cont,PC_EXTRA,$(1))$\
+# PC_EXTRA may contain multi-line content. Stripping would remove newlines
+get_extra = $(call get_cont_unstripped,PC_EXTRA,$(1))$\
             $(call get_cont,PC_LIBS_PIC,$(1),$(newline)Libs_pic= )$\
             $(call get_cont,PC_LINK_LIBS,$(1),$(newline)Link_Libs= )$\
             $(call get_cont,PC_LINK_LIBS_PIC,$(1),$(newline)Link_Libs_pic= )

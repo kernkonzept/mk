@@ -783,21 +783,22 @@ addfileheader:
 # 5: requires_libs
 # 6: PC_CFLAGS
 # 7: extras
-generate_pcfile =                                                            \
-	[ -d $(dir $(2)) ] || mkdir -p $(dir $(2))                           \
-	;echo -n                                                    > $(2)   \
-	$(if $(3),;echo "incdir=/empty_incdir"                     >> $(2))  \
-	;echo "Name: $(1)"                                         >> $(2)   \
-	;echo "Version: 0"                                         >> $(2)   \
-	;echo "Description: L4 library"                            >> $(2)   \
-	$(if $(3),;echo -n "Cflags: $(addprefix -I\$${incdir}/,$(3)) ">> $(2))\
-	$(if $(6),$(if $(3),,;echo -n "Cflags:" >> $(2)))                    \
-	$(if $(6),;echo " $(6)" >> $(2),;echo "" >> $(2))                    \
-	$(if $(4),;echo "Libs: $(4)"                               >> $(2))  \
-	$(if $(5),;echo "Requires: $(5)"                           >> $(2))  \
-	$(if $(7),;echo -e '$(subst $(newline),\n,$(7))' >> $(2)) \
-	$(if $(BID_GEN_CONTROL),;echo "Provides: $(1)"             >> $(PKGDIR)/Control) \
-	$(if $(BID_GEN_CONTROL),;echo "Requires: $(5)"             >> $(PKGDIR)/Control) ;
+generate_pcfile =                                                             \
+	mkdir -p $(dir $(2));                                                 \
+	{ $(if $(3),echo "incdir=/empty_incdir";)                             \
+	  echo "Name: $(1)";                                                  \
+	  echo "Version: 0";                                                  \
+	  echo "Description: L4 library";                                     \
+	  $(if $(3)$(6),echo -n "Cflags:";)                                   \
+	    $(if $(3),echo -n " $(addprefix -I\$${incdir}/,$(3))";)           \
+	    $(if $(6),echo -n " $(6)";)                                       \
+	    $(if $(3)$(6),echo;)                                              \
+	  $(if $(4),echo "Libs: $(4)";)                                       \
+	  $(if $(5),echo "Requires: $(5)";)                                   \
+	  $(if $(7),echo -e '$(subst $(newline),\n,$(7))' | sed -e '/^$$/d';) \
+	} >$(2);                                                              \
+	$(if $(BID_GEN_CONTROL),echo "Provides: $(1)" >> $(PKGDIR)/Control;)  \
+	$(if $(BID_GEN_CONTROL),echo "Requires: $(5)" >> $(PKGDIR)/Control;)
 
 define build_obj_redir_Makefile
 	$(VERBOSE)install -d $(dir $(1))
