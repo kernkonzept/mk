@@ -67,17 +67,18 @@ endif
 
 define BID_call_compiler_default
   $(if $(buildinfo_missing)$(prereqs_changed)$(call BID_cmp_str_ne,$1,$(savedcmd_$@)), \
-      $(call COMP_MESSAGE,$(bid_trace));                                      \
-      $(call lessfork_mkdir,$(@D))                                            \
-      set +o pipefail;                                                        \
-      $1 || exit 1;                                                           \
+      $(call verbcmd,$(call COMP_MESSAGE,$(bid_trace));                       \
+                     $(call lessfork_mkdir,$(@D))                             \
+                     set +o pipefail;                                         \
+                    ,$1                                                       \
+                    ,|| exit 1;                                               \
       $(FIXDEP) $(call BID_dot_fname,$@).d                                    \
                    $@ '$(call escape_cmd,$1)' > $(call BID_dot_fname,$@).cmd; \
-      $(RM) $(call BID_dot_fname,$@).d)
+      $(RM) $(call BID_dot_fname,$@).d))
 endef
 
 define BID_call_compiler_plain
-  $(call COMP_MESSAGE); $(call lessfork_mkdir,$(@D)) $1
+  $(call verbcmd,$(call COMP_MESSAGE);,$(call lessfork_mkdir,$(@D)) $1)
 endef
 
 define _asm_has_cpp
@@ -101,12 +102,11 @@ BID_call_compiler_AS   = $(if $(call _asm_has_cpp,$<),     \
 # prior to the BID_$(3)_COMPILER statement.
 define BID_MAKE_RULE_template_nongendep
 $1: $2 $(if $(BID_call_compiler_$3),$(GENERAL_D_LOC),FORCE)
-	$$(VERBOSE)$$(if $$(BID_OBJ_SRC_$$@),$$(call \
-	              $(if $(BID_call_compiler_$3),\
-		        BID_call_compiler_$3,\
-	                BID_call_compiler_default),$\
+	$$(if $$(BID_OBJ_SRC_$$@),$\
+	      $$(call $(if $(BID_call_compiler_$3),BID_call_compiler_$3,\
+	                                           BID_call_compiler_default),$\
 	              $$($(BID_$(3)_COMPILER)) \
-		      -c $(if $(filter y Y 1,$(NO_CPP_$(3))),,$$(strip \
+	              -c $(if $(filter y Y 1,$(NO_CPP_$(3))),,$$(strip \
 	                      $$(DEPFLAGS) $$(DEPFLAGS_$(3)) $$(CPPFLAGS))) \
 	              $$($(3)FLAGS_EARLY) $$($(3)FLAGS) $(4) $$< -o $$@ \
 	              $$($(3)_COLLECT_REDIR)))

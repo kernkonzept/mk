@@ -62,6 +62,7 @@ CC_WHITELIST-gcc     := 9 10 11 12 13 14 15
 CC_WHITELIST-clang   := 15 16 17 18 19
 
 VERBOSE          = $(if $(CONFIG_VERBOSE),,@)
+verbcmd          = $(if $(CONFIG_VERBOSE),,@)$1 $2 $3
 DEPEND_VERBOSE   = $(if $(CONFIG_DEPEND_VERBOSE),,@)
 DROPS_STDDIR     = $(patsubst "%",%,$(CONFIG_DROPS_STDDIR))
 DROPS_INSTDIR    = $(patsubst "%",%,$(CONFIG_DROPS_INSTDIR))
@@ -562,10 +563,18 @@ ifneq ($(PKGDIR),)
   endif
 endif
 
+# verbcmd consists of pre-command ($1) main-command ($2) and post-command ($3)
+# V=0: nothing is output; V=1: main-command is output; V=2: everything is output
 ifeq ($(V),1)
+  verbcmd = @echo "$2"; $1 $2 $3
+  VERBOSE =
+endif
+ifeq ($(V),2)
+  verbcmd = $1 $2 $3
   VERBOSE =
 endif
 ifeq ($(V),0)
+  verbcmd = @$1 $2 $3
   VERBOSE = @
 endif
 
