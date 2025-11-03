@@ -743,7 +743,7 @@ EFI_IMAGE_STANDARD_NAME-arm64 := bootaa64.efi
 
 define imagebuilder_goal
 .PHONY: $1
-$1:
+$1: check_and_adjust_ram_base
 	$(if $(CHECK_FOR_ARCH_$1),$$(call check_for_arch,$(CHECK_FOR_ARCH_$1))) \
 	+$$(VERBOSE)$$(entryselection);                       \
 	$$(MKDIR) $$(IMAGES_DIR);                             \
