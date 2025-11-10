@@ -28,11 +28,15 @@ my $_platform_type_selected = L4::Makeconf::get($ENV{OBJ_BASE}, "PLATFORM_TYPE")
 my $_ram_base_selected = L4::Makeconf::get($ENV{OBJ_BASE}, "RAM_BASE");
 $_ram_base_selected = L4::Makeconf::get($ENV{OBJ_BASE}, "PLATFORM_RAM_BASE") unless $_ram_base_selected;
 my $_uefi_selected = (defined($ENV{BOOTSTRAP_DO_UEFI}) && $ENV{BOOTSTRAP_DO_UEFI} eq "y") ? "y" : "n";
+my $_platform_type_switch = L4::Makeconf::get($ENV{OBJ_BASE}, "RAM_BASE_SWITCH_PLATFORM_TYPE");
+my $_ram_base_switch = L4::Makeconf::get($ENV{OBJ_BASE}, "RAM_BASE_${_platform_type_switch}");
+my $_ram_base_switch_ok = L4::Makeconf::get($ENV{OBJ_BASE}, "RAM_BASE_SWITCH_OK") eq "yes";
+
 my $makecmd = $ENV{MAKE} // "make";
 
 my $rebuild = 1;
 
-if (-f $image)
+if ($_ram_base_switch_ok && -f $image)
   {
     my $image_attrs;
     eval {
@@ -59,7 +63,9 @@ if (-f $image)
         $rebuild = 0 unless
           !defined($_platform_type_built) || !defined($_ram_base_built) ||
           $_platform_type_selected ne $_platform_type_built ||
+          $_platform_type_switch ne $_platform_type_built ||
           hex($_ram_base_selected) != hex($_ram_base_built) ||
+          hex($_ram_base_switch) != hex($_ram_base_built) ||
           $_uefi_selected ne $_uefi_built;
       }
   }

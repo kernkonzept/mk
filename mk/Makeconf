@@ -289,10 +289,8 @@ ifneq ($(INCLUDE_BOOT_CONFIG),)
   endif
  endif
  -include $(OBJ_BASE)/Makeconf.ram_base
+ RAM_BASE := $(or $(RAM_BASE_$(PLATFORM_TYPE)),$(PLATFORM_RAM_BASE),0)
  BID_RAM_BASE_DEP := $(if $(wildcard $(OBJ_BASE)/Makeconf.ram_base),$(OBJ_BASE)/Makeconf.ram_base)
- ifeq ($(RAM_BASE),)
-  RAM_BASE := 0
- endif
  RAM_SIZE_MB := $(if $(RAM_SIZE_MB),$(RAM_SIZE_MB),$(PLATFORM_RAM_SIZE_MB))
 endif
 
