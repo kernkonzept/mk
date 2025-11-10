@@ -5,8 +5,9 @@ It also provides the basic directory infrastructure for L4Re.
 
 # Documentation
 
-This package is part of the L4Re operating system. For documentation and
-build instructions please refer to [l4re.org](https://l4re.org).
+This package is part of the L4Re Operating System Framework. For
+documentation and build instructions please refer to
+[l4re.org](https://l4re.org).
 
 Packages for additional parts of the L4Re operating system are located
 in `pkg/` and `test/`. Please refer to the READMEs in each directory for
