@@ -5,7 +5,8 @@
 
 This part of the documentation discusses the concept of microkernel-based
 programming in more detail. You should already have a basic understanding
-of the L4Re programming environment from the tutorial.
+of the L4Re programming environment from the tutorials available on
+l4re.org(https://l4re.org/).
 
 \todo All subpages need cleaning. Level of detail here?
 

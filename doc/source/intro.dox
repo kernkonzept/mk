@@ -11,11 +11,9 @@ section which documents the complete programming API.
 
 1. \ref l4re_intro shortly explains the concept of microkernels and
    introduces the basic terminology.
-2. \ref l4re_tutorial helps you getting started with setting up
-   the development environment and writing your own first %L4Re application.
-3. \ref l4re_concepts explains in detail the most important
+2. \ref l4re_concepts explains in detail the most important
    programming concepts.
-4. \ref l4re_servers provides a quick overview over standard services running
+3. \ref l4re_servers provides a quick overview over standard services running
    on the %L4Re operating system.
 
 
