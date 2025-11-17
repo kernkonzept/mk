@@ -244,8 +244,9 @@ CHOSEN_VARIANTS := $(subst +, ,$(VARIANT))
 # Get variant specific variables for all chosen variants. This will for
 # example get <VARNAME>-variant-nofpu and <VARNAME>-variant-nofpu-y if nofpu
 # variant is a chosen variant.
+# Provide a second parameter to force a certain variant
 define variant_values
-  $(foreach v, $(CHOSEN_VARIANTS),$\
+  $(foreach v, $(CHOSEN_VARIANTS) $(2),$\
     $($(strip $(1))-variant-$(v)) $($(strip $(1))-variant-$(v)-y))
 endef
 

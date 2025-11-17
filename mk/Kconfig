@@ -149,6 +149,12 @@ config BID_BUILD_TESTS_SHARED
 
 	  Enable this on platforms that support it if in doubt.
 
+config COV
+	bool "Coverage support" if !RELEASE_MODE
+	help
+	  Adds coverage support using cov or llvm depending on the compiler that
+	  is used. Do not enable this on production systems.
+
 config INT_CPP_NAME_SWITCH
 	bool "Automatically determine internal gcc preprocessor names"
 	default y

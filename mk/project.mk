@@ -82,7 +82,13 @@ ALIASES_DIRS = $(wildcard $(L4DIR)/mk/aliases.d) \
 # all package config files go here
 PKGCONF_DIR    = $(OBJ_BASE)/pc
 
-PKGDEPS_FLAGS += $(call variant_values, PKGDEPS_FLAGS)
+# If we build for coverage, we force the coverage variant values to be present.
+# If they would not be present, the pkgdeps command would miss all the coverage
+# args.
+ifeq ("$(CONFIG_COV)","y")
+  EXTRA_VARIANTS = cov
+endif
+PKGDEPS_FLAGS += $(call variant_values, PKGDEPS_FLAGS, $(EXTRA_VARIANTS))
 
 # the default command for generating package dependencies
 PKGDEPS_CMD  = $(L4DIR)/mk/pkgdeps $(PKGDEPS_IGNORE_MISSING) \
