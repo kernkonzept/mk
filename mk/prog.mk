@@ -25,17 +25,13 @@ include $(L4DIR)/mk/binary.inc
 # define INSTALLDIRs prior to including install.inc, where the install-
 # rules are defined.
 ifneq ($(filter host targetsys,$(MODE)),)
-INSTALLDIR_BIN		?= $(DROPS_STDDIR)/bin/$(MODE)
-INSTALLDIR_BIN_LOCAL	?= $(OBJ_BASE)/bin/$(MODE)
+INSTALLDIR_BIN          ?= $(DROPS_STDDIR)/bin/$(MODE)
+INSTALLDIR_BIN_LOCAL    ?= $(OBJ_BASE)/bin/$(MODE)
 else
-  ifeq ($(words $(VARIANTS)),1)
-    INSTALLDIR_BIN		?= $(DROPS_STDDIR)/bin/$(BID_install_subdir_base)
-    INSTALLDIR_BIN_LOCAL	?= $(OBJ_BASE)/bin/$(BID_install_subdir_base)
-  else
-    INSTALLDIR_BIN		?= $(DROPS_STDDIR)/bin/$(BID_install_subdir_var)
-    INSTALLDIR_BIN_LOCAL	?= $(OBJ_BASE)/bin/$(BID_install_subdir_var)
-  endif
+  INSTALLDIR_BIN        ?= $(DROPS_STDDIR)/bin/$(BID_install_subdir_var)
+  INSTALLDIR_BIN_LOCAL  ?= $(OBJ_BASE)/bin/$(BID_install_subdir_var)
 endif
+
 ifeq ($(CONFIG_BID_STRIP_BINARIES),y)
 INSTALLFILE_BIN 	?= $(call copy_stripped_binary,$(1),$(2),755)
 INSTALLFILE_BIN_LOCAL 	?= $(call copy_stripped_binary,$(1),$(2),755)
@@ -44,10 +40,11 @@ INSTALLFILE_BIN 	?= $(INSTALL) -m 755 $(1) $(2)
 INSTALLFILE_BIN_LOCAL 	?= $(INSTALL) -m 755 $(1) $(2)
 endif
 
-INSTALLFILE		= $(INSTALLFILE_BIN)
-INSTALLDIR		= $(INSTALLDIR_BIN)
-INSTALLFILE_LOCAL	= $(INSTALLFILE_BIN_LOCAL)
-INSTALLDIR_LOCAL	= $(INSTALLDIR_BIN_LOCAL)
+INSTALLFILE              = $(INSTALLFILE_BIN)
+INSTALLDIR               = $(INSTALLDIR_BIN)
+INSTALLDIR_LOCAL_BASE    = $(OBJ_BASE)/bin/$(BID_install_subdir_base)
+INSTALLFILE_LOCAL        = $(INSTALLFILE_BIN_LOCAL)
+INSTALLDIR_LOCAL         = $(INSTALLDIR_BIN_LOCAL)
 
 ifneq ($(SYSTEM),) # if we have a system, really build
 
