@@ -673,7 +673,7 @@ $(FIXDEP): $(L4DIR)/tool/kconfig/scripts/basic/fixdep.c
 ifeq ($(ROOT_MAKEFILE),1)
 	@$(MAKE) genfixdep
 else
-	@echo \'fixdep\' outdated or unavailable, please call \'make oldconfig\' in the root of your build directory.
+	@echo \'fixdep\' outdated or unavailable, please call \'make oldconfig\' in the root of your build directory. >&2
 	@exit 1
 endif
 

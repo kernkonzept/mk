@@ -64,7 +64,7 @@ installscript = perl -W -e '                                                  \
             -d $$dstdir || system("install","-$(if $(VERBOSE),,v)d",$$dstdir) && exit 1;        \
             $(if $(1),$(do_link),$(do_inst))                                  \
             if (! -e $$dst)                                                   \
-              { print "Error: $$dst could not be installed.\n"; exit 1; }     \
+              { print STDERR "Error: $$dst could not be installed.\n"; exit 1; } \
           }                                                                   \
     }                                                                         \
   }'

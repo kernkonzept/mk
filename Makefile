@@ -177,7 +177,7 @@ endif
 all::
 	@echo "Creating build directory \"$(BUILDDIR_TO_CREATE)\"..."
 	@if [ -e $(BUILDDIR_TO_CREATE) ]; then          \
-	   echo "Already exists, aborting.";            \
+	   echo "Already exists, aborting." >&2;        \
 	   exit 1;                                      \
 	fi
 	@mkdir -p $(BUILDDIR_TO_CREATE)
@@ -432,17 +432,17 @@ endif
 checkconf:
 	$(VERBOSE)if [ -n "$(GCCDIR)" -a ! -e $(GCCDIR)/include/stddef.h ]; then \
 	  $(ECHO); \
-	  $(ECHO) "$(GCCDIR) seems wrong (stddef.h not found)."; \
-	  $(ECHO) "Does it exist?"; \
+	  $(ECHO) "$(GCCDIR) seems wrong (stddef.h not found)." >&2; \
+	  $(ECHO) "Does it exist?" >&2; \
 	  $(ECHO); \
 	  $(if $(DISABLE_CC_CHECK),,exit 1;) \
 	fi
 	$(VERBOSE)if [ -z "$(filter $(CC_WHITELIST-$(BID_COMPILER_TYPE)), \
 	                            $(GCCVERSION))" ]; then \
 	  $(ECHO); \
-	  $(ECHO) "$(BID_COMPILER_TYPE)-$(GCCVERSION) is not supported."; \
+	  $(ECHO) "$(BID_COMPILER_TYPE)-$(GCCVERSION) is not supported." >&2; \
 	  $(ECHO) "Please use a $(BID_COMPILER_TYPE) of the following" \
-	          "versions: $(CC_WHITELIST-$(BID_COMPILER_TYPE))"; \
+	          "versions: $(CC_WHITELIST-$(BID_COMPILER_TYPE))" >&2; \
 	  $(ECHO); \
 	  $(if $(DISABLE_CC_CHECK),,exit 1;) \
 	fi
@@ -450,23 +450,23 @@ checkconf:
 	                            $(GCCVERSION).$(GCCPATCHLEVEL))" ]; then \
 	  $(ECHO); \
 	  $(ECHO) "GCC-$(GCCVERSION).$(GCCPATCHLEVEL) is blacklisted" \
-	          "because it showed to produce wrong results."; \
-	  $(ECHO) "Please upgrade to a more recent version."; \
+	          "because it showed to produce wrong results." >&2; \
+	  $(ECHO) "Please upgrade to a more recent version." >&2; \
 	  $(ECHO); \
 	  $(if $(DISABLE_CC_CHECK),,exit 1;) \
 	fi
 ifeq ($(CONFIG_COMPILER_RT_USE_TOOLCHAIN_LIBGCC),y)
 	$(VERBOSE)if ! $(OBJDUMP) -f $$(grep GCCLIB_HOST= $(DROPSCONF_CONFIG_MK) | cut -d= -f2) | grep -q $(OFORMAT); then \
 	  $(ECHO); \
-	  $(ECHO) "Missing the cross-compiler's libgcc variant for the target ($(OFORMAT))."; \
-	  $(ECHO) "Install it, or disable the \"Use libgcc from toolchain\" (BID_USE_TOOLCHAIN_LIBGCC) config option."; \
+	  $(ECHO) "Missing the cross-compiler's libgcc variant for the target ($(OFORMAT))." >&2; \
+	  $(ECHO) "Install it, or disable the \"Use libgcc from toolchain\" (BID_USE_TOOLCHAIN_LIBGCC) config option." >&2; \
 	  $(ECHO); \
 	  exit 1; \
 	fi
 	$(VERBOSE)if ! $(OBJDUMP) -f $$(grep GCCLIB_EH_HOST= $(DROPSCONF_CONFIG_MK) | cut -d= -f2) | grep -q $(OFORMAT); then \
 	  $(ECHO); \
-	  $(ECHO) "Missing the cross-compiler's libgcc_eh variant for the target ($(OFORMAT))."; \
-	  $(ECHO) "Install it, or disable the \"Use libgcc from toolchain\" (BID_USE_TOOLCHAIN_LIBGCC) config option."; \
+	  $(ECHO) "Missing the cross-compiler's libgcc_eh variant for the target ($(OFORMAT))." >&2; \
+	  $(ECHO) "Install it, or disable the \"Use libgcc from toolchain\" (BID_USE_TOOLCHAIN_LIBGCC) config option." >&2; \
 	  $(ECHO); \
 	  exit 1; \
 	fi
@@ -552,7 +552,7 @@ define determine_emulation_gnu_ld =
             fi;                                                \
           done;                                                \
         done;                                                  \
-        echo "No known ld emulation found";                    \
+        echo "No known ld emulation found" >&2;                \
         exit 1
 endef
 
@@ -572,8 +572,8 @@ ifneq ($(CONFIG_INT_CPP_NAME_SWITCH),)
 	          rm -f $$X.out; $(LD_GENDEP_PREFIX) GENDEP_SOURCE=$$X       \
 	          GENDEP_OUTPUT=$$X.out $(CC) $(CARCHFLAGS) $(CCXX_FLAGS) -c $$X -o $$X.o; \
 	          if [ ! -e $$X.out ]; then                                  \
-	            echo -e "\n\033[1;31mGendep did not generate output. Is the compiler ($(CC)) statically linked?\033[0m"; \
-	            echo -e "Please use a dynamically linked compiler.\n"; exit 1; \
+	            echo -e "\n\033[1;31mGendep did not generate output. Is the compiler ($(CC)) statically linked?\033[0m" >&2; \
+	            echo -e "Please use a dynamically linked compiler.\n" >&2; exit 1; \
 	          fi; echo INT_CPP_NAME=`cat $$X.out` >>$(DROPSCONF_CONFIG_MK); \
 	          rm -f $$X $$X.{o,out};
 	$(VERBOSE)set -e; X="$(OBJ_BASE)/tmp.$$$$$$RANDOM.cc" ;        \
@@ -595,10 +595,10 @@ endif
 
 .PHONY: libgendep
 libgendep:
-	$(VERBOSE)if [ ! -r tool/gendep/Makefile ]; then    \
-	            echo "=== l4/tool/gendep missing! ==="; \
-	            exit 1;                                 \
-		  fi
+	$(VERBOSE)if [ ! -r tool/gendep/Makefile ]; then        \
+	            echo "=== l4/tool/gendep missing! ===" >&2; \
+	            exit 1;                                     \
+	          fi
 	$(VERBOSE)$(MAKE) -C tool/gendep
 
 DIRS_FOR_BUILD_TOOLS_CHECKS = $(patsubst BUILD_TOOLS_%,%,    \
@@ -617,7 +617,7 @@ check_build_tools:
 	  fi                                                       \
 	done;                                                      \
 	if [ -n "$$mis" ]; then                                    \
-	  echo -e "\033[1;31mProgram(s) \"$$mis\" not found, please install!\033[0m"; \
+	  echo -e "\033[1;31mProgram(s) \"$$mis\" not found, please install!\033[0m" >&2; \
 	  exit 1;                                                  \
 	else                                                       \
 	  echo "All build tools checked ok.";                      \
@@ -702,15 +702,15 @@ FASTBOOT_BOOT_CMD    ?= fastboot boot
 
 .PHONY: check_and_adjust_ram_base
 check_and_adjust_ram_base:
-	$(VERBOSE)if [ -z "$(PLATFORM_RAM_BASE)" ]; then          \
-	  echo "ERROR: Platform \"$(PLATFORM_TYPE)\" not known."; \
-	  echo "Available platforms:";                            \
-	  $(MAKE) listplatforms;                                  \
-	  exit 1;                                                 \
+	$(VERBOSE)if [ -z "$(PLATFORM_RAM_BASE)" ]; then              \
+	  echo "ERROR: Platform \"$(PLATFORM_TYPE)\" not known." >&2; \
+	  echo "Available platforms:";                                \
+	  $(MAKE) listplatforms;                                      \
+	  exit 1;                                                     \
 	fi
-	$(VERBOSE)if [ -z "$(filter $(ARCH),$(PLATFORM_ARCH))" ]; then     \
-	  echo "Platform \"$(PLATFORM_TYPE)\" not available for $(ARCH)."; \
-	  exit 1;                                                          \
+	$(VERBOSE)if [ -z "$(filter $(ARCH),$(PLATFORM_ARCH))" ]; then         \
+	  echo "Platform \"$(PLATFORM_TYPE)\" not available for $(ARCH)." >&2; \
+	  exit 1;                                                              \
 	fi
 	+$(VERBOSE)if [ -n "$(RAM_BASE_SWITCH_OK)" ] && [ "$(RAM_BASE_SWITCH_PLATFORM_TYPE)" != "$(PLATFORM_TYPE)" ] && [ $$(($(RAM_BASE))) != $$(($(PLATFORM_RAM_BASE))) ] \
 	                || [ -z "$(RAM_BASE)" ] || [ -z "$(RAM_BASE_SWITCH_OK)" ]; then \
@@ -785,9 +785,9 @@ fastboot_uimage: uimage
 .PHONY: vbox
 vbox: $(if $(VBOX_ISOTARGET),$(VBOX_ISOTARGET),grub2iso)
 	$(call check_for_arch,x86 amd64)
-	$(VERBOSE)if [ -z "$(VBOX_VM)" ]; then                                 \
-	  echo "Need to set name of configured VirtualBox VM im 'VBOX_VM'.";   \
-	  exit 1;                                                              \
+	$(VERBOSE)if [ -z "$(VBOX_VM)" ]; then                                    \
+	  echo "Need to set name of configured VirtualBox VM im 'VBOX_VM'." >&2;  \
+	  exit 1;                                                                 \
 	fi
 	$(VERBOSE)VirtualBox                    \
 	    --startvm $(VBOX_VM)                \
@@ -839,7 +839,7 @@ grub2efiiso: efiimage
 .PHONY: exportpack
 exportpack: $(if $(filter $(ARCH),x86 amd64),,$(QEMU_KERNEL_TYPE))
 	$(if $(EXPORTPACKTARGETDIR),, \
-	  @echo Need to specific target directory as EXPORTPACKTARGETDIR=dir; exit 1)
+	  @echo Need to specific target directory as EXPORTPACKTARGETDIR=dir >&2; exit 1)
 	$(VERBOSE)$(entryselection);                                      \
 	 TARGETDIR=$(EXPORTPACKTARGETDIR);                                \
 	 qemu=$(if $(QEMU_PATH),$(QEMU_PATH),$(QEMU_ARCH_MAP_$(ARCH)));   \
@@ -891,7 +891,7 @@ switch_ram_base:
 .PHONY: check_base_dir
 check_base_dir:
 	@if [ -z "$(CHECK_BASE_DIR)" ]; then                                  \
-	  echo "Need to set CHECK_BASE_DIR variable";                         \
+	  echo "Need to set CHECK_BASE_DIR variable" >&2;                     \
 	  exit 1;                                                             \
 	fi
 
@@ -920,7 +920,7 @@ checkbuild.%: $(CHECK_BASE_DIR)/config.%/.config.all $(CHECK_BASE_DIR)/config.%/
 	$(MAKE) O=$(<D) BID_CHECKBUILD=1 tool $(call BID_CHECKBUILD_LOG_REDIR_f, $*)
 	$(MAKE) O=$(<D) BID_CHECKBUILD=1 USE_CCACHE=$(strip $(USE_CCACHE)) BID_MESSAGE_TAG='$$(PKGNAME_DIRNAME)$$(if $$(filter-out std,$$(VARIANT)), - $$(VARIANT)) | $$(BUILD_ARCH)' $(CHECK_MAKE_ARGS) $(call BID_CHECKBUILD_LOG_REDIR_f, $*)
 	@if [ $(<D)/ext-pkg -nt $(<D)/.startbuild ]; then \
-	  echo "$(<D)/ext-pkg created. That must not happen in checkbuild."; \
+	  echo "$(<D)/ext-pkg created. That must not happen in checkbuild." >&2; \
 	  exit 1; \
 	fi
 	$(if $(CHECK_REMOVE_OBJDIR),rm -rf $(<D))
@@ -1075,11 +1075,11 @@ TESTS := bid-tests/ $(if $(TEST_KUNIT_DIR),kunit-tests/)
 test:
 	$(VERBOSE)taparchive="$(TAPARCHIVE)"; \
 	if [ -n "$${taparchive%%/*}" ]; then \
-	  echo "ERROR: TAPARCHIVE must be an absolute path."; \
+	  echo "ERROR: TAPARCHIVE must be an absolute path." >&2; \
 	  exit 1; \
 	fi
 	$(VERBOSE)if [ -z "$(TEST_KUNIT_DIR)" ]; then \
-	  echo "INFO: TEST_KUNIT_DIR not provided. No kernel tests."; \
+	  echo "INFO: TEST_KUNIT_DIR not provided. No kernel tests." >&2; \
 	fi
 	$(VERBOSE)test_tmp_dir=$$(mktemp -d); \
 	\
