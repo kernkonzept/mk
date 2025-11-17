@@ -756,7 +756,7 @@ $1:
 	$(if $(2),true,$(or $(call POST_IMAGE_CMD, $(call TARGET_IMAGE,$1)), true)) && \
 	$(if $(filter efiimage,$1), \
 	  $(call link_unless_same,$(call TARGET_IMAGE,$1,$$$${e}),\
-	                          $(IMAGES_DIR)/$(EFI_IMAGE_STANDARD_NAME-$(ARCH))),:)
+	                          $(BOOTSTRAP_OUTPUT_DIR)/$(EFI_IMAGE_STANDARD_NAME-$(ARCH))),:)
 endef
 
 # touches images dir
