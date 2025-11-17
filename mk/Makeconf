@@ -36,9 +36,11 @@ include $(foreach v,$(VARIANTS_AVAILABLE),$(L4DIR)/mk/variants/$(v).inc)
 CHOSEN_VARIANTS := $(subst +, ,$(VARIANT))
 
 # Get variant specific variables for all chosen variants. This will for
-# example get <VARNAME>-variant-nofpu if nofpu variant is a chosen variant
+# example get <VARNAME>-variant-nofpu and <VARNAME>-variant-nofpu-y if nofpu
+# variant is a chosen variant
 define variant_values
-  $(foreach v, $(CHOSEN_VARIANTS), $($(1)-variant-$(v)))
+  $(foreach v, $(CHOSEN_VARIANTS),$\
+    $($(strip $(1))-variant-$(v)) $($(strip $(1))-variant-$(v)-y))
 endef
 
 $(foreach v, $(CHOSEN_VARIANTS), $(eval $(BID_DEFINE-variant-$(v))))
