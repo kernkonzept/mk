@@ -217,7 +217,7 @@ One loader implementation is the `moe` root task. Moe usually starts an *init*
 process that is responsible for coordinating the further boot
 process. The default *init* process is `ned`, which implements a
 script-based configuration and startup of other processes.  Ned uses Lua
-(http://www.lua.org) as its scripting language, see \ref l4re_servers_ned
+(https://www.lua.org) as its scripting language, see \ref l4re_servers_ned
 "Ned Script example" for more details.
 
 

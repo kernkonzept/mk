@@ -520,7 +520,7 @@ or executing them directly, like
     test/t/amd64_amdfam10/l4f/l4re-core/moe/test_namespace.t
 
 or running one or more tests through the test harness
-[prove](http://perldoc.perl.org/prove.html), like
+[prove](https://perldoc.perl.org/prove), like
 
     prove test/t/amd64_amdfam10/l4f/l4re-core/moe/test_namespace.t
     prove -r test/t/amd64_amdfam10/l4f/l4re-core/
