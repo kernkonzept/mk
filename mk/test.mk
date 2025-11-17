@@ -47,6 +47,7 @@ else
   else
     INSTALLDIR_BIN_LOCAL    = $(OBJ_BASE)/test/bin/$(BID_install_subdir_var)/$(TEST_GROUP)
   endif
+  INSTALLDIR_BIN_COV      = $(OBJ_BASE)/test/bin/$(BID_install_subdir_BASE)/std+cov/$(TEST_GROUP)
   INSTALLDIR_TEST_LOCAL   = $(OBJ_BASE)/test/t/$(BID_install_subdir_base)/$(TEST_GROUP)
 endif
 
@@ -86,6 +87,7 @@ $(TEST_SCRIPTS):%.t: $(GENERAL_D_LOC)
 	$(VERBOSE)echo -e "#!/usr/bin/env bash\n\nset -a" > $@
 	$(VERBOSE)echo 'L4DIR="$(L4DIR)"' >> $@
 	$(VERBOSE)echo 'SEARCHPATH="$(if $(PRIVATE_LIBDIR),$(PRIVATE_LIBDIR):)$(INSTALLDIR_BIN_LOCAL):$(OBJ_BASE)/bin/$(ARCH)_$(CPU)/plain:$(OBJ_BASE)/bin/$(ARCH)_$(CPU)/$(BUILD_ABI):$(OBJ_BASE)/lib/$(ARCH)_$(CPU)/plain:$(OBJ_BASE)/lib/$(ARCH)_$(CPU)/$(BUILD_ABI):$(SRC_DIR):$(L4DIR)/conf/test"' >> $@
+	$(VERBOSE)echo 'COV_SEARCHPATH="$(INSTALLDIR_BIN_COV)"' >> $@
 	$(VERBOSE)$(foreach v,$(testvars_fix), echo '$(v)="$(subst ",\",$(call targetvar,$(v),$(notdir $*)))"' >> $@;)
 	$(VERBOSE)$(foreach v,$(testvars_conf), echo ': $${$(v):=$(call targetvar,$(v),$(notdir $*))}' >> $@;)
 	$(VERBOSE)$(foreach v,$(testvars_append), echo '$(v)="$${$(v):+$${$(v)} }$(subst ",\",$(call targetvar,$(v),$(notdir $*)))"' >> $@;)
@@ -101,9 +103,12 @@ $(TEST_SCRIPTS):%.t: $(GENERAL_D_LOC)
 	@$(BUILT_MESSAGE)
 	@$(call INSTALL_LOCAL_MESSAGE,$@)
 
-# Calculate the list of installed .t files
-TEST_SCRIPTS_INST := $(foreach t,$(TEST_SCRIPTS), $(INSTALLDIR_TEST_LOCAL)/$(notdir $(t)))
+include $(L4DIR)/mk/variants.inc
 
+# Calculate the list of installed .t files
+ifeq ($(filter cov,$(CHOSEN_VARIANTS)),)
+  TEST_SCRIPTS_INST := $(foreach t,$(TEST_SCRIPTS), $(INSTALLDIR_TEST_LOCAL)/$(notdir $(t)))
+endif
 # Add a dependency for them
 all:: $(TEST_SCRIPTS_INST)
 

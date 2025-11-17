@@ -265,7 +265,6 @@ sub __process_ZDATA
   my $path = shift;
   my $data = shift;
   my $exe_name = shift;
-  print("processing plain dump from $path\n");
 
   # Unravel runlength encoding
   my $plain = "";
@@ -277,6 +276,9 @@ sub __process_ZDATA
       $cnt += 1;
     }
   $plain .= $data;
+
+  printf("processing plain dump from %s: - Data: %.2f kB\n",
+         $path, length($plain)/1024);
 
   open my $fh, '>', "$self->{coverage_dir}/$exe_name.profraw";
   print $fh decode_base64($plain);

@@ -34,42 +34,7 @@ $(GENERAL_D_LOC): $(L4DIR)/mk/binary.inc $(L4DIR)/mk/modes.inc $(L4DIR)/mk/rules
 # our default Makefile-name in the OBJ-Subdirs
 BID_OBJ_Makefile ?= Makefile
 
-include $(OBJ_BASE)/.Package.deps
-
-# Add coverage variant modification if necessary
-COV_COMPONENTS_ABS = $(COV_COMPONENTS:%=$(abspath $(L4DIR))/%)
-ifneq ($(filter-out host targetsys,$(MODE)),)
-ifeq ("$(CONFIG_COV)","y")
-  # When building for coverage, all tests are built with coverage. Also, tests
-  # are always std, so we add std+cov
-  VARIANTS_test.mk = std+cov
-  ifneq ($(filter $(abspath $(PKGDIR)),$(COV_COMPONENTS_ABS)),)
-    # progs and libs should only be built for coverage if they are in
-    # $COV_COMPONENTS. We add cov to existing variants.
-    VARIANTS_prog.mk := $(or $(VARIANTS:%=%+cov),std+cov)
-    VARIANTS_lib.mk := $(or $(VARIANTS:%=%+cov),std+cov)
-  endif
-endif
-endif
-
-# Building variants:
-ifeq ($(ROLE),prog.mk)
-  VARIANTS ?= std
-else
-ifeq ($(filter-out lib.mk prog.mk test.mk assets.mk, $(ROLE)),)
-  VARIANTS_lib.mk += std
-  # If there is a variants variable for the src dir, we use it. Otherwise, we
-  # fall back to the pkgdir one. If there is neither, use std.
-  SRC_VARIANTS    += $(VARIANTS_$(SRC_DIR:$(L4DIR_ABS)/%=%))
-  PKGDIR_VARIANTS  = $(VARIANTS_$(PKGDIR_ABS:$(L4DIR_ABS)/%=%))
-  VARIANTS         = $(or $(SRC_VARIANTS), $(PKGDIR_VARIANTS), std)
-endif
-endif
-
-VARIANTS        += $(VARIANTS_$(ROLE))
-VARIANTS        := $(sort $(VARIANTS))
-
-$(if $(VARIANTS),,$(error No variants defined))
+include $(L4DIR)/mk/variants.inc
 
 ifeq ($(SYSTEM),) # if we have no system yet, build the subdirs
 #################################################################

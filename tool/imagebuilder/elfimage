@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 
-BASE_IMAGE_FILENAME="bootstrap.elf"
+if [[ ${COVERAGE} -eq 1 ]]; then
+  BASE_IMAGE_FILENAME="bootstrap.elf.cov"
+else
+  BASE_IMAGE_FILENAME="bootstrap.elf"
+fi
 TARGET_IMAGE_FILENAME="bootstrap_entry.elf"
 
 source "$(dirname $0)/_l4image_build.sh.inc"

@@ -44,16 +44,27 @@ my $modlist_info = {
 };
 sub add_mods { push @{$modlist_info->{extra_modules}}, @_; }
 
+my $coverage = $ENV{COVERAGE};
+my %coverage_bins = map { $_ => 1 } split(/\s/, $ENV{COVERAGE_BINS} || '');
+
 sub parse_mod {
   my $moddef = shift;
 
   $moddef =~ /^([^\[:]*)(:rw)?(\[([^\]]+)\])?$/;
 
-  return {
+  my %m = (
     name => $1,
-    opts => $4,
+    opts => $4 // "",
     is_rw => $2 ? 1 : 0,
-  };
+  );
+
+  if ($coverage && $coverage_bins{$m{name}})
+    {
+      $m{opts} .= join(',', split(",", $m{opts}), "fname=$m{name}") unless $m{opts} =~ /fname=/;
+      $m{name} .= ".cov";
+    }
+
+  return \%m;
 }
 
 
@@ -64,6 +75,8 @@ my $obj_base    = $ENV{OBJ_BASE};
 my $l4linux     = $ENV{"L4LX_KERNEL_${arch}"} || $ENV{L4LX_KERNEL};
 my $ramdisk     = $ENV{"LINUX_RAMDISK_${arch}"} || $ENV{LINUX_RAMDISK};
 my @modulepaths = split(/[:\s]+/, $ENV{SEARCHPATH});
+unshift @modulepaths, $ENV{"COV_SEARCHPATH"}
+  if $coverage;
 unshift @modulepaths, split(/[:\s]+/, $ENV{MODULE_SEARCH_PATH})
   if defined($ENV{MODULE_SEARCH_PATH}) && $ENV{MODULE_SEARCH_PATH} ne "";
 # need a split according to the rules of shell quoting
@@ -72,6 +85,7 @@ my $test_target = $ENV{TEST_TARGET} || '';
 my $test_args   = $ENV{TEST_ARGS} || '';
 my $ned_cfg     = $ENV{NED_CFG} || '';
 my $moe_args    = $ENV{MOE_ARGS} || '';
+my $l4_dir      = $ENV{L4DIR};
 my @more_mods   = map { parse_mod $_ } split(' ', $ENV{REQUIRED_MODULES} || '');
 my $hwconfig_file = $ENV{TEST_HWCONFIG} || '';
 my $fiascoconfig_file = $ENV{TEST_FIASCOCONFIG} || '';
@@ -196,6 +210,14 @@ if ($test_run_tags)
     $test_args .= " --run_tags=" . $test_run_tags;
   }
 
+sub coverage_name
+{
+    my $name = shift;
+
+    return "$name.cov" if $coverage;
+    return $name;
+}
+
 # Are the tags required by the current test?
 if ($test_required_tags)
   {
@@ -287,6 +309,7 @@ if ($ned_cfg and $modlist_info->{roottask}{name} eq 'moe')
 
     my $testenv = L4::TestEnvLua::generate_test_env($hwconfig_file, $fiascoconfig_file);
 
+    $testenv->{COVERAGE} = 'y' if $coverage;
     $testenv->{TEST_PROG} = $test_prog;
     $testenv->{TEST_TARGET} = $test_target;
     $testenv->{TEST_ARGS} = $test_args;
@@ -326,6 +349,16 @@ elsif ($modlist_info->{roottask}{name} eq 'moe')
     $modlist_info->{roottask}{args}  = " --init=rom/$test_target $moe_args";
     $modlist_info->{roottask}{args} .= " -- ".$test_args if $test_args;
   }
+
+if ($coverage)
+{
+    $coverage_bins{$test_target} = 1;
+
+    $modlist_info->{roottask}{name} .= ".cov"
+      if $coverage_bins{$modlist_info->{roottask}{name}};
+    $modlist_info->{rootpager}{name} .= ".cov"
+      if $coverage_bins{$modlist_info->{rootpager}{name}};
+}
 
 add_mods(@more_mods);
 add_mods(parse_mod($test_target)) unless $is_kunit_test;
