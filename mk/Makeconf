@@ -28,23 +28,6 @@ $(if $(ROLE),$(OBJ_DIR)/.general.d: $(L4DIR)/mk/$(ROLE))
 
 -include $(wildcard $(L4DIR)/mk/arch/Makeconf.*)
 
-# Additional available variants, 'std' is always available
-VARIANTS_AVAILABLE := $(patsubst $(L4DIR)/mk/variants/%.inc,%,$(wildcard $(L4DIR)/mk/variants/*.inc))
-
-include $(foreach v,$(VARIANTS_AVAILABLE),$(L4DIR)/mk/variants/$(v).inc)
-
-CHOSEN_VARIANTS := $(subst +, ,$(VARIANT))
-
-# Get variant specific variables for all chosen variants. This will for
-# example get <VARNAME>-variant-nofpu and <VARNAME>-variant-nofpu-y if nofpu
-# variant is a chosen variant
-define variant_values
-  $(foreach v, $(CHOSEN_VARIANTS),$\
-    $($(strip $(1))-variant-$(v)) $($(strip $(1))-variant-$(v)-y))
-endef
-
-$(foreach v, $(CHOSEN_VARIANTS), $(eval $(BID_DEFINE-variant-$(v))))
-
 ARCH = $(BUILD_ARCH)
 
 BUILDDIR_SEARCHPATH = $(OBJ_BASE)/bin/$(ARCH)_$(CPU)/plain:$(OBJ_BASE)/bin/$(ARCH)_$(CPU)/$(BUILD_ABI):$(OBJ_BASE)/lib/$(ARCH)_$(CPU)/std/plain:$(OBJ_BASE)/lib/$(ARCH)_$(CPU)/std/$(BUILD_ABI):$(OBJ_BASE)/assets
@@ -250,6 +233,23 @@ OBJ_DIR_EXPORT = $(OBJ_DIR)
 export OBJ_DIR_EXPORT
 
 VPATH_SRC_BASE ?= $(SRC_DIR)
+
+# Additional available variants, 'std' is always available
+VARIANTS_AVAILABLE := $(patsubst $(L4DIR)/mk/variants/%.inc,%,$(wildcard $(L4DIR)/mk/variants/*.inc))
+
+include $(foreach v,$(VARIANTS_AVAILABLE),$(L4DIR)/mk/variants/$(v).inc)
+
+CHOSEN_VARIANTS := $(subst +, ,$(VARIANT))
+
+# Get variant specific variables for all chosen variants. This will for
+# example get <VARNAME>-variant-nofpu and <VARNAME>-variant-nofpu-y if nofpu
+# variant is a chosen variant.
+define variant_values
+  $(foreach v, $(CHOSEN_VARIANTS),$\
+    $($(strip $(1))-variant-$(v)) $($(strip $(1))-variant-$(v)-y))
+endef
+
+$(foreach v, $(CHOSEN_VARIANTS), $(eval $(BID_DEFINE-variant-$(v))))
 
 # Makeconf.local handling
 # dont use -include here, as we have special build conditions in $(L4DIR)/
