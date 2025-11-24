@@ -2,7 +2,7 @@
 # vim:set ft=make:
 
 COV_FLAGS_gcc             = -ftest-coverage -fprofile-arcs
-COV_FLAGS_clang           = -fprofile-instr-generate -fcoverage-mapping \
+COV_FLAGS_clang           = -fprofile-instr-generate -fcoverage-mapping -fcoverage-mcdc \
                             $(if $(NO_ATOMIC_COV),,-mllvm -instrprof-atomic-counter-update-all)
 COV_FLAGS                 = $(COV_FLAGS_$(BID_COMPILER_TYPE))
 
