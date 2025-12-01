@@ -33,6 +33,7 @@ echo "FVP executable: $MAKECONF_FVP_PATH"
 
 echo -n "FVP options:"
 printf " '%s'" "${optlist[@]}"
+echo;
 
 echo "FVP --version:"
 :| "$MAKECONF_FVP_PATH" --version
