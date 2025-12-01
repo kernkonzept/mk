@@ -24,13 +24,25 @@ my $image = shift;
 open(my $fd, ">", $ENV{OBJ_BASE} . "/.make.flock") or die "Cannot open lock file";
 flock($fd, LOCK_EX) or die "Cannot acquire lock in lock file";
 
-my $_platform_type_selected = L4::Makeconf::get($ENV{OBJ_BASE}, "PLATFORM_TYPE");
-my $_ram_base_selected = L4::Makeconf::get($ENV{OBJ_BASE}, "RAM_BASE");
+my $_platform_type_selected = L4::Makeconf::get($ENV{OBJ_BASE}, "PLATFORM_TYPE") // "invalid";
+my $_ram_base_selected = L4::Makeconf::get($ENV{OBJ_BASE}, "RAM_BASE") // -1;
 $_ram_base_selected = L4::Makeconf::get($ENV{OBJ_BASE}, "PLATFORM_RAM_BASE") unless $_ram_base_selected;
 my $_uefi_selected = (defined($ENV{BOOTSTRAP_DO_UEFI}) && $ENV{BOOTSTRAP_DO_UEFI} eq "y") ? "y" : "n";
 my $_platform_type_switch = L4::Makeconf::get($ENV{OBJ_BASE}, "RAM_BASE_SWITCH_PLATFORM_TYPE");
-my $_ram_base_switch = L4::Makeconf::get($ENV{OBJ_BASE}, "RAM_BASE_${_platform_type_switch}");
-my $_ram_base_switch_ok = L4::Makeconf::get($ENV{OBJ_BASE}, "RAM_BASE_SWITCH_OK") eq "yes";
+
+my $_ram_base_switch;
+my $_ram_base_switch_ok;
+
+if (defined($_platform_type_switch))
+  {
+    $_ram_base_switch = L4::Makeconf::get($ENV{OBJ_BASE}, "RAM_BASE_${_platform_type_switch}");
+    $_ram_base_switch_ok = (L4::Makeconf::get($ENV{OBJ_BASE}, "RAM_BASE_SWITCH_OK") // "no") eq "yes";
+  }
+else
+  {
+    $_ram_base_switch = -1;
+    $_ram_base_switch_ok = 0;
+  }
 
 my $makecmd = $ENV{MAKE} // "make";
 
