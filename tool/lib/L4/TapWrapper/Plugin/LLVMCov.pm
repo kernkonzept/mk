@@ -33,8 +33,8 @@ sub new
   $args->{tag} = "llvmcov";
 
   my $self = L4::TapWrapper::Plugin::TagPluginBase->new($args);
-  $self->{sources} = [];
   $self->{outputs} = {};
+  $self->{sources_file} = undef;
   $self->{keep_going} = defined $args->{keep_going};
   $self->{fail_if_no_data} = !!$args->{fail_if_no_data};
   $self->{has_data} = 0;
@@ -49,6 +49,9 @@ sub new
   print("Workdir: $tmpdir\n");
   $self->{coverage_dir} = "$tmpdir";
   $self->{memdump_file} = undef;
+
+  open ($self->{sources_file}, '>>', "$self->{coverage_dir}/sources")
+    or die "Could not open file: $!";
 
   if ($ENV{COVERAGE_MEMBUF})
     {
@@ -86,7 +89,8 @@ sub process_mine
     {
       my ($path, $type, $data) = ($1, $2, $3);
 
-      push @{$self->{sources}}, $path;
+      print { $self->{sources_file} } $path."\n";
+      $self->{sources_file}->flush();
 
       my $exe_name = $self->__get_name($path);
 
@@ -150,14 +154,6 @@ sub finalize
 
   $self->process_memory_dump();
 
-  open (my $sources_file, '>', "$self->{coverage_dir}/sources")
-    or die "Could not open file: $!";
-
-  foreach my $ln (@{$self->{sources}})
-    {
-      print $sources_file $ln."\n";
-    }
-
   if ($self->{intermittent_fails} > 0)
     {
       $self->add_tap_line(0, "Broken data $self->{intermittent_fails} times");
@@ -168,6 +164,8 @@ sub finalize
       $self->add_tap_line(0, __PACKAGE__ . ": No coverage data");
       $self->add_raw_tap_line("1..1");
     }
+
+  close $self->{sources_file};
 
   return $self->SUPER::finalize();
 }
