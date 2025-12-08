@@ -443,17 +443,26 @@ sub find_image_info
 {
   my $fd = shift;
 
-  my $buf;
-  filepos_set($fd, 0);
-  my $r = sysread($fd, $buf, 1 << 20); # would we be interrupted?
-  return(0, "Could not read from file: $!") unless $r;
+  my $r;
+  my $sz = 0;
+  my $pos = -1;
+  do
+    {
+      my $buf;
+      filepos_set($fd, $sz);
+      $r = sysread($fd, $buf, 1 << 20);
+      return(0, "Could not read from file: $!") unless defined $r;
 
-  my $pos = index($buf, $DSI{BOOTSTRAP_IMAGE_INFO_MAGIC});
-  return(0, "Did not find image info") if $pos == -1;
+      $pos = index($buf, L4::Image::dsi('BOOTSTRAP_IMAGE_INFO_MAGIC'));
+      return $sz + $pos if $pos != -1;
 
-  #printf "Found image info at 0x%x\n", $pos;
+      # overlap of BOOTSTRAP_IMAGE_INFO_MAGIC_LEN bytes in
+      # case BOOTSTRAP_IMAGE_INFO_MAGIC is in between chunks
+      $sz += $r - L4::Image::dsi('BOOTSTRAP_IMAGE_INFO_MAGIC_LEN');
+    }
+  while ($r > 0);
 
-  return $pos;
+  return(0, "Did not find image info");
 }
 
 sub process_image
