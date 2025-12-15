@@ -335,6 +335,8 @@ sysroot: $(SYSROOT_PACKAGES)
 	$(VERBOSE)$(MKDIR) $(OBJ_DIR)/sysroot/usr/include/l4
 	$(VERBOSE)$(MKDIR) $(OBJ_DIR)/sysroot/usr/include/l4-arch/l4
 	$(VERBOSE)$(MKDIR) $(OBJ_DIR)/sysroot/usr/lib
+	$(VERBOSE)$(CP) -Lr $(OBJ_DIR)/include/generated \
+	                    $(OBJ_DIR)/sysroot/usr/include/
 	$(VERBOSE)$(CP) -Lr $(OBJ_DIR)/include/$(BUILD_ARCH)/l4/sys \
 	                    $(OBJ_DIR)/include/$(BUILD_ARCH)/l4/util \
 	                    $(OBJ_DIR)/sysroot/usr/include/l4-arch/l4
