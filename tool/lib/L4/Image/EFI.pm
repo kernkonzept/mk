@@ -479,7 +479,7 @@ sub objcpy_finalize
 
       if ($section->{virt_addr} > $module_section->{virt_addr})
         {
-          printf STDERR "WARNING[%s]: Adjusting VirtualAddress of PE section '%s' behind module data.",
+          printf STDERR "WARNING[%s]: Adjusting VirtualAddress of PE section '%s' behind module data.\n",
             __PACKAGE__,
             $self->_resolve_section_name($section);
 

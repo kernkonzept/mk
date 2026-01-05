@@ -25,7 +25,7 @@ sub warn_once
   my $msg = shift;
   return if exists $warnings{$msg};
 
-  print("WARNING: $msg\n");
+  print STDERR "WARNING: ", $msg, "\n";
   $warnings{$msg} = undef;
 }
 
@@ -225,7 +225,8 @@ sub find_modules
   error("Found multiple matching modules (".join(", ", values %found).
         ") but need exactly one")
     if $multiple == 0 && keys %found > 1;
-  print "Processing module(s) ", join(", ", values %found), "\n";
+  print "Processing module(s) ", join(", ", values %found), "\n"
+    if -t STDOUT;
 
   return %found;
 }
@@ -1305,16 +1306,11 @@ for (my $i = 0; $i < @ARGV; ++$i)
       }
   }
 
-unless (defined $imagefile)
-  {
-    print "Missing input file. Use -h for commands and options.\n";
-    exit 1;
-  }
-if (@ARGV == 0)
-  {
-    print "Missing command. Use -h for commands and options.\n";
-    exit 1;
-  }
+  error("Missing input file. Use -h for commands and options.")
+    unless (defined $imagefile);
+
+  error("Missing command. Use -h for commands and options.")
+    if (@ARGV == 0);
 
 
 my %process_opts;
