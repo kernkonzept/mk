@@ -394,9 +394,13 @@ BID_link_deps_file = $(call BID_dot_fname,$1).pcs.d
 
 BID_LINK_DEPS = $(call BID_dot_fname,$1).d $(call BID_link_deps_file,$1)
 
+__do_warn=$(warning $(shell echo -e "\n\033[33mWARNING: $1\033[0m\n"))
 ifeq ($(BID_MISSING_PCS),)
  ifneq ($(SYSTEM),)
   ifneq ($(strip $(REQUIRES_LIBS)),)
+   ifeq ($(filter-out $(L4DIR_ABS)%,$(PKGDIR_ABS))$(wildcard $(PKGDIR_ABS)/Control),)
+    $(call __do_warn,Package directory for $(SRC_DIR)/$(firstword $(MAKEFILE_LIST)) ($(PKGDIR_ABS)) does not contain 'Control' file. Are you sure that 'PKGDIR' is set correctly?)
+   endif
    MY_DEPS := $(sort $(DEPS_$(PKGDIR_ABS:$(L4DIR_ABS)/%=%)))
    exclude_req_check := $(wildcard $(addprefix $(PKGDIR_ABS)/,broken obsolete))
    MISSING_DEPS := $(if $(exclude_req_check),,$(filter-out $(MY_DEPS),$(REQUIRES_LIBS)))
