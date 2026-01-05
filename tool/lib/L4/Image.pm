@@ -248,7 +248,13 @@ sub update_module
       die "Unable to read $m_file: $!" if !defined $r;
       close($fd);
 
-      if ($r == 0x3c && substr($buf, 0x38, 4) eq "\x41\x52\x4d\x64")
+      if ($r == 0x3c && substr($buf, 0x0, 2) eq "\x4d\x5a")
+        {
+          # MZ binaries (DOS files) should not be stripped. That would destroy
+          # Linux EFI binaries.
+          $m_opts->{nostrip} = 1;
+        }
+      elsif ($r == 0x3c && substr($buf, 0x38, 4) eq "\x41\x52\x4d\x64")
         {
           # Linux AARCH64 kernel image. 'objcopy -S' would remove the AArch64
           # header. The resulting PE image format isn't supported by Uvmm.
