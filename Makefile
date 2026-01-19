@@ -347,7 +347,7 @@ sysroot: $(SYSROOT_PACKAGES)
 	$(VERBOSE)$(CP) -Lr $(OBJ_DIR)/include/uclibc-ng/* $(OBJ_DIR)/sysroot/usr/include/
 	$(VERBOSE)$(MAKE) S='$(addprefix pkg/l4re-core/,$(SYSROOT_LIB_DIRS))' LD_SCRIPTS='' install \
 	                    INSTALLDIR_LIB=$(OBJ_DIR)/sysroot/usr/lib INSTALLDIR_INC=$(OBJ_DIR)/sysroot/usr/include
-	$(VERBOSE)$(MAKE) S=pkg/l4re-core/libc/uclibc-ng/libpthread/src TARGET=libpthread.a install \
+	$(VERBOSE)$(MAKE) S=pkg/l4re-core/libpthread/src TARGET=libpthread.a install \
 	                    INSTALLDIR_LIB=$(OBJ_DIR)/sysroot/usr/lib INSTALLDIR_INC=$(OBJ_DIR)/sysroot/usr/include
 	$(VERBOSE)mv $(OBJ_DIR)/sysroot/usr/lib/libc_nonshared.p.a  $(OBJ_DIR)/sysroot/usr/lib/libc_nonshared.a
 	$(VERBOSE)$(RM) $(OBJ_DIR)/sysroot/usr/lib/libc.so
