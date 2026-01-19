@@ -34,9 +34,9 @@ SOVERSION_MAJOR=$(firstword $(subst ., ,$(SOVERSION)))
 SOVERSION_FULL=$(firstword $(SOVERSION))
 solink=$(if $(SOVERSION_FULL), \
             && mv $1 $1.$(SOVERSION_FULL) \
-            && $(LN) -rsf $1.$(SOVERSION_FULL) $1 \
+            && $(LN) -sf $(notdir $1).$(SOVERSION_FULL) $1 \
             $(if $(filter-out $(SOVERSION_MAJOR),$(SOVERSION_FULL)),\
-              && $(LN) -rsf $1.$(SOVERSION_FULL) $1.$(SOVERSION_MAJOR)))
+              && $(LN) -sf $(notdir $1).$(SOVERSION_FULL) $1.$(SOVERSION_MAJOR)))
 
 do_strip=$(and $(CONFIG_BID_STRIP_BINARIES),$(filter %.so,$(1)))
 INSTALLFILE_LIB         ?= $(if $(call do_strip,$(1)),                      \
