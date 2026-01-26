@@ -251,12 +251,8 @@ disasm: $(TARGET)
 	$(call DISASM_CMD,$(if $(DABIN),$(DABIN),$<))
 
 ifneq ($(CONFIG_USE_DROPS_STDDIR),)
-L4INCDIR ?=	$(addprefix $(OBJ_BASE)/include/$(ARCH)/,$(L4API)) \
-                $(addprefix $(OBJ_BASE)/include/,$(L4API)) \
-                $(OBJ_BASE)/include/$(ARCH) \
+L4INCDIR ?=	$(OBJ_BASE)/include/$(ARCH) \
                 $(OBJ_BASE)/include \
-                $(addprefix $(DROPS_STDDIR)/include/$(ARCH)/,$(L4API)) \
-                $(addprefix $(DROPS_STDDIR)/include/,$(L4API)) \
                 $(DROPS_STDDIR)/include/$(ARCH) \
                 $(DROPS_STDDIR)/include
 
@@ -269,9 +265,7 @@ L4LIBDIR ?=	$(addprefix $(OBJ_BASE)/lib/$(ARCH)_$(CPU)/$(VARIANT)/,$(L4API)) \
 
 else
 
-L4INCDIR ?=	$(addprefix $(OBJ_BASE)/include/$(ARCH)/,$(L4API)) \
-                $(wildcard $(addprefix $(OBJ_BASE)/include/,$(L4API))) \
-                $(OBJ_BASE)/include/$(ARCH) \
+L4INCDIR ?=	$(OBJ_BASE)/include/$(ARCH) \
                 $(OBJ_BASE)/include
 
 L4LIBDIR ?=     $(addprefix $(OBJ_BASE)/lib/$(ARCH)_$(CPU)/$(VARIANT)/,$(L4API)) \

@@ -54,9 +54,7 @@ installscript = perl -W -e '                                                  \
       my ($$src, $$srcorig) = $$_ =~ m/^(.*?)<(.*)/g;                         \
       $$srcorig = $$src = $$_ if not defined $$srcorig;                       \
       s|<.*$$||;                                                              \
-      if(s|^ARCH-([^/]*)/L4API-([^/]*)/([^ ]*)$$|$$1/$$2/$(INSTALL_INC_PREFIX)/$$3| ||\
-         s|^ARCH-([^/]*)/([^ ]*)$$|$$1/$(INSTALL_INC_PREFIX)/$$2| ||          \
-         s|^L4API-([^/]*)/([^ ]*)$$|$$1/$(INSTALL_INC_PREFIX)/$$2| ||         \
+      if(s|^ARCH-([^/]*)/([^ ]*)$$|$$1/$(INSTALL_INC_PREFIX)/$$2| ||          \
          s|^(/.*/)?(\S*)$$|$(INSTALL_INC_PREFIX)/$$2|) {                      \
             $$src="$$srcdir/$$srcorig" if $$srcorig !~ /^\//;                 \
             $$dstdir=$$dst="$(if $(1),$(INSTALLDIR_LOCAL),$(INSTALLDIR))/$$_";\
