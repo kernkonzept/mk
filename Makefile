@@ -338,7 +338,7 @@ sysroot: $(SYSROOT_PACKAGES)
 	                    $(OBJ_DIR)/sysroot/usr/include/
 	$(VERBOSE)$(CP) -Lr $(OBJ_DIR)/include/$(BUILD_ARCH)/l4/sys \
 	                    $(OBJ_DIR)/include/$(BUILD_ARCH)/l4/util \
-	                    $(OBJ_DIR)/sysroot/usr/include/
+	                    $(OBJ_DIR)/sysroot/usr/include/l4/
 	$(VERBOSE)$(CP) -Lr $(OBJ_DIR)/include/l4/{crtn,cxx,l4re_vfs,libc_backends,re,sys,util,bid_config.h} \
 	                    $(OBJ_DIR)/sysroot/usr/include/l4/
 	$(VERBOSE)$(CP) -Lr $(OBJ_DIR)/include/uclibc-ng/* $(OBJ_DIR)/sysroot/usr/include/
