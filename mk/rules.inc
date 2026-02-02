@@ -69,7 +69,7 @@ define BID_call_compiler_default
   $(if $(buildinfo_missing)$(prereqs_changed)$(call BID_cmp_str_ne,$1,$(savedcmd_$@)), \
       $(call verbcmd,$(call COMP_MESSAGE,$(bid_trace));                       \
                      $(call lessfork_mkdir,$(@D))                             \
-                     set +o pipefail;                                         \
+                     set -o pipefail;                                         \
                     ,$1                                                       \
                     ,|| exit 1;                                               \
       $(FIXDEP) $(call BID_dot_fname,$@).d                                    \
