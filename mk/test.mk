@@ -103,8 +103,6 @@ $(TEST_SCRIPTS):%.t: $(GENERAL_D_LOC)
 	@$(BUILT_MESSAGE)
 	@$(call INSTALL_LOCAL_MESSAGE,$@)
 
-include $(L4DIR)/mk/variants.inc
-
 # Calculate the list of installed .t files
 ifeq ($(filter cov,$(CHOSEN_VARIANTS)),)
   TEST_SCRIPTS_INST := $(foreach t,$(TEST_SCRIPTS), $(INSTALLDIR_TEST_LOCAL)/$(notdir $(t)))

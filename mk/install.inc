@@ -65,8 +65,10 @@ VARIANT_IS_STD      := $(filter std,$(or $(VARIANT),std))
 # there only is one variant (which is this one)
 ONLY_ONE_VARIANT    := $(filter 1,$(words $(VARIANTS)))
 # variant is the first in the list of not modified variants
-FIRST_IN_UNMODIFIED := $(filter $(VARIANT),                                                  \
-                         $(firstword $(foreach v,$(VARIANTS),$(if $(findstring +,$v),,$v))))
+# AND there is no std variant
+UNMODIFIED_VARIANTS := $(foreach v,$(VARIANTS),$(if $(findstring +,$v),,$v))
+FIRST_IN_UNMODIFIED := $(if $(filter std,$(VARIANTS)),,                            \
+                         $(filter $(VARIANT),$(firstword $(UNMODIFIED_VARIANTS))))
 
 INSTALL_AS_DEFAULT  := $(or $(VARIANT_IS_STD),$(ONLY_ONE_VARIANT),$(FIRST_IN_UNMODIFIED))
 

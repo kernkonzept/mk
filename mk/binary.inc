@@ -34,7 +34,6 @@ $(GENERAL_D_LOC): $(L4DIR)/mk/binary.inc $(L4DIR)/mk/modes.inc $(L4DIR)/mk/rules
 # our default Makefile-name in the OBJ-Subdirs
 BID_OBJ_Makefile ?= Makefile
 
-include $(L4DIR)/mk/variants.inc
 
 ifeq ($(SYSTEM),) # if we have no system yet, build the subdirs
 #################################################################
@@ -42,6 +41,7 @@ ifeq ($(SYSTEM),) # if we have no system yet, build the subdirs
 # we have NO system defined in $(SYSTEM), we are in the src/ dir
 #
 #################################################################
+include $(L4DIR)/mk/variants.inc
 
 # our default systems
 SYSTEMS	?= $(SYSTEMS_ABI)
@@ -158,6 +158,7 @@ $(foreach sys,$(TARGET_SYSTEMS),$(OBJ_DIR)/OBJ-$(sys)/$(BID_OBJ_Makefile)):$(OBJ
 	@echo 'CPU=$(call SYSTEM_TO_CPU,$*)'>>$@
 	@echo 'L4API=$(call SYSTEM_TO_L4API,$*)'>>$@
 	@echo 'VARIANT=$(call SYSTEM_TO_VARIANT,$*)'>>$@
+	@echo 'VARIANTS=$(VARIANTS)'>>$@
 	@for ext in .c .cc .cpp $(FORTRAN_FILE_EXTENSIONS) $(BID_ASM_FILE_EXTENSIONS) $(ADA_FILE_EXTENSIONS) .y .l .ld .dpe .dts .dtso; \
 	  do echo "vpath %$$ext $(VPATH_SRC_BASE)">>$@ ; done
 	@echo '.general.d: $(SRC_DIR)/$(if $(wildcard Make.rules),Make.rules,Makefile)'>>$@
@@ -205,6 +206,7 @@ else
 # we have a system defined in $(SYSTEM), we are in an OBJ- dir
 #
 ###############################################################
+include $(OBJ_BASE)/.Package.deps
 
 
 # In Ada we need to generate the ada library information file, which also
