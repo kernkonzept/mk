@@ -312,7 +312,7 @@ If not void, the layout of the first word is defined as follows:
 - Bit 1 (`grant`): Grant flag. See #L4_ITEM_MAP, #L4_MAP_ITEM_GRANT and
   #L4::Ipc::Snd_fpage::Map_type.
 
-- Bits 7..4 (`attr`): Attributes. See #L4_obj_fpage_ctl and
+- Bits 7..4 (`attr`): Attributes. See \ref L4_obj_fpage_ctl and
   #l4_fpage_cacheability_opt_t, #L4::Ipc::Snd_fpage::Cacheopt.
 
 - Bits MSB­..12 (`hot_spot`): Send base (also called hot spot). See

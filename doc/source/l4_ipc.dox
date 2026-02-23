@@ -279,7 +279,7 @@ message word contains:
   - *attributes* with semantics depending on the item type; for memory
     mappings, they contain cacheability information
     (see #l4_fpage_cacheability_opt_t); for objects, they contain additional
-    rights (see #L4_obj_fpage_ctl),
+    rights (see \ref L4_obj_fpage_ctl),
   - the *send base* (also called *hot spot*) defining what is actually mapped
     when send and receive flexpages have a different size.
 
