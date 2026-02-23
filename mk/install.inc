@@ -36,6 +36,7 @@ install:: $(EXTRA_INSTALL_GOALS)
 
 ifeq ($(ROLE),prog.mk)
 # with prog.mk, we copy
+# prog.mk also means test.mk
 
 # Set the provided target as a prerequisite for all and generate the install
 # rule for it
