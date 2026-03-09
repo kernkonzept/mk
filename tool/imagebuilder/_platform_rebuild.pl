@@ -38,7 +38,8 @@ if (defined($_platform_type_switch))
     $_ram_base_switch = L4::Makeconf::get($ENV{OBJ_BASE}, "RAM_BASE_${_platform_type_switch}");
     $_ram_base_switch_ok = (L4::Makeconf::get($ENV{OBJ_BASE}, "RAM_BASE_SWITCH_OK") // "no") eq "yes";
   }
-else
+
+if (!defined($_ram_base_switch))
   {
     $_ram_base_switch = -1;
     $_ram_base_switch_ok = 0;
