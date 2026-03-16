@@ -61,12 +61,51 @@ sub load_plugin
   $_have_plugins{$name} = $plugin;
 }
 
-sub parse_plugin
+
+our %escape_map = (n => "\n", t => "\t", r => "\r", '"' => '"', "'" => "'");
+
+sub parse_escape {
+  my $str = shift;
+  return undef unless defined $str;
+  return $str =~ s,\\(.),$escape_map{$1} // "",rge;
+}
+
+sub parse_options
 {
-  my ($name, $arg) = split(/:/, shift, 2);
-  $arg = "" unless defined $arg;
-  my %harg = map { split(/=/, $_, 2) } (split (/,/, $arg));
-  return ($name, \%harg);
+  my ($rest) = @_;
+  my %options;
+
+  while ($rest =~ s/^(\w+)=([^',\s]*|'((\\.|[^'])*)')(,|\s+|$)//)
+    {
+      my ($k, $v, $delim) = ($1, parse_escape($3) // $2, $5);
+      $options{$k} = $v;
+
+      last unless $delim eq ",";
+    }
+
+  return (\%options, $rest);
+}
+
+sub parse_plugins
+{
+  my ($pluginstr) = @_;
+
+  my $rest = $pluginstr;
+
+  my @load;
+
+  while ($rest =~ s/^\s*(\w+)(:)?//)
+    {
+      my ($name, $delim) = ($1,$2);
+      my $options = {};
+      ($options, $rest) = parse_options($rest) if $2;
+      push @load, [$name, $options];
+    }
+
+  die "Unable to parse rest of plugins '$rest'"
+    unless $rest =~ /^\s*$/;
+
+  load_plugin(@$_) foreach @load;
 }
 
 sub load_filter
