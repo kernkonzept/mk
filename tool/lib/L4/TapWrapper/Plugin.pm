@@ -72,10 +72,16 @@ sub process_any {
 # Called for anything belonging to the plugin (as determined by block or tag)
 sub process_mine {}
 
-# TODO: Fail if already inhibiting? Allow nested inhibiting?
 # Inhibit exiting the test, used if more data expected by plugin
-sub inhibit_exit { shift->{inhibit_exit} = 1; }
-sub permit_exit  { shift->{inhibit_exit} = 0; }
+# Nested inhibiting allowed. Extraneous permit calls ignored.
+sub inhibit_exit {
+  shift->{inhibit_exit} += 1;
+}
+sub permit_exit  {
+  my ($self) = @_;
+  return unless $self->{inhibit_exit} > 0;
+  $self->{inhibit_exit} -= 1;
+}
 
 sub wait_for_more {
   my ($self, $set) = @_;
