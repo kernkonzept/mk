@@ -43,7 +43,7 @@ sub uimage_header_update
       $ih_comp,
       $ih_name) = unpack($uimage_pattern, $buf);
 
-  print("uimage: size=$ih_size ih_ep=$ih_ep name='$ih_name'\n");
+  printf("uimage: size=%d ih_ep=0x%x name='%s'\n", $ih_size, $ih_ep, $ih_name);
 
   $ih_size = (stat($fd))[7] - UIMAGE_HEADER_SIZE;
 
