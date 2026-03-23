@@ -63,6 +63,11 @@ MAKECONFS_ADD    = $(call strip_quotes,$(CONFIG_MAKECONFS_ADD))
 CARCHFLAGS       = $(CARCHFLAGS_$(ARCH)) $(CARCHFLAGS_$(ARCH)_$(CPU))
 CCXX_FLAGS       = $(CCXX_FLAGS_$(BUILD_ARCH))
 
+CCXX_VERSION    ?= $(CCXX_VERSION_$(BUILD_ARCH))
+ifneq ($(CCXX_VERSION),)
+  CCXX_SUFFIX := -$(CCXX_VERSION)
+endif
+
 # Prefix tool with 'g' to get the GNU tool (via Homebrew)
 gnutool          = $(if $(filter darwin,$(HOST_SYSTEM)),g)$(1)
 
@@ -93,11 +98,11 @@ clang-bin-tgt    = $(call clang-bin,$(1),$(2)) \
 		   $(addprefix --target=,$(notdir $(CROSS_COMPILE:%-=%)))
 
 $(call dv,CC)    = $(if $(USE_CCACHE),$(CCACHE) )$(if $(CLANG),$(call \
-                     clang-bin-tgt,$(CLANG),clang),$(CROSS_COMPILE)gcc)
+                     clang-bin-tgt,$(CLANG),clang),$(CROSS_COMPILE)gcc$(CCXX_SUFFIX))
 $(call dv,CXX)   = $(if $(USE_CCACHE),$(CCACHE) )$(if $(CLANG),$(call \
-                     clang-bin-tgt,$(CLANG),clang++),$(CROSS_COMPILE)g++)
+                     clang-bin-tgt,$(CLANG),clang++),$(CROSS_COMPILE)g++$(CCXX_SUFFIX))
 $(call dv,CPP)   = $(if $(CLANG),$(call \
-                     clang-bin-tgt,$(CLANG),clang-cpp),$(CROSS_COMPILE)cpp)
+                     clang-bin-tgt,$(CLANG),clang-cpp),$(CROSS_COMPILE)cpp$(CCXX_SUFFIX))
 $(call dv,ADAC)  = $(CROSS_COMPILE)gnatmake -q
 HOST_ADAC        = gnatmake -q
 
