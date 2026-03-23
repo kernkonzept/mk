@@ -1,6 +1,6 @@
 # vim:se ft=make:
 
-CROSS_COMPILE_ppc32        = powerpc-linux-
+CROSS_COMPILE_ppc32        = powerpc-linux-gnu-
 LD_EMULATION_CHOICE_ppc32  = elf32ppc
 OFORMAT_ppc32              = elf32-powerpc
 BFD_ARCH_ppc32             = powerpc
