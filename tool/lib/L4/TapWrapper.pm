@@ -86,26 +86,57 @@ sub parse_options
   return (\%options, $rest);
 }
 
+sub __parse_one_plugin
+{
+  my ($rest) = @_;
+
+  return (undef, undef, $rest) unless $rest =~ s/^\s*(\w+)(:)?//;
+
+  my ($name, $delim) = ($1,$2);
+
+  my $options = {};
+
+  ($options, $rest) = parse_options($rest) if $delim;
+
+  return ($name, $options, $rest);
+}
+
+
 sub parse_plugins
 {
-  my ($pluginstr) = @_;
-
-  my $rest = $pluginstr;
+  my ($rest) = @_;
 
   my @load;
+  my $name;
+  my $options;
 
-  while ($rest =~ s/^\s*(\w+)(:)?//)
-    {
-      my ($name, $delim) = ($1,$2);
-      my $options = {};
-      ($options, $rest) = parse_options($rest) if $2;
-      push @load, [$name, $options];
-    }
+  while (1) {
+    ($name, $options, $rest) = __parse_one_plugin($rest);
+
+    last unless defined $name;
+
+    push @load, [$name, $options];
+  }
 
   die "Unable to parse rest of plugins '$rest'"
     unless $rest =~ /^\s*$/;
 
-  load_plugin(@$_) foreach @load;
+  return @load;
+}
+
+sub parse_plugin
+{
+  my ($rest) = @_;
+
+  my $name;
+  my $options;
+
+  ($name, $options, $rest) = __parse_one_plugin($rest);
+
+  die "Unable to parse rest of plugins '$rest'"
+    unless $rest =~ /^\s*$/;
+
+  return ($name, $options);
 }
 
 sub load_filter
