@@ -929,7 +929,7 @@ checkbuild.%: $(CHECK_BASE_DIR)/config.%/.config.all $(CHECK_BASE_DIR)/config.%/
 	$(if $(CHECK_REMOVE_OBJDIR),rm -rf $(<D))
 
 .PHONY: checkbuild
-checkbuild: $(if $(USE_CONFIGS),$(addprefix checkbuild.,$(USE_CONFIGS)),$(patsubst mk/defconfig/config.%, checkbuild.%, $(wildcard mk/defconfig/config.*)))
+checkbuild: $(if $(USE_CONFIGS),$(addprefix checkbuild.,$(USE_CONFIGS)),$(patsubst $(TEMPLDIR)/config.%, checkbuild.%, $(wildcard $(TEMPLDIR)/config.*)))
 
 .PHONY: report
 report:
