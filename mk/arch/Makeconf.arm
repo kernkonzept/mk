@@ -11,7 +11,6 @@ BFD_ARCH_arm              = arm
 L4_KIP_ADDR_arm          ?= 0xaffff000
 L4_STACK_ADDR_arm        ?= 0xb0000000
 
-CARCHFLAGS_arm_armv5      = -march=armv5
 CARCHFLAGS_arm_armv5t     = -march=armv5t
 CARCHFLAGS_arm_armv5te    = $(GCCARMV5TEFPOPT_arm)
 CARCHFLAGS_arm_armv6      = $(GCCARMV6FPOPT_arm)

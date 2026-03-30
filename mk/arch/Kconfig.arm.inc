@@ -6,10 +6,6 @@
 choice
 	prompt "CPU variant"
 	default CPU_ARM_ARMV7A
-	
-config CPU_ARM_ARMV5
-	bool "ARMv5 type CPU"
-	depends on BUILD_ARCH_arm
 
 config CPU_ARM_ARMV5T
 	bool "ARMv5T type CPU"
@@ -44,7 +40,6 @@ endchoice
 
 config CPU
 	string
-	default "armv5"    if CPU_ARM_ARMV5
 	default "armv5t"   if CPU_ARM_ARMV5T
 	default "armv5te"  if CPU_ARM_ARMV5TE
 	default "armv6"    if CPU_ARM_ARMV6
