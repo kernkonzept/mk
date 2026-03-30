@@ -40,7 +40,8 @@ $(GENERAL_D_LOC): $(L4DIR)/mk/include.mk
 do_link = my $$rl = readlink($$dst);                                          \
           if (!defined $$rl || $$rl ne $$src) {                               \
             if ($$notify == 1) {                                              \
-              $$notify=0; $(if $(VERBOSE),print "  ... Updating symlinks\n";,)\
+              $$notify=0;                                                     \
+              $(if $(VERBOSE),print "  [$(BID_MESSAGE_TAG)] ==> Updating symlinks\n";,)\
             }                                                                 \
             system("ln","-sf$(if $(VERBOSE),,v)",$$src,$$dst) && exit 1;      \
           }
