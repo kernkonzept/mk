@@ -592,7 +592,7 @@ ifneq ($(CONFIG_INT_CPP_NAME_SWITCH),)
 endif
 endif # Host system is Linux
 ifneq ($(CONFIG_INT_LD_NAME_SWITCH),)
-	$(VERBOSE)set -e; echo INT_LD_NAME=$$($(callld) 2>&1 \
+	$(VERBOSE)set -e; echo CONFIG_INT_LD_NAME=$$($(callld) 2>&1 \
 	          | perl -p -e 's,^(.+/)?([^:]+):.+,$$2,') >> $(DROPSCONF_CONFIG_MK)
 endif
 	$(VERBOSE)$(if $(filter LLD,$(shell $(callld) --version)),\
