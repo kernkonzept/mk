@@ -296,25 +296,15 @@ static void get_executable_name(void)
 {
   char *basename_p;
 #ifdef __linux
-  const char * const proc_cmdline = "/proc/self/cmdline";
-  FILE *cmdline = fopen (proc_cmdline, "r");
   char cmd[STRLEN];
-  int i=0;
-  int c;
-  cmd[STRLEN-1] = 0;
-
-  if (!cmdline)
+  /* /proc/self/exe is **always** a symbolic link */
+  ssize_t sz = readlink("/proc/self/exe", cmd, sizeof(cmd) - 1);
+  if (sz < 0)
     {
-      fprintf(stderr, "libgendep.o: cannot open %s\n", proc_cmdline);
+      fprintf(stderr, "libgendep.o: cannot open /proc/self/exe");
       exit(-1);
     }
-
-  while ((c = fgetc(cmdline))!=EOF && c && i < STRLEN-1)
-    cmd[i++] = c;
-
-  fclose(cmdline);
-
-  cmd[i++] = 0;
+  cmd[sz] = '\0';
 #elif defined(__APPLE__) || defined(__FreeBSD__)
   int mib[3], arglen;
   size_t size;
