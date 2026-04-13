@@ -7,6 +7,8 @@ _L4DIR_MK_VARIANTS=y
 
 include $(OBJ_BASE)/.Package.deps
 
+ifeq ($(VARIANTS),)
+
 ifeq ($(filter-out prog.mk test.mk, $(ROLE)),)
   VARIANTS ?= std
 endif
@@ -44,5 +46,6 @@ VARIANTS        += $(VARIANTS_$(ROLE))
 VARIANTS        := $(sort $(VARIANTS))
 
 $(if $(VARIANTS),,$(error No variants defined))
+endif
 
 endif # _L4DIR_MK_VARIANTS undefined
