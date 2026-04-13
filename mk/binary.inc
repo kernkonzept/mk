@@ -67,7 +67,7 @@ endif
 
 ifneq ($(strip $(SRC_ADA)$(foreach t,$(TARGET),$(SRC_ADA_$(t)))),)
   ifeq ($(GNATVERSION),)
-    $(info $(shell echo -e "\033[32mAda compiler (gnatmake) missing, skipping directory '$(SRC_DIR)'.033[0m"))
+    $(info $(shell echo -e "\033[32mAda compiler (gnatmake) missing, skipping directory '$(SRC_DIR)'.\033[0m"))
     SYSTEMS =
   endif
 endif
