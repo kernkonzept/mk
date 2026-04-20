@@ -193,7 +193,7 @@ $(filter %.ofl, $(TARGET)):%.ofl: $(OBJS) $(GENERAL_D_LOC)
 $(filter %.so, $(TARGET)):%.so: $(OBJS) $(LIBDEPS) $(GENERAL_D_LOC)
 	@$(LINK_SHARED_MESSAGE)
 	$(VERBOSE)$(MKDIR) $(@D)
-	$(VERBOSE)$(call MAKEDEP,$(LD)) $(BID_LINK) -MD -MF $(call BID_link_deps_file,$@) -o $@ $(LDFLAGS_SO) \
+	$(VERBOSE)$(call MAKEDEP,$(CONFIG_INT_LD_NAME)) $(BID_LINK) -MD -MF $(call BID_link_deps_file,$@) -o $@ $(LDFLAGS_SO) \
 	  $(LDFLAGS) $(OBJS) $(addprefix -PC,$(REQUIRES_LIBS)) \
 	  $(if $(strip $(SOVERSION)),-soname=$@.$(SOVERSION_MAJOR))
 	@$(BUILT_MESSAGE)
