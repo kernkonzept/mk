@@ -49,7 +49,7 @@ all:: $(1)
 $(1):$(2)
 	@$(call INSTALL_LOCAL_MESSAGE,$(notdir $(1)))
 	$(VERBOSE)$(if $(INSTALLFILE_LOCAL),$(MKDIR) $$(dir $$@))
-	$(VERBOSE)$(call INSTALLFILE_LOCAL,$$<,$$@)
+	$(VERBOSE)$$(call INSTALLFILE_LOCAL,$$<,$$@)
 endef
 
 # generate local install rule for variant directory
