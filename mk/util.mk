@@ -95,13 +95,16 @@ define create_dir
   mkdir -p $(1)
 endef
 
+# Debug link path. Convert foo/bin/file into foo/bin/.debug/file
+debug_link_path = $(dir $(1))/.debug/$(notdir $(1))
+
 # Strip binary $(1) to $(2) and set target file mode to $(3)
 # 1: binary to strip
 # 2: stripped binary destination
 # 3: target file mode
 define copy_stripped_binary
   $(call lessfork_mkdir,$(dir $(2))/.debug) \
-  ln -sf $(abspath $(1)) $(dir $(2))/.debug/$(1); \
+  ln -sf $(abspath $(1)) $(call debug_link_path,$(2)); \
   $(OBJCOPY) --strip-unneeded --add-gnu-debuglink=$(1) \
              $(1) $(2) >/dev/null 2>&1 \
     || ln -sf $(abspath $(1)) $(2); \

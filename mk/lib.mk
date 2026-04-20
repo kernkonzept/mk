@@ -40,10 +40,12 @@ solink=$(if $(SOVERSION_FULL), \
 
 do_strip=$(and $(CONFIG_BID_STRIP_BINARIES),$(filter %.so,$(1)))
 INSTALLFILE_LIB         ?= $(if $(call do_strip,$(1)),                      \
-                                $(call copy_stripped_binary,$(1),$(2),644), \
+                                $(call copy_stripped_binary,$(1),$(2),644) \
+                                $(call solink,$(call debug_link_path,$2)), \
                                 $(INSTALL) -m 644 $(1) $(2))$(call solink,$2)
 INSTALLFILE_LIB_LOCAL   ?= $(if $(call do_strip,$(1)),                      \
-                                $(call copy_stripped_binary,$(1),$(2),644), \
+                                $(call copy_stripped_binary,$(1),$(2),644) \
+                                $(call solink,$(call debug_link_path,$2)), \
                                 $(LN) -sf $(abspath $(1)) $(2))$(call solink,$2)
 
 INSTALLFILE		= $(INSTALLFILE_LIB)
