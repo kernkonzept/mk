@@ -52,7 +52,8 @@ BROKEN_SUBDIRS	= $(patsubst %/broken, %, \
 OBSOLETE_SUBDIRS = $(patsubst %/obsolete, %, \
 			$(wildcard $(addsuffix /obsolete,$(ALL_SUBDIRS))))
 # and the packages we are supposed to build
-BUILD_SUBDIRS  = $(filter-out $(BROKEN_SUBDIRS) $(OBSOLETE_SUBDIRS) $(FILTER_OUT_SUBDIRS), \
+BUILD_SUBDIRS  = $(filter-out $(BROKEN_SUBDIRS) $(OBSOLETE_SUBDIRS) \
+                   $(FILTER_OUT_SUBDIRS) $(addsuffix /%,$(FILTER_OUT_SUBDIRS)), \
                    $(ALL_SUBDIRS))
 
 # force that every package to be built has a Control and Makefile
