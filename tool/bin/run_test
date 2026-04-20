@@ -356,7 +356,7 @@ if ($ned_cfg and $modlist_info->{roottask}{name} eq 'moe')
           {
             $err =~ s/'/\\'/g;
             $err =~ s/\n//;
-            $testenv->{BUNDLE_ENV}{SKIP}{$target} = $err . " :: " . $target;
+            $testenv->{BUNDLE_ENV}{SKIP}{$target} = $target . " :: " . $err;
           }
       }
 
