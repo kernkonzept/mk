@@ -229,7 +229,7 @@ sub finalize {
               my $explanation = $2 // "";
               $explanation =~ s/[\r\n]//g;
               $explanation =~ s/^\s+|\s+$//g;
-              push @plan_explanations, [ref($_),$explanation] if $explanation;
+              push @plan_explanations, [ref($pluggable),$explanation] if $explanation;
             }
           else
             {
@@ -278,6 +278,7 @@ sub finalize {
           my ($class, $reason) = @$exp;
           $reason =~ s/^#\s*SKIP\s+//i;
           print $TAP_FD "ok $class #SKIP $reason\n";
+          print $TAP_FD "Test-uuid: 00000000-0000-0000-0000-000000000000\n";
           $taplines++;
         }
       @plan_explanations = ();
