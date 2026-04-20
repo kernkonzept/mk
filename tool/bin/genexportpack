@@ -64,7 +64,7 @@ print QEMU "#! /bin/sh\n".
            "\n".
            "case \"\$entry\" in\n";
 
-$qemu =~ s@.*/@@;
+$qemu =~ s@\S+/@@;
 
 my %files;
 
