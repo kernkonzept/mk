@@ -283,11 +283,19 @@ sub trigger_jdb_system_report {
   # Trigger system report
   print $test_proc_input "Y\n";
 
+  # Give jdb up to 120 seconds for the system report.
+  local $SIG{ALRM} = sub {
+    on_test_abort("Test did not finish. JDB system report failed.");
+  };
+  alarm 120;
+
   # Wait for "Done" with 5 seconds as between-lines-timeout in case jdb itself misbehaves.
   while($line = readline_timeout($test_proc, 5))
     {
       last if $line =~ /^Done/;
     }
+  # Disable ALRM again.
+  alarm 0;
 }
 
 sub on_test_abort {
