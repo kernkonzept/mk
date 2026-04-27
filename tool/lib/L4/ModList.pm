@@ -505,9 +505,15 @@ sub get_module_entry($$$)
   while ($lookagain && --$loopcnt);
   error "Recursion limit hit for scanning '$m->{command}'\n" if $lookagain;
 
+  my %modlookup = map { basename($_->{command}) => 1 } @mods;
+
   foreach (sort keys %shlibs)
     {
-      push @mods, { get_command_and_cmdline($_), type => $type_num{generic} };
+      my $shmod = { get_command_and_cmdline($_), type => $type_num{generic} };
+
+      next if $modlookup{basename($shmod->{command})};
+
+      push @mods, $shmod;
     }
 
   return (
