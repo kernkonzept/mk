@@ -278,7 +278,7 @@ sub finalize {
           my ($class, $reason) = @$exp;
           $reason =~ s/^#\s*SKIP\s+//i;
           print $TAP_FD "ok $class #SKIP $reason\n";
-          print $TAP_FD "Test-uuid: 00000000-0000-0000-0000-000000000000\n";
+          print $TAP_FD "# Test-uuid: 00000000-0000-0000-0000-000000000000\n";
           $taplines++;
         }
       @plan_explanations = ();
