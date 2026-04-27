@@ -112,7 +112,7 @@ sub handle_line
   if (exists $opts{shell})
     {
       my @m = split /\n/, `$r`;
-      error "$mod_file:$.: Shell command failed\n" if $?;
+      error "$r:$.: Shell command failed\n" if $?;
       return @m;
     }
 
