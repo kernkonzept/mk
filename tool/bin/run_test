@@ -84,6 +84,7 @@ my $test_setup  = $ENV{TEST_SETUP} || '';
 my @test_target = split(' ', $ENV{TEST_TARGET} || '');
 my $single_test_target = $ENV{TEST_TARGET} || '';
 my @extra_test  = split(' ', $ENV{EXTRA_TEST} || '');
+# WARNING! Do not alter $test_args. Add your args to $more_test_args instead!
 my $test_args   = $ENV{TEST_ARGS} || '';
 my $ned_cfg     = $ENV{NED_CFG} || '';
 my $moe_args    = $ENV{MOE_ARGS} || '';
@@ -101,6 +102,8 @@ my $kunit_record = $ENV{TEST_KUNIT_RECORD} || 0;
 my $test_platform_allow = $ENV{TEST_PLATFORM_ALLOW} || "";
 my $test_platform_deny = $ENV{TEST_PLATFORM_DENY} || "";
 my $platform = $ENV{PT};
+
+my $more_test_args = "";
 
 $platform = L4::Makeconf::get($obj_base,"PLATFORM_TYPE") unless defined $platform;
 
@@ -146,7 +149,7 @@ sub check_add_gtest_shuffle()
   return unless $ENV{TEST_GTEST_SHUFFLE};
   # Shuffling test will disrupt the expected output.
   generate_gtest_shuffle_seed();
-  $test_args.=
+  $more_test_args.=
     " --gtest_shuffle --gtest_random_seed=$ENV{TEST_GTEST_SHUFFLE_SEED}";
 }
 
@@ -215,7 +218,7 @@ $test_run_tags =~ s/\s+//g;
 # propagate run tags to test
 if ($test_run_tags)
   {
-    $test_args .= " --run_tags=" . $test_run_tags;
+    $more_test_args .= " --run_tags=" . $test_run_tags;
   }
 
 sub coverage_name
@@ -306,7 +309,7 @@ check_add_gtest_shuffle();
 # Introspection testing
 if ($ENV{INTROSPECTION_TESTS})
   {
-    $test_args .= " -l";
+    $more_test_args .= " -l";
   }
 
 # Create the initial module list
@@ -321,6 +324,7 @@ if ($ned_cfg and $modlist_info->{roottask}{name} eq 'moe')
     my @mod_list = map { $_->{name} } @more_mods;
     my $test_prog = $single_test_target;
     $test_prog .= ' '.$test_args if $test_args;
+    $test_prog .= ' '.$more_test_args if $more_test_args;
     open($test_env_cfg, '>', $test_env_cfg_name)
       or confess "Cannot create configuration file $test_env_cfg_name.";
 
@@ -328,9 +332,10 @@ if ($ned_cfg and $modlist_info->{roottask}{name} eq 'moe')
 
     $testenv->{COVERAGE} = 'y' if $coverage;
     $testenv->{BUNDLE_ENV} = {};
-    foreach my $var (split(' ', $ENV{BUNDLE_ENV}))
+
+    foreach my $target (@test_target, @extra_test)
       {
-        foreach my $target (@test_target, @extra_test)
+        foreach my $var (split(' ', $ENV{BUNDLE_ENV}))
           {
             my $val = $ENV{"${var}_${target}"};
             if (defined $val)
@@ -339,6 +344,10 @@ if ($ned_cfg and $modlist_info->{roottask}{name} eq 'moe')
                 $testenv->{BUNDLE_ENV}{$var}{$target} = $val;
               }
           }
+
+        # Append test_args we added here in run_test
+        $testenv->{BUNDLE_ENV}{TEST_ARGS}{$target} //= $test_args;
+        $testenv->{BUNDLE_ENV}{TEST_ARGS}{$target} .= " " . $more_test_args;
       }
 
     foreach my $target (@test_target)
@@ -362,7 +371,7 @@ if ($ned_cfg and $modlist_info->{roottask}{name} eq 'moe')
 
     $testenv->{TEST_PROG} = "$test_prog";
     $testenv->{TEST_TARGET} = [@test_target, @extra_test];
-    $testenv->{TEST_ARGS} = $test_args;
+    $testenv->{TEST_ARGS} = $test_args . ' ' . $more_test_args;
 
     if (defined($ENV{BASE_NED_CFG}))
       {
@@ -399,11 +408,8 @@ if ($ned_cfg and $modlist_info->{roottask}{name} eq 'moe')
         print {$test_env_cfg}<<~EOT;
           if arg[1] ~= nil then
             t.TEST_TARGET = arg[1]
-            t.TEST_PROG = arg[1]
-            if t.BUNDLE_ENV.TEST_ARGS then
-              t.TEST_ARGS = t.BUNDLE_ENV.TEST_ARGS[arg[1]]
-              t.TEST_PROG = arg[1] .. " " .. t.TEST_ARGS
-            end
+            t.TEST_ARGS = t.BUNDLE_ENV.TEST_ARGS[arg[1]]
+            t.TEST_PROG = arg[1] .. " " .. t.TEST_ARGS
           end
           EOT
        }
