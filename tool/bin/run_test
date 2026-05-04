@@ -335,7 +335,7 @@ if ($ned_cfg and $modlist_info->{roottask}{name} eq 'moe')
 
     foreach my $target (@test_target, @extra_test)
       {
-        foreach my $var (split(' ', $ENV{BUNDLE_ENV}))
+        foreach my $var (split(' ', $ENV{BUNDLE_ENV} // ''))
           {
             my $val = $ENV{"${var}_${target}"};
             if (defined $val)
