@@ -423,9 +423,10 @@ if ($ned_cfg and $modlist_info->{roottask}{name} eq 'moe')
   }
 elsif ($modlist_info->{roottask}{name} eq 'moe')
   {
+    my $full_test_args = join(" ", $test_args, $more_test_args);
     # Run the test program directly as the init process.
     $modlist_info->{roottask}{args}  = " --init=rom/$single_test_target $moe_args";
-    $modlist_info->{roottask}{args} .= " -- ".$test_args if $test_args;
+    $modlist_info->{roottask}{args} .= " -- ".$full_test_args if $full_test_args;
   }
 
 if ($coverage)
