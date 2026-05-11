@@ -373,9 +373,9 @@ if ($ned_cfg and $modlist_info->{roottask}{name} eq 'moe')
     $testenv->{TEST_TARGET} = [@test_target, @extra_test];
     $testenv->{TEST_ARGS} = $test_args . ' ' . $more_test_args;
 
-    if (defined($ENV{BASE_NED_CFG}))
+    if ($ENV{BASE_NED_CFG})
       {
-        $testenv->{BASE_NED_CFG} = $ENV{BASE_NED_CFG} if $ENV{BASE_NED_CFG};
+        $testenv->{BASE_NED_CFG} = $ENV{BASE_NED_CFG};
         $testenv->{BASE_NED_CFG} =~ s,.*/,,;
       }
     $testenv->{REQUIRED_MODULES} = \@mod_list;
