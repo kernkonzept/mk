@@ -943,7 +943,8 @@ report:
 	$(call ver_fun_var,LD)
 	$(call ver_funs,perl)
 	$(call ver_funs,python python2 python3,-V)
-	$(call ver_funs,svn git doxygen,--version)
+	$(call ver_funs,svn git,--version)
+	$(call ver_fun_var,DOXYGEN,--version)
 	@echo "Shell is:"
 	@ls -la /bin/sh || true
 	@echo
