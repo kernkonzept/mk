@@ -14,9 +14,9 @@ PHONY += regen regen_cfg regen_html
 regen: regen_cfg regen_html
 
 regen_cfg:
-	doxygen -u l4re.cfg
+	$(DOXYGEN) -u l4re.cfg
 	rm -f l4re.cfg.bak
 
 regen_html: regen_cfg
-	doxygen -w html l4re-header.html l4re-footer.html l4re.css l4re.cfg
+	$(DOXYGEN) -w html l4re-header.html l4re-footer.html l4re.css l4re.cfg
 	rm -r l4re-footer.html.bak l4re-header.html.bak l4re.css.bak
