@@ -436,7 +436,7 @@ endif
 # -----------------------
 
 # TEMP-only
-$(if $(filter x86 arm arm64 amd64 mips sparc ppc32,$(SYSTEMS)), $(error Please appends "-plain" to each architecture in SYSTEMS ))
+$(if $(filter x86 arm arm64 amd64 mips,$(SYSTEMS)), $(error Please appends "-plain" to each architecture in SYSTEMS ))
 
 ifneq ($(MODE),host)
 LDFLAGS += $(if $(CONFIG_BID_LD_EMIT_UNWIND),--eh-frame-hdr,)
