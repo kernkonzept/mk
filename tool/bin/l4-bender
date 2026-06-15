@@ -24,6 +24,7 @@ my $trace_pc_files = 0; # --trace-pc-files | --debug
 my $trace_exec = 0;     # --trace-exec | --debug
 my $template;           # template argument to evaluate
 my $action;             # action to do nothing
+my $variant;            # variant of considered binary
 
 # regexp for variable names and option names
 my $tag = qr/(?:[a-zA-Z0-9,+~\$._-]+)/;
@@ -744,12 +745,15 @@ sub read_pc_files
 {
   my ( $dir, $recurse, @names ) = @_;
 
+  print $errout "error: Please provide a variant with the --variant option.\n"
+    unless $variant;
+
   # read pc files for all given packages.
   # we start with the last one to keep the order of independent packages
   # the same as given in @names, because read_pc_file will add new
   # packages at the front of the $recurse list.
   while (my $name = pop @names) {
-    read_pc_file($dir, $name, $recurse);
+    read_pc_file($dir, $name.".".$variant, $recurse);
   }
 }
 
@@ -922,6 +926,8 @@ while (@ARGV) {
     $trace_exec = 1;
   } elsif ($o eq '--trace-pc-files') {
     $trace_pc_files = 1;
+  } elsif ($o eq '--variant') {
+    $variant = shift @ARGV;
   } elsif ($o =~ /^-/) {
     die "$0: error: unknown option '$o'\n";
   } else {

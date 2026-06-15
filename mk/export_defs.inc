@@ -17,6 +17,8 @@ L4DEF_FILE_PL ?= l4defs.pl.inc
 do_output_all   = echo '$(1) = $($(1))' >> $(L4DEF_FILE_MK); echo '$(1)="$($(1))"' >> $(L4DEF_FILE_SH); echo '  "$(1)" => "$($(1))",' >> $(L4DEF_FILE_PL);
 do_output_mk    = echo '$(1) = $($(1))' >> $(L4DEF_FILE_MK);
 
+SKIP_BENDER_CHECKS   := y
+
 ifeq ($(CALLED_FOR),static)
 
 MODE = static
@@ -97,6 +99,7 @@ all::
 	@$(call do_output_all,L4_BID_KIP_OFFS_SYS_DEBUGGER)
 	@$(call do_output_all,L4_BID_PKG_CONFIG)
 	@$(call do_output_all,L4_VARIANT)
+	@$(call do_output_mk,L4_BID_PKG_CONFIG_FLAGS)
 	@$(call do_output_mk,L4_BID_PKG_CONFIG_CALL)
 	@$(call do_output_mk,L4_BID_PKG_CONFIG_FAILED)
 	@$(call do_output_mk,L4_BID_BENDER_LINK)

@@ -132,19 +132,14 @@ PC_LIBS     ?= $(if $(and $(PC_LIBS_WHOLELIB),$(TARGET_STANDARD)), \
                $(if $(and $(PC_LIBS_WHOLELIB),$(TARGET_STANDARD)), \
 	            --no-whole-archive)
 
-PC_FILENAME  ?= $(PKGNAME)
-PC_FILENAMES ?= $(PC_FILENAME)
-PC_FILES     := $(if $(filter std,$(VARIANT)),$(foreach pcfile,$(PC_FILENAMES),$(OBJ_BASE)/pc/$(pcfile).pc))
+PC_FILENAME      ?= $(PKGNAME)
+PC_FILENAMES     ?= $(PC_FILENAME)
+PC_FILES         := $(foreach pcfile,$(PC_FILENAMES),$(OBJ_BASE)/pc/$(pcfile).pc)
+VARIANT_PC_FILES := $(foreach pcfile,$(call with_variant,$(PC_FILENAMES)),$(OBJ_BASE)/pc/$(pcfile).pc)
 
 PC_LIBS_PIC ?= $(if $(and $(PC_LIBS_WHOLELIB),$(TARGET_PIC)),--whole-archive) \
                $(patsubst lib%.p.a,-l%.p,$(TARGET_PIC)) \
                $(if $(and $(PC_LIBS_WHOLELIB),$(TARGET_PIC)),--no-whole-archive)
-
-# 1: basename
-# 2: pcfilename
-# 3: optional prefix
-get_cont = $(if $($1_$2),$3$(strip $($1_$2)),$(if $($1),$3$(strip $($1))))
-get_cont_unstripped = $(if $($1_$2),$3$($1_$2),$(if $($1),$3$($1)))
 
 # 1: pcfile
 # PC_EXTRA may contain multi-line content. Stripping would remove newlines
@@ -155,21 +150,22 @@ get_extra = $(call get_cont_unstripped,PC_EXTRA,$(1))$\
 
 # Ths must contain all the contents of all possible PC files as used in
 # below generate_pcfile
+REQUIRES_LIB_VARIANTS := $(call with_variant,$(REQUIRES_LIBS))
 PC_FILES_CONTENTS := $(strip $(foreach pcfile,$(PC_FILENAMES),\
   $(call get_cont,CONTRIB_INCDIR,$(pcfile)) \
   $(call get_cont,PC_LIBS,$(pcfile)) \
-  $(call get_cont,REQUIRES_LIBS,$(pcfile)) \
+  $(call get_cont,REQUIRES_LIB_VARIANTS,$(pcfile)) \
   $(call get_cont,PC_CFLAGS,$(pcfile)) $(call get_extra,$(pcfile))))
 
 ifneq ($(PC_FILES_CONTENTS),)
 
 # when adding something to generate_pcfile it must also be added to the
 # PC_FILES_CONTENTS above, otherwise PC files may not be generated
-$(patsubst %,$(OBJ_BASE)/pc/%.pc,$(PC_FILENAMES)):$(OBJ_BASE)/pc/%.pc: $(GENERAL_D_LOC)
+$(VARIANT_PC_FILES): $(OBJ_BASE)/pc/%.pc: $(GENERAL_D_LOC)
 	@$(call GEN_MESSAGE,$(@F))
-	$(VERBOSE)$(call generate_pcfile,$*,$@,$(call get_cont,CONTRIB_INCDIR,$*),$(call get_cont,PC_LIBS,$*),$(call get_cont,REQUIRES_LIBS,$*),$(call get_cont,PC_CFLAGS,$*),$(call get_extra,$*))
+	$(VERBOSE)$(call generate_pcfile,$*,$@,$(call get_cont_variant,CONTRIB_INCDIR,$*),$(call get_cont_variant,PC_LIBS,$*),$(call get_cont_variant,REQUIRES_LIBS,$*),$(call get_cont_variant,PC_CFLAGS,$*),$(call get_extra,$*))
 
-all:: $(PC_FILES)
+all:: $(VARIANT_PC_FILES)
 
 endif
 endif

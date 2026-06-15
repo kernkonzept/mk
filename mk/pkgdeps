@@ -158,17 +158,18 @@ sub set_pcfiledir_for_aliases($)
   $pcfiledir_for_aliases = shift;
 }
 
-sub write_alias_pcfile($@)
+sub write_alias_pcfile($$@)
 {
   my $alias = shift;
+  my $variant = shift;
 
   die "Path for pc-files not set, use '-P dir'"
     unless defined $pcfiledir_for_aliases;
 
-  open(my $u, ">$pcfiledir_for_aliases/$alias.pc")
-    || die "Cannot create '$pcfiledir_for_aliases/$alias.pc': $!";
+  open(my $u, ">$pcfiledir_for_aliases/$alias.$variant.pc")
+    || die "Cannot create '$pcfiledir_for_aliases/$alias.$variant.pc': $!";
 
-  print $u "Name: $alias\n".
+  print $u "Name: $alias.$variant\n".
            "Version: 0\n".
            "Description: Alias Dependency Package\n".
            "Requires: ".join(' ', grep { not defined $build_only_deps{$_} } @_)."\n";
@@ -209,12 +210,14 @@ sub add_alias($$@)
         requires => [ @_ ] }), $cluster);
 }
 
-sub write_alias_pc_files()
+sub write_alias_pc_files($)
 {
+  my $variant = shift;
+
   foreach my $n (values %nodes)
     {
       next unless $n->{alias};
-      write_alias_pcfile($n->{name}, @{$n->{requires}});
+      write_alias_pcfile($n->{name}, $variant, @{$n->{requires}});
     }
 }
 
@@ -461,7 +464,6 @@ sub extra_deps
 sub generate_dep_makefile
 {
   scan_files_dirs(shift, 1, @_);
-  write_alias_pc_files();
   my $error_count = 0;
 
   print "# Automatically generated Makefile for dependencies\n";
@@ -471,6 +473,7 @@ sub generate_dep_makefile
 
   my %p = %pkgs;
   my %variants;
+  $variants{"std"} = [];
 
   foreach my $a (sort keys %nodes)
     {
@@ -526,6 +529,12 @@ sub generate_dep_makefile
       my @p = figure_out_pkg_dependencies(@{$variants{$variant}});
       print "\n# Derived from: " . join(' ', sort @{$variants{$variant}}) . "\n";
       print "VARIANTS_$_+=$variant\n" foreach @p;
+      write_alias_pc_files($variant);
+    }
+
+  foreach (keys %variants)
+    {
+      print "USED_VARIANTS += $_\n";
     }
 
   print "\n# pakages w/o deps\n.PHONY: ".join(' ', sort keys %p)."\n" if %p;

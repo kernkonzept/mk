@@ -34,6 +34,7 @@ endif
 INCSRC_DIR		?= $(SRC_DIR)
 
 include $(L4DIR)/mk/Makeconf
+include $(L4DIR)/mk/variants.inc
 $(GENERAL_D_LOC): $(L4DIR)/mk/include.mk
 -include $(DEPSVAR)
 
@@ -69,14 +70,20 @@ installscript = perl -W -e '                                                  \
   }'
 
 PC_FILENAMES ?= $(PC_FILENAME)
-PC_FILES     := $(foreach pcfile,$(PC_FILENAMES),$(OBJ_BASE)/pc/$(pcfile).pc)
 
-$(OBJ_BASE)/pc/%.pc: $(GENERAL_D_LOC)
-	$(VERBOSE)$(call generate_pcfile,$*,$@,$(PKGNAME),,$(call get_cont,REQUIRES_LIBS,$*))
+# We want pc files for all possible variants
+VARIANT_PC_FILES := $(foreach v,$(VARIANTS),                       \
+                      $(foreach pcfile,$(call with_variant,        \
+                                              $(PC_FILENAMES),$v), \
+                        $(OBJ_BASE)/pc/$(pcfile).pc))
+
+$(VARIANT_PC_FILES): $(OBJ_BASE)/pc/%.pc: $(GENERAL_D_LOC)
+	$(VERBOSE)$(call generate_pcfile,$*,$@,$(PKGNAME),,    \
+	            $(call get_cont_variant,REQUIRES_LIBS,$*))
 
 headers::
 
-all:: headers $(PC_FILES)
+all:: headers $(VARIANT_PC_FILES)
 	@$(TARGET_CMD) | $(call installscript,1)
 
 install::

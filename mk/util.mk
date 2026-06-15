@@ -165,5 +165,43 @@ is_dir = $(shell test -d '$(1)' && echo yes)
 # 1: filename
 BID_dot_fname = $(dir $1).$(notdir $1)
 
+# Get variant strings by adding ".<variant>" to each given string.
+# 1: list of strings to add variant to
+# 2: [optional] Explicit variant to add. If this is empty, $(VARIANT) is used.
+with_variant    = $(addsuffix .$(or $2,$(VARIANT)),$(1))
+
+# Strip variant part of strings.
+# This essentially returns the provided strings upon the first occurence of a
+# point ".".
+# 1: list of strings to strip variant from
+without_variant = $(foreach v,$(1),$(firstword $(subst ., ,$v)))
+
+# Generate enumeration by adding commas between each two words
+# 1: string to generate enumeration of
+enumerate = $(subst $(BID_SPACE),$(BID_COMMA) ,$(1))
+
+# Extract variant parts of provided targets.
+# This essentially returns the part after the last point "." of all strings.
+# 1: targets to get variants from
+variant_from_target = $(foreach t,$(1),$(if $(findstring .,$t),$(lastword $(subst ., ,$t))))
+
+# Get the content of a variable preferable from the pc-file specific variable.
+# This will return the content of the variable named $1_$2 if it has content.
+# Otherwise, the content of the variable named $1 will be returned. The
+# optional prefix is prepended to the value of the variable.
+#
+# Using get_cont_variant will strip the variant part from the provided
+# basename.
+#
+# Using get_cont_unstripped will not strip the content of the variable.
+#
+# 1: basename
+# 2: pcfilename
+# 3: optional prefix
+get_cont            = $(if $($1_$2),$3$(strip $($1_$2)),$(if $($1),$3$(strip $($1))))
+get_cont_variant    = $(call get_cont,$1,$(call without_variant,$2),$3)
+get_cont_unstripped = $(if $($1_$2),$3$($1_$2),$(if $($1),$3$($1)))
+
+
 endif # _L4DIR_MK_UTIL undefined
 

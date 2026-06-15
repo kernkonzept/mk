@@ -48,11 +48,6 @@ SYSTEMS	?= $(SYSTEMS_ABI)
 
 DEPENDS_PKGS ?= $(if $(PKG_OPTIONAL),$(REQUIRES_LIBS))
 
-BID_MISSING_PCS := \
-   $(strip $(if $(DEPENDS_PKGS), \
-             $(strip $(foreach i,$(DEPENDS_PKGS),            \
-	               $(if $(strip $(wildcard $(OBJ_BASE)/pc/$(i).pc)),,$(i))))))
-
 ifneq ($(strip $(SRC_F)$(foreach t,$(TARGET),$(SRC_F_$(t)))),)
   ifeq ($(filter x86 amd64,$(BUILD_ARCH)),)
     $(info $(shell echo -e "\033[32mFortran is only available on x86 and amd64 currently, skipping directory '$(SRC_DIR)'.\033[0m"))
@@ -72,11 +67,18 @@ ifneq ($(strip $(SRC_ADA)$(foreach t,$(TARGET),$(SRC_ADA_$(t)))),)
   endif
 endif
 
+BID_MISSING_PCS := \
+  $(strip $(if $(DEPENDS_PKGS),                                         \
+            $(foreach v, $(strip $(VARIANTS)),                          \
+              $(foreach p,$(call with_variant,$(DEPENDS_PKGS),$v),      \
+                $(if $(strip $(wildcard $(OBJ_BASE)/pc/$p.pc)),,$p)))))
+
 ifneq ($(BID_MISSING_PCS),)
-  # clear SYSTEMS to prevent building anything
-  SYSTEMS =
-  text := $(shell echo -e "\033[32mPackage dependencies missing: \033[1m$(BID_MISSING_PCS)\033[22m; skipping directory '$(SRC_DIR)'.\033[0m")
+  SKIP_VARIANTS := $(sort $(call variant_from_target,$(BID_MISSING_PCS)))
+  text := $(shell echo -e "\033[32mPackage dependencies missing: \033[1m$(BID_MISSING_PCS)\033[22m; skipping variant(s) [$(call enumerate,$(SKIP_VARIANTS))] for '$(SRC_DIR)'.\033[0m")
   $(if $(BID_FAIL_ON_MISSING),$(error $(text)), $(info $(text)))
+
+  VARIANTS := $(filter-out $(SKIP_VARIANTS),$(VARIANTS))
 endif
 
 ifneq ($(filter l4linux targetsys,$(MODE)),)
@@ -322,17 +324,20 @@ BID_MISSING_LIBS :=
 # 3: list of packages
 # use L4_BID_PKG_CONFIG because of export-defs, the function is copied
 L4_BID_PKG_CONFIG = $(L4DIR)/tool/bin/l4-bender
-BID_PKG_CONFIG =                                      \
-                   $(shell PKG_CONFIG_LIBDIR=$(1)/pc                     \
-                           PKG_CONFIG_PATH= $(L4_BID_PKG_CONFIG)         \
-                           --define-variable=incdir=$(1)/include/contrib \
-                           $(if $(VERBOSE),--silence-errors)             \
-			   $(2) $(3) || echo __PKGCONFIG_FAILED__)
+L4_BID_PKG_CONFIG_FLAGS = --variant $(VARIANT)
+BID_PKG_CONFIG = $(shell PKG_CONFIG_LIBDIR=$(1)/pc                     \
+                         PKG_CONFIG_PATH=                              \
+                         $(L4_BID_PKG_CONFIG)                          \
+                         $(L4_BID_PKG_CONFIG_FLAGS)                    \
+                         --define-variable=incdir=$(1)/include/contrib \
+                         $(if $(VERBOSE),--silence-errors)             \
+                         $(2) $(3) || echo __PKGCONFIG_FAILED__)
 
 BID_PKG_CONFIG_MISSING =                                         \
      $(if $(strip $(3)),                                         \
           $(shell PKG_CONFIG_LIBDIR=$(1)/pc                      \
                   PKG_CONFIG_PATH= LC_ALL=C $(L4_BID_PKG_CONFIG) \
+                  $(L4_BID_PKG_CONFIG_FLAGS)                     \
                   --errors-to-stdout --print-errors $(2) $(3)    \
                   | LC_ALL=C grep ", not found"))
 
@@ -349,23 +354,27 @@ bid_bender_default_vars = $(call BID_BENDER_DEFINES,$(OBJ_BASE),$(L4DIR),$(GCCSY
 
 # linker for L4 libs and applications
 BID_LINK = $(L4DIR)/tool/bin/l4-bender $(if $(VERBOSE),,--trace-exec) \
-           -t $(if $(filter lld,$(BID_LD_TYPE)),lld,ld) \
-	   $(bid_bender_default_vars) -Dlinker="$(LD)" \
+           $(L4_BID_PKG_CONFIG_FLAGS)                                 \
+           -t $(if $(filter lld,$(BID_LD_TYPE)),lld,ld)               \
+           $(bid_bender_default_vars) -Dlinker="$(LD)"                \
            --spec=$(L4DIR)/mk/bid-bender.spec --
 
 # linker for host mode
 BID_LINK_MODE_host = $(L4DIR)/tool/bin/l4-bender $(if $(VERBOSE),,--trace-exec) \
-                     -t host-ld $(bid_bender_default_vars) -Dlinker="$(1)" \
+                     $(L4_BID_PKG_CONFIG_FLAGS)                                 \
+                     -t host-ld $(bid_bender_default_vars) -Dlinker="$(1)"      \
                      --spec=$(L4DIR)/mk/bid-bender.spec --
 #
 # linker for targetsys mode
 BID_LINK_MODE_targetsys = $(L4DIR)/tool/bin/l4-bender $(if $(VERBOSE),,--trace-exec) \
-                          -t host-ld $(bid_bender_default_vars) -Dlinker="$(1)" \
+                          $(L4_BID_PKG_CONFIG_FLAGS)                                 \
+                          -t host-ld $(bid_bender_default_vars) -Dlinker="$(1)"      \
                           --spec=$(L4DIR)/mk/bid-bender.spec --
 
 # linker for l4linux mode
 BID_LINK_MODE_l4linux = $(L4DIR)/tool/bin/l4-bender $(if $(VERBOSE),,--trace-exec) \
-                        -t l4linux-ld $(bid_bender_default_vars) -Dlinker="$(1)" \
+                        $(L4_BID_PKG_CONFIG_FLAGS)                                 \
+                        -t l4linux-ld $(bid_bender_default_vars) -Dlinker="$(1)"   \
                         --spec=$(L4DIR)/mk/bid-bender.spec --
 
 BID_link_deps_file = $(call BID_dot_fname,$1).pcs.d
@@ -373,6 +382,8 @@ BID_link_deps_file = $(call BID_dot_fname,$1).pcs.d
 BID_LINK_DEPS = $(call BID_dot_fname,$1).d $(call BID_link_deps_file,$1)
 
 __do_warn=$(warning $(shell echo -e "\n\033[33mWARNING: $1\033[0m\n"))
+# We only do the following checks if others have not already failed.
+# We also might want to skip the error handling when SKIP_BENDER_CHECKS is set.
 ifeq ($(BID_MISSING_PCS),)
  ifneq ($(SYSTEM),)
   __is_l4defs_dir := $(filter     l4defs.gen.dir,$(notdir $(PKGDIR_ABS)))
@@ -384,34 +395,40 @@ ifeq ($(BID_MISSING_PCS),)
    MY_DEPS := $(sort $(DEPS_$(PKGDIR_ABS:$(L4DIR_ABS)/%=%)))
    exclude_req_check := $(wildcard $(addprefix $(PKGDIR_ABS)/,broken obsolete))
    MISSING_DEPS := $(if $(exclude_req_check),,$(filter-out $(MY_DEPS),$(REQUIRES_LIBS)))
-   ifneq ($(and $(MISSING_DEPS),$(BID_GLOBAL_MAKE)),)
-     SRC_MAKEFILE := $(firstword $(filter $(SRC_DIR)%,$(MAKEFILE_LIST)))
-     #RL_DEBUG_INFO   := : PD[$(PKGDIR_ABS)] L4D[$(L4DIR_ABS)] D:[$(MY_DEPS)] RL:[$(REQUIRES_LIBS)] M:[$(MISSING_DEPS)]
-     TEXT         := $(shell echo -e "\n\033[31m$(SRC_MAKEFILE): '$(MISSING_DEPS)' in REQUIRES_LIBS in Makefile but not in Control file requires$(RL_DEBUG_INFO)\033[0m")
-     $(if $(__is_l4defs_dir),,$(error $(TEXT)))
+   ifeq ($(SKIP_BENDER_CHECKS),)
+    ifneq ($(and $(MISSING_DEPS),$(BID_GLOBAL_MAKE)),)
+      SRC_MAKEFILE := $(firstword $(filter $(SRC_DIR)%,$(MAKEFILE_LIST)))
+      #RL_DEBUG_INFO   := : PD[$(PKGDIR_ABS)] L4D[$(L4DIR_ABS)] D:[$(MY_DEPS)] RL:[$(REQUIRES_LIBS)] M:[$(MISSING_DEPS)]
+      TEXT         := $(shell echo -e "\n\033[31m$(SRC_MAKEFILE): '$(MISSING_DEPS)' in REQUIRES_LIBS in Makefile but not in Control file requires$(RL_DEBUG_INFO)\033[0m")
+      $(if $(__is_l4defs_dir),,$(error $(TEXT)))
+    endif
    endif
    REQUIRES_LIBS_LIST := $(strip $(call BID_PKG_CONFIG,$(OBJ_BASE),--libs,$(REQUIRES_LIBS)))
    # error handling
-   ifneq ($(call BID_PKG_CONFIG_FAILED,$(REQUIRES_LIBS_LIST)),)
-    BID_MISSING_PCS := $(strip $(foreach i,$(REQUIRES_LIBS), \
-                         $(if $(filter __PKGCONFIG_FAILED__,$(call BID_PKG_CONFIG,$(OBJ_BASE),--libs --print-errors,$(i))),$(i))))
-    text := $(shell echo -e "\033[31mLibrary dependencies missing: \033[1m$(BID_MISSING_PCS)\033[22m in directory '$(SRC_DIR)'; aborting.\033[0m")
-    text2 := $(strip $(foreach i,$(REQUIRES_LIBS), $(call BID_PKG_CONFIG_MISSING,$(OBJ_BASE),--libs,$(i))))
-    $(if $(text2),$(info $(shell echo -e "\033[31m$(text2)\033[0m")))
-    $(if $(BID_MISSING_PCS),$(info $(text)),$(error $(text)))
+   ifeq ($(SKIP_BENDER_CHECKS),)
+    ifneq ($(call BID_PKG_CONFIG_FAILED,$(REQUIRES_LIBS_LIST)),)
+     BID_MISSING_PCS := $(strip $(foreach i,$(REQUIRES_LIBS), \
+                          $(if $(filter __PKGCONFIG_FAILED__,$(call BID_PKG_CONFIG,$(OBJ_BASE),--libs --print-errors,$(i))),$(i))))
+     text := $(shell echo -e "\033[31mLibrary dependencies missing: \033[1m$(BID_MISSING_PCS)\033[22m in directory '$(SRC_DIR)'; aborting.\033[0m")
+     text2 := $(strip $(foreach i,$(REQUIRES_LIBS), $(call BID_PKG_CONFIG_MISSING,$(OBJ_BASE),--libs,$(i))))
+     $(if $(text2),$(info $(shell echo -e "\033[31m$(text2)\033[0m")))
+     $(if $(BID_MISSING_PCS),$(info $(text)),$(error $(text)))
+    endif
    endif
   endif
 
   BID_PKG_CONFIG_CFLAGS := $(call BID_PKG_CONFIG,$(OBJ_BASE),--cflags, $(REQUIRES_CFLAGS) $(REQUIRES_LIBS))
 
   # error handling
-  ifneq ($(call BID_PKG_CONFIG_FAILED,$(BID_PKG_CONFIG_CFLAGS)),)
-   BID_MISSING_PCS := $(strip $(foreach i,$(REQUIRES_CFLAGS) $(REQUIRES_LIBS), \
-                          $(if $(filter __PKGCONFIG_FAILED__,$(call BID_PKG_CONFIG,$(OBJ_BASE),--cflags --print-errors,$(i))),$(i))))
-   text := $(shell echo -e "\033[31mCflags dependencies missing: \033[1m$(BID_MISSING_PCS)\033[22m in directory '$(SRC_DIR)'; aborting.\033[0m")
-   text2 := $(strip $(foreach i,$(REQUIRES_LIBS), $(call BID_PKG_CONFIG_MISSING,$(OBJ_BASE),--cflags,$(i))))
-   $(if $(text2),$(info $(shell echo -e "\033[31m$(text2)\033[0m")))
-   $(error $(text))
+  ifeq ($(SKIP_BENDER_CHECKS),)
+   ifneq ($(call BID_PKG_CONFIG_FAILED,$(BID_PKG_CONFIG_CFLAGS)),)
+    BID_MISSING_PCS := $(strip $(foreach i,$(REQUIRES_CFLAGS) $(REQUIRES_LIBS), \
+                           $(if $(filter __PKGCONFIG_FAILED__,$(call BID_PKG_CONFIG,$(OBJ_BASE),--cflags --print-errors,$(i))),$(i))))
+    text := $(shell echo -e "\033[31mCflags dependencies missing: \033[1m$(BID_MISSING_PCS)\033[22m in directory '$(SRC_DIR)'; aborting.\033[0m")
+    text2 := $(strip $(foreach i,$(REQUIRES_LIBS), $(call BID_PKG_CONFIG_MISSING,$(OBJ_BASE),--cflags,$(i))))
+    $(if $(text2),$(info $(shell echo -e "\033[31m$(text2)\033[0m")))
+    $(error $(text))
+   endif
   endif
  endif # SYSTEM
 endif

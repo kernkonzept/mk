@@ -260,7 +260,7 @@ clean cleanall install::
 
 l4defs_file  = $(OBJ_BASE)/l4defs$(if $(filter std,$(1)),,-$(1)).$(2).inc
 
-L4DEFS_FILES = $(foreach v,std $(VARIANTS_AVAILABLE),$(call l4defs_file,$(v),mk) $(call l4defs_file,$(v),sh) $(call l4defs_file,$(v),pl))
+L4DEFS_FILES = $(foreach v,$(USED_VARIANTS),$(call l4defs_file,$(v),mk) $(call l4defs_file,$(v),sh) $(call l4defs_file,$(v),pl))
 
 .PHONY: l4defs
 l4defs: $(L4DEFS_FILES)
@@ -289,13 +289,13 @@ generate_l4defs_files = \
 
 $(firstword $(L4DEFS_FILES)): $(OBJ_DIR)/.Package.deps pkg/l4re-core \
                  $(DROPSCONF_CONFIG_MK) $(L4DIR)/mk/export_defs.inc
-	+$(VERBOSE)$(foreach v,std $(VARIANTS_AVAILABLE),$(call generate_l4defs_files,$(v));)
+	+$(VERBOSE)$(foreach v,$(USED_VARIANTS),$(call generate_l4defs_files,$(v));)
 
 $(wordlist 2,$(words $(L4DEFS_FILES)),$(L4DEFS_FILES)): $(firstword $(L4DEFS_FILES))
 
 .PHONY: regen_l4defs
 regen_l4defs:
-	+$(VERBOSE)$(foreach v,std $(VARIANTS_AVAILABLE),$(call generate_l4defs_files,$(v));)
+	+$(VERBOSE)$(foreach v,$(USED_VARIANTS),$(call generate_l4defs_files,$(v));)
 
 COMPILE_COMMANDS_JSON = compile_commands.json
 
