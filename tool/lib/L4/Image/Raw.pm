@@ -7,6 +7,7 @@ package L4::Image::Raw;
 use warnings;
 use strict;
 use Exporter;
+use Fcntl qw(SEEK_SET SEEK_END);
 use L4::Image::Utils qw/error check_sysread check_syswrite filepos_set/;
 
 use vars qw(@ISA @EXPORT);
@@ -64,7 +65,64 @@ sub write_image
   # write module data
   $write_cb->($ofd);
 
+  # Adjust vmlinuz header if available
+  patch_vmlinuz_header($ofd);
+
   close($ofd);
+}
+
+sub patch_vmlinuz_header
+{
+  my ($fd) = @_;
+
+  my $image_size = sysseek($fd, 0, SEEK_END);
+
+  # try arm32
+  {
+    sysseek($fd, 0, SEEK_SET);
+    sysread($fd, my $buf, 14*4);
+
+    my ($nop0, $nop1, $nop2, $nop3, $nop4, $nop5, $nop6, $nop7,
+        $b_insn, $magic1, $start, $end, $magic2, $magic3)
+      = unpack("(L14)<", substr($buf, 0, 14 * 4));
+
+    if (   $nop0 == $nop1
+        && $nop0 == $nop2
+        && $nop0 == $nop3
+        && $nop0 == $nop4
+        && $nop0 == $nop5
+        && $nop0 == $nop6
+        && $nop0 == $nop7
+        && $magic1 == 0x016f2818
+        && $magic2 == 0x04030201
+        && $magic3 == 0x45454545)
+      {
+        # Found vmlinuz signature, patch end of binary
+        sysseek($fd, 11 * 4, SEEK_SET);
+        my $r = syswrite($fd, pack("L<", $start + $image_size), 4);
+        die "Could not patch binary" if not defined $r or $r != 4;
+
+        return;
+      }
+  }
+
+  # try arm64
+  {
+    sysseek($fd, 0, SEEK_SET);
+    sysread($fd, my $buf, 8 * 8);
+
+    my ($two_insns, $start, $old_size, $flags, $res1, $res2, $res3, $magic)
+      = unpack("(Q8)<", substr($buf, 0, 8 * 8));
+
+    if ( $magic == 0x644d5241 )
+      {
+        sysseek($fd, 2 * 8, SEEK_SET);
+        my $r = syswrite($fd, pack("Q<", $image_size), 8);
+        die "Could not patch binary" if not defined $r or $r != 8;
+
+        return;
+      }
+  }
 }
 
 1;
