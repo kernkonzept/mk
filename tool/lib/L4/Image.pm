@@ -285,7 +285,7 @@ sub update_module
       my ($tfh, $tfilename) = tempfile(UNLINK => 1);
       gzip ${m_file} => $tfilename
         or return "Compression failed: $GzipError\n";
-      $d->{filepath} = $tfilename;
+      $m_file = $d->{filepath} = $tfilename;
 
       $d->{md5sum_compr} = _md5_file($m_file);
     }
