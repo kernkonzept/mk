@@ -60,8 +60,7 @@ BID_cmp_str_ne = $(filter-out _$(subst $(BID_SPACE),_SPC_,$1),_$(subst $(BID_SPA
 
 # Strip leading and trailing double quotes.
 # 1: words to strip quotes from
-strip_quotes = $(patsubst "%,%,$(patsubst %",%,$(1)))#"
-
+strip_quotes = $(patsubst $(BID_DQUOTE)%,%,$(patsubst %$(BID_DQUOTE),%,$(1)))
 
 # Commands #
 ############
