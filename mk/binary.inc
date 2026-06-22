@@ -586,6 +586,12 @@ CPPFLAGS+= $(call bid_flag_variants,CPPFLAGS)
 
 ifneq ($(MODE),host)
 CPPFLAGS += -include l4/bid_config.h
+
+# We're usually using Linux cross compilers for L4Re. Make sure the're not
+# recognized as such...
+CPPFLAGS += -U__linux -U__gnu_linux__ -Ulinux -U__linux__
+CPPFLAGS += -D__l4re__
+
 # Treat libstdc++-headers as system headers. This includes many warnings about
 # -Wdouble-promotion, -Wfloat-equal, and -Wfloat-conversion. But this will
 # suppress other warnings in these headers as well!
