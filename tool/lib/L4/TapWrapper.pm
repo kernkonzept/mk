@@ -25,6 +25,7 @@ our $wait_for_more = 0;
 our $test_description;
 our $expline;
 our $pid = -1;
+our $plugin_error;
 
 sub __load_module
 {
@@ -186,6 +187,9 @@ sub process_input
       for my $plugin (@_plugins)
         {
           $plugin->process_any($line);
+
+          return 1 if $plugin_error;
+
           $no_exit ||= $plugin->{inhibit_exit};
         }
       return 1 unless $no_exit;
@@ -202,6 +206,14 @@ sub calculate_wait_for_more {
       $max_wfm_time = $wfm_time if $wfm_time > $max_wfm_time;
     }
   return $max_wfm_time;
+}
+
+sub plugin_error {
+  my ($plugin, $error) = @_;
+
+  return $plugin_error unless defined $plugin;
+
+  $plugin_error = ref($plugin) . ": $error";
 }
 
 sub finalize {
