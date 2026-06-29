@@ -37,8 +37,10 @@ read parameters which are not passed as direct arguments.
 As result of an IPC operation the kernel returns a message tag and a label and
 the kernel also changes UTCB content. For the detailed call signature, refer to
 l4_ipc(). Furthermore, depending on the IPC parameters, the kernel might have
-transferred the FPU state and capabilities (memory, I/O ports, and/or object
-capabilities) from the sender to the receiving thread.
+transferred the FPU state from the sender to the receiving thread and
+capabilities (memory, I/O ports, and/or object capabilities) from the sender's
+task to the receiving task. The receiving task is either the receiver's task or
+a dedicated task, see \ref l4re_concepts_descr_brs.
 
 When both, a send phase and the a receive phase, are requested, the receive
 phase is entered only after the send phase was finished successfully. A relative
@@ -344,6 +346,13 @@ registers are required:
     registers (*message word*, a *flexpage*, and an optional destination task
     capability index) is required to receive memory flexpages, I/O ports, or
     multiple object capabilities.
+
+By default, send items are received in the invoking task. The receiver can
+change the destination object to a different task or task-like object (e.g., DMA
+space or VM) by specifying the #L4_RCV_ITEM_FORWARD_MAPPINGS flag and providing
+a third buffer register holding a capability index referring to the destination
+object in the receive item. Any capabilities received for such a receive item
+are then directly mapped in the destination object.
 
 \subsubsection l4re_concepts_descr_bdr IPC Buffer Descriptor Register
 The buffer descriptor register defines indices of buffer registers used to
