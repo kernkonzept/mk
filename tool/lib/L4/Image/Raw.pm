@@ -73,13 +73,16 @@ sub write_image
 
 sub patch_vmlinuz_header
 {
-  my ($fd) = @_;
+  my ($fd, $image_base, $image_size) = @_;
 
-  my $image_size = sysseek($fd, 0, SEEK_END);
+  $image_base //= 0;
+
+  $image_size = sysseek($fd, 0, SEEK_END) - $image_base
+    unless defined $image_size;
 
   # try arm32
   {
-    sysseek($fd, 0, SEEK_SET);
+    sysseek($fd, $image_base, SEEK_SET);
     sysread($fd, my $buf, 14*4);
 
     my ($nop0, $nop1, $nop2, $nop3, $nop4, $nop5, $nop6, $nop7,
@@ -98,7 +101,7 @@ sub patch_vmlinuz_header
         && $magic3 == 0x45454545)
       {
         # Found vmlinuz signature, patch end of binary
-        sysseek($fd, 11 * 4, SEEK_SET);
+        sysseek($fd, $image_base + 11 * 4, SEEK_SET);
         my $r = syswrite($fd, pack("L<", $start + $image_size), 4);
         die "Could not patch binary" if not defined $r or $r != 4;
 
@@ -108,7 +111,7 @@ sub patch_vmlinuz_header
 
   # try arm64
   {
-    sysseek($fd, 0, SEEK_SET);
+    sysseek($fd, $image_base, SEEK_SET);
     sysread($fd, my $buf, 8 * 8);
 
     my ($two_insns, $start, $old_size, $flags, $res1, $res2, $res3, $magic)
@@ -116,7 +119,7 @@ sub patch_vmlinuz_header
 
     if ( $magic == 0x644d5241 )
       {
-        sysseek($fd, 2 * 8, SEEK_SET);
+        sysseek($fd, $image_base + 2 * 8, SEEK_SET);
         my $r = syswrite($fd, pack("Q<", $image_size), 8);
         die "Could not patch binary" if not defined $r or $r != 8;
 

@@ -9,6 +9,7 @@ use strict;
 use Exporter;
 use Compress::Zlib qw/crc32/;
 use L4::Image::Utils qw/error check_sysread check_syswrite filepos_set/;
+use L4::Image::Raw;
 
 use vars qw(@ISA @EXPORT);
 @ISA    = qw(Exporter);
@@ -144,6 +145,10 @@ sub write_image
   $write_cb->($ofd);
 
   $self->uimage_header_update($ofd);
+
+  # Patch vmlinuz header if necessary which sits right behind the uimage header
+  L4::Image::Raw::patch_vmlinuz_header($ofd, UIMAGE_HEADER_SIZE);
+
   close($ofd);
 }
 
