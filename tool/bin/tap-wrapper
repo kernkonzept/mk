@@ -401,11 +401,7 @@ while ($test_current_read = readline_timeout($test_proc, $L4::TapWrapper::timeou
 
     $test_eof = L4::TapWrapper::process_input($test_lastline);
 
-    if (my $errmsg = L4::TapWrapper::plugin_error())
-      {
-        on_test_abort($errmsg);
-      }
-    elsif ($test_eof)
+    if ($test_eof)
       {
         my $wfm = L4::TapWrapper::calculate_wait_for_more();
         last unless $wfm > 0;

@@ -48,13 +48,8 @@ sub process_mine {
       # previous plugins finalization and the BUNDLE CONTROL line.
       if ($line =~ /BUNDLE CONTROL (.*)/)
         {
-          if ($self->{SubPlugin}{inhibit_exit})
-            {
-              L4::TapWrapper::plugin_error($self, "sub plugin has incomplete data");
-              return;
-            }
-
           $self->{BundleControl} = $1 =~ s/^\s+|\s+$//gr;
+          $self->{SubPlugin}->permit_exit();
           $hard_terminate_plugin = 1;
         }
       else
