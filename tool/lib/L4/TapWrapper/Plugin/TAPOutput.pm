@@ -85,3 +85,44 @@ sub process_any {
 }
 
 1;
+
+__END__
+
+=head1 Plugin for collecting TAP blocks from output
+
+Collect one or more TAP blocks. TAP blocks are encased between a line "TAP TEST
+START" and line "TAP TEST FINISH".
+
+If there's a prefix, i.e. text in the same line in front of the "TAP TEST
+START", only subsequent lines with the same prefix count for the same TAP block,
+including the "TAP TEST FINISH" line.
+
+The plugin by default only collects one TAP block. If more TAP blocks are to be
+expected in the output, the plugin has to be passed the C<block_count> parameter
+with an amount of TAP blocks to gather.
+
+TAP blocks can be positioned one after the other within the output of a test, in
+which case the prefix can be chosen arbitrarily and can even be reused. TAP
+blocks can also be interleaved in which case they need to have different
+prefixes in order to be separated correctly.
+
+=head1 Options
+
+The following options are defined
+
+=over
+
+=item C<block_count>
+
+Number of TAP blocks to collect. Must be at least 1. Defaults to 1.
+
+=back
+
+=head1 Usage
+
+Specify for a particular testrun using the TEST_TAP_PLUGINS variable.
+Example:
+
+  TEST_TAP_PLUGINS=TAPOutput:block_count=2
+
+=cut
