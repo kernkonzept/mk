@@ -19,7 +19,9 @@ choice
 	prompt "FPU"
 	default FPU_RISCV_DOUBLE
 
+# Experimental because pkg/libunwind doesn't support this
 config FPU_RISCV_NONE
+	depends on EXPERIMENTAL
 	bool "Off"
 
 config FPU_RISCV_SINGLE
