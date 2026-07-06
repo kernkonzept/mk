@@ -5,6 +5,13 @@
 
 #include <inttypes.h>
 
+#ifndef __LITTLE_ENDIAN
+#define __LITTLE_ENDIAN __ORDER_LITTLE_ENDIAN__
+#endif
+#ifndef __BIG_ENDIAN
+#define __BIG_ENDIAN    __ORDER_BIG_ENDIAN__
+#endif
+
 static __inline uint16_t __bswap16(uint16_t __x)
 {
 	return (__x << 8) | (__x >> 8);
