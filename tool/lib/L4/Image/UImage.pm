@@ -144,10 +144,12 @@ sub write_image
   # Write new module data
   $write_cb->($ofd);
 
-  $self->uimage_header_update($ofd);
-
   # Patch vmlinuz header if necessary which sits right behind the uimage header
+  # Must be done before updating the uimage header, because that contains a
+  # crc32 of the image including the vmlinuz header
   L4::Image::Raw::patch_vmlinuz_header($ofd, UIMAGE_HEADER_SIZE);
+
+  $self->uimage_header_update($ofd);
 
   close($ofd);
 }
