@@ -43,8 +43,8 @@ The kernel reads and interprets all the fields ([in]).
 
 - Bits 0…3 [in]: These bits correspond to the capability selector flags.
   The individual bits correspond to #L4_SYSF_REPLY,
-  #L4_SYSF_OPEN_WAIT, #L4_SYSF_RECV, #L4_SYSF_SEND. Note that not all
-  combinations of those bits are valid; see #L4_SYSF_NONE for an overview.
+  #L4_SYSF_OPEN_WAIT, #L4_SYSF_RECV, #L4_SYSF_SEND. Note that [not all
+  combinations of those bits are valid](#l4_syscall_flags).
 
 - Bits 4…10 [in] `SBZ`: should be zero
 
