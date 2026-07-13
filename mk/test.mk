@@ -69,9 +69,10 @@ BUNDLE_NAME = $(if $(TEST_BUNDLE_NAME),$(TEST_BUNDLE_NAME),bundle)
 ALL_TESTS = $(TARGET) $(EXTRA_TEST)
 TEST_SCRIPTS += $(BUNDLE_NAME).t
 TEST_TARGET_$(BUNDLE_NAME) ?= $(TARGET)
-REQUIRED_MODULES += ned lib_test.lua
-REQUIRED_MODULES += $(sort $(foreach t,$(ALL_TESTS),$(REQUIRED_MODULES_$(t))))
-REQUIRED_MODULES += $(sort $(foreach t,$(EXTRA_TEST),$(TEST_TARGET_$(t))))
+REQUIRED_MODULES += $(foreach t,$(ALL_TESTS),$(REQUIRED_MODULES_$(t)))
+# We should not require modules that are already in the bundle targets again
+REQUIRED_MODULES += $(filter-out $(TARGET),\
+                                 $(foreach t,$(EXTRA_TEST),$(TEST_TARGET_$(t))))
 
 __all_timeouts := $(strip $(foreach t,$(ALL_TESTS),$(TEST_TIMEOUT_$(t))))
 # This is a gross over estimation! Since we do not evaluate tags until after
@@ -103,6 +104,8 @@ BASE_NED_CFG := $(NED_CFG)
 testvars_fix += BASE_NED_CFG EXTRA_TEST BUNDLE_ENV
 testvars_fix += $(foreach t,$(EXTRA_TEST),TEST_TARGET_$(t))
 REQUIRED_MODULES += $(foreach t,$(ALL_TESTS),$(NED_CFG_$(t))) $(BASE_NED_CFG)
+# Keep modules unique, and filter out ned, since that is pulled in by NED_CFG
+REQUIRED_MODULES := $(filter-out ned,$(sort $(REQUIRED_MODULES)))
 NED_CFG = bundle.cfg
 else # non-bundle mode
 # There are two kind of targets:

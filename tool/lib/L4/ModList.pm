@@ -516,6 +516,16 @@ sub get_module_entry($$$)
       push @mods, $shmod;
     }
 
+  my %allcmds;
+  foreach my $m (@mods)
+    {
+      if (defined $allcmds{$m->{command}})
+       {
+          error "Duplicate module name '$m->{command}' in entry '$entry_to_pick'\n";
+       }
+      $allcmds{$m->{command}} = 1;
+    }
+
   return (
            bootstrap => \%bootstrap,
            mods    => [ @mods ],

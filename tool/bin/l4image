@@ -171,7 +171,9 @@ sub do_add_module
                            L4::Image::map_type_name_to_flag($args->{"--type"}),
                            $args->{"--cmdline"})
   });
+
   error(${$d}{mods}[$pos]{error}) if ${$d}{mods}[$pos]{error};
+  check_duplicate_modules($d);
   ${$d}{num_mods}++;
 }
 
@@ -274,6 +276,19 @@ sub op_insert_after
   do_add_module($d, $args, $k[0] + 1);
 }
 
+sub check_duplicate_modules
+{
+  my $d = shift;
+
+  my %allnames;
+  foreach my $m (@{${$d}{mods}})
+    {
+      error "Duplicate module name '$m->{name}' in added module!\n"
+        if (defined $allnames{$m->{name}});
+      $allnames{$m->{name}} = 1;
+    }
+}
+
 sub op_replace
 {
   my $d = shift;
@@ -299,6 +314,7 @@ sub op_replace
                                    L4::Image::map_type_name_to_flag($args->{"--type"}),
                                    $args->{"--cmdline"});
   error($r) if $r;
+  check_duplicate_modules($d);
 }
 
 sub default_editor
