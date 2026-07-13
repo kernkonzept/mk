@@ -213,7 +213,7 @@ sub finalize {
   my @all_log_lines;
   my $plan_found = 0;
   my @plan_explanations;
-  my $taplines = 0;
+  my $plan_sum = 0;
   foreach my $pluggable (@_plugins, @_filters)
     {
       my ($tap_lines, $log_lines) = $pluggable->finalize();
@@ -222,7 +222,7 @@ sub finalize {
         {
           if (/^1\.\.([0-9]+)(.*)$/)
             {
-              $taplines += $1;
+              $plan_sum += $1;
               $plan_found = 1;
 
               # Collect any #SKIPs at the end of plan lines
@@ -271,7 +271,7 @@ sub finalize {
 
   return unless $print_to_tap_fd;
 
-  if ($taplines != 0 || scalar(@plan_explanations) > 1)
+  if ($plan_sum != 0 || scalar(@plan_explanations) > 1)
     {
       foreach my $exp (@plan_explanations)
         {
@@ -279,14 +279,14 @@ sub finalize {
           $reason =~ s/^#\s*SKIP\s+//i;
           print $TAP_FD "ok $class #SKIP $reason\n";
           print $TAP_FD "# Test-uuid: 00000000-0000-0000-0000-000000000000\n";
-          $taplines++;
+          $plan_sum++;
         }
       @plan_explanations = ();
     }
 
   if ($plan_found)
     {
-      print $TAP_FD "1..$taplines";
+      print $TAP_FD "1..$plan_sum";
       if (@plan_explanations)
         {
           # Can only contain one here, because multiple are handled further up
