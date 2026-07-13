@@ -51,9 +51,12 @@ sub handle_block_end {
   L4::TapWrapper::fail_test("End of block with prefix '$prefix' that wasn't started.")
     unless exists $self->{active_blocks}{$prefix};
 
-  $self->add_raw_tap_line(@{$self->{active_blocks}{$prefix}});
+  my $taplines = delete $self->{active_blocks}{$prefix};
 
-  delete $self->{active_blocks}{$prefix};
+  L4::TapWrapper::fail_test("Block with prefix '$prefix' ended without a TAP plan.")
+    unless $self->{args}{block_count} == 1 || grep { m/^1\.\.([0-9]+)/ } @$taplines;
+
+  $self->add_raw_tap_line(@$taplines);
 
   $self->{blocks_collected}++;
 
