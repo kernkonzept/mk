@@ -22,7 +22,14 @@ BEGIN {
 use L4::Makeconf;
 use L4::TestEnvLua;
 
+sub to_bool { { y => 1, 1 => 1 }->{$_[0]} // 0 }
+
 my $arch        = $ENV{ARCH} or die "No architecture specified";
+my $test_is_sigma0 = to_bool($ENV{TEST_IS_SIGMA0});
+my $test_is_root = to_bool($ENV{TEST_IS_ROOT});
+
+$ENV{SIGMA0} = $ENV{TEST_TARGET} if $test_is_sigma0;
+$ENV{TEST_ROOT_TASK} = $ENV{TEST_TARGET} if $test_is_root;
 
 # Hash that defines information used for modules list template instantiation
 my $modlist_info = {
@@ -39,6 +46,10 @@ my $modlist_info = {
   roottask => {
     name => $ENV{TEST_ROOT_TASK} || 'moe',
     args => $ENV{TEST_ROOT_TASK_ARGS} || '',
+    omit => $test_is_sigma0,
+  },
+  itas => {
+    omit => $test_is_root || $test_is_sigma0,
   },
   extra_modules => []
 };
@@ -469,7 +480,10 @@ if ($is_kunit_test)
   }
 else
   {
-    add_mods(parse_mod($_)) foreach @test_target;
+    if (!$test_is_sigma0 && !$test_is_root)
+      {
+        add_mods(parse_mod($_)) foreach @test_target
+      }
   }
 
 my $tt = Template->new({ TRIM => 1, STRICT => 1, ABSOLUTE => 1,
