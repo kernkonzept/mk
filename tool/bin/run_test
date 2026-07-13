@@ -51,6 +51,9 @@ my $modlist_info = {
   itas => {
     omit => $test_is_root || $test_is_sigma0,
   },
+  cpu_firmware => {
+    file => $ENV{TEST_CPU_FIRMWARE} || '',
+  },
   extra_modules => []
 };
 sub add_mods { push @{$modlist_info->{extra_modules}}, @_; }
