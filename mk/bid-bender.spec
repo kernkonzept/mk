@@ -5,7 +5,7 @@ pc_file_dir = %:set-var(pc_file_dir %(l4obj)/pc)
 link_arg_opts =
   %:arg-option(L m z o O h e -entry fini init -defsym Map)
   %:arg-option(b -format A -architecture y -trace-symbol MF)
-  %:arg-option(-hash-style -version-script)
+  %:arg-option(-hash-style -version-script -dynamic-list)
   %:arg-option(T Tbss Tdata Ttext Ttext-segment Trodata-segment Tldata-segment)
   %:arg-option(dT -image-base)
 
@@ -53,7 +53,8 @@ link_pass_opts = %:set-var(link_pass_opts
   %{e} %{-entry*} %{-defsym*} %{Map*} %{b} %{-format*} %{A} %{-architecture*}
   %{-gc-sections} %{gc-sections} %{-no-gc-sections} %{-hash-style*} %{-eh-frame-hdr}
   # we always set -nostlib below so drop it but use it to avoid an error
-  %{nostdlib:} %{no-pie:} %{pie} %{-no-dynamic-linker} %{-version-script*})
+  %{nostdlib:} %{no-pie:} %{pie} %{-no-dynamic-linker} %{-version-script*}
+  %{-dynamic-list*})
   %{-wrap*}
 
 # linker arguments part I
