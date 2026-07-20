@@ -13,6 +13,12 @@ CARCHFLAGS_mips          += -march=mips$(CPU) -mabi=$(CPU_ABI)
 CARCHFLAGS_mips          += $(if $(CONFIG_MIPS_LITTLE_ENDIAN),-EL,-EB)
 LDFLAGS_mips             += $(call if_for_target,$(if $(CONFIG_MIPS_LITTLE_ENDIAN),-EL,-EB) \
                                                  -z noexecstack)
+# Some toolchains default to --hash-style=gnu, which on MIPS emits a
+# .MIPS.xhash (DT_MIPS_XHASH) section instead of a classic DT_HASH or
+# DT_GNU_HASH. The musl dynamic linker only understands DT_HASH/DT_GNU_HASH,
+# so force emission of both hash styles (like upstream musl's configure does)
+# to keep a usable DT_HASH in every shared object.
+LDFLAGS_mips             += $(call if_for_target,--hash-style=both)
 SYSTEMS_ABI              += mips-l4f
 SYSTEMS_PLAIN            += mips-plain
 
