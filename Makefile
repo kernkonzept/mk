@@ -905,7 +905,7 @@ BID_CHECKBUILD_LOG_REDIR_f = $(if $(BID_CHECKBUILD_LOG), 1>>$(BID_CHECKBUILD_LOG
 .PRECIOUS: $(CHECK_BASE_DIR)/config.%/.config.all
 .PHONY: FORCE
 
-checkbuild_prepare.%:
+checkbuild_prepare.%: check_base_dir
 	$(if $(CHECK_INCREMENTAL),,rm -rf $(CHECK_BASE_DIR)/$(patsubst checkbuild_prepare.%,config.%,$@))
 
 $(CHECK_BASE_DIR)/config.%/.kconfig: $(TEMPLDIR)/config.% checkbuild_prepare.% Makefile
