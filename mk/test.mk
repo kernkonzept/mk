@@ -119,6 +119,11 @@ endif
 # names to L4Re relative paths.
 CPPFLAGS += -DL4RE_ABS_SOURCE_DIR_PATH='"$(L4DIR_ABS)"'
 
+# Set extra options for tests, to reduce compile and produced object sizes.
+ifeq ($(CONFIG_BID_TESTS_REDUCED_DEBUG),y)
+OPTS ?= -Og -g1 -fno-strict-aliasing
+endif
+
 # variables that are forwarded to the test runner environment
 testvars_fix    +=  ARCH CPU NED_CFG REQUIRED_MODULES KERNEL_CONF L4LINUX_CONF \
                     TEST_TARGET TEST_SETUP TEST_EXPECTED TEST_TAGS OBJ_BASE \

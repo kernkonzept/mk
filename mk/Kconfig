@@ -164,6 +164,18 @@ config BID_ALLOW_TEST_BUNDLING
 	  other tests this may make the wall clock runtime longer, as you cannot
 	  spread out tests within a group to cores.
 
+config BID_TESTS_REDUCED_DEBUG
+	bool "Reduced optimization and debug info for tests"
+	depends on BID_BUILD_TESTS
+	default y
+	help
+	  Build test binaries with '-Og -g1' instead of the default.
+	  This reduces compile time and binary sizes. '-Og -g1' keeps line
+	  tables and backtraces while considerably reducing compile time and
+	  object sizes.
+
+	  If unsure, say 'Y'.
+
 config COV
 	bool "Coverage support" if !RELEASE_MODE
 	help
