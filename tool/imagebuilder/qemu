@@ -27,11 +27,20 @@ if [[ ( "${ARCH}" == "amd64" || "${ARCH}" == "x86" ) && -z "${QEMU_IMAGE_TYPE}" 
     exec "${L4DIR}/tool/bin/qemu-x86-launch" "${MODULES_LIST}" "${ENTRY:-${E}}"
 fi
 
+: ${QEMU_IMAGE_TYPE:-elfimage}
+
 if [[ -z "$TARGET_IMAGE" ]]; then
-    export TARGET_IMAGE="$(mktemp --tmpdir "bootstrap-qemu-XXXXXXXXXX.elf")"
+    case "$QEMU_IMAGE_TYPE" in
+      rawimage) suffix=.raw;;
+      elfimage) suffix=.elf;;
+      efiimage) suffix=.efi;;
+      uimage) suffix=.uimage;;
+      *) suffix=;;
+    esac
+    export TARGET_IMAGE="$(mktemp --tmpdir "bootstrap-qemu-XXXXXXXXXX$suffix")"
     trap 'rm $TARGET_IMAGE' EXIT
 fi
 
-"$(dirname $0)"/"${QEMU_IMAGE_TYPE:-elfimage}" || exit $?
+"$(dirname $0)"/"$QEMU_IMAGE_TYPE" || exit $?
 
 $L4IMAGE --verbose -i "$TARGET_IMAGE" launch; exit $?
