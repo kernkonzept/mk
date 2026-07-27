@@ -25,7 +25,7 @@ specified separately for each phase. Invoking the IPC syscall without any phase
 is deprecated.
 
 On the lowest abstraction level, IPC operations need the following arguments:
-  - \ref l4re_concepts_descr_flags "flags" describing the IPC mode,
+  - \ref l4re_concepts_descr_flags "syscall flags" describing the IPC mode,
   - the \ref l4re_concepts_descr_capidx "capability selector" of the
     communication partner,
   - a \ref l4re_concepts_descr_label "label",
@@ -58,8 +58,8 @@ to the server thread. This behavior can be disabled by setting the
 #L4_MSGTAG_SCHEDULE flag in the sender message tag (see below).
 
 
-\subsection l4re_concepts_descr_flags IPC Flags
-The capability selector *flags* (#L4_SYSF_SEND, #L4_SYSF_RECV,
+\subsection l4re_concepts_descr_flags Syscall Flags
+The *syscall flags* (#L4_SYSF_SEND, #L4_SYSF_RECV,
 #L4_SYSF_OPEN_WAIT, #L4_SYSF_REPLY) are used by the invoking thread to
 define the intended IPC operation. The variants of l4_ipc() (see \ref
 l4_ipc_api) use the flags

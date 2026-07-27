@@ -22,9 +22,9 @@ The following notation is used to indicate how particular data fields are used:
 The above indications may be combined.
 
 
-\section l4re_concepts_abi_capsel Capability selector and flags
+\section l4re_concepts_abi_capsel Capability selector and syscall flags
 
-See [partner capability selector](#l4re_concepts_descr_capidx) and [IPC
+See [partner capability selector](#l4re_concepts_descr_capidx) and [syscall
 flags](#l4re_concepts_descr_flags).
 
 The kernel reads and interprets all the fields ([in]).
@@ -41,7 +41,7 @@ The kernel reads and interprets all the fields ([in]).
     │   1...1   │    1    │  if special is 1
     └───────────┴─────────┴─
 
-- Bits 0…3 [in]: These bits correspond to the capability selector flags.
+- Bits 0…3 [in]: These bits correspond to the syscall flags.
   The individual bits correspond to #L4_SYSF_REPLY,
   #L4_SYSF_OPEN_WAIT, #L4_SYSF_RECV, #L4_SYSF_SEND. Note that [not all
   combinations of those bits are valid](#l4_syscall_flags).

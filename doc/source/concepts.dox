@@ -103,8 +103,8 @@ object the capability points to. All user-visible kernel objects, such as
 tasks, threads, and IRQs, can only be accessed through a capability.
 Please refer to the \ref l4_kernel_object_api
 documentation for details. Capabilities are stored in per-task capability
-tables (the object space) and are referenced by capability selectors or
-object flexpages. In a simplified view, a capability selector is a natural
+tables (the object space) and are referenced by capability indices or
+object flexpages. In a simplified view, a capability index is a natural
 number indexing into the capability table of the current task.
 
 As a matter of fact, a system designed solely based on capabilities uses
@@ -143,7 +143,8 @@ address depends on which space is referenced, the hardware, and the
 configuration of the kernel. Although a program can access memory at byte
 granularity, from the kernel's point of view the address granularity in the
 memory space is not bytes but pages, as determined by the hardware. The address
-of a capability is also called its "capability slot".
+of a capability is also called its *capability index* or, synonymously,
+*capability slot*.
 
 Flexpages describe a range in any of the spaces that has a power-of-two length
 and is also aligned to this length. They additionally hold access rights
