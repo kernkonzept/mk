@@ -764,16 +764,11 @@ endef
 
 # touches images dir
 CHECK_FOR_ARCH_efiimage = x86 amd64 arm64
-$(foreach g,efiimage elfimage rawimage uimage,$(eval $(call imagebuilder_goal,$g)))
+$(foreach g,efiimage elfimage rawimage uimage itb,$(eval $(call imagebuilder_goal,$g)))
 
 # does not touch images dir
 CHECK_FOR_ARCH_fvp = arm arm64
 $(foreach g,qemu fvp,$(eval $(call imagebuilder_goal,$g,y)))
-
-.PHONY: itb
-itb: check_and_adjust_ram_base
-	$(call genimage,BOOTSTRAP_DO_ITB=y)
-	$(VERBOSE)$(if $(POST_IMAGE_CMD),$(call POST_IMAGE_CMD,$(IMAGES_DIR)/bootstrap.itb))
 
 .PHONY: fastboot fastboot_rawimage
 fastboot fastboot_rawimage: rawimage

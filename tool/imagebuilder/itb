@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+MAKECONF="${OBJ_BASE}/source/tool/bin/makeconf"
+
+source <("$MAKECONF" "$OBJ_BASE" BOOTSTRAP_ITB_DTB)
+
+IMAGEBUILDER_MKIMAGE_SUFFIX="itb"
+IMAGEBUILDER_MKIMAGE_FLAGS="-f auto"
+IMAGEBUILDER_MKIMAGE_FLAGS+="${BOOTSTRAP_ITB_DTB:+ -b ${BOOTSTRAP_ITB_DTB}}"
+
+if [[ -n "${TARGET_IMAGE}" ]] ; then
+    TARGET_MKIMAGE=${TARGET_IMAGE}
+    TARGET_IMAGE="${TARGET_IMAGE%.${IMAGEBUILDER_MKIMAGE_SUFFIX}}.raw"
+fi
+
+source "$(dirname "$0")/_mkimage_build.sh.inc"
