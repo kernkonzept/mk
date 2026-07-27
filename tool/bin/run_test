@@ -22,7 +22,7 @@ BEGIN {
 use L4::Makeconf;
 use L4::TestEnvLua;
 
-sub to_bool { { y => 1, 1 => 1 }->{$_[0]} // 0 }
+sub to_bool { { y => 1, 1 => 1 }->{$_[0] // ""} // 0 }
 
 my $arch        = $ENV{ARCH} or die "No architecture specified";
 my $test_is_sigma0 = to_bool($ENV{TEST_IS_SIGMA0});
