@@ -41,6 +41,22 @@ post_l4image_hook() {
             bzip2 -c9 "${rawimage}" > "${rawimage}.bzip2" || exit $?
             rawimage="${rawimage}.bzip2"
             ;;
+        lz4)
+            lz4 -9 "${rawimage}" "${rawimage}.lz4" || exit $?
+            rawimage="${rawimage}.lz4"
+            ;;
+        lzma)
+            lzma -9 "${rawimage}" "${rawimage}.lzma" || exit $?
+            rawimage="${rawimage}.lzma"
+            ;;
+        lzo)
+            lzo -9 -c "${rawimage}" > "${rawimage}.lzo" || exit $?
+            rawimage="${rawimage}.lzo"
+            ;;
+        zstd)
+            zstd -19 "${rawimage}" -o "${rawimage}.zstd" || exit $?
+            rawimage="${rawimage}.zstd"
+            ;;
         none)
             ;;
         *)
