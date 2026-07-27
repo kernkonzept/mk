@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
 
-BASE_IMAGE_FILENAME="bootstrap.uimage"
-TARGET_IMAGE_FILENAME="bootstrap_entry.uimage"
+IMAGEBUILDER_MKIMAGE_SUFFIX="uimage"
 
-source "$(dirname $0)/_l4image_build.sh.inc"
+if [[ -n "${TARGET_IMAGE}" ]] ; then
+    TARGET_MKIMAGE=${TARGET_IMAGE}
+    TARGET_IMAGE="${TARGET_IMAGE%.${IMAGEBUILDER_MKIMAGE_SUFFIX}}.raw"
+fi
+
+source "$(dirname "$0")/_mkimage_build.sh.inc"

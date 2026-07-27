@@ -56,14 +56,20 @@ $L4IMAGE -i "$BASE_IMAGE" -o "$TARGET_IMAGE" --verbose create \
      ${L4IMAGE_EXTRA_OPTS}
 ret=$?
 
-if [[ $ret -eq 0 ]] ; then
-    echo
-    echo "Generated image: $TARGET_IMAGE"
-    echo
+if [[ $ret -ne 0 ]]; then exit $ret; fi
+
+if [[ "$(type -t post_l4image_hook)" == "function" ]]; then
+    post_l4image_hook; ret=$?
 fi
 
-if [[ $ret -eq 0 && -n "$POST_IMAGE_CMD" ]]; then
+if [[ $ret -ne 0 ]]; then exit $ret; fi
+
+echo
+echo "Generated image: $TARGET_IMAGE"
+echo
+
+if [[ -n "$POST_IMAGE_CMD" ]]; then
     $MAKE -f <(echo -e '.PHONY: p\np:\n\t$(call POST_IMAGE_CMD,$(TARGET_IMAGE))') -C "${OBJ_BASE}" TARGET_IMAGE=$TARGET_IMAGE; ret=$?
 fi
 
-exit $ret
+if [[ $ret -ne 0 ]]; then exit $ret; fi
