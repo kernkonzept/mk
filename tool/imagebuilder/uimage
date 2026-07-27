@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 IMAGEBUILDER_MKIMAGE_SUFFIX="uimage"
+declare -a IMAGEBUILDER_MKIMAGE_FLAGS=()
 
 if [[ -n "${TARGET_IMAGE}" ]] ; then
     TARGET_MKIMAGE=${TARGET_IMAGE}

@@ -69,7 +69,7 @@ post_l4image_hook() {
 
     local ret;
 
-    mkimage ${IMAGEBUILDER_MKIMAGE_FLAGS} \
+    mkimage "${IMAGEBUILDER_MKIMAGE_FLAGS[@]}" \
             -a "${loadaddr}" \
             -e "${loadaddr}" \
             -A "${mkimage_arch}" \
