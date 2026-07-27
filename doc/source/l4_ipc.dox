@@ -59,7 +59,7 @@ to the server thread. This behavior can be disabled by setting the
 
 
 \subsection l4re_concepts_descr_flags Syscall Flags
-The *syscall flags* (#L4_SYSF_SEND, #L4_SYSF_RECV,
+The *[syscall flags](#l4_syscall_flags)* (#L4_SYSF_SEND, #L4_SYSF_RECV,
 #L4_SYSF_OPEN_WAIT, #L4_SYSF_REPLY) are used by the invoking thread to
 define the intended IPC operation. The variants of l4_ipc() (see \ref
 l4_ipc_api) use the flags
