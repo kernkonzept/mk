@@ -905,7 +905,7 @@ BID_CHECKBUILD_LOG_REDIR_f = $(if $(BID_CHECKBUILD_LOG), 1>>$(BID_CHECKBUILD_LOG
 .PRECIOUS: $(CHECK_BASE_DIR)/config.%/.config.all
 .PHONY: FORCE
 
-checkbuild_prepare.%: check_base_dir
+checkbuild_prepare.%: | check_base_dir
 	$(if $(CHECK_INCREMENTAL),,rm -rf $(CHECK_BASE_DIR)/$(patsubst checkbuild_prepare.%,config.%,$@))
 
 $(CHECK_BASE_DIR)/config.%/.kconfig: $(TEMPLDIR)/config.% checkbuild_prepare.% Makefile
@@ -917,7 +917,7 @@ $(CHECK_BASE_DIR)/config.%/.config.all: $(CHECK_BASE_DIR)/config.%/.kconfig FORC
 	rm -rf $(@D)/pc
 	$(MAKE) O=$(@D) olddefconfig $(call BID_CHECKBUILD_LOG_REDIR_f, $*)
 
-checkbuild.%: $(CHECK_BASE_DIR)/config.%/.config.all $(CHECK_BASE_DIR)/config.%/.kconfig check_base_dir
+checkbuild.%: $(CHECK_BASE_DIR)/config.%/.config.all $(CHECK_BASE_DIR)/config.%/.kconfig
 	@touch $(<D)/.startbuild
 	$(MAKE) O=$(<D) BID_CHECKBUILD=1 report $(call BID_CHECKBUILD_LOG_REDIR_f, $*)
 	$(MAKE) O=$(<D) BID_CHECKBUILD=1 tool $(call BID_CHECKBUILD_LOG_REDIR_f, $*)
