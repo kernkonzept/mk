@@ -458,6 +458,27 @@ sub vaddr_to_file_offset
   return undef;
 }
 
+# Convert file offset to virtual address
+#
+# Will return undef if no section matched the file offset.
+sub file_offset_to_vaddr
+{
+  my $self = shift;
+  my $file_offset = shift;
+
+  $self->read_phdrs();
+
+  foreach (@{$self->{'phdr'}})
+    {
+      if ($file_offset >= $_->{'offset'} and
+          $file_offset < ($_->{'offset'} + $_->{'filesz'})) {
+        return $file_offset - $_->{'offset'} + $_->{'vaddr'};
+      }
+    }
+
+  return undef;
+}
+
 # Copy this ELF file to a new one, giving the user the possibility to
 # replace the content of a section.
 #

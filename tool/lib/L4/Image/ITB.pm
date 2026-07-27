@@ -77,9 +77,6 @@ sub unpack_inner
   die "Compression not yet supported in ITB images"
     unless rtrim_zerobytes($selected_image->{properties}{compression}) eq "none";
 
-  my $loadbytes = $selected_image->{properties}{load};
-  my $loadaddr = unpack("L>",$loadbytes);
-
   my ($fd, $filename) = tempfile("l4image-itb-inner-XXXXXXXXX", TMPDIR => 1, UNLINK => 1);
   binmode($fd);
 
@@ -87,9 +84,11 @@ sub unpack_inner
 
   close($fd);
 
-  $self->{'inner-vaddr'} = $loadaddr;
+  # Needs to exist but is unused.
+  # Will be passed to write_image() as $vaddr;
+  $self->{'inner-vaddr'} = 0;
 
-  return ($filename, $loadaddr);
+  return $filename;
 }
 
 sub write_image {

@@ -395,6 +395,23 @@ sub _find_section_by_vaddr
   die "Virtual address " . sprintf("0x%08x", $vaddr) . " not present in PE image";
 }
 
+sub _find_section_by_file_offset
+{
+  my $self = shift;
+  my $file_offset = shift;
+
+  for my $section (@{$self->{sections}})
+    {
+      if ($file_offset >= $section->{raw_addr} &&
+          $file_offset < $section->{raw_addr} + $section->{raw_size})
+        {
+          return $section;
+        }
+    }
+
+  die "Section with file offset " . sprintf("0x%08x", $file_offset) . " not present in PE image";
+}
+
 sub vaddr_to_file_offset
 {
   my $self = shift;
@@ -402,6 +419,15 @@ sub vaddr_to_file_offset
   my $section = $self->_find_section_by_vaddr($vaddr);
 
   return $vaddr - $section->{virt_addr} + $section->{raw_addr};
+}
+
+sub file_offset_to_vaddr
+{
+  my $self = shift;
+  my $vaddr = shift;
+  my $section = $self->_find_section_by_file_offset($vaddr);
+
+  return $vaddr - $section->{raw_addr} + $section->{virt_addr};
 }
 
 sub write_image

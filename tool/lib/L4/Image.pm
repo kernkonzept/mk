@@ -52,7 +52,7 @@ use vars qw(@ISA @EXPORT);
 @EXPORT = qw();
 
 my %DSI = (
-  STRUCTURE_VERSION => 2,
+  STRUCTURE_VERSION => 3,
   BOOTSTRAP_IMAGE_INFO_MAGIC => "<< L4Re Bootstrap Image Info >>",
   BOOTSTRAP_IMAGE_INFO_MAGIC_LEN => 32,
   TEMPLATE_IMAGE_INFO_HDR => "L<L<",
@@ -88,6 +88,21 @@ my %DSI = (
     BOOTSTRAP_MOD_INFO_MAGIC_MOD     => "<< L4Re-bootstrap-modinfo-mod >>",
     BOOTSTRAP_MOD_INFO_MAGIC_MOD_LEN => 32,
   },
+  V_3 => {
+    TEMPLATE_IMAGE_INFO_TAIL => "Q<Q<Q<Q<Q<",
+    IMAGE_INFO_TAIL_SIZE => 40,
+    IMAGE_INFO_OFFSET_MOD_HEADER => 24,
+    IMAGE_INFO_OFFSET_ATTR       => 32,
+
+    TEMPLATE_MOD_HEADER => "A32L<L<q<q<",
+    TEMPLATE_MOD_INFO   => "A32Q<Q<L<L<q<q<q<q<q<",
+    MOD_HEADER_SIZE     => 56,
+    MOD_INFO_SIZE       => 96,
+    BOOTSTRAP_MOD_INFO_MAGIC_HDR     => "<< L4Re-bootstrap-modinfo-hdr >>",
+    BOOTSTRAP_MOD_INFO_MAGIC_HDR_LEN => 32,
+    BOOTSTRAP_MOD_INFO_MAGIC_MOD     => "<< L4Re-bootstrap-modinfo-mod >>",
+    BOOTSTRAP_MOD_INFO_MAGIC_MOD_LEN => 32,
+  }
 );
 
 sub dsi
@@ -498,8 +513,8 @@ sub process_image
   elsif ($file_type == FILE_TYPE_ITB)
     {
       my $wrapper = L4::Image::ITB->new($fn, $opts->{itbkey});
-      my ($inner_fn, $loadaddr) = $wrapper->unpack_inner();
-      $img = L4::Image::Raw->new($inner_fn, $loadaddr);
+      my $inner_fn = $wrapper->unpack_inner();
+      $img = L4::Image::Raw->new($inner_fn);
       $img->{'wrapper-img'} = $wrapper;
       $img->{'wrapper-fn'} = $fn;
       $fn = $inner_fn;
@@ -546,34 +561,41 @@ sub process_image
   $r = sysread($fd, $buf, $DSI_CUR->{IMAGE_INFO_TAIL_SIZE});
   return("Could not read from binary ($r)")
     if not defined $r or $r != $DSI_CUR->{IMAGE_INFO_TAIL_SIZE};
-  my ($_flags, $_start, $_end,
-      $_module_data_start, $bin_addr_end_bin, $mod_header, $attrs_offset)
+  my ($_flags, $image_module_data_start, $image_module_data_end,
+      $image_module_header, $image_attrs)
     = unpack($DSI_CUR->{TEMPLATE_IMAGE_INFO_TAIL}, $buf);
 
-  printf "crc32=%x DSI_CUR_ver=%x _flags=%x _start=%x _end=%x ".
-         "_module_data_start=%x bin_addr_end_bin=%x mod_header=%x attrs=%x\n",
-         $crc32, $DSI_CUR_ver, $_flags, $_start, $_end,
-         $_module_data_start, $bin_addr_end_bin, $mod_header, $attrs_offset
+  printf STDERR "crc32=%x DSI_CUR_ver=%x _flags=%x ".
+         "module_data_start=%x module_data_end=%x module_header=%x attrs=%x\n",
+         $crc32, $DSI_CUR_ver, $_flags,
+         $image_module_data_start, $image_module_data_end, $image_module_header, $image_attrs
     if 0;
 
   # See L4::Image::Elf module for a description of the interface.
   if ($file_type == FILE_TYPE_UIMAGE) {
-    $img = L4::Image::UImage->new($fn, $_start);
+    $img = L4::Image::UImage->new($fn);
   } elsif ($file_type == FILE_TYPE_ELF) {
     # Already parsed above due to unwrapping ...
   } elsif ($file_type == FILE_TYPE_ITB) {
     # Already parsed above due to unwrapping ...
   } elsif ($file_type == FILE_TYPE_EFI) {
-    $img = L4::Image::EFI->new($fn, $_start);
+    $img = L4::Image::EFI->new($fn);
   } else {
-    $img = L4::Image::Raw->new($fn, $_start);
+    $img = L4::Image::Raw->new($fn);
   }
 
-  my $file_attrshdr_start = $img->vaddr_to_file_offset($_start + $attrs_offset)
-    if $attrs_offset;
+  # Image module has the authority on what the virtual address space looks like.
+  # Is allowed to be at an offset to the virtual address space at runtime,
+  # because this allows us to support PIE.
+
+  # Addresses in image_info are relative to the address of image_info
+  my $image_info_vaddr = $img->file_offset_to_vaddr($image_info_file_pos);
+
+  my $file_attrshdr_start = $img->vaddr_to_file_offset($image_info_vaddr + $image_attrs)
+    if $image_attrs;
 
   my %d;
-  if ($mod_header == 0)
+  if ($image_module_header == 0)
     {
       print "Found empty image\n";
       $d{num_mods}    = 0;
@@ -582,8 +604,8 @@ sub process_image
     }
   else
     {
-      my $file_modhdr_start = $img->vaddr_to_file_offset($_start + $mod_header);
-      error("Virtual offset " . ($_start + $mod_header) . " not found in binary")
+      my $file_modhdr_start = $img->vaddr_to_file_offset($image_info_vaddr + $image_module_header);
+      error("Relative virtual address " . ($image_module_header) . " not found in binary")
         unless defined $file_modhdr_start;
       %d = import_modules($fd, $file_modhdr_start, $workdir);
       return($d{error}) if defined $d{error};
@@ -617,7 +639,7 @@ sub process_image
       my $tmp_ofn = $ofn . ".tmp";
 
       my $ofd = $img->write_image(
-        $_module_data_start,
+        $image_info_vaddr + $image_module_data_start,
         $tmp_ofn,
         sub {
           my $ofd = shift;
@@ -626,18 +648,15 @@ sub process_image
           my %offsets = export_modules($ofd, %d);
           my $module_end_pos = filepos_get($ofd);
 
-          write_image_info($ofd, $image_info_file_pos,
-                           $_module_data_start - $_start,  %offsets);
+          my $new_module_data_end = $image_module_data_start + $module_end_pos - $module_start_pos;
+          my $new_module_header = $image_module_data_start + $offsets{mod_header}
+            if defined $offsets{mod_header};
+          my $new_attrs = $image_module_data_start + $offsets{attrs}
+            if defined $offsets{attrs};
 
-          # Update optional pointer to _module_data_end
-          if (($d{arch} eq 'arm' or $d{arch} eq 'arm64')
-              and $bin_addr_end_bin)
-            {
-              my $_module_data_end = $_module_data_start + $module_end_pos -
-                                      $module_start_pos;
-              filepos_set($ofd, $img->vaddr_to_file_offset($bin_addr_end_bin));
-              check_syswrite(syswrite($ofd, pack("Q<", $_module_data_end)), 8);
-            }
+          write_image_info($ofd, $image_info_file_pos,
+                           $_flags, $image_module_data_start, $new_module_data_end,
+                           $new_module_header, $new_attrs);
         });
 
       $img->dispose();
@@ -886,33 +905,22 @@ sub import_modules
 
 sub write_image_info
 {
-  my $fd = shift;
-  my $image_info_file_pos = shift;
-  my $data_area_start_offset = shift;
-  my %offsets = @_;
+  my ($fd, $image_info_file_pos,
+      $_flags, $image_module_data_start, $image_module_data_end,
+      $image_module_header, $image_attrs) = @_;
 
   printf "image_info_file_pos = %x\n", $image_info_file_pos if 0;
 
-  if (defined $offsets{attrs})
-    {
-      filepos_set($fd, $image_info_file_pos
-                       + $DSI{BOOTSTRAP_IMAGE_INFO_MAGIC_LEN}
-                       + $DSI_CUR->{IMAGE_INFO_OFFSET_ATTR});
-      syswrite($fd, pack("q<", $data_area_start_offset + $offsets{attrs}), 8);
+  $image_module_data_start //= 0;
+  $image_module_data_end //= 0;
+  $image_module_header //= 0;
+  $image_attrs //= 0;
 
-      printf "data_area_start_offset=%x\n", $data_area_start_offset if 0;
-      printf "offsets.attrs=%x\n", $offsets{attrs} if 0;
-    }
+  filepos_set($fd, $image_info_file_pos + $DSI{BOOTSTRAP_IMAGE_INFO_MAGIC_LEN} + $DSI{IMAGE_INFO_HDR_SIZE});
 
-  if (defined $offsets{mod_header})
-    {
-      filepos_set($fd, $image_info_file_pos
-                       + $DSI{BOOTSTRAP_IMAGE_INFO_MAGIC_LEN}
-                       + $DSI_CUR->{IMAGE_INFO_OFFSET_MOD_HEADER});
-      syswrite($fd, pack("q<", $data_area_start_offset + $offsets{mod_header}), 8);
-      printf "data_area_start_offset=%x\n", $data_area_start_offset if 0;
-      printf "offsets.mod_header=%x\n", $offsets{mod_header} if 0;
-    }
+  syswrite($fd, pack($DSI_CUR->{TEMPLATE_IMAGE_INFO_TAIL},
+                     $_flags, $image_module_data_start, $image_module_data_end,
+                     $image_module_header, $image_attrs), $DSI_CUR->{IMAGE_INFO_TAIL_SIZE});
 }
 
 sub store_add_info

@@ -97,13 +97,11 @@ sub new
 {
   my $class = shift;
   my $fn = shift;
-  my $start_of_binary = shift;
 
   open(my $fd, "<", $fn) || error("Could not open '$fn': $!");
   binmode($fd);
 
   return bless {
-    start_of_binary => $start_of_binary,
     fd => $fd,
   }, $class;
 }
@@ -119,7 +117,15 @@ sub vaddr_to_file_offset
   my $self = shift;
   my $vaddr = shift;
 
-  return $vaddr - $self->{'start_of_binary'} + UIMAGE_HEADER_SIZE;
+  return $vaddr + UIMAGE_HEADER_SIZE;
+}
+
+sub file_offset_to_vaddr
+{
+  my $self = shift;
+  my $file_offset = shift;
+
+  return $file_offset - UIMAGE_HEADER_SIZE;
 }
 
 sub write_image

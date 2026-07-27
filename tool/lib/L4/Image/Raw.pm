@@ -18,13 +18,15 @@ sub new
 {
   my $class = shift;
   my $fn = shift;
-  my $start_of_binary = shift;
 
   open(my $fd, "<", $fn) || error("Could not open '$fn': $!");
   binmode($fd);
 
+  my $image_size = sysseek($fd, 0, SEEK_END);
+  sysseek($fd, 0, SEEK_SET);
+
   return bless {
-    start_of_binary => $start_of_binary,
+    size => $image_size,
     fd => $fd,
   }, $class;
 }
@@ -40,7 +42,21 @@ sub vaddr_to_file_offset
   my $self = shift;
   my $vaddr = shift;
 
-  return $vaddr - $self->{'start_of_binary'};
+  return undef if $vaddr < 0;
+  return undef if $vaddr > $self->{size};
+
+  return $vaddr;
+}
+
+sub file_offset_to_vaddr
+{
+  my $self = shift;
+  my $file_offset = shift;
+
+  return undef if $file_offset < 0;
+  return undef if $file_offset > $self->{size};
+
+  return $file_offset;
 }
 
 sub write_image
