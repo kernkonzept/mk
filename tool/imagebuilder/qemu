@@ -45,4 +45,16 @@ fi
 
 "$(dirname $0)"/"$QEMU_IMAGE_TYPE" || exit $?
 
+# Workaround: L4image can't read qemu cmdline from efidisk
+if [[ "$QEMU_IMAGE_TYPE" == "efidisk" ]]; then
+    # Find efiimage
+    efiimage="${TARGET_IMAGE%.efidisk}.efi"
+
+    # Set L4IMAGE_FILE to efidisk
+    export L4IMAGE_FILE="$TARGET_IMAGE"
+
+    # Boot with cmdline from efi image
+    eval "$($L4IMAGE -i $efiimage launch --show-cmd-raw)"; exit $?
+fi
+
 $L4IMAGE --verbose -i "$TARGET_IMAGE" launch; exit $?
