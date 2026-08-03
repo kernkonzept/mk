@@ -764,7 +764,8 @@ endef
 
 # touches images dir
 CHECK_FOR_ARCH_efiimage = x86 amd64 arm64
-$(foreach g,efiimage elfimage rawimage uimage itb,$(eval $(call imagebuilder_goal,$g)))
+CHECK_FOR_ARCH_efidisk = x86 amd64 arm64
+$(foreach g,efiimage efidisk elfimage rawimage uimage itb,$(eval $(call imagebuilder_goal,$g)))
 
 # does not touch images dir
 CHECK_FOR_ARCH_fvp = arm arm64

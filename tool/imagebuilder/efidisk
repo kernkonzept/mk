@@ -1,0 +1,115 @@
+#!/usr/bin/env bash
+
+MAKECONF="${OBJ_BASE}/source/tool/bin/makeconf"
+
+if [[ -n "${TARGET_IMAGE}" ]] ; then
+    TARGET_DISKIMAGE=${TARGET_IMAGE}
+    TARGET_IMAGE="${TARGET_IMAGE%.efidisk}.efi"
+fi
+
+# Check if tooling is there
+if ! which parted >/dev/null 2>&1; then
+    echo "Please install parted." >&2;
+    exit 1
+fi
+
+if ! which mcopy >/dev/null 2>&1;  then
+    echo "Please install mtools." >&2;
+    exit 1
+fi
+
+if ! which mkfs.vfat >/dev/null 2>&1;  then
+    echo "Please install dosfstools (mkfs.vfat)." >&2;
+    exit 1
+fi
+
+if ! which dd >/dev/null 2>&1;  then
+    echo "Please install coreutils." >&2;
+    exit 1
+fi
+
+post_l4image_hook() {
+    local diskimage="${TARGET_DISKIMAGE:-${TARGET_IMAGE%.efi}.efidisk}"
+    local partition="${diskimage}.partition"
+    local efiimage="${TARGET_IMAGE}"
+
+    echo
+
+    local filename
+    case "$ARCH" in
+        x86)
+            filename="BOOTIA32.EFI"
+            ;;
+        amd64)
+            filename="BOOTX64.EFI"
+            ;;
+        arm64)
+            filename="BOOTAA64.EFI"
+            ;;
+        *)
+            echo "Unknown arch $arch" >&2;
+            exit 1
+            ;;
+    esac
+
+    # Calculate partition_size from efiimage
+    local -i efiimage_size="($(wc -c "$efiimage" | awk '{print $1}')/1024)+1"
+
+    # Add a bit of space +10KB
+    efiimage_size="$efiimage_size+10"
+
+    # Make efi partition at least 1 MiB bigger than efiimage
+    local -i partition_size="(($efiimage_size/1024)+2)*1024"
+
+    # Make partition at least 5 MB in size
+    if [[ $partition_size -lt 5120 ]] ; then
+        partition_size=5120
+    fi
+
+    echo "#### Calculated partition size: ${partition_size}KiB"
+
+    # Make disk 1 MiB bigger than efi partition
+    local -i diskimage_size="$partition_size+1024"
+
+    echo "#### Calculated disk image size: ${diskimage_size}KiB"
+
+    # Prepare partition
+    echo "#### Create file system..."
+
+    mkfs.vfat -C -n EFI "$partition" "$partition_size" || exit $?
+
+    # copy efiimage into partition
+    echo "#### Copy file into file system..."
+    mmd -i "$partition" '::EFI' || exit $?
+    mmd -i "$partition" '::EFI/BOOT' || exit $?
+    mcopy -i "$partition" "$efiimage" "::EFI/BOOT/$filename" || exit $?
+
+    # create disk image
+    echo "#### Create disk image with efi partition..."
+    dd if=/dev/zero of="$diskimage" bs=1K count="$diskimage_size" || exit $?
+    # Create efi partition
+    parted --script "$diskimage" \
+           mklabel gpt \
+           mkpart primary fat32 0% 100% \
+           set 1 esp on || exit $?
+
+    echo "#### Copy file system into efi partition..."
+
+    # offset in sectors (each 512B)
+    partition_offset="$(parted -s "$diskimage" unit S print | awk '/^ 1/{ print $2; }' | sed -e 's/s$//')"
+
+    # Copy partition image into partition
+    dd conv=notrunc if="$partition" of="$diskimage" bs=512 seek="$partition_offset" || exit $?
+
+    rm "$partition"
+
+    TARGET_IMAGE="$diskimage"
+}
+
+# Setup cleanup
+cleanup() {
+    if [[ -n "$partition" ]]; then rm $partition; fi
+}
+trap "cleanup" EXIT
+
+source "$(dirname "$0")/efiimage"
