@@ -27,7 +27,9 @@ if [[ ( "${ARCH}" == "amd64" || "${ARCH}" == "x86" ) && -z "${QEMU_IMAGE_TYPE}" 
     exec "${L4DIR}/tool/bin/qemu-x86-launch" "${MODULES_LIST}" "${ENTRY:-${E}}"
 fi
 
-: ${QEMU_IMAGE_TYPE:=elfimage}
+. <("$MAKECONF" "$OBJ_BASE" QEMU_IMAGE_TYPE)
+
+: ${QEMU_IMAGE_TYPE:=${MAKECONF_QEMU_IMAGE_TYPE:-elfimage}}
 
 if [[ -z "$TARGET_IMAGE" ]]; then
     case "$QEMU_IMAGE_TYPE" in
