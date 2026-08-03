@@ -41,12 +41,12 @@ l4_ipc(). Furthermore, depending on the IPC parameters, the kernel might have
 transferred the FPU state and capabilities (memory, I/O ports, and/or object
 capabilities) from the sender to the receiving thread.
 
-The transition between the IPC send phase and the IPC receive phase is atomic,
-that is, as soon as the send phase has finished, the thread receive phase
-starts. A relative receive timeout does not start before the send phase has
-finished (see also below) and a thread which received an IPC call from another
-thread can assume that the other thread is ready to receive the reply message
-and the replying thread can therefore reply with a timeout of zero, see
+When both, a send phase and the a receive phase, are requested, the receive
+phase is entered only after the send phase was finished successfully. A relative
+receive timeout does not start before the send phase has finished (see also
+below). When a thread received an IPC call from another thread, it is guaranteed
+that there won’t be a send timeout when the thread replies to the call using a
+reply capability, i.e., the reply can be done with a send timeout of zero, see
 \ref l4re_concepts_descr_timeouts.
 
 For performance optimization and under certain conditions, the kernel may
@@ -181,18 +181,18 @@ Two specific timeout values are sufficient for most IPC operations:
     as the server needs time to serve the request. Also, a server will usually
     wait with an infinite receive timeout for the next request (see below for
     a possible exception).
-  - #L4_IPC_TIMEOUT_0 is used when it is either certain that the IPC receiver
-    is currently ready or if the IPC sender doesn't want to wait if the IPC
-    receiver is not ready. The former case applies to a thread which was called
-    with an IPC call, for example a server got a client request. The reply to
-    the IPC call should use a timeout of zero to ensure that a client doesn't
-    block a server (server could not deliver the result of the request).
-    See also L4::Ipc_svr::Default_timeout.
-    Another case is an IPC send operation for waking up another thread from an
-    IPC receive operation. If the other thread is not ready to receive, then it
-    might be already woken up and it does not make sense to wait any longer.
-    Also triggering an IRQ is usually done with a send timeout of 0, see
-    L4::Triggerable::trigger().
+  - #L4_IPC_TIMEOUT_0 is used when it is certain that the IPC receiver is
+    currently ready, when the IPC sender doesn't want to wait if the IPC
+    receiver is not ready, or when replying to an IPC call using a reply
+    capability. The latter case applies for example to a server that received a
+    call from a client. The reply to the IPC call should use a reply capability
+    and a timeout of zero to ensure that a client doesn't block a server (server
+    could not deliver the result of the request). See also
+    L4::Ipc_svr::Default_timeout. Another case is an IPC send operation for
+    waking up another thread from an IPC receive operation. If the other thread
+    is not ready to receive, then it might be already woken up and it does not
+    make sense to wait any longer. Also triggering an IRQ is usually done with a
+    send timeout of 0, see L4::Triggerable::trigger().
 
 In certain cases it also makes sense to specify an IPC timeout different from
 "never" or "zero":
