@@ -6,10 +6,15 @@ post_l4image_hook() {
     local mkimage="${TARGET_MKIMAGE:-${TARGET_IMAGE%.raw}.${IMAGEBUILDER_MKIMAGE_SUFFIX}}"
     local rawimage="${TARGET_IMAGE}"
 
-    source <("$MAKECONF" "$OBJ_BASE" BOOTSTRAP_UIMAGE_COMPRESSION)
+    source <("$MAKECONF" "$OBJ_BASE" BOOTSTRAP_UIMAGE_COMPRESSION \
+                                     BOOTSTRAP_UIMAGE_LOAD_ADDRESS)
 
-    # Read load address from rawimage
-    local loadaddr="$($L4IMAGE -i "${rawimage}" attr --get l4i:loadaddr)"
+    : ${BOOTSTRAP_UIMAGE_LOAD_ADDRESS:=${MAKECONF_BOOTSTRAP_UIMAGE_LOAD_ADDRESS}}
+
+    if [[ -z "${BOOTSTRAP_UIMAGE_LOAD_ADDRESS}" ]]; then
+        # Read load address from rawimage
+        BOOTSTRAP_UIMAGE_LOAD_ADDRESS="$($L4IMAGE -i "${rawimage}" attr --get l4i:loadaddr)"
+    fi
 
     : ${MAKECONF_BOOTSTRAP_UIMAGE_COMPRESSION:=none}
 
@@ -70,8 +75,8 @@ post_l4image_hook() {
     local ret;
 
     mkimage "${IMAGEBUILDER_MKIMAGE_FLAGS[@]}" \
-            -a "${loadaddr}" \
-            -e "${loadaddr}" \
+            -a "${BOOTSTRAP_UIMAGE_LOAD_ADDRESS}" \
+            -e "${BOOTSTRAP_UIMAGE_LOAD_ADDRESS}" \
             -A "${mkimage_arch}" \
             -n "L4Re Image @ $(LC_ALL=C date)" \
             -C "${MAKECONF_BOOTSTRAP_UIMAGE_COMPRESSION}" \
