@@ -47,12 +47,18 @@ mkdir -p "$(dirname "$TARGET_IMAGE")"
 
 L4IMAGE_SEARCHPATH="${MODULE_SEARCH_PATH}:${SEARCHPATH}:${MAKECONF_MODULE_SEARCH_PATH}:${MAKECONF_BUILDDIR_SEARCHPATH}"
 
+qemu_cmd="${MAKECONF_QEMU_PATH} ${MAKECONF_QEMU_OPTIONS}"
+
+if ! grep -q "L4IMAGE_FILE" <<< "$qemu_cmd"; then
+    qemu_cmd+=" -kernel \$L4IMAGE_FILE"
+fi
+
 # Create a new image
 $L4IMAGE -i "$BASE_IMAGE" -o "$TARGET_IMAGE" --verbose create \
      --entry "${ENTRY}" \
      --modules-list-file "${MODULES_LIST}" \
      --search-path "$L4IMAGE_SEARCHPATH" \
-     --set-attr "l4i:QEMUcmd" "${MAKECONF_QEMU_PATH} ${MAKECONF_QEMU_OPTIONS} -kernel \$L4IMAGE_FILE" \
+     --set-attr "l4i:QEMUcmd" "${qemu_cmd}" \
      ${L4IMAGE_EXTRA_OPTS}
 ret=$?
 
