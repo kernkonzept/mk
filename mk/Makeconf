@@ -565,9 +565,11 @@ BID_GCC_OPTS=-static -shared -nostdlib -Wl$(BID_COMMA)% -L% -l% -PC% -nocrt1 -no
 #  Convert arguments to a format compatible with gcc invocation
 ldflags_to_gcc=$(foreach o,$(1),$(if $(filter $(BID_GCC_OPTS),$o),$o,$(addprefix -Wl$(BID_COMMA),$o)))
 
+ifneq ($(COMPILER_RT_USE_TOOLCHAIN_LIBGCC),)
 ifneq ($(strip $(GCCDIR)),)
 GCCINCDIR	= $(GCCDIR)/include $(GCCINCFIXEDPATH)
 I_GCCINCDIR	= $(addprefix -isystem ,$(GCCINCDIR))
+endif
 endif
 
 PKGNAME_DIRNAME := $(notdir $(abspath $(if $(PKGDIR),$(PKGDIR),.)))
