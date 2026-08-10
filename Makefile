@@ -301,7 +301,7 @@ COMPILE_COMMANDS_JSON = compile_commands.json
 
 .PHONY: $(COMPILE_COMMANDS_JSON)
 $(COMPILE_COMMANDS_JSON):
-	$(GEN_MESSAGE)
+	@$(GEN_MESSAGE)
 	$(VERBOSE)$(L4DIR)/tool/bin/gen_ccj $(OBJ_DIR) $@
 
 # Automatically regenerate compile_commands.json if the file is already
@@ -330,7 +330,7 @@ OUTPUT_FORMAT = $(CC) $(CFLAGS) -Wl,--verbose 2>&1 | $(SED) -n '/OUTPUT_FORMAT/,
 SYSROOT_PACKAGES = $(addprefix pkg/l4re-core/,ldso libc_backends libc)
 .PHONY: sysroot
 sysroot: $(SYSROOT_PACKAGES)
-	$(GEN_MESSAGE)
+	@$(GEN_MESSAGE)
 	$(VERBOSE)$(RM) -r $(OBJ_DIR)/sysroot
 	$(VERBOSE)$(MKDIR) $(OBJ_DIR)/sysroot/usr/include/l4
 	$(VERBOSE)$(MKDIR) $(OBJ_DIR)/sysroot/usr/lib
