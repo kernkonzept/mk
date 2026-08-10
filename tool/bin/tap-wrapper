@@ -434,9 +434,14 @@ if (!$test_eof)
   {
     if (!defined($test_current_read))
       {
-        my $exp = $L4::TapWrapper::expline;
         my $msg = "Test timed out after $timeout seconds.";
-        $msg .= defined($exp) ? " Was expecting: $exp" : "";
+
+        L4::TapWrapper::iter_plugins("OutputMatching", sub {
+          my $plugin = shift;
+
+          $msg .= sprintf(" Was expecting '%s'.", $plugin->{next_line})
+            if defined $plugin->{next_line};
+        });
 
         on_test_abort($msg)
       }

@@ -19,27 +19,37 @@ our $logdir;
 our $print_to_tap_fd = 1;
 our $harness_active;
 our $plugintmpdir = undef;
-our %_have_plugins = ();
 our $timeout;
 our $wait_for_more = 0;
 our $test_description;
-our $expline;
 our $pid = -1;
+our %loaded_plugins;
+
 sub plugin_to_module { "L4::TapWrapper::Plugin::" . shift; }
+
+sub __safe_load
+{
+  my $class = shift;
+
+  eval {
+    load $class;
+    1;
+  } or do {
+    fail_test("Unable to load '$class'");
+  };
+}
 
 sub __load_module
 {
-  my $class = shift;
-  my $arg = shift;
-  my $c;
-  eval {
-    load $class;
-    $c = $class->new( $arg );
-    die unless $c;
-    1;
-  } or do {
-    fail_test("Unable to load '$class': $@");
-  };
+  my ($class, $arg) = @_;
+
+  __safe_load($class);
+
+  my $c = $class->new( $arg );
+
+  fail_test("Unable to instantiate '$class': $@")
+    unless defined $c;
+
   return $c;
 }
 
@@ -55,11 +65,20 @@ sub load_plugin
 {
   my $name = shift;
   my $arg = shift;
-  return if defined $_have_plugins{$name}; # Do not load twice
+
+  # Load class to check if plugin supports multiloading
+  my $class = plugin_to_module($name);
+  __safe_load($class);
+  fail_test("Plugin '$name' does not support being loaded multiple times.")
+    if $loaded_plugins{$class} && !$class->supports_multiload();
+
   print "Loading Plugin '$name' with args: " . Dumper($arg). "\n";
+
   my $plugin = get_plugin($name, $arg);
+
+  $loaded_plugins{$class} = 1;
+
   push @_plugins, $plugin;
-  $_have_plugins{$name} = $plugin;
 }
 
 
@@ -162,14 +181,31 @@ sub plugin_features
   map { $_->{features}{$feature} } @_plugins;
 }
 
-# Removes named plugin and returns reference (if it existed, undef otherwise)
-sub steal_plugin
+# Removes plugin(s) with provided name
+sub unload_plugin
 {
-  my $plugin = shift;
-  @_plugins = grep { $_ != $_have_plugins{$plugin} } @_plugins;
-  my $old_plugin = $_have_plugins{$plugin};
-  delete $_have_plugins{$plugin};
-  return $old_plugin;
+  my $name = shift;
+
+  my $class = plugin_to_module($name);
+
+  @_plugins = grep { ref($_) eq $class } @_plugins;
+
+  delete $loaded_plugins{$class};
+}
+
+# Iterates over all plugin of type $name
+sub iter_plugins($&)
+{
+  my ($name, $cb) = @_;
+
+  my $class = plugin_to_module($name);
+
+  foreach my $plugin (@_plugins)
+    {
+      next unless ref($plugin) eq $class;
+
+      $cb->($plugin);
+    }
 }
 
 sub process_input
@@ -368,15 +404,16 @@ Can be used to load an additional plugin (for example a dependency). Arguments
 to the function are the name of the plugin to load as well as the argument
 passed to its constructor.
 
-=item1 C<steal_plugin>
+=item1 C<unload_plugin>
 
-If an argument with the name given in the only argument is already registered
-it is removed from the list of all plugins and returned by the function. The
-plugin will no longer be passed new input.
+Plugin with the name given in the only argument are removed from the list of all
+plugins. The plugin will no longer be passed new input.
 
-B<Important:> When a new plugin with the same name will be laded later on, a new
-instance will be constructed! There will be no duplicate checking for stolen
-plugins.
+=item1 C<iter_plugins>
+
+Iterates over all plugins with the name given as the first argument. For each
+plugin found a callback, passed as the second argument, will be called with the
+found plugin as first argument.
 
 =item1 C<plugin_features>
 
@@ -430,12 +467,6 @@ Defaults to C<10>.
 
 The test description string as provided by the C<TEST_DESCRIPTION> environment
 variable. Defaults to the name of the test target.
-
-=item C<expline>
-
-A string describing what is expected from the output next. Used for more
-informative diganostic output. This is mainly used by the OutputMatching plugin,
-since the concept is ambiguous in the presence of multiple plugins.
 
 =item C<wait_for_more>
 

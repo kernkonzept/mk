@@ -9,6 +9,8 @@ use Scalar::Util qw(looks_like_number);
 use parent 'L4::TapWrapper::Plugin';
 use L4::TapWrapper;
 
+sub supports_multiload { 1 }
+
 sub new {
   my $type = shift;
   my $self = L4::TapWrapper::Plugin->new( () );
@@ -56,7 +58,8 @@ sub new {
 sub get_next_line {
   my $self = shift;
   my $fd = $self->{expect_fd};
-  if (!($L4::TapWrapper::expline = <$fd>))
+  my $expline;
+  if (!($expline = <$fd>))
     {
       if ($self->{number_of_runs} == 1) # End of file and we only had one run
         {
@@ -66,11 +69,11 @@ sub get_next_line {
         }
       $self->{number_of_runs}-- if ($self->{number_of_runs} > 0);
       seek($fd, 0, 0); # Rewind
-      $L4::TapWrapper::expline = <$fd>;
+      $expline = <$fd>;
     }
-  $L4::TapWrapper::expline =~ s/\r*\n$//g unless $self->{args}{raw}; # simplify line endings
-  return $L4::TapWrapper::expline if $self->{args}{literal};
-  return extract_expected($L4::TapWrapper::expline);
+  $expline =~ s/\r*\n$//g unless $self->{args}{raw}; # simplify line endings
+  return $expline if $self->{args}{literal};
+  return extract_expected($expline);
 }
 
 sub check_start {

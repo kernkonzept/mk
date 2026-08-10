@@ -4,6 +4,8 @@ use 5.010;
 use Scalar::Util 'blessed';
 use File::Path "make_path";
 
+sub supports_multiload { 0 }
+
 sub new {
   my $type = shift;
   my $self = {};

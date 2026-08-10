@@ -3,6 +3,7 @@ package L4::TapWrapper::Plugin::BundleMode;
 use File::Basename;
 
 use parent 'L4::TapWrapper::Plugin';
+use L4::TapWrapper::Plugin::TAPOutput;
 use L4::TapWrapper;
 
 sub new {
@@ -18,7 +19,12 @@ sub check_start {
   my $self = shift;
   return unless shift =~ m/BUNDLE TEST START/;
   $self->{have_bundle} = 1;
-  $self->{SubPlugin} = L4::TapWrapper::steal_plugin("TAPOutput");
+
+  # Unload other TAPOutput plugins
+  L4::TapWrapper::unload_plugin("TAPOutput");
+
+  # Create new TAPOutput plugin for our purposes
+  $self->{SubPlugin} = L4::TapWrapper::Plugin::TAPOutput->new();
   $self->inhibit_exit();
 
   $L4::TapWrapper::print_to_tap_fd = 1; # Bundles always print
