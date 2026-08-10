@@ -173,24 +173,25 @@ sub steal_plugin
 
 sub process_input
 {
-  my @data = ( shift );
+  my $line = shift;
 
   for my $filter (@_filters)
     {
-      @data = map { $filter->process_any($_) } @data;
+      $line = $filter->process_any($line);
     }
 
-  for my $line ( @data )
+  for my $plugin (@_plugins)
     {
-      my $no_exit = 0;
-      for my $plugin (@_plugins)
-        {
-          $plugin->process_any($line);
-          $no_exit ||= $plugin->{inhibit_exit};
-        }
-      return 1 unless $no_exit;
+      $plugin->process_any($line);
     }
-  return 0;
+}
+
+sub plugins_finished {
+  my $inhibit_exit = 0;
+
+  $inhibit_exit ||= $_->{inhibit_exit} foreach @_plugins;
+
+  return !$inhibit_exit;
 }
 
 sub calculate_wait_for_more {
@@ -326,6 +327,8 @@ sub exit_test
 {
   my ($exit_code) = @_;
 
+  $_->on_exit() foreach @_plugins;
+
   # tell test runner to finish up
   # signals aren't passed to whole children tree - kill explicit
   kill_ps_tree($pid);
@@ -386,6 +389,10 @@ Can be used to feed input to all plugins using the normal input loop, basically
 generating additional input. It is advised to not use the function for such
 purposes if possible and rely on input stealing and filtering / explicit input
 feeding instead.
+
+=item C<plugins_finished>
+
+If any plugin inhibits the exit, returns 0. Otherwise 1.
 
 =item C<fail_test>
 

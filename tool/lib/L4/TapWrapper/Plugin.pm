@@ -50,6 +50,11 @@ sub finalize {
   return $self->{tap_lines}, $self->{log_lines};
 }
 
+# Called when tap-wrapper is terminating
+# before sub processes are killed
+# after finalize
+sub on_exit { }
+
 # Guarantee: Not called if already within a block
 sub check_start { }
 

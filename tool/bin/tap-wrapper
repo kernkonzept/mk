@@ -329,35 +329,47 @@ sub readline_timeout
       my $was_blocking = $handle->blocking(0);
       while ($idx < 0 and $sel->can_read($timeout))
         {
-          # If the following sysread fails, we must be at the end of the file.
-          # Just return the content of the readbuffer in that case.
-          $idx = length($readbuffer);
-          while (sysread($handle, my $part, 128))
-            {
-              my $log_part = $part;
-              if ($test_timestamps)
-                {
-                  my $timestamp = get_timestamp();
-                  $log_part =~ s/\n(.)/\n$timestamp$1/gm;
-                  if ($buffer_is_at_newline)
-                    {
-                      $log_part = $timestamp . $log_part;
-                      $buffer_is_at_newline = 0;
-                    }
+          # The following sysread can fail in two ways:
+          # - returning 0: eof, just return the content of the readbuffer in that case.
+          # - returning undef: might have been interrupted by a signal. Retry.
 
-                  if (substr($log_part,-1) eq "\n")
-                    {
-                      $buffer_is_at_newline = 1;
-                    }
-                }
-              print $log_part;
-              print $LOG_FD $log_part if $LOG_FD;
-              $readbuffer .= $part;
-              $idx = index($readbuffer, "\n");
-              last if $idx >= 0;
+          my $ret_sysread = sysread($handle, my $part, 128);
+
+          next unless defined $ret_sysread;
+
+          # EOF: Return rest of readbuffer
+          if ($ret_sysread == 0)
+            {
+              $idx = length($readbuffer);
+              last;
             }
+
+          $readbuffer .= $part;
+          $idx = index($readbuffer, "\n");
+
+          # Put timestamps into log
+          if ($test_timestamps)
+            {
+              my $timestamp = get_timestamp();
+              $part =~ s/\n(.)/\n$timestamp$1/gm;
+              if ($buffer_is_at_newline)
+                {
+                  $part = $timestamp . $part;
+                  $buffer_is_at_newline = 0;
+                }
+
+              if (substr($part,-1) eq "\n")
+                {
+                  $buffer_is_at_newline = 1;
+                }
+            }
+
+          print $part;
+          print $LOG_FD $part if $LOG_FD;
+
           STDOUT->flush();
         }
+
       $handle->blocking($was_blocking);
 
       # Timeout
@@ -399,7 +411,9 @@ while ($test_current_read = readline_timeout($test_proc, $L4::TapWrapper::timeou
         last;
       }
 
-    $test_eof = L4::TapWrapper::process_input($test_lastline);
+    L4::TapWrapper::process_input($test_lastline);
+
+    $test_eof = L4::TapWrapper::plugins_finished();
 
     if ($test_eof)
       {
@@ -412,6 +426,9 @@ while ($test_current_read = readline_timeout($test_proc, $L4::TapWrapper::timeou
         $L4::TapWrapper::timeout = $timeout;
       }
   }
+
+# Read might have failed, but plugins might be happy.
+$test_eof = L4::TapWrapper::plugins_finished();
 
 if (!$test_eof)
   {
