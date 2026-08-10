@@ -17,6 +17,25 @@ source <("$MAKECONF" "$OBJ_BASE" \
                      QEMU_PATH QEMU_OPTIONS \
                      MODULE_SEARCH_PATH BUILDDIR_SEARCHPATH)
 
+L4IMAGE_SEARCHPATH="${MODULE_SEARCH_PATH}:${SEARCHPATH}:${MAKECONF_MODULE_SEARCH_PATH}:${MAKECONF_BUILDDIR_SEARCHPATH}"
+
+resolve_module() {
+    if [[ "$1" == /* ]]; then
+        echo "$1"
+        return
+    fi
+
+    local -a paths=( $(sed -e 's/:/ /g' <<< "$L4IMAGE_SEARCHPATH") )
+
+    for path in "${paths[@]}"; do
+        if [[ -f "${path}/$1" ]]; then
+            echo "${path}/$1"
+            echo "Found ${path}/$1" >&2
+            return
+        fi
+    done
+}
+
 # Detect selected system
 : ${ARCH:=${MAKECONF_ARCH}}
 : ${CPU:=${MAKECONF_CPU}}
@@ -44,8 +63,6 @@ fi
 
 # Make sure the target directory exists.
 mkdir -p "$(dirname "$TARGET_IMAGE")"
-
-L4IMAGE_SEARCHPATH="${MODULE_SEARCH_PATH}:${SEARCHPATH}:${MAKECONF_MODULE_SEARCH_PATH}:${MAKECONF_BUILDDIR_SEARCHPATH}"
 
 qemu_cmd="${MAKECONF_QEMU_PATH} ${MAKECONF_QEMU_OPTIONS}"
 

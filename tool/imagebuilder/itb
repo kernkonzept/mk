@@ -6,14 +6,7 @@ source <("$MAKECONF" "$OBJ_BASE" BOOTSTRAP_ITB_DTB)
 : ${BOOTSTRAP_ITB_DTB:=${MAKECONF_BOOTSTRAP_ITB_DTB}}
 
 IMAGEBUILDER_MKIMAGE_SUFFIX="itb"
-
 declare -a IMAGEBUILDER_MKIMAGE_FLAGS=( "-f" "auto" )
-if [[ -n "${BOOTSTRAP_ITB_DTB}" ]]; then
-    IMAGEBUILDER_MKIMAGE_FLAGS+=(
-        "-b"
-        "${BOOTSTRAP_ITB_DTB}"
-    )
-fi
 
 if [[ -n "${TARGET_IMAGE}" ]] ; then
     TARGET_MKIMAGE=${TARGET_IMAGE}

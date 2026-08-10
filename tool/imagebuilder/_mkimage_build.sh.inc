@@ -72,6 +72,11 @@ post_l4image_hook() {
 
     echo
 
+    if [[ -n "${BOOTSTRAP_ITB_DTB}" ]]; then
+        BOOTSTRAP_ITB_DTB="$(resolve_module "${BOOTSTRAP_ITB_DTB}")"
+        IMAGEBUILDER_MKIMAGE_FLAGS+=( "-b" "${BOOTSTRAP_ITB_DTB}" )
+    fi
+
     local ret;
 
     mkimage "${IMAGEBUILDER_MKIMAGE_FLAGS[@]}" \
