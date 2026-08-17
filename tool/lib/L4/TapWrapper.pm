@@ -188,7 +188,7 @@ sub unload_plugin
 
   my $class = plugin_to_module($name);
 
-  @_plugins = grep { ref($_) eq $class } @_plugins;
+  @_plugins = grep { ref($_) ne $class } @_plugins;
 
   delete $loaded_plugins{$class};
 }
