@@ -44,7 +44,8 @@ L4_STACK_ADDR           ?= $(L4_STACK_ADDR_$(ARCH))
 L4_STACK_SIZE           ?= $(if $(L4_STACK_SIZE_MAIN_THREAD),$(L4_STACK_SIZE_MAIN_THREAD),0x8000)
 
 CC_WHITELIST-gcc     := 11 12 13 14 15 16
-CC_WHITELIST-clang   := 15 16 17 18 19 20 21
+# depend on Clang >= 16 for better C++20 support
+CC_WHITELIST-clang   := 16 17 18 19 20 21 22
 
 VERBOSE          = $(if $(CONFIG_VERBOSE),,@)
 verbcmd          = $(if $(CONFIG_VERBOSE),,@)$1 $2 $3
