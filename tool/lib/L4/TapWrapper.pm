@@ -25,6 +25,7 @@ our $wait_for_more = 0;
 our $test_description;
 our $expline;
 our $pid = -1;
+sub plugin_to_module { "L4::TapWrapper::Plugin::" . shift; }
 
 sub __load_module
 {
@@ -46,7 +47,7 @@ sub get_plugin
 {
   my $name = shift;
   my $arg = shift;
-  my $class = "L4::TapWrapper::Plugin::$name";
+  my $class = plugin_to_module($name);
   return __load_module($class, $arg);
 }
 
@@ -298,7 +299,7 @@ sub finalize {
           # We should not alter plain TAP output too much, so skip this when
           # using the TAPOutput plugin. In other cases we might want to know
           # which plugin added the reason
-          print $TAP_FD " ($class)" unless $class eq "L4::TapWrapper::Plugin::TAPOutput";
+          print $TAP_FD " ($class)" unless $class eq plugin_to_module("TAPOutput");
         }
       print $TAP_FD "\n";
     }
