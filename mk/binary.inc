@@ -543,7 +543,7 @@ default_stack_size = $(if $(if $(NO_DEFAULT_RELOC),,$(CONFIG_BID_STATIC_STACK)),
 CCXX_FLAGS += $(if $(CONFIG_FULL_PATH_NAMES_IN_BINARIES),,$(GCCPREFIXOPT))
 
 # can be overwritten to get the old mode
-CFLAGS_C99 ?= -std=gnu99
+CFLAGS_C99 ?= -std=gnu11
 
 ifneq ($(MODE),host)
 CFLAGS_L4_GENERIC += $(CARCHFLAGS) $(CCXX_FLAGS) $(GCCSTACKPROTECTOROPT)
