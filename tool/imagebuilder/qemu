@@ -3,12 +3,11 @@
 L4IMAGE="${OBJ_BASE}/source/tool/bin/l4image"
 MAKECONF="${OBJ_BASE}/source/tool/bin/makeconf"
 
-# Sets MAKECONF_ARCH
-if [[ -z "${ARCH}" || -z "${CPU}" ]]; then
-    . <("$MAKECONF" "$OBJ_BASE" ARCH CPU)
-    ARCH=${MAKECONF_ARCH}
-    CPU=${MAKECONF_CPU}
-fi
+. <("$MAKECONF" "$OBJ_BASE" ARCH CPU BITS)
+
+: ${ARCH:=${MAKECONF_ARCH}}; export ARCH
+: ${CPU:=${MAKECONF_CPU}}; export CPU
+: ${BITS:=${MAKECONF_BITS}}; export BITS
 
 L4_SYSTEM="${ARCH}_${CPU}"
 

@@ -12,7 +12,7 @@ MAKECONF="${OBJ_BASE}/source/tool/bin/makeconf"
 
 # Sets MAKECONF_{ARCH|CPU|...}
 source <("$MAKECONF" "$OBJ_BASE" \
-                     ARCH CPU \
+                     ARCH CPU BITS \
                      OBJCOPY \
                      QEMU_PATH QEMU_OPTIONS \
                      MODULE_SEARCH_PATH BUILDDIR_SEARCHPATH)
@@ -37,8 +37,9 @@ resolve_module() {
 }
 
 # Detect selected system
-: ${ARCH:=${MAKECONF_ARCH}}
-: ${CPU:=${MAKECONF_CPU}}
+: ${ARCH:=${MAKECONF_ARCH}}; export ARCH
+: ${CPU:=${MAKECONF_CPU}}; export CPU
+: ${BITS:=${MAKECONF_BITS}}; export BITS
 : ${MAKE:=make}
 : ${OBJCOPY:=${MAKECONF_OBJCOPY}}; export OBJCOPY
 L4_SYSTEM="${ARCH}_${CPU}"
