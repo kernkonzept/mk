@@ -8,7 +8,9 @@ use vars qw(@ISA @EXPORT);
 @ISA    = qw(Exporter);
 @EXPORT = qw(error check_syswrite check_sysread checked_sysseek
              filepos_get filepos_set sysreadz syswritez
-             rtrim_zerobytes alignto alignto_fd);
+             rtrim_zerobytes alignto alignto_fd copy_data);
+
+use constant COPY_CHUNK_SIZE => 64 * 1024;
 
 
 sub error
@@ -115,6 +117,25 @@ sub alignto_fd {
     }
 
   return $newpos;
+}
+
+# Copy $size bytes starting at file offset $pos of $ifd to the current
+# position of $ofd.
+sub copy_data
+{
+  my ($ifd, $ofd, $pos, $size) = @_;
+
+  filepos_set($ifd, $pos);
+
+  while ($size > 0)
+    {
+      my $chunk = $size < COPY_CHUNK_SIZE ? $size : COPY_CHUNK_SIZE;
+
+      check_sysread(sysread($ifd, my $buf, $chunk), $chunk);
+      check_syswrite(syswrite($ofd, $buf), $chunk);
+
+      $size -= $chunk;
+    }
 }
 
 
