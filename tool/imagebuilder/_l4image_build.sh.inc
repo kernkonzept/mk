@@ -42,11 +42,10 @@ resolve_module() {
 : ${BITS:=${MAKECONF_BITS}}; export BITS
 : ${MAKE:=make}
 : ${OBJCOPY:=${MAKECONF_OBJCOPY}}; export OBJCOPY
-L4_SYSTEM="${ARCH}_${CPU}"
 
 # Select base image and target image
 : ${ENTRY:=${E}}; export ENTRY
-BASE_IMAGE="${OBJ_BASE}/bin/${L4_SYSTEM}/plain/${BASE_IMAGE_FILENAME:-bootstrap}"
+BASE_IMAGE="$(resolve_module "${BASE_IMAGE_FILENAME:-bootstrap}")"
 
 : ${TARGET_IMAGE_PATH:=${BOOTSTRAP_OUTPUT_DIR:-${OBJ_BASE}/images}}
 : ${TARGET_IMAGE="${TARGET_IMAGE_PATH}/${TARGET_IMAGE_FILENAME//entry/${ENTRY}}"}
