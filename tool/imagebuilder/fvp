@@ -6,7 +6,7 @@ source <("$MAKECONF" "$OBJ_BASE" FVP_PATH FVP_OPTIONS)
 
 if [[ -z "$TARGET_IMAGE" ]]; then
     export TARGET_IMAGE="$(mktemp --tmpdir "bootstrap-qemu-XXXXXXXXXX.elf")"
-    trap 'rm $TARGET_IMAGE' EXIT
+    trap 'rm -f $TARGET_IMAGE' EXIT
 fi
 
 "$(dirname $0)/elfimage" || exit $?

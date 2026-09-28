@@ -39,7 +39,7 @@ if [[ -z "$TARGET_IMAGE" ]]; then
       *) suffix=;;
     esac
     export TARGET_IMAGE="$(mktemp --tmpdir "bootstrap-qemu-XXXXXXXXXX$suffix")"
-    trap 'rm $TARGET_IMAGE' EXIT
+    trap 'rm -f $TARGET_IMAGE' EXIT
 fi
 
 "$(dirname $0)"/"$QEMU_IMAGE_TYPE" || exit $?
