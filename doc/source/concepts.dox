@@ -194,6 +194,28 @@ Object capabilities are not hierarchical -- they have no children. The result
 of the map operation on an object capability is a copy of that capability in
 the object space of the destination task.
 
+\section l4re_concepts_reply_capability_space Reply capability space
+
+In addition to the spaces mentioned above, each task has a reply capability
+space if the kernel configuration option `EXPLICIT_REPLY_CAPS` is enabled (which
+is the default). This was not mentioned above because capability spaces do not
+allow mapping, granting, and unmapping like the other types of spaces do.
+
+When a thread in a task receives a call from an unknown partner (see
+#L4_SYSF_OPEN_WAIT) as it is typical in client/server scenarios, it implicitly
+receives a reply capability for being able to reply to the unkown partner’s
+call. Such a reply capability can be stored in the task’s reply capability space
+if available. In any case, each thread has its own storage for a single reply
+capability. The callee decides where a received reply capability is stored and
+which reply capability is used when replying. A reply capability can solely be
+used for replying and it can be used only once. For further details, see [L4
+Inter-Process Communication (IPC)](#l4re_concepts_ipc).
+
+For simple server threads, the implicit reply capability slot is usually
+sufficient for their purposes. In advanced cases, storing multiple reply
+capabilities in their reply capability spaces enables servers to process
+requests from multiple clients out-of-order.
+
 
 \page l4re_concepts_env_and_start Initial Environment and Application Bootstrapping
 

@@ -26,8 +26,7 @@ is deprecated.
 
 On the lowest abstraction level, IPC operations need the following arguments:
   - \ref l4re_concepts_descr_flags "syscall flags" describing the IPC mode,
-  - the \ref l4re_concepts_descr_capidx "capability selector" of the
-    communication partner,
+  - a \ref l4re_concepts_descr_capidx "capability selector",
   - a \ref l4re_concepts_descr_label "label",
   - a \ref l4re_concepts_descr_msgtag "message tag", and
   - a pair of \ref l4re_concepts_descr_timeouts "timeout" values.
@@ -65,23 +64,57 @@ define the intended IPC operation. The variants of l4_ipc() (see \ref
 l4_ipc_api) use the flags
   - to request the IPC phases (send-only IPC, receive-only IPC, IPC with send
     and receive phase), and
-  - to decide, if the reply capability (see \ref l4re_concepts_descr_capidx
+  - to decide, if a reply capability (see \ref l4re_concepts_descr_capidx
     "below") should be used instead of the capability of a dedicated kernel
     object as target for the send phase (*reply*), and
   - to decide, if receiving should wait for an incoming message from any
     possible sender (*open wait*) instead of a message from a dedicated
     sender (*closed wait*).
 
+The following table lists the possible combinations of syscall flags.
+Combinations that must not be used are marked by “—” in the operation column. A
+“*” indicates an arbitrary choice for the respective flag. The cap. sel. type
+column will be explained in the next section.
 
-\subsection l4re_concepts_descr_capidx Partner capability selector
-The *partner capability selector* defines a kernel object as partner of the IPC
-operation. Some kernel objects forward IPC to a userland thread.
+| direction | send | receive | open wait | reply | operation           | cap. sel. type |
+|:---------:|:----:|:-------:|:---------:|:-----:|:--------------------|:--------------:|
+|     —     |  0   |    0    |     *     |   *   | —                   |       —        |
+|    in     |  0   |    1    |     0     |   0   | closed wait         |     object     |
+|     ^     |  0   |    1    |     1     |   0   | open wait           |     reply      |
+|     ^     |  0   |    *    |     *     |   1   | —                   |       —        |
+|    out    |  1   |    0    |     0     |   0   | send                |     object     |
+|     ^     |  1   |    0    |     0     |   1   | reply               |     reply      |
+|     ^     |  *   |    0    |     1     |   *   | —                   |       —        |
+| out & in  |  1   |    1    |     0     |   0   | call an object      |     object     |
+|     ^     |  1   |    1    |     0     |   1   | call a caller       |     reply      |
+|     ^     |  1   |    1    |     1     |   0   | send and open wait  |     object     |
+|     ^     |  1   |    1    |     1     |   1   | reply and open wait |     reply      |
 
-Basically an object capability is represented by #l4_cap_idx_t where the bits
-starting from #L4_CAP_SHIFT are used as index into the local capability table
-of the current address space.
+When a call rendezvous with an open wait (and only in that case), the callee
+receives a *reply capability*. The received reply capability is stored in the
+thread-local implicit reply capability slot or in the callee task’s [reply
+capability space](#l4re_concepts_reply_capability_space). A reply capability
+allows the callee to answer the respective call without knowing the particular
+caller. It can be used only once.
 
-Specifying #L4_INVALID_CAP as target for an IPC operation is equivalent to
+
+\subsection l4re_concepts_descr_capidx Capability Selector
+
+Depending on the syscall flags, the capability selector defines the
+communication partner or where to store a received reply capability. Also
+depending on the syscall flags, it refers to an object capability or a reply
+capability.
+
+
+In any case, a capability selector is represented by #l4_cap_idx_t. It is either
+the special value #L4_INVALID_CAP, or a capability index shifted by
+#L4_CAP_SHIFT identifying a capability slot in the object or reply capability
+space of the current address space.
+
+For operations stating “object” in the cap. sel. type column in the table above,
+the capability selector refers to an object capability defining the partner of
+the operation. Note that some kernel objects forward IPC to a userland thread.
+With these operations, using #L4_INVALID_CAP is equivalent to
 specifying a thread capability of the current thread with full permissions.
 As a result, the userland thread either communicates with its corresponding
 kernel thread object (if #L4_PROTO_THREAD is specified as protocol value,
@@ -91,14 +124,21 @@ will be performed and the send phase and the receive phase will block until the
 corresponding timeout has expired, see \ref l4re_concepts_descr_timeouts
 "below".
 
-A special partner is defined by the *reply capability*. Since it would
-be impractical (and a security flaw) to always pass an explicit object
-capability to reply to for each IPC, the kernel generates an implicit one that
-can be used for just that purpose if the IPC contains an **open wait** phase.
-The reply capability is valid after a receive phase and points to the kernel
-object that sent the IPC just received. It can be used only once. The reply
-capability is selected by setting the #L4_SYSF_REPLY flag, see \ref
-l4re_concepts_descr_flags "above".
+For operations stating “reply” in the cap. sel. type column in the table above,
+the capability selector refers to a reply capability slot. The special value
+#L4_INVALID_CAP refers to the implicit reply capability slot of the invoking
+thread. When the send and reply flag are set, the referenced reply capability
+defines the partner of the operation. IPC via a reply capabilites is always
+between userland threads. When the receive and open wait flag are set, a
+potentially received reply capability is stored in the referenced reply
+capability slot. Note that in case of a reply and open wait operation, the same
+reply capability slot is used for looking up the partner and for storing a
+potentially received reply capability.
+
+The send and open wait operation is a special case, because it needs an object
+capability for sending and it might receive a reply capability. Since slots for
+both cannot be specified at the same time, the reply capability slot for
+receiving defaults to the implicit reply capability slot of the invoking thread.
 
 
 \subsection l4re_concepts_descr_label IPC Label
@@ -213,7 +253,7 @@ In certain cases it also makes sense to specify an IPC timeout different from
 \note Special care is required if a finite timeout for the receive phase of an
       IPC call is specified: The IPC receive operation could abort before the
       partner was able to send the reply message. Under certain circumstances
-      the partner may still have the temporary reply capability to the calling
+      the partner may still have a temporary reply capability to the calling
       thread and may use this capability to reply to the caller at a later,
       unexpected time specifying an arbitrary IPC label. This case is relevant
       for servers which call another, possibly untrusted, server while serving a
@@ -508,14 +548,14 @@ special treatment of this particular client, performs the computation on
 what exactly it computes). It sets up the tag in the usual way, but probably
 needs to pass no label, as the client knows who it is talking to.
 
-For the reply, the server makes use the reply capability (see
-\ref l4re_concepts_descr_capidx "above"). Since the client sent the last IPC to
-the server, the reply capability will point to it. So when the server calls
-l4_ipc() with the computed result in the message registers and using the reply
-capability as target, the kernel knows to forward this to the client's thread.
-The kernel copies the message registers from the server's UTCB to the client's
-UTCB, and the client's l4_ipc() system call, which is still stuck in the
-receive phase, is returned with the tag.
+For the reply, the server makes use of the reply capability it received during
+the open wait (see \ref l4re_concepts_descr_capidx "above"). Since the client
+sent the IPC to the server, the reply capability will point to it. So when the
+server calls l4_ipc() with the computed result in the message registers and
+using a reply capability as target, the kernel knows to forward this to the
+client's thread. The kernel copies the message registers from the server's UTCB
+to the client's UTCB, and the client's l4_ipc() system call, which is still
+stuck in the receive phase, is returned with the tag.
 
 The client looks at the tag and then the message registers for its wanted
 result and the example is concluded.
