@@ -50,8 +50,8 @@ include $(L4DIR)/mk/binary.inc
 ifneq ($(SYSTEM),) # if we are a system, really build
 
 # Functionality for device-tree file handling
-TARGET_DTB      = $(patsubst %.dts,%.dtb,$(SRC_DTS))
-TARGET_DTBO     = $(patsubst %.dtso,%.dtbo,$(SRC_DTS))
+TARGET_DTB      = $(patsubst %.dts,%.dtb,$(filter %.dts, $(SRC_DTS)))
+TARGET_DTBO     = $(patsubst %.dtso,%.dtbo,$(filter %.dtso, $(SRC_DTS)))
 TARGET         += $(TARGET_DTB) $(TARGET_DTBO)
 INSTALL_TARGET += $(TARGET)
 DEPS           += $(foreach file,$(TARGET_DTB) $(TARGET_DTBO),$(call BID_dot_fname,$(file)).d)
