@@ -61,6 +61,13 @@ fi
 # Check if we need to trigger the build system due to RAM_BASE/PLATFORM change
 "$(dirname $0)/_platform_rebuild.pl" "$BASE_IMAGE" || exit 1
 
+# If the correct bootstrap image didn't didn't exist before
+# _platform_rebuild.pl, then BASE_IMAGE is empty. _platform_rebuild.pl should
+# have build it in the meantime, so let's try finding it again.
+if [[ -z "$BASE_IMAGE" ]]; then
+    BASE_IMAGE="$(resolve_module "${BASE_IMAGE_FILENAME:-bootstrap}")"
+fi
+
 # Make sure the target directory exists.
 mkdir -p "$(dirname "$TARGET_IMAGE")"
 
