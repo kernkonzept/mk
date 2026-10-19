@@ -116,14 +116,11 @@ my $kunit_debug = $ENV{TEST_KUNIT_DEBUG} || 0;
 my $kunit_record = $ENV{TEST_KUNIT_RECORD} || 0;
 my $test_platform_allow = $ENV{TEST_PLATFORM_ALLOW} || "";
 my $test_platform_deny = $ENV{TEST_PLATFORM_DENY} || "";
-my $platform = $ENV{PT};
+my $platform_type = $ENV{PT};
 
 my $more_test_args = "";
 
-$platform = L4::Makeconf::get($obj_base,"PLATFORM_TYPE") unless defined $platform;
-
-print STDERR "Warning: Unable to determine platform type.\n"
-  unless defined $platform;
+$platform_type //= L4::Makeconf::get($obj_base,"PLATFORM_TYPE");
 
 $single_test_target = "invalid_in_bundle_mode" if defined $ENV{BUNDLE_ENV};
 
@@ -165,6 +162,30 @@ for my $envkey (keys %ENV)
     $hwconfig->{$key} = $value;
     $hwconfig_altered = 1;
   }
+
+# Use the PLATFORM_TYPE as fallback for PLATFORM
+if (!defined($hwconfig->{PLATFORM}) || $hwconfig->{PLATFORM} eq "")
+  {
+    if (defined($platform_type))
+      {
+        $hwconfig->{PLATFORM} = $platform_type;
+        $hwconfig_altered = 1;
+
+        print "HWCONFIG: Falling back to $platform_type as PLATFORM\n";
+      }
+    else
+      {
+        $hwconfig->{PLATFORM} = "?";
+        print STDERR "Warning: Unable to determine platform type.\n";
+      }
+  }
+
+# Determine platform from HWCONFIG, which in turn might be PT/PLATFORM_TYPE
+# unless configured otherwise.
+my $platform = $hwconfig->{PLATFORM};
+
+# Provide PT/PLATFORM_TYPE as separate key
+$hwconfig->{COMPILE_TIME_PLATFORM} = $platform_type;
 
 sub exit_skip
 {
@@ -439,7 +460,6 @@ if ($ned_cfg and $modlist_info->{roottask}{name} eq 'moe')
         $testenv->{BASE_NED_CFG} =~ s,.*/,,;
       }
     $testenv->{REQUIRED_MODULES} = \@mod_list;
-    $testenv->{FULLCONFIG}{PLATFORM} = $platform;
 
     # Some more assembly required for L4Linux tests.
     if ($test_mode eq 'l4linux')
