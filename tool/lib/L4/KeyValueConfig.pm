@@ -36,4 +36,10 @@ sub parse {
     @_;
 }
 
+sub dump {
+  my ($kv) = @_;
+
+  return join "", map { $_ . "=" . $kv->{$_} . "\n" } keys %$kv;
+}
+
 1;

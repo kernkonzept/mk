@@ -57,6 +57,15 @@ sub readconfig {
   return { L4::KeyValueConfig::parse(0, @lines) };
 }
 
+sub writeconfig {
+  my $file = shift;
+  my $kv = shift;
+
+  open(my $fh, ">", $file);
+  print $fh L4::KeyValueConfig::dump($kv);
+  close($fh);
+}
+
 sub generate_test_env {
   my $hwconfig_file     = shift;
   my $fiascoconfig_file = shift;
@@ -64,15 +73,23 @@ sub generate_test_env {
   my $hwconfig;
   my $fiascoconfig;
 
-  my $testenv = {};
-
   # Add hwconfig if present
-  $hwconfig = $testenv->{HWCONFIG} =
-    readconfig($hwconfig_file, "Hwconfig") if $hwconfig_file;
+  $hwconfig = readconfig($hwconfig_file, "Hwconfig") if $hwconfig_file;
 
   # Add fiasco config if present
-  $fiascoconfig = $testenv->{FIASCOCONFIG} =
-    readconfig($fiascoconfig_file, "Fiasco config") if $fiascoconfig_file;
+  $fiascoconfig = readconfig($fiascoconfig_file, "Fiasco config")
+    if $fiascoconfig_file;
+
+  return generate_test_env_fromhash($hwconfig, $fiascoconfig);
+}
+
+sub generate_test_env_fromhash {
+  my ($hwconfig, $fiascoconfig) = @_;
+
+  my $testenv = {};
+
+  $testenv->{HWCONFIG} = $hwconfig if $hwconfig;
+  $testenv->{FIASCOCONFIG} = $fiascoconfig if $hwconfig;
 
   my $fullconfig = $testenv->{FULLCONFIG} = {};
 

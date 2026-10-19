@@ -139,6 +139,33 @@ my $tmpdir      = $ENV{TEST_TMPDIR};
 make_path($tmpdir);
 push(@modulepaths, $tmpdir);
 
+### Prepare HWCONFIG
+my $hwconfig = {};
+my $hwconfig_altered = 0;
+
+# Parse hwconfig if present
+$hwconfig = L4::TestEnvLua::readconfig(
+    $hwconfig_file,
+    "Hwconfig"
+) if $hwconfig_file;
+
+# Get overrides for hwconfig from the environment
+for my $envkey (keys %ENV)
+  {
+    next if $ENV{$envkey} eq "";
+    next unless $envkey =~ /^HWCONFIG_/;
+
+    my $key = $envkey;
+    $key =~ s/^HWCONFIG_//;
+
+    my $value = $ENV{$envkey};
+
+    printf "HWCONFIG: Using %s=%s from environment\n", $key, $value;
+
+    $hwconfig->{$key} = $value;
+    $hwconfig_altered = 1;
+  }
+
 sub exit_skip
 {
   print shift;
@@ -343,7 +370,17 @@ if ($ned_cfg and $modlist_info->{roottask}{name} eq 'moe')
     open($test_env_cfg, '>', $test_env_cfg_name)
       or confess "Cannot create configuration file $test_env_cfg_name.";
 
-    my $testenv = L4::TestEnvLua::generate_test_env($hwconfig_file, $fiascoconfig_file);
+    # Parse fiasco config if present
+    my $fiascoconfig;
+    $fiascoconfig = L4::TestEnvLua::readconfig(
+      $fiascoconfig_file,
+      "Fiasco config"
+    ) if $fiascoconfig_file;
+
+    my $testenv = L4::TestEnvLua::generate_test_env_fromhash(
+      $hwconfig,
+      $fiascoconfig,
+    );
 
     $testenv->{COVERAGE} = 'y' if $coverage;
     $testenv->{BUNDLE_ENV} = {};
@@ -509,6 +546,16 @@ $tt->process($modlist_template, $modlist_info, $test_modules_name)
 # run any potential pre-test setup scripts
 if ($test_setup)
   {
+    # Provide TEST_HWCONFIG with overwrites to TEST_SETUP script.
+    if ($hwconfig && $hwconfig_altered)
+      {
+        $hwconfig_file = "$tmpdir/hwconfig.txt";
+        L4::TestEnvLua::writeconfig($hwconfig_file, $hwconfig);
+      }
+
+    local %ENV;
+    $ENV{TEST_HWCONFIG} = $hwconfig_file;
+
     system($test_setup);
     if ($?)
       {
