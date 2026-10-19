@@ -36,7 +36,8 @@ my $modlist_info = {
   entryname => "maketest",
   kernel => {
     name => $ENV{"KERNEL_${arch}"} || $ENV{KERNEL} || 'fiasco',
-    args => join ' ', grep { defined } $ENV{KERNEL_ARGS}, $ENV{TEST_KERNEL_ARGS}
+    args => join ' ', map { exists($ENV{$_}) ? $ENV{$_} : () }
+                      qw(KERNEL_ARGS TEST_KERNEL_ARGS),
   },
   rootpager => { name => $ENV{SIGMA0} || "sigma0" },
   bootstrap => {
