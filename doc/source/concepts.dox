@@ -208,8 +208,8 @@ call. Such a reply capability can be stored in the task’s reply capability spa
 if available. In any case, each thread has its own storage for a single reply
 capability. The callee decides where a received reply capability is stored and
 which reply capability is used when replying. A reply capability can solely be
-used for replying and it can be used only once. For further details, see [L4
-Inter-Process Communication (IPC)](#l4re_concepts_ipc).
+used for replying and it can be used only once. For further details, see \ref
+l4re_concepts_ipc.
 
 For simple server threads, the implicit reply capability slot is usually
 sufficient for their purposes. In advanced cases, storing multiple reply

@@ -4,10 +4,9 @@
 \page l4re_concepts_abi Kernel ABI
 
 This section details the binary representation of the IPC interface of the
-kernel. It accompanies the [L4 Inter-Process Communication
-(IPC)](#l4re_concepts_ipc) section. The details presented here are usually not
-relevant when developing %L4Re applications and can therefore be skipped by many
-readers.
+kernel. It accompanies the \ref l4re_concepts_ipc section. The details presented
+here are usually not relevant when developing %L4Re applications and can
+therefore be skipped by many readers.
 
 \note The kernel ABI is subject to change. Please use the API instead of relying
       on particular binary representations.
@@ -24,8 +23,7 @@ The above indications may be combined.
 
 \section l4re_concepts_abi_capsel Capability selector and syscall flags
 
-See [partner capability selector](#l4re_concepts_descr_capidx) and [syscall
-flags](#l4re_concepts_descr_flags).
+See \ref l4re_concepts_descr_capidx and \ref l4re_concepts_descr_flags.
 
 The kernel reads and interprets all the fields ([in]).
 
@@ -51,13 +49,13 @@ The kernel reads and interprets all the fields ([in]).
 - Bit 11 [in] `special`: Set when using #L4_INVALID_CAP, otherwise unset.
 
 - Bits 12…MSB [in]: Capability index if `special` is unset, otherwise all those
-  bits should be one (see #L4_INVALID_CAP, [partner capability
-  selector](#l4re_concepts_descr_capidx) and #l4_cap_idx_t).
+  bits should be one (see #L4_INVALID_CAP, \ref l4re_concepts_descr_capidx and
+  #l4_cap_idx_t).
 
 
 \section l4re_concepts_abi_label Label
 
-See [IPC label](#l4re_concepts_descr_label).
+See \ref l4re_concepts_descr_label.
 
 When IPC is sent via a thread capability, the label is copied to the receiver
 unchanged ([cpy]).
@@ -77,9 +75,9 @@ capability ([out]):
 
 \section l4re_concepts_abi_msgtag Message tag
 
-See [IPC message tag](#l4re_concepts_descr_msgtag). Note that, for a message tag
-returned by the kernel, if the error flag is set, all other contents of the
-message tag is undefined.
+See \ref l4re_concepts_descr_msgtag. Note that, for a message tag returned by
+the kernel, if the error flag is set, all other contents of the message tag is
+undefined.
 
      MSB            16     15         14         13         12     11   [6]    6 5    [6]    0  bits
     ┌─────────────────┬──────────┬──────────┬──────────┬──────────┬─────────────┬─────────────┐
@@ -112,7 +110,7 @@ message tag is undefined.
 
 \section l4re_concepts_abi_timeouts  Timeouts
 
-See [IPC timeouts](#l4re_concepts_descr_timeouts) and #l4_timeout_t.
+See \ref l4re_concepts_descr_timeouts and #l4_timeout_t.
 
 The kernel reads and interprets all the fields ([in]).
 
@@ -162,7 +160,7 @@ bit 15.
 
 \section l4re_concepts_abi_utcb User-level thread control block (UTCB)
 
-See [User-level thread control block (UTCB)](#l4re_concepts_descr_utcb).
+See \ref l4re_concepts_descr_utcb.
 
          l4_utcb_mr()                        l4_utcb_br()                    l4_utcb_tcr()
         l4_msg_regs_t                       l4_buf_regs_t                   l4_thread_regs_t
@@ -181,12 +179,12 @@ See [User-level thread control block (UTCB)](#l4re_concepts_descr_utcb).
     │ message words │ message items │        │
     └───────────────┴───────────────┴────────┘
 
-- Words 0…62 `MRs`: See [IPC Message registers](#l4re_concepts_descr_mrs) and
-  #l4_utcb_mr(). The number of message registers is defined by
-  #L4_UTCB_GENERIC_DATA_SIZE. The actually used message registers are defined by
-  `words` and `items` in the [message tag](#l4re_concepts_abi_msgtag). The
-  layout of a typed message item varies depending on being an input or output
-  value, see [typed message items](#l4re_concepts_abi_items).
+- Words 0…62 `MRs`: See \ref l4re_concepts_descr_mrs and #l4_utcb_mr(). The
+  number of message registers is defined by #L4_UTCB_GENERIC_DATA_SIZE. The
+  actually used message registers are defined by `words` and `items` in the
+  [message tag](#l4re_concepts_abi_msgtag). The layout of a typed message item
+  varies depending on being an input or output value, see \ref
+  l4re_concepts_abi_items.
 
 - Word 63 [(out)]: Depending on the architecture, this word may be used by the
   kernel to signify the position of a thread’s UTCB in memory. See
@@ -194,31 +192,26 @@ See [User-level thread control block (UTCB)](#l4re_concepts_descr_utcb).
   writes this word when kernel-user memory is set up as UTCB while binding a
   thread to a task; see #l4_thread_control_bind(), #L4::Thread::Attr::bind().
 
-- Word 64 [in] `BDR`: See [buffer descriptor
-  register](#l4re_concepts_abi_utcb_bdr).
+- Word 64 [in] `BDR`: See \ref l4re_concepts_abi_utcb_bdr.
 
-- Words 65…122 [in] `BRs`: See [IPC Buffer Registers](#l4re_concepts_descr_brs),
-  [receive items](#l4re_concepts_abi_items_receive) and
-  #l4_utcb_br()->[br](#l4_buf_regs_t::br). The number of buffer registers is
-  defined by #L4_UTCB_GENERIC_BUFFERS_SIZE.
+- Words 65…122 [in] `BRs`: See \ref l4re_concepts_descr_brs, \ref
+  l4re_concepts_abi_items_receive and #l4_utcb_br()->[br](#l4_buf_regs_t::br).
+  The number of buffer registers is defined by #L4_UTCB_GENERIC_BUFFERS_SIZE.
 
-- Word 123 [out] `error code`: See [IPC Thread Control
-  Registers](#l4re_concepts_descr_tcrs) and
+- Word 123 [out] `error code`: See \ref l4re_concepts_descr_tcrs and
   #l4_utcb_tcr()->[error](#l4_thread_regs_t::error).
 
 - Word 124 [(out)] `free marker`: Written by the kernel, but not necessarily
-  during IPC. See [IPC Thread Control Registers](#l4re_concepts_descr_tcrs) and
+  during IPC. See \ref l4re_concepts_descr_tcrs and
   #l4_utcb_tcr()->[free_marker](#l4_thread_regs_t::free_marker).
 
-- Word 125…128 `TLS`: Ignored and left untouched by the kernel. See [IPC Thread
-  Control Registers](#l4re_concepts_descr_tcrs) and
-  #l4_utcb_tcr()->[user](#l4_thread_regs_t::user).
+- Word 125…128 `TLS`: Ignored and left untouched by the kernel. See \ref
+  l4re_concepts_descr_tcrs and #l4_utcb_tcr()->[user](#l4_thread_regs_t::user).
 
 
 \subsection l4re_concepts_abi_utcb_bdr Buffer descriptor register
 
-See [IPC Buffer Descriptor Register](#l4re_concepts_descr_bdr) and
-#l4_utcb_br()->[bdr](#l4_buf_regs_t::bdr).
+See \ref l4re_concepts_descr_bdr and #l4_utcb_br()->[bdr](#l4_buf_regs_t::bdr).
 
      MSB      25     24     23  [9]  15 14    [5]     10 9     [5]      5 4     [5]      0  bits
     ┌───────────┬──────────┬───────────┬────────────────┬────────────────┬────────────────┐
@@ -248,7 +241,7 @@ kind of item. However, for the first word, the following properties are shared:
   except for void items.
 
 There are three sub-types of typed message items: *send items*, *receive items*,
-and *return items*; see [Message Items](#l4_msgitem_api).
+and *return items*; see \ref l4_msgitem_api.
 
 Many typed items make use of flexpages, therefore, these are described before
 the various kinds of typed items. Note that flexpages are also used outside of
@@ -258,7 +251,7 @@ typed message items, e.g., for #L4::Task::unmap().
 \subsection l4re_concepts_abi_items_flexpages Flexpages
 
 A flexpage consists of a single word and, except for some special values,
-describes a range in an address space, see [flex pages](#l4_fpage_api).
+describes a range in an address space, see \ref l4_fpage_api.
 
 The general layout is defined as follows:
 
@@ -318,7 +311,7 @@ If not void, the layout of the first word is defined as follows:
 - Bits MSB­..12 (`hot_spot`): Send base (also called hot spot). See
   #L4::Ipc::Snd_fpage::snd_base().
 
-For details, see [IPC Message registers](#l4re_concepts_descr_mrs).
+For details, see \ref l4re_concepts_descr_mrs.
 
 
 \subsection l4re_concepts_abi_items_receive Receive items
