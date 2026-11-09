@@ -102,7 +102,19 @@ $L4::TapWrapper::test_description = $ENV{TEST_DESCRIPTION} || ($testfile ? "run 
 $L4::TapWrapper::harness_active = !!$ENV{HARNESS_ACTIVE};
 
 my $workdir = $ENV{TEST_WORKDIR} || tempdir("/tmp/tap-wrapper-workdir-XXXXXXXX", CLEANUP => 1);
-my ($name, $path, $suffix) = fileparse($testfile || $target || "", ".t");
+
+my $test_path = $testfile || $target || "";
+
+
+L4::TapWrapper::fail_test("TEST_TESTFILE (or alternatively TEST_TARGET) must".
+                          " not be an absolute path")
+  if $test_path =~ m,^/,;
+
+L4::TapWrapper::fail_test("TEST_TESTFILE (or alternatively TEST_TARGET) must".
+                          " not contain a path segment '..'")
+  if $test_path =~ m,(^|/)\.\.?(/|$),;
+
+my ($name, $path, $suffix) = fileparse($test_path, ".t");
 my $testworkdir   = "$workdir/$path$name";
 my $logdir        = "$testworkdir/log"; # tap-wrapper logs
 my $rundir        = "$testworkdir/run"; # run_test modules.list, ned files, etc.

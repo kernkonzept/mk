@@ -347,7 +347,7 @@ sub fail_test
   my $exit_code = shift || 1;
   chomp $long_msg;
 
-  print $TAP_FD <<EOT;
+  print { defined($TAP_FD) ? $TAP_FD : \*STDOUT } <<EOT;
 1..1
 not ok 1 - execution - exit code $exit_code - $L4::TapWrapper::test_description
 # Test-uuid: 00000000-0000-0000-0000-000000000000
@@ -378,7 +378,7 @@ sub exit_test
       or $harness_active);       # run under 'prove'
 
 
-  close($TAP_FD);
+  close($TAP_FD) if defined $TAP_FD;
   exit($exit_code);
 }
 
