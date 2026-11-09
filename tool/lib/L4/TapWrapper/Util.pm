@@ -8,7 +8,7 @@ use POSIX;
 
 use vars qw(@ISA @EXPORT);
 @ISA    = qw(Exporter);
-@EXPORT = qw(kill_ps_tree);
+@EXPORT = qw(kill_ps_tree strip_ansi);
 
 sub cat {
   my $file = shift;
@@ -164,6 +164,14 @@ sub do_interactive
   # Enable canonical mode again (part of which is line buffering)
   $termios->setlflag($old_lflag);
   $termios->setattr($fdno_stdin, &POSIX::TCSADRAIN);
+}
+
+# Strip all ANSI sequences
+sub strip_ansi {
+    my @out = map {
+        defined ? s/\e\[[0-?]*[ -\/]*[@-~]|\e\([0-9A-Za-z]//gr : undef
+    } @_;
+    return wantarray ? @out : $out[0];
 }
 
 1;

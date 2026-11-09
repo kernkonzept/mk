@@ -3,6 +3,8 @@ package L4::TapWrapper::Plugin::MatchLine;
 use strict;
 use warnings;
 
+use L4::TapWrapper::Util qw(strip_ansi);
+
 use parent 'L4::TapWrapper::Plugin';
 
 sub new {
@@ -36,7 +38,7 @@ sub process_any {
 
   chomp $line;
 
-  $line =~ s/\e\[[\d,;\s]*[A-Za-z]//gi; # strip color escapes
+  $line = strip_ansi($line); # strip color escapes
 
   if ($line =~ $self->{goodre})
     {

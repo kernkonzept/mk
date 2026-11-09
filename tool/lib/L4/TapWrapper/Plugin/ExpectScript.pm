@@ -7,6 +7,7 @@ use POSIX ":sys_wait_h";
 
 use IPC::Open2;
 
+use L4::TapWrapper::Util qw(strip_ansi);
 use parent 'L4::TapWrapper::Plugin';
 
 sub new {
@@ -86,7 +87,7 @@ sub process_any {
 
   return unless defined $self->{expect_proc};
 
-  $line =~ s/\e\[[\d,;\s]*[A-Za-z]//gi; #Strip color escapes
+  $line = strip_ansi($line); #Strip color escapes
   $line =~ s/\r+(\n)?$/$1/g; # Remove \r, keep \n if present
 
   print { $self->{expect_proc}{stream} } $line;

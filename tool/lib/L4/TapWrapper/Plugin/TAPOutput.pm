@@ -4,6 +4,7 @@ use strict;
 use warnings;
 
 use File::Basename;
+use L4::TapWrapper::Util qw(strip_ansi);
 
 use parent 'L4::TapWrapper::Plugin';
 
@@ -72,7 +73,7 @@ sub process_any {
   my $line = shift;
 
   # strip color escapes
-  $line =~ s/\e\[[\d,;\s]+[A-Za-z]//gi;
+  $line = strip_ansi($line);
 
   return if $self->handle_block_end($line);
   return if $self->handle_block_start($line);

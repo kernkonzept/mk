@@ -7,6 +7,7 @@ use File::Basename;
 
 use parent 'L4::TapWrapper::Plugin';
 use L4::TapWrapper;
+use L4::TapWrapper::Util qw(strip_ansi);
 
 sub new {
   my $type = shift;
@@ -37,7 +38,7 @@ sub check_start {
   $self->{in_block} = 1;
   $self->{block_prefix} = $1;
   $self->{cur_tag} = $2;
-  $self->{block_info} = ($3 =~ s/\e\[[\d,;\s]+[A-Za-z]//gir); # strip color escapes
+  $self->{block_info} = strip_ansi($3); # strip color escapes
   $self->start_block($self->{block_info});
 
   # Inhibit unless we already do because we require more blocks
@@ -57,6 +58,8 @@ sub check_end {
 
 sub has_tag {
   my $self = shift;
+
+  $self->{clean_line} = strip_ansi($self->{clean_line});
 
   # The following line contains a regular expression. Regular expressions
   # are used to match parts of a string based on rules. They also allow
@@ -89,7 +92,6 @@ sub has_tag {
   #
   # https://perldoc.perl.org/perlretut
   # https://perldoc.perl.org/perlrecharclass#Special-Characters-Inside-a-Bracketed-Character-Class
-  $self->{clean_line} =~ s/\e\[[\d,;\s]+[A-Za-z]//gi;
   if ($self->{clean_line} =~ s/^.*@@ ($self->{tagre})(?:\[([^]]*)\])?://)
     {
       $self->{cur_tag} = $1;

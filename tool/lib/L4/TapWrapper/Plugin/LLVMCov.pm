@@ -18,6 +18,7 @@ use IO::Handle;
 
 use parent 'L4::TapWrapper::Plugin::TagPluginBase';
 use L4::TapWrapper;
+use L4::TapWrapper::Util qw(strip_ansi);
 use L4::Makeconf;
 
 my $cxx = L4::Makeconf::get("$ENV{OBJ_BASE}", "CXX");
@@ -83,7 +84,7 @@ sub process_mine
 {
   my $self = shift;
   my $check_data = shift;
-  $check_data =~ s/\e\[[\d,;\s]+[A-Za-z]//gi; # strip color escapes
+  $check_data = strip_ansi($check_data); # strip color escapes
 
   if ($check_data =~ /PATH '(.*)' (ZSTD|ZDATA) '(.+)'/)
     {
