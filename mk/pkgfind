@@ -3,8 +3,10 @@
 =head1 pkgfind
 
 This tool finds l4re packages in the provided source dir by looking for a
-`Control` file and sorting out those that are marked 'obsolete' or 'broken'
-by a respective file.
+`Control` file. Packages and projects (directories with a Makefile including
+`mk/project.mk`, e.g. multi-package repositories) marked 'obsolete' or 'broken'
+by a respective file are skipped including all packages below them, unless
+they are the source dir itself.
 
 Args:
 
@@ -26,12 +28,29 @@ my ($p, $max) = @ARGV;
 
 my %hits;
 
+sub is_prj_dir
+{
+  my $d = shift;
+  open(my $fh, '<', "$d/Makefile") or return 0;
+  while (<$fh>) {
+    return 1 if /^\s*include\s+\$\(L4DIR\)\/mk\/project\.mk/;
+  }
+  return 0;
+}
+
 sub find_dir
 {
   my $m = shift;
   my $dx = catdir(@_);
   my $d = catdir($p, @_);
-  if (-f "$d/Control" and ! -f "$d/obsolete" and ! -f "$d/broken") {
+  my $pkg = -f "$d/Control";
+  # The source dir itself is never skipped to allow building packages and
+  # projects marked broken or obsolete directly in their directory.
+  if (@_ and ($pkg or is_prj_dir($d))
+      and (-f "$d/obsolete" or -f "$d/broken")) {
+    return;
+  }
+  if ($pkg) {
     $hits{$dx} = 1;
     return;
   }
