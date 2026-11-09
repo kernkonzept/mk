@@ -214,10 +214,10 @@ if ($hard_timeout)
     alarm $hard_timeout;
   }
 
-print $L4::TapWrapper::TAP_FD "TAP Version 13\n";
 my $repeat = $ENV{TEST_EXPECTED_REPEAT};
 if (looks_like_number($repeat) and $repeat == 0 and $L4::TapWrapper::harness_active)
   {
+    print $L4::TapWrapper::TAP_FD "TAP version 13\n";
     print $L4::TapWrapper::TAP_FD "1..0 # SKIP ";
     print $L4::TapWrapper::TAP_FD "infinite test cannot be run when harness is active\n";
     L4::TapWrapper::exit_test(69);
@@ -463,6 +463,7 @@ if (!$test_eof)
     $test_proc_exit_code = $? >> 8;
     if ($test_proc_exit_code == 69)
       {
+        print $L4::TapWrapper::TAP_FD "TAP version 13\n";
         print $L4::TapWrapper::TAP_FD "1..0 # SKIP $test_lastline\n";
         L4::TapWrapper::exit_test($test_proc_exit_code);
       }

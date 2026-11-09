@@ -248,17 +248,25 @@ sub finalize {
   kill_ps_tree($pid);
   $pid = -1; # clean behaviour on multiple calling
 
+  my @all_tap_lines;
   my @all_log_lines;
   my $plan_found = 0;
   my @plan_explanations;
   my $plan_sum = 0;
+  my $tap_version_max = undef;
   foreach my $pluggable (@_plugins, @_filters)
     {
       my ($tap_lines, $log_lines) = $pluggable->finalize();
 
+      my $tap_version = undef;
+
       foreach (@$tap_lines)
         {
-          if (/^1\.\.([0-9]+)(.*)$/)
+          if (/^TAP\s+version\s+(\d+)\s*\z/i)
+            {
+              $tap_version = $1 if !$tap_version || $tap_version < $1;
+            }
+          elsif (/^1\.\.([0-9]+)(.*)$/)
             {
               $plan_sum += $1;
               $plan_found = 1;
@@ -274,9 +282,16 @@ sub finalize {
               # carriage returns in TAP lead to problems down the line
               s/\r+\n/\n/g;
 
-              print $TAP_FD $_ if $print_to_tap_fd;
+              push @all_tap_lines, $_;
             }
         }
+
+      # default to 13 for missing TAP version
+      $tap_version //= 13;
+
+      # Find max tap version for combined TAP
+      $tap_version_max = $tap_version
+        if !$tap_version_max || $tap_version_max < $tap_version;
 
       my $tag = ref($pluggable);
       $tag =~ s/^L4::TapWrapper::/@/;
@@ -307,8 +322,19 @@ sub finalize {
       close($fh) if $harness_active;
     }
 
+  # No TAP printing, return early.
   return unless $print_to_tap_fd;
 
+  # Print TAP version (default to 13 if no TAP block)
+  $tap_version_max //= 13;
+  print $TAP_FD "TAP version ${tap_version_max}\n";
+
+  # Print all collected tap lines
+  print $TAP_FD @all_tap_lines;
+
+  # If we can't use the plan explanation because we have multiple plan
+  # explanations or if at least one test ran in any of the TAP blocks, we
+  # convert these plan explanations into skipped test points
   if ($plan_sum != 0 || scalar(@plan_explanations) > 1)
     {
       foreach my $exp (@plan_explanations)
@@ -322,6 +348,7 @@ sub finalize {
       @plan_explanations = ();
     }
 
+  # Saw a plan
   if ($plan_found)
     {
       print $TAP_FD "1..$plan_sum";
@@ -348,6 +375,7 @@ sub fail_test
   chomp $long_msg;
 
   print { defined($TAP_FD) ? $TAP_FD : \*STDOUT } <<EOT;
+TAP version 13
 1..1
 not ok 1 - execution - exit code $exit_code - $L4::TapWrapper::test_description
 # Test-uuid: 00000000-0000-0000-0000-000000000000
