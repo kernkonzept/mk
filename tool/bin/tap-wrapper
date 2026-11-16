@@ -112,7 +112,7 @@ L4::TapWrapper::fail_test("TEST_TESTFILE (or alternatively TEST_TARGET) must".
 
 L4::TapWrapper::fail_test("TEST_TESTFILE (or alternatively TEST_TARGET) must".
                           " not contain a path segment '..'")
-  if $test_path =~ m,(^|/)\.\.?(/|$),;
+  if $test_path =~ m,(^|/)\.\.(/|$),;
 
 my ($name, $path, $suffix) = fileparse($test_path, ".t");
 my $testworkdir   = "$workdir/$path$name";
