@@ -28,7 +28,9 @@ MODULE_SEARCH_PATH += /path/to/fiasco-build
 # For use with multiple platforms and architectures:
 
 FIASCO_PATH-arm-arm_virt        = /path/to/fiasco-build-arm-arm_virt
+FIASCO_PATH-arm-arm_gen         = /path/to/fiasco-build-arm-arm_gen
 FIASCO_PATH-arm64-arm_virt      = /path/to/fiasco-build-arm64-arm_virt
+FIASCO_PATH-arm64-arm_gen       = /path/to/fiasco-build-arm64-arm_gen
 
 FIASCO_PATH-mips-malta          = /path/to/fiasco-build-mips-malta
 
@@ -46,6 +48,7 @@ QEMU_OPTIONS       += -serial stdio
 #QEMU_OPTIONS      += -monitor none
 
 QEMU_OPTIONS-arm-arm_virt        += -M virt,virtualization=true -cpu cortex-a15 -m 1024
+QEMU_OPTIONS-arm-arm_gen         += -M virt,virtualization=true -cpu cortex-a15 -m 1024
 QEMU_OPTIONS-arm-arm_mps3_an536  += -M mps3-an536 -smp 2
 # Have to add additional serial devices to see output of UARTs other than UART0.
 # UART0: Exclusively accessible to CPU0.
@@ -56,6 +59,7 @@ QEMU_OPTIONS-arm-arm_mps3_an536  += -M mps3-an536 -smp 2
 # QEMU_OPTIONS-arm-arm_mps3_an536  += -chardev stdio,mux=on,id=stdio-mux -serial chardev:stdio-mux -serial chardev:stdio-mux -serial chardev:stdio-mux -serial chardev:stdio-mux
 
 QEMU_OPTIONS-arm64-arm_virt      += -M virt,virtualization=true,iommu=smmuv3 -cpu cortex-a57 -m 1024
+QEMU_OPTIONS-arm64-arm_gen       += -M virt,virtualization=true,iommu=smmuv3 -cpu cortex-a57 -m 1024
 
 QEMU_OPTIONS-mips-malta          += -M malta -m 1024 -cpu P5600
 
