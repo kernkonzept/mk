@@ -27,9 +27,6 @@ MODULE_SEARCH_PATH += /path/to/fiasco-build
 
 # For use with multiple platforms and architectures:
 
-FIASCO_PATH-arm-integrator      = /path/to/fiasco-build-arm-integrator
-FIASCO_PATH-arm-rv_vexpress     = /path/to/fiasco-build-arm-rv_vexpress
-FIASCO_PATH-arm-rv_vexpress_a15 = /path/to/fiasco-build-arm-rv_vexpress_a15
 FIASCO_PATH-arm-arm_virt        = /path/to/fiasco-build-arm-arm_virt
 FIASCO_PATH-arm64-arm_virt      = /path/to/fiasco-build-arm64-arm_virt
 
@@ -48,17 +45,6 @@ QEMU_OPTIONS       += -serial stdio
 #QEMU_OPTIONS      += -nographic
 #QEMU_OPTIONS      += -monitor none
 
-QEMU_OPTIONS-arm-rv              += -M realview-eb -m 256 
-#QEMU_OPTIONS-arm-rv              += -cpu arm926
-QEMU_OPTIONS-arm-rv              += -cpu arm1176
-#QEMU_OPTIONS-arm-rv              += -cpu cortex-a8
-#QEMU_OPTIONS-arm-rv              += -cpu cortex-a9
-QEMU_OPTIONS-arm-integrator      += -M integratorcp -m 256
-#QEMU_OPTIONS-arm-integrator      += -cpu arm1176
-QEMU_OPTIONS-arm-rv_vexpress     += -M vexpress-a9 -m 1024 -cpu cortex-a9 -smp 4
-QEMU_OPTIONS-arm-rv_vexpress_a15 += -M vexpress-a15 -m 2047 -cpu cortex-a15 \
-                                    -smp 4
-QEMU_OPTIONS-arm-rv_pbx          += realview-pbx-a9 -m 512 -cpu cortex-a9 -smp 4
 QEMU_OPTIONS-arm-arm_virt        += -M virt,virtualization=true -cpu cortex-a15 -m 1024
 QEMU_OPTIONS-arm-arm_mps3_an536  += -M mps3-an536 -smp 2
 # Have to add additional serial devices to see output of UARTs other than UART0.
