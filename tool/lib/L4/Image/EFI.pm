@@ -135,6 +135,7 @@ use constant {
   SECTION_FLAG_DATA => 0x40,
   SECTION_FLAG_BSS => 0x80,
   SIZE_COFF_SYMBOL => 18,
+  DATADIR_CERTIFICATE => 4,
 };
 
 my @datadir_names = qw(Export Import Resource Exception Certificate BaseRelocation Debug Arch GlobalPtr TLS LoadConfig BoundImport IAT DelayImport CLRRuntimeHeader ReservedZ);
@@ -476,6 +477,21 @@ sub write_image
   # Copy everything after the module data section from the old image to the new image
   my $taildata_start = $module_section->{raw_addr} + $module_section->{raw_size};
   my $taildata_end = $self->{file_size};
+  my $cert = $self->{datadirs}[DATADIR_CERTIFICATE];
+  if (defined $cert and $cert->{size} != 0)
+    {
+      die "Certificate table not at end of file"
+        unless $cert->{addr} >= $taildata_start
+               and $cert->{addr} + $cert->{size} == $taildata_end;
+
+      printf STDERR "WARNING[%s]: Removing signature, image needs re-signing.\n",
+        __PACKAGE__;
+
+      $taildata_end = $cert->{addr};
+      $cert->{addr} = 0;
+      $cert->{size} = 0;
+    }
+
   my $taildata_size = $taildata_end - $taildata_start;
   filepos_set($ifd, $taildata_start);
   check_sysread(sysread($ifd, $buf, $taildata_size), $taildata_size);
